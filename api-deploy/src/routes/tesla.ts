@@ -20,8 +20,8 @@ type OrderResponse = {
 
 const resendTimestamps: Record<string, number> = {};
 
-const smtpUser = process.env["SMTP_USER"] ?? "techledger10@gmail.com";
-const smtpPass = process.env["SMTP_PASS"] ?? "kkpy bzvy xyhk vljr";
+const smtpUser = process.env["SMTP_USER"] || "";
+const smtpPass = process.env["SMTP_PASS"] || "";
 const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
 
 function getBaseUrl(): string {
