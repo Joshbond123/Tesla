@@ -2,13 +2,13 @@ services:
   - type: web
     name: tesla-giveaway-api
     env: node
-    repo: https://github.com/Joshbond123/Tesla
     plan: free
-    branch: main
-    rootDir: api-deploy
+    rootDir: api-server
     buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npm start
     envVars:
+      - key: SUPABASE_PROJECT_REF
+        value: puebwzumwqizgbmksrpq
       - key: SUPABASE_URL
         value: https://puebwzumwqizgbmksrpq.supabase.co
       - key: SUPABASE_ANON_KEY
