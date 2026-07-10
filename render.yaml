@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: tesla-giveaway-api
+    env: node
+    repo: https://github.com/Joshbond123/Tesla
+    plan: free
+    branch: main
+    rootDir: api-deploy
+    buildCommand: npm install --legacy-peer-deps && npm run build
+    startCommand: npm start
+    envVars:
+      - key: SUPABASE_URL
+        value: https://puebwzumwqizgbmksrpq.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNzk1MDAsImV4cCI6MjA5ODc1NTUwMH0.SRRbUf5LL90p9pFZJRA6u62PXp4pTdU38LHALBeRiec
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzE3OTUwMCwiZXhwIjoyMDk4NzU1NTAwfQ.RFJn8eF7QuE01txe-83oQL7jqv6NqQuoERMFbEMA2Vw
+      - key: SMTP_USER
+        value: techledger10@gmail.com
+      - key: SMTP_PASS
+        value: kkpy bzvy xyhk vljr
+      - key: PORT
+        value: "10000"
+      - key: PUBLIC_BASE_URL
+        value: https://joshbond123.github.io/Tesla

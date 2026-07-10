@@ -17,7 +17,7 @@
     @media(max-width:560px){.success-hero{padding:36px 22px;}}
     .success-title{font-size:32px;font-weight:900;color:var(--dark);margin-bottom:10px;}
     .success-sub{font-size:16px;color:var(--gray-2);line-height:1.7;max-width:440px;margin:0 auto 28px;}
-    .tracking-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(227,25,55,.07);border:1px solid rgba(227,25,55,.2);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:700;color:var(--red);margin-bottom:8px;}
+    .tracking-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(227,25,55,.07);border:1px solid rgba(227,25,55,.2);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:700;color:#E31937;margin-bottom:8px;}
 
     /* Order grid */
     .order-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
@@ -28,8 +28,8 @@
     .detail-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.05);}
     .dr-key{color:var(--gray-2);}
     .dr-val{color:var(--dark);font-weight:600;text-align:right;max-width:60%;}
-    .dr-val.red{color:var(--red);}
-    .dr-val.green{color:var(--success);}
+    .dr-val.red{color:#E31937;}
+    .dr-val.green{color:#00A550;}
 
     /* Timeline card */
     .timeline-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:24px;}
@@ -45,7 +45,7 @@
 
     /* Status badge */
     .status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;}
-    .status-confirmed{background:rgba(0,165,80,.1);color:var(--success);}
+    .status-confirmed{background:rgba(0,165,80,.1);color:#00A550;}
   </style>
 </head>
 <body>
@@ -115,7 +115,7 @@
     <div class="map-title">🗺️ Delivery Route</div>
     <div id="successMap"></div>
     <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--gray-2);">
-      <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:var(--red);border-radius:50%;display:inline-block;"></span> Origin: Tesla Factory, Fremont CA</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#E31937;border-radius:50%;display:inline-block;"></span> Origin: Tesla Factory, Fremont CA</span>
       <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:var(--success);border-radius:50%;display:inline-block;"></span> Destination: Your address</span>
     </div>
   </div>
@@ -188,7 +188,7 @@ document.getElementById('statusLabel').textContent = statusLabels[order?.status]
 const tlIcons = ['📋','⚙️','📦','🚚','🏠','✅'];
 document.getElementById('timeline').innerHTML = timeline.map((s,i)=>`
   <div class="tl-item ${s.completed?'done':i===completed?'current':''}">
-    <div class="tl-dot">${s.completed?'✓':(i===completed?'<span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span>':tlIcons[i]||'○')}</div>
+    <div class="tl-dot">${s.completed?'✓':(i===completed?'<span style="width:8px;height:8px;background:#E31937;border-radius:50%;display:inline-block;"></span>':tlIcons[i]||'○')}</div>
     <div class="tl-info">
       <div class="tl-stage">${s.stage}</div>
       <div class="tl-time">${s.timestamp?new Date(s.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):(i===completed?'In progress...':'Upcoming')}</div>
@@ -215,7 +215,7 @@ async function initMap() {
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19
   }).addTo(map);
 
-  const redIcon = L.divIcon({ html:'<div style="width:14px;height:14px;background:var(--red);border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] });
+  const redIcon = L.divIcon({ html:'<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] });
   const greenIcon = L.divIcon({ html:'<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] });
   const truckIcon = L.divIcon({ html:'<div style="font-size:20px;line-height:1;">🚚</div>', className:'', iconSize:[24,24], iconAnchor:[12,12] });
 

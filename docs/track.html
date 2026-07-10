@@ -27,8 +27,8 @@
     .track-id-group{display:flex;flex-direction:column;gap:4px;}
     .track-id-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);}
     .track-id-val{font-size:20px;font-weight:800;color:var(--dark);font-family:monospace;}
-    .track-status-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(0,165,80,.08);border:1px solid rgba(0,165,80,.2);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:700;color:var(--success);}
-    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);animation:pulse 1.5s ease-in-out infinite;}
+    .track-status-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(0,165,80,.08);border:1px solid rgba(0,165,80,.2);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:700;color:#00A550;}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:#00A550;animation:pulse 1.5s ease-in-out infinite;}
 
     /* Content grid */
     .content-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
@@ -45,7 +45,7 @@
     /* Progress */
     .progress-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
     .prog-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:14px;}
-    .prog-pct{font-size:22px;font-weight:800;color:var(--red);}
+    .prog-pct{font-size:22px;font-weight:800;color:#E31937;}
 
     /* Map */
     .map-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
@@ -92,7 +92,7 @@
       </div>
       <div>
         <div class="track-id-label">Tracking Number</div>
-        <div class="track-id-val" style="color:var(--red);" id="trackingDisplay">—</div>
+        <div class="track-id-val" style="color:#E31937;" id="trackingDisplay">—</div>
       </div>
       <div>
         <div class="track-status-chip"><span class="status-dot"></span><span id="statusChip">Confirmed</span></div>
@@ -127,8 +127,8 @@
       <div class="track-card-title">🗺️ Live Delivery Route</div>
       <div id="trackMap"></div>
       <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--gray-2);">
-        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:var(--red);border-radius:50%;"></span> Origin: Tesla Factory, Fremont CA</span>
-        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:var(--success);border-radius:50%;"></span> Your Delivery Address</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#E31937;border-radius:50%;"></span> Origin: Tesla Factory, Fremont CA</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#00A550;border-radius:50%;"></span> Your Delivery Address</span>
         <span style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;">🚚</span> Your Tesla in Transit</span>
       </div>
     </div>
