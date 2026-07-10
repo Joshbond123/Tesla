@@ -3,284 +3,198 @@ import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
 import { logger } from "../lib/logger";
+import { getSupabaseAdmin } from "../lib/supabase";
 
 const router = Router();
 
-// ── IN-MEMORY STORAGE ──────────────────────────────────────────────────
-const entries: Record<string, {
-  id: string; email: string; phone: string;
-  firstName: string; lastName: string;
-  verificationToken: string; verified: boolean; createdAt: string;
-}> = {};
-
-const verifiedUsers: Record<string, {
-  email: string; entryId: string; verifiedAt: string;
-}> = {};
-
-const orders: Record<string, {
+type TimelineItem = { stage: string; timestamp: string | null; completed: boolean };
+type OrderResponse = {
   orderId: string; trackingNumber: string; email: string; entryId: string;
   selectedCar: Record<string, string>;
   deliveryDetails: Record<string, string>;
   deliveryMethod: Record<string, string | number>;
   paymentMethod: Record<string, string>;
   status: string; orderDate: string; estimatedDelivery: string;
-  timeline: { stage: string; timestamp: string | null; completed: boolean }[];
-}> = {};
+  timeline: TimelineItem[];
+};
 
-// Resend cooldown (email → last resend timestamp)
 const resendTimestamps: Record<string, number> = {};
 
-// ── MAILER ────────────────────────────────────────────────────────────
 const smtpUser = process.env["SMTP_USER"] ?? "";
 const smtpPass = process.env["SMTP_PASS"] ?? "";
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: smtpUser, pass: smtpPass },
-});
+const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
 
-// Helper: build base URL from REPLIT_DOMAINS env
 function getBaseUrl(): string {
   const domains = process.env["REPLIT_DOMAINS"] ?? "";
   const primary = domains.split(",")[0]?.trim();
-  return primary
-    ? `https://${primary}`
-    : `http://localhost:${process.env["PORT"] ?? 8080}`;
+  return primary ? `https://${primary}` : `http://localhost:${process.env["PORT"] ?? 8080}`;
 }
 
-// ── POST /api/entry ───────────────────────────────────────────────────
 router.post("/entry", async (req, res) => {
   try {
-    const { email, phone, firstName, lastName } = req.body as {
-      email: string; phone: string; firstName?: string; lastName?: string;
-    };
+    const { email, phone, firstName, lastName } = req.body as { email: string; phone: string; firstName?: string; lastName?: string };
+    if (!email || !phone) { res.status(400).json({ error: "Email and phone number are required." }); return; }
+    const emailKey = email.toLowerCase().trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailKey)) { res.status(400).json({ error: "Please enter a valid email address." }); return; }
 
-    if (!email || !phone) {
-      res.status(400).json({ error: "Email and phone number are required." });
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      res.status(400).json({ error: "Please enter a valid email address." });
-      return;
-    }
-
-    if (entries[email.toLowerCase()]) {
-      res.status(409).json({ error: "This email has already been entered. Only one entry per person is allowed." });
-      return;
-    }
+    const supabase = await getSupabaseAdmin();
+    const { data: existing, error: lookupError } = await supabase.from("giveaway_users").select("id").eq("email", emailKey).maybeSingle();
+    if (lookupError) throw lookupError;
+    if (existing) { res.status(409).json({ error: "This email has already been entered. Only one entry per person is allowed." }); return; }
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
-    const entryId = uuidv4();
-    const emailKey = email.toLowerCase();
+    const authResult = await supabase.auth.admin.createUser({ email: emailKey, phone, email_confirm: false, user_metadata: { firstName: firstName ?? "", lastName: lastName ?? "" } });
+    if (authResult.error && !authResult.error.message.toLowerCase().includes("already")) throw authResult.error;
 
-    entries[emailKey] = {
-      id: entryId,
-      email: emailKey,
-      phone,
-      firstName: firstName || "",
-      lastName: lastName || "",
-      verificationToken,
-      verified: false,
-      createdAt: new Date().toISOString(),
-    };
+    const { data: entry, error } = await supabase.from("giveaway_users").insert({
+      auth_user_id: authResult.data.user?.id ?? null,
+      email: emailKey, phone, first_name: firstName ?? "", last_name: lastName ?? "", verification_token: verificationToken,
+      verification_status: "pending", entry_count: 1,
+    }).select("id").single();
+    if (error) {
+      if (error.code === "23505") { res.status(409).json({ error: "This email has already been entered. Only one entry per person is allowed." }); return; }
+      throw error;
+    }
 
-    const baseUrl = getBaseUrl();
-    const verifyLink = `${baseUrl}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
-
-    await transporter.sendMail({
-      from: `"Tesla Award Program" <${smtpUser}>`,
-      to: email,
-      subject: "⚡ Verify Your Email — Tesla Award Program",
-      html: buildVerificationEmail(firstName || "there", verifyLink, entryId),
-    });
-
+    const verifyLink = `${getBaseUrl()}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
+    await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Verify Your Email — Tesla Award Program", html: buildVerificationEmail(firstName || "there", verifyLink, entry.id) });
     logger.info({ email: emailKey }, "Verification email sent");
-    res.json({ success: true, message: "Entry submitted! Check your email to verify.", entryId });
-  } catch (err) {
-    logger.error({ err }, "Entry error");
-    res.status(500).json({ error: "Server error. Please try again." });
-  }
+    res.json({ success: true, message: "Entry submitted! Check your email to verify.", entryId: entry.id });
+  } catch (err) { logger.error({ err }, "Entry error"); res.status(500).json({ error: "Server error. Please try again." }); }
 });
 
-// ── GET /api/verify ───────────────────────────────────────────────────
-router.get("/verify", (req, res) => {
-  const { token, email } = req.query as { token?: string; email?: string };
+router.get("/verify", async (req, res) => {
+  try {
+    const { token, email } = req.query as { token?: string; email?: string };
+    if (!token || !email) { res.redirect("/verify-error.html?reason=invalid"); return; }
+    const emailKey = email.toLowerCase();
+    const supabase = await getSupabaseAdmin();
+    const { data: entry, error } = await supabase.from("giveaway_users").select("id,email,verification_token,auth_user_id").eq("email", emailKey).maybeSingle();
+    if (error) throw error;
+    if (!entry) { res.redirect("/verify-error.html?reason=notfound"); return; }
+    if (entry.verification_token !== token) { res.redirect("/verify-error.html?reason=invalid_token"); return; }
 
-  if (!token || !email) { res.redirect("/verify-error.html?reason=invalid"); return; }
-
-  const entry = entries[email.toLowerCase()];
-  if (!entry) { res.redirect("/verify-error.html?reason=notfound"); return; }
-
-  if (entry.verificationToken !== token) {
-    res.redirect("/verify-error.html?reason=invalid_token");
-    return;
-  }
-
-  entry.verified = true;
-  const sessionToken = crypto.randomBytes(32).toString("hex");
-  verifiedUsers[sessionToken] = {
-    email: email.toLowerCase(),
-    entryId: entry.id,
-    verifiedAt: new Date().toISOString(),
-  };
-
-  res.redirect(`/dashboard.html?session=${sessionToken}`);
+    await supabase.from("giveaway_users").update({ verification_status: "verified", verified_at: new Date().toISOString() }).eq("id", entry.id);
+    if (entry.auth_user_id) await supabase.auth.admin.updateUserById(entry.auth_user_id, { email_confirm: true });
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
+    if (sessionError) throw sessionError;
+    res.redirect(`/dashboard.html?session=${sessionToken}`);
+  } catch (err) { logger.error({ err }, "Verify error"); res.redirect("/verify-error.html?reason=server"); }
 });
 
-// ── POST /api/resend ──────────────────────────────────────────────────
 router.post("/resend", async (req, res) => {
   try {
     const { email } = req.body as { email: string };
     if (!email) { res.status(400).json({ error: "Email is required." }); return; }
-
     const emailKey = email.toLowerCase();
-    const entry = entries[emailKey];
+    const supabase = await getSupabaseAdmin();
+    const { data: entry, error } = await supabase.from("giveaway_users").select("id,first_name,verification_token,verification_status").eq("email", emailKey).maybeSingle();
+    if (error) throw error;
     if (!entry) { res.status(404).json({ error: "Email address not found. Please enter the program first." }); return; }
-
-    if (entry.verified) {
-      res.status(409).json({ error: "This email has already been verified." });
-      return;
-    }
-
-    // Rate limit: 60 seconds between resends
+    if (entry.verification_status === "verified") { res.status(409).json({ error: "This email has already been verified." }); return; }
     const lastResend = resendTimestamps[emailKey];
-    if (lastResend && Date.now() - lastResend < 60_000) {
-      res.status(429).json({ error: "Please wait 60 seconds before requesting another email." });
-      return;
-    }
-
+    if (lastResend && Date.now() - lastResend < 60_000) { res.status(429).json({ error: "Please wait 60 seconds before requesting another email." }); return; }
     resendTimestamps[emailKey] = Date.now();
-
-    const baseUrl = getBaseUrl();
-    const verifyLink = `${baseUrl}/api/verify?token=${entry.verificationToken}&email=${encodeURIComponent(emailKey)}`;
-
-    await transporter.sendMail({
-      from: `"Tesla Award Program" <${smtpUser}>`,
-      to: email,
-      subject: "⚡ Verification Email Resent — Tesla Award Program",
-      html: buildVerificationEmail(entry.firstName || "there", verifyLink, entry.id),
-    });
-
-    logger.info({ email: emailKey }, "Verification email resent");
+    const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
+    await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Verification Email Resent — Tesla Award Program", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
     res.json({ success: true, message: "Verification email resent." });
-  } catch (err) {
-    logger.error({ err }, "Resend error");
-    res.status(500).json({ error: "Failed to resend email. Please try again." });
-  }
+  } catch (err) { logger.error({ err }, "Resend error"); res.status(500).json({ error: "Failed to resend email. Please try again." }); }
 });
 
-// ── GET /api/session ──────────────────────────────────────────────────
-router.get("/session", (req, res) => {
-  const { token } = req.query as { token?: string };
-  if (!token || !verifiedUsers[token]) { res.status(401).json({ valid: false }); return; }
+async function getSessionUser(sessionToken?: string) {
+  if (!sessionToken) return null;
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase.from("user_sessions").select("token,user_id,giveaway_users(id,email,phone,first_name,last_name)").eq("token", sessionToken).gt("expires_at", new Date().toISOString()).maybeSingle();
+  if (error) throw error;
+  const user = Array.isArray(data?.giveaway_users) ? data?.giveaway_users[0] : data?.giveaway_users;
+  return user ? { ...user, entryId: data!.user_id } as any : null;
+}
 
-  const user = verifiedUsers[token];
-  const entry = entries[user.email];
-  res.json({
-    valid: true,
-    user: {
-      email: user.email,
-      firstName: entry?.firstName || "",
-      lastName: entry?.lastName || "",
-      entryId: user.entryId,
-      phone: entry?.phone || "",
-    },
-  });
+router.get("/session", async (req, res) => {
+  try {
+    const user = await getSessionUser((req.query as { token?: string }).token);
+    if (!user) { res.status(401).json({ valid: false }); return; }
+    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" } });
+  } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
 });
 
-// ── POST /api/order ───────────────────────────────────────────────────
 router.post("/order", async (req, res) => {
   try {
-    const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = req.body as {
-      sessionToken: string;
-      selectedCar: Record<string, string>;
-      deliveryDetails: Record<string, string>;
-      deliveryMethod?: Record<string, string | number>;
-      paymentMethod?: Record<string, string>;
-    };
-
-    if (!sessionToken || !verifiedUsers[sessionToken]) {
-      res.status(401).json({ error: "Invalid session. Please verify your email first." });
-      return;
-    }
-
-    const user = verifiedUsers[sessionToken];
+    const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = req.body as { sessionToken: string; selectedCar: Record<string, string>; deliveryDetails: Record<string, string>; deliveryMethod?: Record<string, string | number>; paymentMethod?: Record<string, string> };
+    const user = await getSessionUser(sessionToken);
+    if (!user) { res.status(401).json({ error: "Invalid session. Please verify your email first." }); return; }
+    const supabase = await getSupabaseAdmin();
     const orderId = "TSLA-" + uuidv4().substring(0, 8).toUpperCase();
     const trackingNumber = "TRK-" + crypto.randomBytes(4).toString("hex").toUpperCase();
-
-    // Estimated delivery: express = +2 days, standard = +10 days
-    const isExpress = (deliveryMethod?.id === "express");
-    const daysToAdd = isExpress ? 2 : 10;
-
-    const order = {
-      orderId,
-      trackingNumber,
-      email: user.email,
-      entryId: user.entryId,
-      selectedCar: selectedCar ?? {},
-      deliveryDetails: deliveryDetails ?? {},
-      deliveryMethod: deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 },
-      paymentMethod: paymentMethod ?? { id: "unknown", name: "Not specified" },
-      status: "confirmed",
-      orderDate: new Date().toISOString(),
-      estimatedDelivery: calcEstimatedDelivery(daysToAdd),
-      timeline: [
-        { stage: "Order Confirmed",     timestamp: new Date().toISOString(), completed: true  },
-        { stage: "Processing",          timestamp: null, completed: false },
-        { stage: "Shipped",             timestamp: null, completed: false },
-        { stage: "In Transit",          timestamp: null, completed: false },
-        { stage: "Out for Delivery",    timestamp: null, completed: false },
-        { stage: "Delivered",           timestamp: null, completed: false },
-      ],
-    };
-
-    orders[orderId] = order;
-
+    const method = deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 };
+    const estimatedDelivery = calcEstimatedDelivery(method.id === "express" ? 2 : 10);
+    const { data: carRow, error: carError } = await supabase.from("selected_cars").insert({ user_id: user.id, data: selectedCar ?? {} }).select("id").single();
+    if (carError) throw carError;
+    const { data: deliveryRow, error: deliveryError } = await supabase.from("delivery_details").insert({ user_id: user.id, data: deliveryDetails ?? {} }).select("id").single();
+    if (deliveryError) throw deliveryError;
+    const { data: orderRow, error: orderError } = await supabase.from("orders").insert({ order_id: orderId, tracking_number: trackingNumber, user_id: user.id, selected_car_id: carRow.id, delivery_details_id: deliveryRow.id, delivery_method: method, payment_method: paymentMethod ?? { id: "unknown", name: "Not specified" }, status: "confirmed", estimated_delivery: estimatedDelivery }).select("id,order_date").single();
+    if (orderError) throw orderError;
+    const timeline = defaultTimeline(new Date(orderRow.order_date).toISOString());
+    const { error: trackingError } = await supabase.from("tracking_data").insert(timeline.map((t, i) => ({ order_id: orderRow.id, stage: t.stage, stage_order: i, timestamp: t.timestamp, completed: t.completed })));
+    if (trackingError) throw trackingError;
+    const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? { id: "unknown", name: "Not specified" }, status: "confirmed", orderDate: new Date(orderRow.order_date).toISOString(), estimatedDelivery, timeline };
     // Send confirmation email (best effort)
     try {
-      await transporter.sendMail({
-        from: `"Tesla Giveaway" <${smtpUser}>`,
-        to: user.email,
-        subject: "🎉 Order Confirmed — Your Tesla is on the way!",
-        html: buildOrderConfirmationEmail(order),
-      });
+      await transporter.sendMail({ from: `"Tesla Giveaway" <${smtpUser}>`, to: user.email, subject: "🎉 Order Confirmed — Your Tesla is on the way!", html: buildOrderConfirmationEmail(order) });
       logger.info({ email: user.email, orderId }, "Order confirmation email sent");
-    } catch (emailErr) {
-      logger.warn({ err: emailErr }, "Failed to send order confirmation email");
-    }
-
+    } catch (emailErr) { logger.warn({ err: emailErr }, "Failed to send order confirmation email"); }
     res.json({ success: true, order });
-  } catch (err) {
-    logger.error({ err }, "Order error");
-    res.status(500).json({ error: "Server error. Please try again." });
-  }
+  } catch (err) { logger.error({ err }, "Order error"); res.status(500).json({ error: "Server error. Please try again." }); }
 });
 
-// ── GET /api/order/tracking/:trackingNumber — MUST be before /order/:orderId
-router.get("/order/tracking/:trackingNumber", (req, res) => {
-  const order = Object.values(orders).find(
-    o => o.trackingNumber === req.params["trackingNumber"],
-  );
-  if (!order) { res.status(404).json({ error: "Tracking number not found." }); return; }
-  res.json({ order: simulateProgress(order) });
+router.get("/order/tracking/:trackingNumber", async (req, res) => {
+  try {
+    const order = await loadOrderBy("tracking_number", req.params["trackingNumber"] ?? "");
+    if (!order) { res.status(404).json({ error: "Tracking number not found." }); return; }
+    res.json({ order: simulateProgress(order) });
+  } catch (err) { logger.error({ err }, "Tracking lookup error"); res.status(500).json({ error: "Server error." }); }
 });
 
-// ── GET /api/order/:orderId ────────────────────────────────────────────
-router.get("/order/:orderId", (req, res) => {
-  const order = orders[req.params["orderId"] ?? ""];
-  if (!order) { res.status(404).json({ error: "Order not found." }); return; }
-  res.json({ order: simulateProgress(order) });
+router.get("/order/:orderId", async (req, res) => {
+  try {
+    const order = await loadOrderBy("order_id", req.params["orderId"] ?? "");
+    if (!order) { res.status(404).json({ error: "Order not found." }); return; }
+    res.json({ order: simulateProgress(order) });
+  } catch (err) { logger.error({ err }, "Order lookup error"); res.status(500).json({ error: "Server error." }); }
 });
+
+async function loadOrderBy(column: "order_id" | "tracking_number", value: string): Promise<OrderResponse | null> {
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase.from("orders").select("id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(id,email),selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq(column, value).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const user = Array.isArray(data.giveaway_users) ? data.giveaway_users[0] : data.giveaway_users;
+  const car = Array.isArray(data.selected_cars) ? data.selected_cars[0] : data.selected_cars;
+  const delivery = Array.isArray(data.delivery_details) ? data.delivery_details[0] : data.delivery_details;
+  const tracking = ((data.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+  return { orderId: data.order_id, trackingNumber: data.tracking_number, email: user?.email ?? "", entryId: user?.id ?? "", selectedCar: car?.data ?? {}, deliveryDetails: delivery?.data ?? {}, deliveryMethod: data.delivery_method ?? {}, paymentMethod: data.payment_method ?? {}, status: data.status, orderDate: new Date(data.order_date).toISOString(), estimatedDelivery: data.estimated_delivery, timeline: tracking };
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────
+function defaultTimeline(orderDate: string): TimelineItem[] {
+  return [
+    { stage: "Order Confirmed", timestamp: orderDate, completed: true },
+    { stage: "Processing", timestamp: null, completed: false },
+    { stage: "Shipped", timestamp: null, completed: false },
+    { stage: "In Transit", timestamp: null, completed: false },
+    { stage: "Out for Delivery", timestamp: null, completed: false },
+    { stage: "Delivered", timestamp: null, completed: false },
+  ];
+}
+
 function calcEstimatedDelivery(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString().split("T")[0]!;
 }
 
-function simulateProgress(order: typeof orders[string]) {
+function simulateProgress(order: OrderResponse) {
   const now = new Date();
   const orderDate = new Date(order.orderDate);
   const hrs = (now.getTime() - orderDate.getTime()) / 3_600_000;
@@ -343,7 +257,7 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 </html>`;
 }
 
-function buildOrderConfirmationEmail(order: typeof orders[string]) {
+function buildOrderConfirmationEmail(order: OrderResponse) {
   const car  = order.selectedCar;
   const addr = order.deliveryDetails;
   const method = order.deliveryMethod;
