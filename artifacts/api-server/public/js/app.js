@@ -1,14 +1,37 @@
 // Tesla Giveaway — Shared Utilities
 
-// API base: same-origin for the Express app, configurable for GitHub Pages/static deployments.
-const API_BASE = window.TESLA_API_BASE || (window.location.hostname.endsWith('github.io') ? 'https://tesla-api.techledger.app/api' : '/api');
+// API base resolution:
+// - Express/static deployment: same-origin /api
+// - GitHub Pages/static deployment: set window.TESLA_API_BASE in js/config.js or localStorage.tesla_api_base
+//   to the hosted Express backend URL (for example https://your-api.example.com/api).
+const configuredApiBase = (window.TESLA_API_BASE || localStorage.getItem('tesla_api_base') || '').replace(/\/$/, '');
+const isGitHubPages = window.location.hostname.endsWith('github.io');
+const API_BASE = configuredApiBase || (isGitHubPages ? '' : '/api');
+
+function getApiConfigurationError() {
+  if (!API_BASE && isGitHubPages) {
+    return 'The secure backend API is not configured for this GitHub Pages deployment. Set window.TESLA_API_BASE in docs/js/config.js to your hosted API URL ending in /api.';
+  }
+  return '';
+}
 
 // ── API ──────────────────────────────────────────────────────────────
 async function apiCall(endpoint, method = 'GET', body = null) {
+  const configError = getApiConfigurationError();
+  if (configError) throw new Error(configError);
+
   const options = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) options.body = JSON.stringify(body);
-  const res = await fetch(`${API_BASE}${endpoint}`, options);
-  const data = await res.json();
+
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, options);
+  } catch (err) {
+    throw new Error(`Unable to reach the secure backend API. Confirm the API is deployed, CORS is enabled, and TESLA_API_BASE points to it. ${err?.message || ''}`.trim());
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  const data = contentType.includes('application/json') ? await res.json() : { error: await res.text() };
   if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
   return data;
 }
@@ -25,7 +48,7 @@ function showToast(message, type = 'success') {
     t.style.transform = 'translateX(20px)';
     t.style.transition = 'opacity .3s ease, transform .3s ease';
     setTimeout(() => t.remove(), 300);
-  }, 4000);
+  }, 6500);
 }
 
 // ── LOADING ───────────────────────────────────────────────────────────
