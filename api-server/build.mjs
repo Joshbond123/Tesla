@@ -41,6 +41,8 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+
+  console.log("Build complete! Output at:", distDir);
 }
 
 buildAll().catch((err) => {

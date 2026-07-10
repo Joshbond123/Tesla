@@ -503,3 +503,269 @@ main{display:block;}
 @media(max-width:480px){
   .toast-notif{left:16px;right:16px;bottom:16px;max-width:none;}
 }
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║     PREMIUM EV LOADING ANIMATION v3.0                   ║
+   ║     Tesla-inspired charging experience                  ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 16, 0.96);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: loaderFadeIn 0.3s ease;
+}
+
+@keyframes loaderFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── EV Loader Container ──────────────────────────── */
+.ev-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  max-width: 420px;
+  width: 100%;
+  padding: 0 24px;
+}
+
+/* ── Central loader with rings ────────────────────── */
+.ev-loader {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Outer rings — charging animation */
+.ev-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  animation: evRingPulse 2s ease-in-out infinite;
+}
+
+.ev-ring-1 {
+  width: 100%;
+  height: 100%;
+  border-top-color: rgba(227, 25, 55, 0.8);
+  border-right-color: rgba(227, 25, 55, 0.3);
+  animation-delay: 0s;
+}
+
+.ev-ring-2 {
+  width: 82%;
+  height: 82%;
+  border-top-color: rgba(227, 25, 55, 0.5);
+  border-left-color: rgba(255, 59, 87, 0.3);
+  animation-delay: 0.4s;
+  animation-direction: reverse;
+}
+
+.ev-ring-3 {
+  width: 64%;
+  height: 64%;
+  border-bottom-color: rgba(255, 107, 107, 0.4);
+  border-right-color: rgba(255, 107, 107, 0.2);
+  animation-delay: 0.8s;
+}
+
+@keyframes evRingPulse {
+  0%, 100% { 
+    transform: rotate(0deg) scale(1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: rotate(180deg) scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* Tesla Logo Core */
+.ev-core {
+  position: absolute;
+  width: 48%;
+  height: 48%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: evCoreBreathe 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(227, 25, 55, 0.5));
+}
+
+.ev-tesla-logo {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes evCoreBreathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(227, 25, 55, 0.5)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 22px rgba(227, 25, 55, 0.8)); }
+}
+
+/* ── Orbiting Particles ───────────────────────────── */
+.ev-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.ev-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(227, 25, 55, 0.6), 0 0 12px rgba(227, 25, 55, 0.3);
+}
+
+@keyframes evOrbit {
+  from { transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--distance)) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(calc(var(--angle) + 360deg)) translateX(var(--distance)) rotate(-360deg); }
+}
+
+/* ── Energy Trail ─────────────────────────────────── */
+.ev-energy-trail {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ev-energy-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px rgba(227, 25, 55, 0.8), 0 0 16px rgba(227, 25, 55, 0.4);
+  animation: evDotPulse 1.4s ease-in-out infinite;
+}
+
+.ev-energy-dot:nth-child(1) { animation-delay: 0s; }
+.ev-energy-dot:nth-child(2) { animation-delay: 0.18s; }
+.ev-energy-dot:nth-child(3) { animation-delay: 0.36s; }
+.ev-energy-dot:nth-child(4) { animation-delay: 0.54s; }
+.ev-energy-dot:nth-child(5) { animation-delay: 0.72s; }
+
+@keyframes evDotPulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.3;
+    box-shadow: 0 0 4px rgba(227, 25, 55, 0.3);
+  }
+  50% { 
+    transform: scale(2.2);
+    opacity: 1;
+    background: #ff4d6a;
+    box-shadow: 0 0 14px rgba(227, 25, 55, 1), 0 0 28px rgba(227, 25, 55, 0.6);
+  }
+}
+
+/* ── Progress Bar ─────────────────────────────────── */
+.ev-progress-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ev-progress-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ev-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #E31937, #ff3c57);
+  border-radius: 999px;
+  transition: width 0.25s ease-out, background 0.5s ease;
+  position: relative;
+  width: 0%;
+}
+
+.ev-progress-glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(227, 25, 55, 0.4));
+  border-radius: 999px;
+}
+
+.ev-progress-pct {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* ── Status Text ──────────────────────────────────── */
+.ev-status {
+  text-align: center;
+}
+
+.ev-status-main {
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 6px;
+  letter-spacing: 0.01em;
+}
+
+.ev-status-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 480px) {
+  .ev-loader {
+    width: 110px;
+    height: 110px;
+  }
+  .ev-loader-container {
+    gap: 20px;
+  }
+  .ev-status-main {
+    font-size: 15px;
+  }
+  .ev-status-sub {
+    font-size: 12px;
+  }
+}
+
+/* ── Success Circle ─────────────────────────────── */
+.success-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--success), #00C853);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 10px 32px rgba(0, 165, 80, 0.4);
+  animation: successPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

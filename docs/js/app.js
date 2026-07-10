@@ -1,22 +1,40 @@
 // ╔══════════════════════════════════════════════════════════╗
 // ║     Tesla Vehicle Award Program — Shared Utilities       ║
-// ║     Production v2.0 — Premium Experience                 ║
+// ║     Production v3.0 — Premium Experience                 ║
 // ╚══════════════════════════════════════════════════════════╝
 
 // ── API CONFIGURATION ──────────────────────────────────────────────────
-const configuredApiBase = (window.TESLA_API_BASE || localStorage.getItem('tesla_api_base') || '').replace(/\/$/, '');
+// Allow setting API base via URL param, localStorage, or config file
+const urlApiParam = new URLSearchParams(window.location.search).get('api_url');
+if (urlApiParam) {
+  localStorage.setItem('tesla_api_base', urlApiParam);
+  window.TESLA_API_BASE = urlApiParam;
+}
+
+const configuredApiBase = (
+  window.TESLA_API_BASE ||
+  localStorage.getItem('tesla_api_base') ||
+  ''
+).replace(/\/$/, '');
+
 const isGitHubPages = window.location.hostname.endsWith('github.io');
-const API_BASE = configuredApiBase || (isGitHubPages ? '' : '/api');
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE = configuredApiBase || (isLocalhost ? '/api' : (isGitHubPages ? '' : '/api'));
 
 function getApiConfigurationError() {
-  if (!API_BASE && isGitHubPages) {
-    return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 Deploy the API server (see render.yaml in repo) and update docs/js/config.js with your API URL ending in /api.\n\nNeed help? Check the repo for one-click deploy instructions.';
-  }
   if (!API_BASE) {
+    if (isGitHubPages) {
+      return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 The API server needs to be deployed. Deploy it to Render (see api-server/ directory) and set the URL.\n\nFor quick testing, add ?api_url=YOUR_API_URL to the URL, e.g.:\n?api_url=https://your-service.onrender.com/api';
+    }
     return 'API base URL is not configured. Please set window.TESLA_API_BASE or deploy the backend server.';
   }
   return '';
 }
+
+// Log API configuration for debugging
+console.log('[Tesla] API_BASE:', API_BASE || '(not configured — backend features will be unavailable)');
+console.log('[Tesla] Hostname:', window.location.hostname);
+console.log('[Tesla] isGitHubPages:', isGitHubPages);
 
 // ── API CALLS ──────────────────────────────────────────────────────────
 async function apiCall(endpoint, method, body) {
@@ -33,12 +51,18 @@ async function apiCall(endpoint, method, body) {
   try {
     res = await fetch(API_BASE + endpoint, options);
   } catch (err) {
-    throw new Error('Unable to reach the backend API. Please check your connection and try again.');
+    throw new Error('Unable to reach the backend API. Please check your connection and try again.\n\nMake sure the API server is running at: ' + API_BASE);
   }
 
   const contentType = res.headers.get('content-type') || '';
-  const data = contentType.includes('application/json') ? await res.json() : { error: await res.text() };
-  if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+  let data;
+  try {
+    data = contentType.includes('application/json') ? await res.json() : { error: await res.text() };
+  } catch (e) {
+    data = { error: 'Invalid response from server' };
+  }
+  
+  if (!res.ok) throw new Error(data.error || data.message || 'Something went wrong. Please try again.');
   return data;
 }
 
@@ -74,16 +98,17 @@ function showToast(message, type) {
 function showLoading(message) {
   message = message || 'Processing...';
   
+  // Remove any existing loader
   var existing = document.getElementById('globalLoader');
   if (existing) existing.remove();
 
-  var el = document.createElement('div');
-  el.className = 'loading-overlay';
-  el.id = 'globalLoader';
-  el.setAttribute('role', 'alertdialog');
-  el.setAttribute('aria-label', 'Loading');
+  var overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.id = 'globalLoader';
+  overlay.setAttribute('role', 'alertdialog');
+  overlay.setAttribute('aria-label', 'Loading');
   
-  el.innerHTML = 
+  overlay.innerHTML = 
     '<div class="ev-loader-container">' +
       '<div class="ev-loader">' +
         '<div class="ev-ring ev-ring-1"></div>' +
@@ -109,37 +134,48 @@ function showLoading(message) {
       '</div>' +
     '</div>';
 
-  document.body.appendChild(el);
+  document.body.appendChild(overlay);
   
-  // Animate progress
-  var fill = el.querySelector('#evProgressFill');
-  var pct = el.querySelector('#evProgressPct');
+  // Animate progress bar with realistic charging curve
+  var fill = overlay.querySelector('#evProgressFill');
+  var pct = overlay.querySelector('#evProgressPct');
   var width = 0;
+  var speed = 0.8;
   var interval = setInterval(function() {
     if (!document.getElementById('globalLoader')) { clearInterval(interval); return; }
-    width += (94 - width) * 0.03;
-    if (width > 93) width = 93;
-    if (fill) fill.style.width = width + '%';
+    // Simulate a charging curve that slows down near 90%
+    var target = Math.min(92, 92 * (1 - Math.exp(-width / 30)));
+    width += (target - width) * 0.04 + 0.15;
+    if (width > 91) width = 91;
+    if (fill) {
+      fill.style.width = width + '%';
+      fill.style.background = width > 50 
+        ? 'linear-gradient(90deg, #E31937, #ff3c57)' 
+        : 'linear-gradient(90deg, #E31937, #ff6b6b)';
+    }
     if (pct) pct.textContent = Math.round(width) + '%';
     
     var sm = document.getElementById('evStatusMain');
     var ss = document.getElementById('evStatusSub');
-    if (width > 25 && width < 28) { if (sm) sm.textContent = 'Validating information...'; if (ss) ss.textContent = 'Checking your details'; }
-    else if (width > 50 && width < 54) { if (sm) sm.textContent = 'Securing your entry...'; if (ss) ss.textContent = 'Encrypting connection'; }
-    else if (width > 75 && width < 78) { if (sm) sm.textContent = 'Almost there...'; if (ss) ss.textContent = 'Finalizing your request'; }
-  }, 150);
-  el._progressInterval = interval;
+    if (width > 18 && width < 22) { if (sm) sm.textContent = 'Initializing secure connection...'; if (ss) ss.textContent = 'Establishing encrypted channel'; }
+    else if (width > 35 && width < 39) { if (sm) sm.textContent = 'Validating your information...'; if (ss) ss.textContent = 'Verifying details for accuracy'; }
+    else if (width > 55 && width < 59) { if (sm) sm.textContent = 'Processing your entry...'; if (ss) ss.textContent = 'Registering in the award program'; }
+    else if (width > 72 && width < 76) { if (sm) sm.textContent = 'Securing your submission...'; if (ss) ss.textContent = 'Encrypting and finalizing data'; }
+    else if (width > 85 && width < 89) { if (sm) sm.textContent = 'Almost complete...'; if (ss) ss.textContent = 'Preparing your confirmation'; }
+  }, 80);
+  overlay._progressInterval = interval;
   
-  // Create particles
-  var particles = el.querySelector('#evParticles');
+  // Create glowing particles that orbit around the Tesla core
+  var particles = overlay.querySelector('#evParticles');
   if (particles) {
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 24; i++) {
       var p = document.createElement('div');
       p.className = 'ev-particle';
       var angle = Math.random() * 360;
-      var dist = 50 + Math.random() * 30;
-      var dur = 2 + Math.random() * 3;
-      p.style.cssText = 'width:' + (2+Math.random()*4) + 'px;height:' + (2+Math.random()*4) + 'px;--angle:' + angle + 'deg;--distance:' + dist + 'px;animation:evOrbit ' + dur + 's linear infinite;animation-delay:' + Math.random()*2 + 's;opacity:' + (0.3+Math.random()*0.7) + ';';
+      var dist = 48 + Math.random() * 34;
+      var dur = 2.5 + Math.random() * 4;
+      var size = 2 + Math.random() * 5;
+      p.style.cssText = 'width:' + size + 'px;height:' + size + 'px;--angle:' + angle + 'deg;--distance:' + dist + 'px;animation:evOrbit ' + dur + 's linear infinite;animation-delay:' + (Math.random() * 3) + 's;opacity:' + (0.25 + Math.random() * 0.65) + ';background:' + (Math.random() > 0.5 ? '#E31937' : '#ff6b6b') + ';';
       particles.appendChild(p);
     }
   }
@@ -154,16 +190,26 @@ function hideLoading() {
   var sm = document.getElementById('evStatusMain');
   var ss = document.getElementById('evStatusSub');
   
-  if (fill) fill.style.width = '100%';
-  if (pct) pct.textContent = '100%';
+  // Complete the progress bar
+  if (fill) {
+    fill.style.width = '100%';
+    fill.style.background = 'linear-gradient(90deg, #00A550, #00C853)';
+  }
+  if (pct) {
+    pct.textContent = '100%';
+    pct.style.color = '#00A550';
+  }
   if (sm) sm.textContent = '✓ Complete!';
-  if (ss) ss.textContent = 'Redirecting...';
+  if (ss) ss.textContent = 'Success — redirecting you now...';
   
   if (el._progressInterval) clearInterval(el._progressInterval);
   
-  el.style.opacity = '0';
-  el.style.transition = 'opacity 0.4s ease';
-  setTimeout(function() { if (el.parentNode) el.remove(); }, 400);
+  // Fade out with a slight delay for the success animation
+  setTimeout(function() {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.5s ease';
+    setTimeout(function() { if (el.parentNode) el.remove(); }, 500);
+  }, 600);
 }
 
 // ── VALIDATION ────────────────────────────────────────────────────────
@@ -194,7 +240,7 @@ function getParam(name) {
 // ── COUNTDOWN ─────────────────────────────────────────────────────────
 function startCountdown(endDate) {
   function tick() {
-    const diff = endDate - new Date();
+    var diff = endDate - new Date();
     if (diff <= 0) {
       ['days','hours','minutes','seconds'].forEach(function(id) {
         var el = document.getElementById(id);
@@ -230,6 +276,7 @@ function animateCounter(el, target, duration) {
 // ── SCROLL REVEAL ─────────────────────────────────────────────────────
 var _scrollObs = null;
 function initScrollAnimations() {
+  if (!window.IntersectionObserver) return;
   if (_scrollObs) _scrollObs.disconnect();
   _scrollObs = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
@@ -261,9 +308,21 @@ function launchConfetti(count) {
   }
 }
 
+// ── NAVBAR ────────────────────────────────────────────────────────────
+function initNavbar() {
+  window.addEventListener('scroll', function() {
+    var nav = document.getElementById('navbar');
+    if (nav) nav.classList.toggle('scrolled', window.scrollY > 40);
+  });
+}
+
 // ── AUTO INIT ─────────────────────────────────────────────────────────
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initScrollAnimations);
+  document.addEventListener('DOMContentLoaded', function() {
+    initScrollAnimations();
+    initNavbar();
+  });
 } else {
   initScrollAnimations();
+  initNavbar();
 }

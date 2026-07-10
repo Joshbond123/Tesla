@@ -2,8 +2,8 @@ import { Router } from "express";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
-import { logger } from "../lib/logger";
-import { getSupabaseAdmin } from "../lib/supabase";
+import { logger } from "../lib/logger.js";
+import { getSupabaseAdmin } from "../lib/supabase.js";
 
 const router = Router();
 

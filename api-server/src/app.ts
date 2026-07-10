@@ -1,10 +1,10 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
 import { fileURLToPath } from "url";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,14 +14,14 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req) {
+      req(req: any) {
         return {
           id: req.id,
           method: req.method,
           url: req.url?.split("?")[0],
         };
       },
-      res(res) {
+      res(res: any) {
         return {
           statusCode: res.statusCode,
         };
@@ -29,7 +29,7 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({ origin: "*", methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type", "Authorization"] }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -40,7 +40,7 @@ app.use(express.static(publicDir));
 app.use("/api", router);
 
 // Fallback: serve index.html for non-API GET routes
-app.get("/{*splat}", (req, res, next) => {
+app.get("*", (req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith("/api/")) {
     next();
     return;

@@ -245,11 +245,57 @@ main{display:block;}
 .nav-inner{width:100%;}
 .btn{min-height:44px;}
 .loading-overlay{background:radial-gradient(circle at 50% 35%,rgba(227,25,55,.22),rgba(23,26,32,.96) 44%,#090a0c 100%);gap:18px;text-align:center;padding:24px;}
-.ev-loader{width:132px;height:132px;border-radius:50%;position:relative;display:grid;place-items:center;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.02));box-shadow:0 0 60px rgba(227,25,55,.28),inset 0 0 28px rgba(255,255,255,.06);}
-.ev-loader-orbit{position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(255,255,255,.14);border-top-color:var(--red);border-right-color:rgba(227,25,55,.7);animation:spin 1.1s linear infinite;}
-.ev-loader-car{font-size:44px;filter:drop-shadow(0 0 18px rgba(227,25,55,.9));animation:bounce 1.3s ease-in-out infinite;}
-.ev-loader-road{position:absolute;left:30px;right:30px;bottom:30px;height:3px;border-radius:999px;background:rgba(255,255,255,.16);overflow:hidden;}
-.ev-loader-road span{display:block;height:100%;width:45%;border-radius:inherit;background:linear-gradient(90deg,transparent,var(--red),transparent);animation:loaderRoad 1.1s ease-in-out infinite;}
+/* ── Premium EV Loader ─────────────────── */
+.ev-loader-container{display:flex;flex-direction:column;align-items:center;gap:24px;}
+.ev-loader{width:160px;height:160px;border-radius:50%;position:relative;display:grid;place-items:center;}
+
+/* Animated rings */
+.ev-ring{position:absolute;border-radius:50%;border:2px solid transparent;}
+.ev-ring-1{inset:0;border-top-color:var(--red);border-right-color:rgba(227,25,55,.5);animation:spin .9s linear infinite;}
+.ev-ring-2{inset:12px;border-bottom-color:rgba(227,25,55,.4);border-left-color:rgba(227,25,55,.25);animation:spin 1.4s linear infinite reverse;}
+.ev-ring-3{inset:26px;border-top-color:rgba(255,255,255,.12);border-right-color:rgba(255,255,255,.06);animation:spin 2s linear infinite;}
+
+/* Core Tesla logo */
+.ev-core{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle,rgba(227,25,55,.15),rgba(0,0,0,.8));display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 0 40px rgba(227,25,55,.3),inset 0 0 20px rgba(255,255,255,.05);}
+.ev-tesla-logo{width:28px;height:28px;animation:bounce 2.2s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(227,25,55,.8));}
+
+/* Particle field */
+.ev-particles{position:absolute;inset:-20px;pointer-events:none;}
+.ev-particle{position:absolute;top:50%;left:50%;background:var(--red);border-radius:50%;transform-origin:0 0;}
+@keyframes evOrbit{
+  0%{transform:rotate(var(--angle)) translateX(var(--distance)) scale(1);opacity:1;}
+  50%{opacity:.3;transform:rotate(calc(var(--angle) + 180deg)) translateX(var(--distance)) scale(.5);}
+  100%{transform:rotate(calc(var(--angle) + 360deg)) translateX(var(--distance)) scale(1);opacity:1;}
+}
+
+/* Energy trail */
+.ev-energy-trail{display:flex;align-items:center;justify-content:center;gap:8px;height:8px;}
+.ev-energy-dot{width:4px;height:4px;border-radius:50%;background:var(--red);animation:energyFlow 1.5s ease-in-out infinite;}
+.ev-energy-dot:nth-child(1){animation-delay:0s;}
+.ev-energy-dot:nth-child(2){animation-delay:.15s;}
+.ev-energy-dot:nth-child(3){animation-delay:.3s;}
+.ev-energy-dot:nth-child(4){animation-delay:.45s;}
+.ev-energy-dot:nth-child(5){animation-delay:.6s;}
+@keyframes energyFlow{
+  0%,100%{opacity:.2;transform:scale(.8);box-shadow:0 0 2px rgba(227,25,55,.3);}
+  50%{opacity:1;transform:scale(1.6);box-shadow:0 0 10px rgba(227,25,55,.9);}
+}
+
+/* Progress bar */
+.ev-progress-wrap{display:flex;align-items:center;gap:14px;width:100%;max-width:300px;}
+.ev-progress-bar{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;position:relative;}
+.ev-progress-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff3c57,var(--red));border-radius:999px;transition:width .4s ease;position:relative;z-index:1;}
+.ev-progress-glow{position:absolute;top:0;left:0;height:100%;width:100%;background:linear-gradient(90deg,transparent,rgba(227,25,55,.4),transparent);animation:progressGlow 1.8s ease-in-out infinite;}
+.ev-progress-pct{font-size:13px;font-weight:700;color:rgba(255,255,255,.5);font-variant-numeric:tabular-nums;min-width:36px;text-align:right;}
+@keyframes progressGlow{
+  0%,100%{transform:translateX(-100%);}
+  50%{transform:translateX(100%);}
+}
+
+/* Status text */
+.ev-status{text-align:center;}
+.ev-status-main{color:white;font-size:clamp(16px,3.5vw,20px);font-weight:700;letter-spacing:-.01em;margin-bottom:6px;}
+.ev-status-sub{color:rgba(255,255,255,.45);font-size:13px;margin-bottom:0;}
 .loader-title{color:white;font-size:clamp(17px,4vw,22px);font-weight:800;letter-spacing:-.01em;}
 .loader-caption{color:rgba(255,255,255,.58);font-size:14px;margin-top:-10px;}
 @keyframes loaderRoad{0%{transform:translateX(-120%);}100%{transform:translateX(260%);}}
@@ -272,4 +318,454 @@ main{display:block;}
   .countdown-box{min-width:54px;}
   .countdown-label{font-size:10px;}
   .form-input{font-size:16px;}
+}
+
+/* ── PREMIUM LOADING OVERLAY ─────────────────────────────────────── */
+.premium-loader-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: radial-gradient(circle at 50% 35%, rgba(227,25,55,.18), rgba(10,12,16,.97) 50%, #050608 100%);
+  backdrop-filter: blur(24px);
+  display: flex; align-items: center; justify-content: center;
+  animation: loaderFadeIn .35s ease;
+}
+@keyframes loaderFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.premium-loader-container {
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 28px;
+  padding: 40px 28px;
+}
+
+/* Energy Ring */
+.energy-ring-wrapper {
+  position: relative;
+  width: 180px; height: 180px;
+  display: flex; align-items: center; justify-content: center;
+}
+.energy-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(227,25,55,.12), rgba(227,25,55,.04) 60%, rgba(255,255,255,.02) 100%);
+  box-shadow: 0 0 80px rgba(227,25,55,.18), 0 0 160px rgba(227,25,55,.06), inset 0 0 40px rgba(227,25,55,.08);
+  animation: ringPulse 2.5s ease-in-out infinite;
+}
+.energy-ring-inner {
+  position: absolute; inset: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(20,22,30,.9), #0a0c14 90%);
+  box-shadow: inset 0 2px 20px rgba(0,0,0,.5);
+}
+.energy-ring-svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+.ring-track {
+  fill: none; stroke: rgba(255,255,255,.06); stroke-width: 3;
+}
+.ring-progress {
+  fill: none;
+  stroke: url(#ringGradient);
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px rgba(227,25,55,.6));
+  stroke-dasharray: 553;
+  stroke-dashoffset: 553;
+}
+
+@keyframes ringPulse {
+  0%, 100% { box-shadow: 0 0 80px rgba(227,25,55,.18), 0 0 160px rgba(227,25,55,.06), inset 0 0 40px rgba(227,25,55,.08); }
+  50% { box-shadow: 0 0 120px rgba(227,25,55,.28), 0 0 200px rgba(227,25,55,.10), inset 0 0 60px rgba(227,25,55,.13); }
+}
+
+/* Energy Core */
+.energy-core {
+  position: relative; z-index: 2;
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(227,25,55,.35), rgba(227,25,55,.08) 60%, transparent 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 40px rgba(227,25,55,.4), 0 0 80px rgba(227,25,55,.15);
+  animation: coreGlow 1.5s ease-in-out infinite alternate;
+}
+@keyframes coreGlow {
+  0% { box-shadow: 0 0 30px rgba(227,25,55,.3), 0 0 60px rgba(227,25,55,.1); }
+  100% { box-shadow: 0 0 50px rgba(227,25,55,.55), 0 0 100px rgba(227,25,55,.2); }
+}
+.tesla-icon {
+  font-size: 30px;
+  filter: drop-shadow(0 0 14px rgba(227,25,55,.8));
+  animation: iconBounce 0.6s ease-in-out infinite alternate;
+}
+@keyframes iconBounce {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-4px) scale(1.08); }
+}
+
+/* Energy Particles */
+.energy-particles { position: absolute; width: 100%; height: 100%; }
+.particle {
+  position: absolute; top: 50%; left: 50%;
+  width: 3px; height: 3px;
+  background: var(--red-light);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--red-light);
+  animation: particleOrbit 3s linear infinite;
+}
+.p1 { animation-duration: 2.2s; animation-delay: 0s; }
+.p2 { animation-duration: 2.8s; animation-delay: -0.5s; }
+.p3 { animation-duration: 3.4s; animation-delay: -1.2s; }
+.p4 { animation-duration: 2.6s; animation-delay: -1.8s; }
+.p5 { animation-duration: 3.0s; animation-delay: -2.2s; }
+.p6 { animation-duration: 2.4s; animation-delay: -0.8s; }
+
+@keyframes particleOrbit {
+  0%   { transform: rotate(0deg) translateX(58px) rotate(0deg) scale(0.6); opacity: 0; }
+  20%  { opacity: 0.9; }
+  50%  { transform: rotate(180deg) translateX(58px) rotate(-180deg) scale(1); opacity: 0.8; }
+  80%  { opacity: 0.9; }
+  100% { transform: rotate(360deg) translateX(58px) rotate(-360deg) scale(0.6); opacity: 0; }
+}
+
+/* Status Text */
+.loader-status { text-align: center; }
+.loader-step-text {
+  color: #fff; font-size: clamp(16px, 3vw, 20px); font-weight: 700;
+  letter-spacing: -0.01em; margin: 0; line-height: 1.3;
+  transition: all 0.4s ease;
+}
+.loader-sub-text {
+  color: rgba(255,255,255,.45); font-size: 13px; font-weight: 400;
+  margin: 6px 0 0; letter-spacing: 0.02em;
+  transition: all 0.4s ease;
+}
+
+/* Premium Progress Bar */
+.premium-progress-wrap {
+  display: flex; align-items: center; gap: 14px; width: 100%; max-width: 320px;
+}
+.premium-progress-bar {
+  flex: 1; height: 4px; background: rgba(255,255,255,.08);
+  border-radius: 999px; overflow: visible; position: relative;
+}
+.premium-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--red), #ff3c57, var(--red-light));
+  border-radius: 999px; width: 0%;
+  position: relative;
+  box-shadow: 0 0 12px rgba(227,25,55,.5);
+}
+.premium-progress-glow {
+  position: absolute; top: 50%; right: 0;
+  width: 40px; height: 20px;
+  background: radial-gradient(ellipse at center, rgba(227,25,55,.4), transparent 70%);
+  transform: translate(20px, -50%); pointer-events: none;
+}
+.premium-progress-pct {
+  color: rgba(255,255,255,.5); font-size: 13px; font-weight: 600;
+  font-variant-numeric: tabular-nums; min-width: 36px; text-align: right;
+}
+
+/* Loading Dots */
+.loader-dots {
+  display: flex; gap: 8px; justify-content: center;
+}
+.loader-dots .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(227,25,55,.5);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.loader-dots .dot:nth-child(2) { animation-delay: 0.15s; }
+.loader-dots .dot:nth-child(3) { animation-delay: 0.3s; }
+.loader-dots .dot:nth-child(4) { animation-delay: 0.45s; }
+.loader-dots .dot:nth-child(5) { animation-delay: 0.6s; }
+@keyframes dotPulse {
+  0%, 80%, 100% { opacity: .25; transform: scale(.7); }
+  40% { opacity: 1; transform: scale(1); background: var(--red-light); }
+}
+
+/* Responsive loader */
+@media (max-width: 480px) {
+  .energy-ring-wrapper { width: 140px; height: 140px; }
+  .energy-core { width: 52px; height: 52px; }
+  .tesla-icon { font-size: 24px; }
+  .premium-progress-wrap { max-width: 260px; }
+  .loader-step-text { font-size: 15px; }
+  .loader-sub-text { font-size: 12px; }
+}
+
+/* ── Toast Notifications ─────────────────── */
+.toast-notif{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:500;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.2);color:white;animation:slideInRight .35s cubic-bezier(.4,0,.2,1);}
+.toast-icon{font-size:16px;font-weight:700;flex-shrink:0;}
+.toast-msg{line-height:1.5;}
+.toast-success{background:var(--dark);}
+.toast-error{background:#EF4444;}
+.toast-info{background:#3B82F6;}
+.toast-warning{background:#F59E0B;color:#171A20;}
+@media(max-width:480px){
+  .toast-notif{left:16px;right:16px;bottom:16px;max-width:none;}
+}
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║     PREMIUM EV LOADING ANIMATION v3.0                   ║
+   ║     Tesla-inspired charging experience                  ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 16, 0.96);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: loaderFadeIn 0.3s ease;
+}
+
+@keyframes loaderFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── EV Loader Container ──────────────────────────── */
+.ev-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  max-width: 420px;
+  width: 100%;
+  padding: 0 24px;
+}
+
+/* ── Central loader with rings ────────────────────── */
+.ev-loader {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Outer rings — charging animation */
+.ev-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  animation: evRingPulse 2s ease-in-out infinite;
+}
+
+.ev-ring-1 {
+  width: 100%;
+  height: 100%;
+  border-top-color: rgba(227, 25, 55, 0.8);
+  border-right-color: rgba(227, 25, 55, 0.3);
+  animation-delay: 0s;
+}
+
+.ev-ring-2 {
+  width: 82%;
+  height: 82%;
+  border-top-color: rgba(227, 25, 55, 0.5);
+  border-left-color: rgba(255, 59, 87, 0.3);
+  animation-delay: 0.4s;
+  animation-direction: reverse;
+}
+
+.ev-ring-3 {
+  width: 64%;
+  height: 64%;
+  border-bottom-color: rgba(255, 107, 107, 0.4);
+  border-right-color: rgba(255, 107, 107, 0.2);
+  animation-delay: 0.8s;
+}
+
+@keyframes evRingPulse {
+  0%, 100% { 
+    transform: rotate(0deg) scale(1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: rotate(180deg) scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* Tesla Logo Core */
+.ev-core {
+  position: absolute;
+  width: 48%;
+  height: 48%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: evCoreBreathe 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(227, 25, 55, 0.5));
+}
+
+.ev-tesla-logo {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes evCoreBreathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(227, 25, 55, 0.5)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 22px rgba(227, 25, 55, 0.8)); }
+}
+
+/* ── Orbiting Particles ───────────────────────────── */
+.ev-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.ev-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(227, 25, 55, 0.6), 0 0 12px rgba(227, 25, 55, 0.3);
+}
+
+@keyframes evOrbit {
+  from { transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--distance)) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(calc(var(--angle) + 360deg)) translateX(var(--distance)) rotate(-360deg); }
+}
+
+/* ── Energy Trail ─────────────────────────────────── */
+.ev-energy-trail {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ev-energy-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px rgba(227, 25, 55, 0.8), 0 0 16px rgba(227, 25, 55, 0.4);
+  animation: evDotPulse 1.4s ease-in-out infinite;
+}
+
+.ev-energy-dot:nth-child(1) { animation-delay: 0s; }
+.ev-energy-dot:nth-child(2) { animation-delay: 0.18s; }
+.ev-energy-dot:nth-child(3) { animation-delay: 0.36s; }
+.ev-energy-dot:nth-child(4) { animation-delay: 0.54s; }
+.ev-energy-dot:nth-child(5) { animation-delay: 0.72s; }
+
+@keyframes evDotPulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.3;
+    box-shadow: 0 0 4px rgba(227, 25, 55, 0.3);
+  }
+  50% { 
+    transform: scale(2.2);
+    opacity: 1;
+    background: #ff4d6a;
+    box-shadow: 0 0 14px rgba(227, 25, 55, 1), 0 0 28px rgba(227, 25, 55, 0.6);
+  }
+}
+
+/* ── Progress Bar ─────────────────────────────────── */
+.ev-progress-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ev-progress-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ev-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #E31937, #ff3c57);
+  border-radius: 999px;
+  transition: width 0.25s ease-out, background 0.5s ease;
+  position: relative;
+  width: 0%;
+}
+
+.ev-progress-glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(227, 25, 55, 0.4));
+  border-radius: 999px;
+}
+
+.ev-progress-pct {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* ── Status Text ──────────────────────────────────── */
+.ev-status {
+  text-align: center;
+}
+
+.ev-status-main {
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 6px;
+  letter-spacing: 0.01em;
+}
+
+.ev-status-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 480px) {
+  .ev-loader {
+    width: 110px;
+    height: 110px;
+  }
+  .ev-loader-container {
+    gap: 20px;
+  }
+  .ev-status-main {
+    font-size: 15px;
+  }
+  .ev-status-sub {
+    font-size: 12px;
+  }
+}
+
+/* ── Success Circle ─────────────────────────────── */
+.success-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--success), #00C853);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 10px 32px rgba(0, 165, 80, 0.4);
+  animation: successPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
