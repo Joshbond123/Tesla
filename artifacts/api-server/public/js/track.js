@@ -86,25 +86,32 @@ function displayTracking(order) {
     </div>
   `).join('');
 
-  // Vehicle details
+  // Vehicle details — all user-supplied values escaped to prevent XSS
   const car  = order.selectedCar || {};
   const addr = order.deliveryDetails || {};
-  document.getElementById('vehicleDetails').innerHTML = `
-    <div class="det-row"><span class="det-key">Vehicle</span><span class="det-val">Tesla ${car.name||'—'}</span></div>
-    <div class="det-row"><span class="det-key">Colour</span><span class="det-val">${car.color||'—'}</span></div>
-    <div class="det-row"><span class="det-key">Order Date</span><span class="det-val">${order.orderDate?new Date(order.orderDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}</span></div>
-    <div class="det-row"><span class="det-key">Est. Delivery</span><span class="det-val" style="color:var(--success);">${order.estimatedDelivery||'—'}</span></div>
-    ${order.deliveryMethod?.name?`<div class="det-row"><span class="det-key">Shipping</span><span class="det-val">${order.deliveryMethod.name}</span></div>`:''}
-  `;
 
-  document.getElementById('addressDetails').innerHTML = `
-    <div class="det-row"><span class="det-key">Recipient</span><span class="det-val">${addr.fullName||'—'}</span></div>
-    <div class="det-row"><span class="det-key">Address</span><span class="det-val">${addr.address||'—'}</span></div>
-    <div class="det-row"><span class="det-key">City</span><span class="det-val">${addr.city||'—'}</span></div>
-    <div class="det-row"><span class="det-key">State</span><span class="det-val">${addr.state||'—'}</span></div>
-    <div class="det-row"><span class="det-key">Country</span><span class="det-val">${addr.country||'—'}</span></div>
-    ${addr.instructions?`<div class="det-row"><span class="det-key">Instructions</span><span class="det-val">${addr.instructions}</span></div>`:''}
-  `;
+  function detRow(label, value, style='') {
+    return `<div class="det-row"><span class="det-key">${label}</span><span class="det-val"${style?` style="${style}"`:''}>${escapeHtml(value)||'—'}</span></div>`;
+  }
+
+  const orderDateStr = order.orderDate
+    ? new Date(order.orderDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+    : '—';
+
+  document.getElementById('vehicleDetails').innerHTML =
+    detRow('Vehicle', `Tesla ${car.name||''}`.trim()) +
+    detRow('Colour', car.color) +
+    detRow('Order Date', orderDateStr) +
+    detRow('Est. Delivery', order.estimatedDelivery, 'color:var(--success);') +
+    (order.deliveryMethod?.name ? detRow('Shipping', order.deliveryMethod.name) : '');
+
+  document.getElementById('addressDetails').innerHTML =
+    detRow('Recipient', addr.fullName) +
+    detRow('Address',   addr.address) +
+    detRow('City',      addr.city) +
+    detRow('State',     addr.state) +
+    detRow('Country',   addr.country) +
+    (addr.instructions ? detRow('Instructions', addr.instructions) : '');
 
   // Map
   setTimeout(() => initMap(addr), 300);

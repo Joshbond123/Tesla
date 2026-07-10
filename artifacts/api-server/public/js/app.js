@@ -112,6 +112,17 @@ function initScrollAnimations() {
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
 
+// ── HTML ESCAPING ─────────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Auto-init scroll animations
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initScrollAnimations);
