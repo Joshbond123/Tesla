@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/Tesla/">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmed! | Tesla Award Program 2026</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <style>
     body{background:var(--light);}
     .success-wrap{max-width:820px;margin:0 auto;padding:88px 24px 64px;}
@@ -52,7 +53,7 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo">
+    <a href="index.html" class="nav-logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
       TESLA
     </a>
@@ -122,13 +123,13 @@
 
   <!-- Actions -->
   <div class="action-row anim-fade-up delay-5">
-    <a id="trackBtn" href="/track.html" class="btn btn-primary btn-lg" style="flex:1;text-align:center;">📍 Track My Order</a>
-    <a href="/" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">← Back to Home</a>
+    <a id="trackBtn" href="track.html" class="btn btn-primary btn-lg" style="flex:1;text-align:center;">📍 Track My Order</a>
+    <a href="index.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">← Back to Home</a>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="/js/app.js"></script>
+<script src="js/app.js"></script>
 <script>
 // Confetti
 function launchConfetti() {
@@ -154,7 +155,7 @@ launchConfetti();
 
 // Load order data
 const order = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
-if (!order) { window.location.href = '/'; }
+if (!order) { window.location.href = 'index.html'; }
 
 // Populate details
 document.getElementById('trackingNum').textContent  = order?.trackingNumber || '—';
