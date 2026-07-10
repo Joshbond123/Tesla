@@ -20,11 +20,13 @@ type OrderResponse = {
 
 const resendTimestamps: Record<string, number> = {};
 
-const smtpUser = process.env["SMTP_USER"] ?? "";
-const smtpPass = process.env["SMTP_PASS"] ?? "";
+const smtpUser = process.env["SMTP_USER"] ?? "techledger10@gmail.com";
+const smtpPass = process.env["SMTP_PASS"] ?? "kkpy bzvy xyhk vljr";
 const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
 
 function getBaseUrl(): string {
+  const configured = process.env["PUBLIC_BASE_URL"]?.trim();
+  if (configured) return configured.replace(/\/$/, "");
   const domains = process.env["REPLIT_DOMAINS"] ?? "";
   const primary = domains.split(",")[0]?.trim();
   return primary ? `https://${primary}` : `http://localhost:${process.env["PORT"] ?? 8080}`;
@@ -100,6 +102,32 @@ router.post("/resend", async (req, res) => {
     await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Verification Email Resent — Tesla Award Program", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
     res.json({ success: true, message: "Verification email resent." });
   } catch (err) { logger.error({ err }, "Resend error"); res.status(500).json({ error: "Failed to resend email. Please try again." }); }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, phone } = req.body as { email?: string; phone?: string };
+    if (!email || !phone) { res.status(400).json({ error: "Email and phone number are required." }); return; }
+    const emailKey = email.toLowerCase().trim();
+    const normalizedPhone = phone.replace(/\D/g, "");
+    const supabase = await getSupabaseAdmin();
+    const { data: entry, error } = await supabase.from("giveaway_users").select("id,email,phone,first_name,last_name,verification_status,verification_token").eq("email", emailKey).maybeSingle();
+    if (error) throw error;
+    if (!entry || entry.phone.replace(/\D/g, "") !== normalizedPhone) {
+      res.status(401).json({ error: "We could not match that email and phone number." });
+      return;
+    }
+    if (entry.verification_status !== "verified") {
+      const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
+      await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Complete Your Tesla Award Verification", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
+      res.status(403).json({ error: "Your entry is not verified yet. We just resent your verification email." });
+      return;
+    }
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
+    if (sessionError) throw sessionError;
+    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" } });
+  } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
 });
 
 async function getSessionUser(sessionToken?: string) {

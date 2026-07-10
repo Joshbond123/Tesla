@@ -1,208 +1,134 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Tesla Award Program — GitHub Pages Demo Version
-// All API calls are intercepted and simulated client-side via localStorage.
-// ─────────────────────────────────────────────────────────────────────────────
+// Tesla Giveaway — Shared Utilities
 
-// ── MOCK API ─────────────────────────────────────────────────────────────────
+// API base: same-origin for the Express app, configurable for GitHub Pages/static deployments.
+const API_BASE = window.TESLA_API_BASE || (window.location.hostname.endsWith('github.io') ? 'https://tesla-api.techledger.app/api' : '/api');
+
+// ── API ──────────────────────────────────────────────────────────────
 async function apiCall(endpoint, method = 'GET', body = null) {
-  // Simulate realistic network delay
-  await new Promise(r => setTimeout(r, 350 + Math.random() * 450));
-
-  // POST /entry
-  if (endpoint === '/entry' && method === 'POST') {
-    const key = (body.email || '').toLowerCase().trim();
-    if (!key) throw new Error('Email is required.');
-    const entries = JSON.parse(localStorage.getItem('_tp_entries') || '{}');
-    if (entries[key]) throw new Error('This email has already been entered. Only one entry per person is permitted.');
-    const token = rand64();
-    entries[key] = {
-      email: key, phone: body.phone || '',
-      firstName: body.firstName || '', lastName: body.lastName || '',
-      token, verified: false, createdAt: new Date().toISOString()
-    };
-    localStorage.setItem('_tp_entries', JSON.stringify(entries));
-    localStorage.setItem('_tp_pending_email', key);
-    localStorage.setItem('_tp_pending_name', body.firstName || '');
-    return { success: true, message: 'Entry submitted! Check your email to verify.' };
-  }
-
-  // POST /resend
-  if (endpoint === '/resend' && method === 'POST') {
-    return { success: true, message: 'Verification email resent.' };
-  }
-
-  // GET /session
-  if (endpoint.startsWith('/session')) {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('session') || localStorage.getItem('tesla_session_token');
-    if (!token) return { valid: false };
-    const sessions = JSON.parse(localStorage.getItem('_tp_sessions') || '{}');
-    const session = sessions[token];
-    if (!session) return { valid: false };
-    const entries = JSON.parse(localStorage.getItem('_tp_entries') || '{}');
-    const entry = entries[session.email] || {};
-    return {
-      valid: true,
-      user: {
-        email: session.email,
-        firstName: entry.firstName || session.firstName || '',
-        lastName: entry.lastName || '',
-        entryId: session.entryId,
-        phone: entry.phone || ''
-      }
-    };
-  }
-
-  // POST /order
-  if (endpoint === '/order' && method === 'POST') {
-    const orderId = 'TSLA-' + randId(8);
-    const trackingNumber = 'TRK-' + randId(8);
-    const isExpress = body.deliveryMethod?.id === 'express';
-    const daysToAdd = isExpress ? 2 : 10;
-    const est = new Date(); est.setDate(est.getDate() + daysToAdd);
-    const order = {
-      orderId, trackingNumber,
-      email: body.sessionToken || 'demo@example.com',
-      selectedCar: body.selectedCar || {},
-      deliveryDetails: body.deliveryDetails || {},
-      deliveryMethod: body.deliveryMethod || {},
-      paymentMethod: body.paymentMethod || {},
-      status: 'confirmed',
-      orderDate: new Date().toISOString(),
-      estimatedDelivery: est.toISOString().split('T')[0],
-      timeline: [
-        { stage: 'Order Confirmed',   timestamp: new Date().toISOString(), completed: true  },
-        { stage: 'Processing',        timestamp: null,                     completed: false },
-        { stage: 'Shipped',           timestamp: null,                     completed: false },
-        { stage: 'In Transit',        timestamp: null,                     completed: false },
-        { stage: 'Out for Delivery',  timestamp: null,                     completed: false },
-        { stage: 'Delivered',         timestamp: null,                     completed: false }
-      ]
-    };
-    const orders = JSON.parse(localStorage.getItem('_tp_orders') || '{}');
-    orders[orderId] = order;
-    localStorage.setItem('_tp_orders', JSON.stringify(orders));
-    return { success: true, order };
-  }
-
-  // GET /order/tracking/:trackingNumber  (must come before /order/:id)
-  const trackMatch = endpoint.match(/^\/order\/tracking\/([^/]+)$/);
-  if (trackMatch) {
-    const orders = JSON.parse(localStorage.getItem('_tp_orders') || '{}');
-    const order = Object.values(orders).find(o => o.trackingNumber === trackMatch[1]);
-    if (!order) throw new Error('Tracking number not found.');
-    return { order };
-  }
-
-  // GET /order/:orderId
-  const orderMatch = endpoint.match(/^\/order\/([^/]+)$/);
-  if (orderMatch) {
-    const orders = JSON.parse(localStorage.getItem('_tp_orders') || '{}');
-    const order = orders[orderMatch[1]];
-    if (!order) throw new Error('Order not found.');
-    return { order };
-  }
-
-  return { success: true };
+  const options = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) options.body = JSON.stringify(body);
+  const res = await fetch(`${API_BASE}${endpoint}`, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+  return data;
 }
 
-// ── UTILS ─────────────────────────────────────────────────────────────────────
-function rand64() {
-  return Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-}
-function randId(n) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  return Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-}
-
-function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
-function isValidPhone(p) { return p && p.replace(/\D/g,'').length >= 7; }
-
-function getParam(name) {
-  return new URLSearchParams(window.location.search).get(name) || '';
-}
-
-function getSession() {
-  return localStorage.getItem('tesla_session_token') || getParam('session');
-}
-
-function logout() {
-  localStorage.removeItem('tesla_session_token');
-  localStorage.removeItem('tesla_selected_car');
-  localStorage.removeItem('tesla_delivery_details');
-  localStorage.removeItem('tesla_delivery_method');
-  window.location.href = 'index.html';
-}
-
-// ── TOAST ─────────────────────────────────────────────────────────────────────
-function showToast(msg, type = 'info') {
-  const existing = document.getElementById('toast-container');
-  if (existing) existing.remove();
-  const c = document.createElement('div');
-  c.id = 'toast-container';
-  c.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:10px;';
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(message, type = 'success') {
   const t = document.createElement('div');
-  const bg = type === 'success' ? '#00A550' : type === 'error' ? '#E31937' : '#171A20';
-  t.style.cssText = `background:${bg};color:white;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:600;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:fadeInUp .3s ease;`;
-  t.textContent = msg;
-  c.appendChild(t);
-  document.body.appendChild(c);
-  setTimeout(() => c.remove(), 4000);
+  t.className = `toast toast-${type}`;
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  t.innerHTML = `<span style="font-weight:700;font-size:16px;">${icons[type]||'✓'}</span> ${message}`;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(20px)';
+    t.style.transition = 'opacity .3s ease, transform .3s ease';
+    setTimeout(() => t.remove(), 300);
+  }, 4000);
 }
 
-// ── COUNTDOWN ─────────────────────────────────────────────────────────────────
+// ── LOADING ───────────────────────────────────────────────────────────
+function showLoading(message = 'Processing...') {
+  if (document.getElementById('globalLoader')) return;
+  const el = document.createElement('div');
+  el.className = 'loading-overlay';
+  el.id = 'globalLoader';
+  el.innerHTML = `
+    <div class="ev-loader" aria-hidden="true">
+      <div class="ev-loader-orbit"></div>
+      <div class="ev-loader-car">⚡</div>
+      <div class="ev-loader-road"><span></span></div>
+    </div>
+    <p class="loader-title">${message}</p>
+    <p class="loader-caption">Securing your Tesla Award session</p>
+    <div class="charging-bar"><div class="charging-fill"></div></div>
+  `;
+  document.body.appendChild(el);
+}
+function hideLoading() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.remove();
+}
+
+// ── VALIDATION ────────────────────────────────────────────────────────
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).toLowerCase());
+}
+function isValidPhone(phone) {
+  return /^\+?[\d\s\-(). ]{7,20}$/.test(phone);
+}
+
+// ── SESSION ───────────────────────────────────────────────────────────
+function saveSession(token) { localStorage.setItem('tesla_session', token); localStorage.setItem('tesla_session_token', token); }
+function getSession() { return localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token') || getParam('session'); }
+function clearSession() { localStorage.removeItem('tesla_session'); localStorage.removeItem('tesla_session_token'); }
+
+// ── URL PARAMS ────────────────────────────────────────────────────────
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+// ── COUNTDOWN ─────────────────────────────────────────────────────────
 function startCountdown(endDate) {
-  function update() {
-    const diff = endDate - Date.now();
-    if (diff <= 0) return;
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff % 86400000) / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    const pad = n => String(n).padStart(2, '0');
-    const dEl = document.getElementById('days');
-    const hEl = document.getElementById('hours');
-    const mEl = document.getElementById('minutes');
-    const sEl = document.getElementById('seconds');
-    if (dEl) dEl.textContent = pad(d);
-    if (hEl) hEl.textContent = pad(h);
-    if (mEl) mEl.textContent = pad(m);
-    if (sEl) sEl.textContent = pad(s);
+  function tick() {
+    const diff = endDate - new Date();
+    if (diff <= 0) {
+      ['days','hours','minutes','seconds'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '00';
+      });
+      return;
+    }
+    const pad = n => String(Math.floor(n)).padStart(2,'0');
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = pad(val); };
+    set('days',    diff / 86400000);
+    set('hours',   (diff % 86400000) / 3600000);
+    set('minutes', (diff % 3600000) / 60000);
+    set('seconds', (diff % 60000) / 1000);
   }
-  update();
-  setInterval(update, 1000);
+  tick();
+  setInterval(tick, 1000);
 }
 
-// ── COUNTER ANIMATION ─────────────────────────────────────────────────────────
-function animateCounter(el, target, duration) {
+// ── COUNTER ANIMATION ─────────────────────────────────────────────────
+function animateCounter(el, target, duration = 2000) {
   if (!el) return;
-  const start = Date.now();
-  const tick = () => {
-    const p = Math.min((Date.now() - start) / duration, 1);
-    el.textContent = Math.floor(p * target).toLocaleString();
-    if (p < 1) requestAnimationFrame(tick);
-    else el.textContent = target.toLocaleString();
+  const step = target / (duration / 16);
+  let current = 0;
+  const run = () => {
+    current = Math.min(current + step, target);
+    el.textContent = Math.floor(current).toLocaleString();
+    if (current < target) requestAnimationFrame(run);
   };
-  requestAnimationFrame(tick);
+  run();
 }
 
-// ── SCROLL ANIMATIONS ─────────────────────────────────────────────────────────
+// ── SCROLL REVEAL ─────────────────────────────────────────────────────
 function initScrollAnimations() {
   const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal,.anim-fade-up').forEach(el => observer.observe(el));
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
 
-// ── HTML ESCAPING ─────────────────────────────────────────────────────────────
+// ── HTML ESCAPING ─────────────────────────────────────────────────────
 function escapeHtml(str) {
   if (str == null) return '';
   return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-// Auto-init
+// Auto-init scroll animations
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initScrollAnimations);
 } else {

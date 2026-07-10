@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlSession = new URLSearchParams(window.location.search).get('session');
   if (urlSession) {
     saveSession(urlSession);
-    history.replaceState(null, '', '/dashboard.html');
+    history.replaceState(null, '', 'dashboard.html');
   }
 
   const session = getSession();

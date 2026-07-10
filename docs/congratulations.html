@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <base href="/Tesla/">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>You're Eligible to Win! | Tesla Award Program 2026</title>
@@ -90,17 +89,6 @@
       <button id="resendBtn" onclick="resendEmail()">Resend Verification Email</button>
       <div class="resend-countdown" id="resendCountdown"></div>
     </div>
-
-    <!-- Demo shortcut -->
-    <div style="margin-top:24px;padding:18px 20px;background:linear-gradient(135deg,rgba(227,25,55,.05),rgba(227,25,55,.02));border:1.5px solid rgba(227,25,55,.18);border-radius:14px;text-align:center;">
-      <p style="font-size:13px;color:var(--gray-2);margin:0 0 14px;line-height:1.6;">
-        ✉️ In a real session, click the link emailed to you.<br>
-        <strong style="color:var(--dark);">For instant access, click below to proceed:</strong>
-      </p>
-      <button onclick="simulateVerify()" class="btn btn-primary" style="font-size:15px;padding:13px 32px;">
-        ✓ Verify Email &amp; Access Dashboard →
-      </button>
-    </div>
   </div>
 </div>
 
@@ -118,18 +106,6 @@ if (email) {
 // Resend
 let resendCooldown = 0;
 let resendTimer = null;
-
-function simulateVerify() {
-  const pendingEmail = localStorage.getItem('_tp_pending_email') || email;
-  const pendingName  = localStorage.getItem('_tp_pending_name')  || name;
-  if (!pendingEmail) { showToast('No pending entry found. Please submit an entry first.', 'error'); return; }
-  const token = Array.from({length:32}, () => Math.floor(Math.random()*16).toString(16)).join('');
-  const sessions = JSON.parse(localStorage.getItem('_tp_sessions') || '{}');
-  sessions[token] = { email: pendingEmail, firstName: pendingName, entryId: 'entry-' + Date.now() };
-  localStorage.setItem('_tp_sessions', JSON.stringify(sessions));
-  localStorage.setItem('tesla_session_token', token);
-  window.location.href = 'dashboard.html?session=' + token;
-}
 
 async function resendEmail() {
   if (!email) { showToast('Email address not found. Please re-enter the program.', 'error'); return; }
