@@ -1,233 +1,180 @@
-// Track Order JavaScript
+// Tesla Giveaway — Order Tracking
+
 let map = null;
-let markerInterval = null;
+let truckInterval = null;
 
 // Auto-load from URL params
 document.addEventListener('DOMContentLoaded', () => {
-  const orderId = getParam('order');
+  const orderId  = getParam('order');
   const tracking = getParam('tracking');
-  
   if (orderId || tracking) {
-    if (orderId) document.getElementById('trackInput').value = orderId;
-    else if (tracking) document.getElementById('trackInput').value = tracking;
+    const input = document.getElementById('trackInput');
+    if (input) input.value = orderId || tracking;
     lookupOrder();
   }
 });
 
+// Track input — Enter key
+document.getElementById?.('trackInput')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') lookupOrder();
+});
+
+// ── LOOKUP ────────────────────────────────────────────────────────────
 async function lookupOrder() {
-  const input = document.getElementById('trackInput').value.trim();
-  if (!input) {
-    showToast('Please enter an Order ID or Tracking Number.', 'error');
-    return;
-  }
+  const input = document.getElementById('trackInput')?.value.trim();
+  if (!input) { showToast('Please enter an Order ID or Tracking Number.', 'error'); return; }
 
   showLoading('Looking up your order...');
 
   try {
     let result;
-    if (input.startsWith('TSLA-')) {
-      result = await apiCall(`/order/${input}`);
-    } else if (input.startsWith('TRK-')) {
+    if (input.startsWith('TRK-')) {
       result = await apiCall(`/order/tracking/${input}`);
     } else {
       result = await apiCall(`/order/${input}`);
     }
-
     hideLoading();
     displayTracking(result.order);
-
-  } catch (error) {
+  } catch (err) {
     hideLoading();
     // Try localStorage fallback
     const saved = localStorage.getItem('tesla_last_order');
     if (saved) {
-      const order = JSON.parse(saved);
-      if (order.orderId === input || order.trackingNumber === input) {
-        displayTracking(order);
-        return;
-      }
+      try {
+        const o = JSON.parse(saved);
+        if (o.orderId === input || o.trackingNumber === input) { displayTracking(o); return; }
+      } catch(_) {}
     }
-    showToast('Order not found. Please check your Order ID.', 'error');
+    showToast('Order not found. Please check your Order ID or Tracking Number.', 'error');
   }
 }
 
+// ── DISPLAY ───────────────────────────────────────────────────────────
 function displayTracking(order) {
-  document.getElementById('lookupSection').classList.add('hidden');
-  document.getElementById('trackingSection').classList.remove('hidden');
+  document.getElementById('lookupSection').style.display = 'none';
+  const section = document.getElementById('trackingSection');
+  section.style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   // Header
-  document.getElementById('orderIdDisplay').textContent = order.orderId;
+  document.getElementById('orderIdDisplay').textContent  = order.orderId;
   document.getElementById('trackingDisplay').textContent = order.trackingNumber;
 
-  // Status
   const statusMap = {
-    'confirmed': 'Order Confirmed',
-    'processing': 'Processing',
-    'shipped': 'Shipped',
-    'in_transit': 'In Transit',
-    'out_for_delivery': 'Out for Delivery',
-    'delivered': 'Delivered'
+    confirmed: 'Order Confirmed', processing: 'Processing',
+    shipped: 'Shipped', in_transit: 'In Transit',
+    out_for_delivery: 'Out for Delivery', delivered: 'Delivered',
   };
-  document.getElementById('statusText').textContent = statusMap[order.status] || 'Processing';
+  document.getElementById('statusChip').textContent = statusMap[order.status] || 'Processing';
 
   // Progress
   const timeline = order.timeline || [];
-  const completedCount = timeline.filter(t => t.completed).length;
-  const progressPercent = Math.min((completedCount / timeline.length) * 100, 100);
-  document.getElementById('progressFill').style.width = progressPercent + '%';
+  const done = timeline.filter(t => t.completed).length;
+  const pct  = Math.max(8, Math.min(Math.round((done / Math.max(timeline.length,1))*100), 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent  = pct + '%';
 
   // Timeline
-  const timelineEl = document.getElementById('timeline');
-  timelineEl.innerHTML = timeline.map((stage, i) => {
-    const cls = stage.completed ? 'completed' : (i === completedCount ? 'active' : '');
-    return `
-      <div class="timeline-stage ${cls} py-2">
-        <div class="timeline-dot"></div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm ${stage.completed ? 'text-white' : (i === completedCount ? 'text-red-400' : 'text-gray-600')} font-medium">
-            ${stage.stage}
-          </span>
-          <span class="text-xs text-gray-600">${stage.timestamp ? new Date(stage.timestamp).toLocaleString() : '—'}</span>
-        </div>
+  const tlIcons = ['📋','⚙️','📦','🚚','🏠','✅'];
+  document.getElementById('timeline').innerHTML = timeline.map((s,i) => `
+    <div class="tl-item ${s.completed?'done':i===done?'current':''}">
+      <div class="tl-dot">${s.completed?'✓':(i===done?'<span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span>':tlIcons[i]||'○')}</div>
+      <div class="tl-info">
+        <div class="tl-stage">${s.stage}</div>
+        <div class="tl-time">${s.timestamp ? new Date(s.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (i===done?'In progress...':'Upcoming')}</div>
       </div>
-    `;
-  }).join('');
+    </div>
+  `).join('');
 
-  // Order Details
+  // Vehicle details
+  const car  = order.selectedCar || {};
   const addr = order.deliveryDetails || {};
-  document.getElementById('orderDetails').innerHTML = `
-    <div><span class="text-gray-600 block text-xs uppercase mb-1">Vehicle</span><span class="text-white">${order.selectedCar?.name || 'Tesla'} (${order.selectedCar?.color || ''})</span></div>
-    <div><span class="text-gray-600 block text-xs uppercase mb-1">Order Date</span><span class="text-white">${new Date(order.orderDate).toLocaleDateString()}</span></div>
-    <div><span class="text-gray-600 block text-xs uppercase mb-1">Est. Delivery</span><span class="text-white">${order.estimatedDelivery}</span></div>
-    <div><span class="text-gray-600 block text-xs uppercase mb-1">Recipient</span><span class="text-white">${addr.fullName || '—'}</span></div>
-    <div class="sm:col-span-2"><span class="text-gray-600 block text-xs uppercase mb-1">Delivery Address</span><span class="text-white text-sm">${addr.address || ''}, ${addr.city || ''}, ${addr.state || ''} ${addr.zipCode || ''}, ${addr.country || ''}</span></div>
-    ${addr.instructions ? `<div class="sm:col-span-2"><span class="text-gray-600 block text-xs uppercase mb-1">Special Instructions</span><span class="text-white text-sm">${addr.instructions}</span></div>` : ''}
+  document.getElementById('vehicleDetails').innerHTML = `
+    <div class="det-row"><span class="det-key">Vehicle</span><span class="det-val">Tesla ${car.name||'—'}</span></div>
+    <div class="det-row"><span class="det-key">Colour</span><span class="det-val">${car.color||'—'}</span></div>
+    <div class="det-row"><span class="det-key">Order Date</span><span class="det-val">${order.orderDate?new Date(order.orderDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}</span></div>
+    <div class="det-row"><span class="det-key">Est. Delivery</span><span class="det-val" style="color:var(--success);">${order.estimatedDelivery||'—'}</span></div>
+    ${order.deliveryMethod?.name?`<div class="det-row"><span class="det-key">Shipping</span><span class="det-val">${order.deliveryMethod.name}</span></div>`:''}
+  `;
+
+  document.getElementById('addressDetails').innerHTML = `
+    <div class="det-row"><span class="det-key">Recipient</span><span class="det-val">${addr.fullName||'—'}</span></div>
+    <div class="det-row"><span class="det-key">Address</span><span class="det-val">${addr.address||'—'}</span></div>
+    <div class="det-row"><span class="det-key">City</span><span class="det-val">${addr.city||'—'}</span></div>
+    <div class="det-row"><span class="det-key">State</span><span class="det-val">${addr.state||'—'}</span></div>
+    <div class="det-row"><span class="det-key">Country</span><span class="det-val">${addr.country||'—'}</span></div>
+    ${addr.instructions?`<div class="det-row"><span class="det-key">Instructions</span><span class="det-val">${addr.instructions}</span></div>`:''}
   `;
 
   // Map
   setTimeout(() => initMap(addr), 300);
 }
 
-function initMap(address) {
-  // Destroy existing map
+// ── MAP ───────────────────────────────────────────────────────────────
+async function initMap(address) {
   if (map) {
-    if (markerInterval) clearInterval(markerInterval);
-    map.remove();
-    map = null;
+    if (truckInterval) { clearInterval(truckInterval); truckInterval = null; }
+    map.remove(); map = null;
   }
 
-  const mapEl = document.getElementById('map');
+  const mapEl = document.getElementById('trackMap');
   if (!mapEl) return;
 
-  // Default to San Francisco if no address
-  const city = address?.city || 'San Francisco';
-  const state = address?.state || 'CA';
-  const country = address?.country || 'US';
+  const origin = [37.4936, -121.9448]; // Tesla Fremont factory
+  let dest = [40.7128, -74.0060]; // Default NYC
 
-  // Geocode the address (simple approach: use coordinates for the location)
-  const locations = {
-    'San Francisco': [37.7749, -122.4194],
-    'Los Angeles': [34.0522, -118.2437],
-    'New York': [40.7128, -74.0060],
-    'Chicago': [41.8781, -87.6298],
-    'Houston': [29.7604, -95.3698],
-    'Miami': [25.7617, -80.1918],
-    'Seattle': [47.6062, -122.3321],
-    'Austin': [30.2672, -97.7431],
-    'Dallas': [32.7767, -96.7970],
-    'Denver': [39.7392, -104.9903],
-    'Atlanta': [33.7490, -84.3880],
-    'London': [51.5074, -0.1278],
-    'Toronto': [43.6532, -79.3832],
-    'Lagos': [6.5244, 3.3792],
-    'Dubai': [25.2048, 55.2708],
-    'Sydney': [-33.8688, 151.2093],
-  };
+  // Geocode address
+  const city    = address?.city || '';
+  const state   = address?.state || '';
+  const country = address?.country || '';
+  if (city) {
+    try {
+      const q = `${city}, ${state}, ${country}`;
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
+      const d = await r.json();
+      if (d.length) dest = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+    } catch(_) {}
+  }
 
-  // Use Tesla Fremont factory as origin
-  const origin = [37.4936, -121.9448]; // Fremont, CA - Tesla Factory
-  let dest = locations[city] || [37.7749, -122.4194];
+  map = L.map('trackMap');
 
-  map = L.map('map').setView(origin, 5);
-
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    subdomains: 'abcd',
-    maxZoom: 19
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 19,
   }).addTo(map);
 
-  // Tesla Factory marker
-  const factoryIcon = L.divIcon({
-    html: '<div style="background:#E82127;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 10px rgba(232,33,39,0.6)"></div>',
-    className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
-  });
+  const redIcon   = L.divIcon({ html:'<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] });
+  const greenIcon = L.divIcon({ html:'<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] });
+  const truckIcon = L.divIcon({ html:'<div style="font-size:20px;line-height:1;">🚚</div>', className:'', iconSize:[24,24], iconAnchor:[12,12] });
 
-  L.marker(origin, { icon: factoryIcon }).addTo(map)
-    .bindPopup('<b>Tesla Factory</b><br>Fremont, CA<br><span style="color:#00cc44">● Origin</span>');
+  L.marker(origin, { icon: redIcon }).addTo(map)
+    .bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
+  L.marker(dest, { icon: greenIcon }).addTo(map)
+    .bindPopup(`<strong>Delivery Destination</strong><br>${city}, ${country}`);
 
-  // Destination marker
-  const destIcon = L.divIcon({
-    html: '<div style="background:#00cc44;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 10px rgba(0,204,68,0.6)"></div>',
-    className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
-  });
+  const mid = [(origin[0]+dest[0])/2, (origin[1]+dest[1])/2];
+  const truck = L.marker(mid, { icon: truckIcon }).addTo(map);
+  truck.bindPopup('<strong>Your Tesla</strong><br>🚚 In Transit');
 
-  L.marker(dest, { icon: destIcon }).addTo(map)
-    .bindPopup(`<b>Delivery Location</b><br>${city}, ${state}, ${country}<br><span style="color:#00cc44">● Destination</span>`);
+  L.polyline([origin, dest], { color:'#E31937', weight:2.5, opacity:.5, dashArray:'8,8' }).addTo(map);
+  map.fitBounds(L.latLngBounds([origin, dest]), { padding:[50,50] });
 
-  // Delivery truck marker (moving)
-  const truckIcon = L.divIcon({
-    html: '<div style="font-size:24px">🚚</div>',
-    className: '',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
-  });
-
-  // Calculate midpoint
-  const midLat = (origin[0] + dest[0]) / 2;
-  const midLng = (origin[1] + dest[1]) / 2;
-
-  const truckMarker = L.marker([midLat, midLng], { icon: truckIcon }).addTo(map);
-  truckMarker.bindPopup('<b>Your Tesla</b><br>🚚 In Transit');
-
-  // Draw route line
-  const routeLine = L.polyline([origin, [midLat, midLng], dest], {
-    color: '#E82127',
-    weight: 3,
-    opacity: 0.6,
-    dashArray: '10, 10'
-  }).addTo(map);
-
-  // Fit bounds
-  const bounds = L.latLngBounds([origin, dest]);
-  map.fitBounds(bounds, { padding: [50, 50] });
-
-  // Animate truck
-  let progress = 0;
-  markerInterval = setInterval(() => {
-    progress += 0.005;
-    if (progress > 1) progress = 0;
-    
-    const lat = origin[0] + (dest[0] - origin[0]) * progress + (Math.sin(progress * 10) * 0.1);
-    const lng = origin[1] + (dest[1] - origin[1]) * progress + (Math.cos(progress * 10) * 0.1);
-    truckMarker.setLatLng([lat, lng]);
+  let p = 0.3;
+  truckInterval = setInterval(() => {
+    p = (p + 0.004) % 1;
+    truck.setLatLng([
+      origin[0] + (dest[0]-origin[0])*p + Math.sin(p*10)*.04,
+      origin[1] + (dest[1]-origin[1])*p + Math.cos(p*10)*.04,
+    ]);
   }, 100);
 }
 
-function resetTracking() {
-  if (markerInterval) clearInterval(markerInterval);
+// ── RESET ─────────────────────────────────────────────────────────────
+function resetLookup() {
+  if (truckInterval) { clearInterval(truckInterval); truckInterval = null; }
   if (map) { map.remove(); map = null; }
-  document.getElementById('trackingSection').classList.add('hidden');
-  document.getElementById('lookupSection').classList.remove('hidden');
-  document.getElementById('trackInput').value = '';
+  document.getElementById('trackingSection').style.display = 'none';
+  document.getElementById('lookupSection').style.display   = 'block';
+  const input = document.getElementById('trackInput');
+  if (input) { input.value = ''; input.focus(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-// Handle Enter key
-document.getElementById('trackInput')?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') lookupOrder();
-});

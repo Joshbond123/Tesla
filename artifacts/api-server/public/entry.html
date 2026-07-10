@@ -3,171 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
-  <title>Enter Giveaway | Win a Tesla</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={theme:{extend:{colors:{tesla:{red:'#E82127',dark:'#000000',gray:'#111111'}},animation:{'pulse-red':'pulseRed 2s ease-in-out infinite','fade-in':'fadeIn 0.6s ease-out','slide-up':'slideUp 0.8s ease-out'},keyframes:{pulseRed:{'0%,100%':{opacity:1},'50%':{opacity:0.6}},fadeIn:{'0%':{opacity:0,transform:'translateY(20px)'},'100%':{opacity:1,transform:'translateY(0)'}},slideUp:{'0%':{opacity:0,transform:'translateY(40px)'},'100%':{opacity:1,transform:'translateY(0)'}}}}}}</script>
+  <title>Enter the Giveaway | Tesla Vehicle Giveaway 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
-</head>
-<body class="min-h-screen flex flex-col">
+  <style>
+    body{background:var(--light);}
+    .entry-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
+    .entry-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.1);border:1.5px solid rgba(0,0,0,.05);padding:52px 48px;width:100%;max-width:500px;animation:fadeInUp .65s ease forwards;}
+    @media(max-width:560px){.entry-card{padding:32px 22px;border-radius:18px;}}
+    .entry-logo{text-align:center;margin-bottom:32px;}
+    .entry-logo .logo-text{font-size:22px;font-weight:900;letter-spacing:.12em;color:var(--red);}
+    .entry-title{font-size:28px;font-weight:800;color:var(--dark);text-align:center;line-height:1.25;margin-bottom:10px;}
+    .entry-sub{font-size:15px;color:var(--gray-2);text-align:center;line-height:1.65;margin-bottom:32px;}
+    .phone-prefix{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--gray-2);font-size:15px;font-weight:500;pointer-events:none;}
+    .phone-input-wrap{position:relative;}
+    .phone-input-wrap .form-input{padding-left:44px;}
+    .privacy-note{font-size:12px;color:var(--gray-2);text-align:center;margin-top:18px;line-height:1.6;}
+    .trust-badges{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:28px;flex-wrap:wrap;}
+    .trust-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-2);font-weight:500;}
+    .already-entered{background:rgba(227,25,55,.06);border:1px solid rgba(227,25,55,.2);border-radius:var(--radius);padding:14px 18px;font-size:14px;color:var(--red);text-align:center;display:none;margin-bottom:16px;}
+    .field-error{font-size:12px;color:var(--red);margin-top:5px;display:none;}
 
-<nav class="w-full z-50 bg-black/95 backdrop-blur-md border-b border-gray-900">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <a href="/" class="flex items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 100 100"><path d="M50 5 L85 25 L85 75 L50 95 L15 75 L15 25 Z" fill="none" stroke="#E82127" stroke-width="4"/><text x="50" y="64" text-anchor="middle" fill="#E82127" font-size="28" font-weight="bold">T</text></svg>
-        <span class="text-lg font-bold tracking-[0.15em] text-red-500">TESLA</span>
-      </a>
-      <a href="/" class="text-gray-400 hover:text-white text-sm transition-colors">← Back to Home</a>
-    </div>
+    /* Loading sequence overlay */
+    #entryLoader{
+      position:fixed;inset:0;background:rgba(23,26,32,.97);
+      z-index:9999;display:none;
+      flex-direction:column;align-items:center;justify-content:center;gap:0;
+      backdrop-filter:blur(10px);
+    }
+    #entryLoader.show{display:flex;}
+    .loader-content{text-align:center;}
+    .loader-step{color:white;font-size:18px;font-weight:600;margin-bottom:12px;transition:all .4s ease;}
+    .loader-sub{color:rgba(255,255,255,.5);font-size:14px;margin-bottom:32px;}
+    .loader-bar-wrap{width:240px;height:4px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;margin:0 auto 28px;}
+    .loader-bar{height:100%;background:var(--red);border-radius:999px;width:0%;transition:width .8s ease;}
+    .loader-icon{font-size:64px;margin-bottom:20px;display:none;}
+    .loader-icon.show{display:block;animation:scaleIn .5s cubic-bezier(.34,1.56,.64,1);}
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
+    <a href="/" class="btn btn-ghost" style="font-size:14px;">← Back to Home</a>
   </div>
 </nav>
 
-<main class="flex-1 flex items-center justify-center px-4 py-12">
-  <div class="w-full max-w-md">
-
-    <!-- Header -->
-    <div class="text-center mb-10 animate-fade-in">
-      <h1 class="text-3xl sm:text-4xl font-bold mb-3">Enter the <span class="gradient-text">Giveaway</span></h1>
-      <p class="text-gray-400 text-sm">Fill in your details below for a chance to win</p>
+<div class="entry-wrap">
+  <div class="entry-card">
+    <div class="entry-logo">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      <div class="logo-text">TESLA GIVEAWAY</div>
     </div>
 
-    <!-- Entry Card -->
-    <div class="glass rounded-2xl p-6 sm:p-8 animate-slide-up">
-      <!-- Warning -->
-      <div class="flex items-start gap-3 p-4 mb-6 bg-red-500/5 border border-red-500/20 rounded-lg">
-        <span class="text-red-500 text-lg flex-shrink-0">⚠️</span>
-        <p class="text-gray-400 text-xs leading-relaxed">
-          To prevent users from claiming this win multiple times, <span class="text-white font-semibold">each person is allowed only one entry.</span>
-        </p>
+    <h1 class="entry-title">Claim Your Free Entry</h1>
+    <p class="entry-sub">You're one step away from potentially winning a brand-new Tesla. Enter your details below — it takes under 30 seconds and is completely free.</p>
+
+    <div class="already-entered" id="alreadyMsg">
+      This email has already been entered. Only one entry per person is permitted.
+    </div>
+
+    <form id="entryForm" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="firstName">First Name</label>
+        <input class="form-input" type="text" id="firstName" name="firstName" placeholder="e.g. James" autocomplete="given-name">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="lastName">Last Name</label>
+        <input class="form-input" type="text" id="lastName" name="lastName" placeholder="e.g. Anderson" autocomplete="family-name">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address <span style="color:var(--red)">*</span></label>
+        <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+        <div class="field-error" id="emailError">Please enter a valid email address.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="phone">Phone Number <span style="color:var(--red)">*</span></label>
+        <div class="phone-input-wrap">
+          <span class="phone-prefix">📱</span>
+          <input class="form-input" type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" autocomplete="tel" required>
+        </div>
+        <div class="field-error" id="phoneError">Please enter a valid phone number.</div>
       </div>
 
-      <!-- Form -->
-      <form id="entryForm" class="space-y-5">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">First Name</label>
-            <input type="text" name="firstName" class="tesla-input" placeholder="John" autocomplete="given-name">
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Last Name</label>
-            <input type="text" name="lastName" class="tesla-input" placeholder="Doe" autocomplete="family-name">
-          </div>
-        </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn" style="margin-top:8px;">
+        ⚡ Submit My Free Entry
+      </button>
 
-        <div>
-          <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Email Address <span class="text-red-500">*</span></label>
-          <input type="email" name="email" class="tesla-input" placeholder="you@example.com" required autocomplete="email" id="emailInput">
-          <p class="text-red-500 text-xs mt-1 hidden" id="emailError">Please enter a valid email address</p>
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Phone Number <span class="text-red-500">*</span></label>
-          <div class="flex gap-2">
-            <select name="countryCode" class="tesla-input w-24 flex-shrink-0 appearance-none bg-[#0a0a0a]" style="background-image:url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23555%22 stroke-width=%222%22%3e%3cpath d=%22M6 9l6 6 6-6%22/%3e%3c/svg%3e');background-repeat:no-repeat;background-position:right 8px center;background-size:16px;padding-right:28px;">
-              <option value="+1">+1</option><option value="+44">+44</option><option value="+234">+234</option>
-              <option value="+91">+91</option><option value="+61">+61</option><option value="+86">+86</option>
-              <option value="+81">+81</option><option value="+49">+49</option><option value="+33">+33</option>
-              <option value="+971">+971</option><option value="+27">+27</option><option value="+254">+254</option>
-            </select>
-            <input type="tel" name="phone" class="tesla-input flex-1" placeholder="(555) 123-4567" required autocomplete="tel" id="phoneInput">
-          </div>
-          <p class="text-red-500 text-xs mt-1 hidden" id="phoneError">Please enter a valid phone number</p>
-        </div>
-
-        <button type="submit" class="glow-btn w-full text-center" id="submitBtn">
-          ⚡ Submit Entry
-        </button>
-      </form>
-
-      <!-- Terms -->
-      <p class="text-gray-600 text-xs text-center mt-6">
-        By entering, you agree to our <a href="#" class="text-gray-400 hover:text-white transition-colors">Terms & Conditions</a> and <a href="#" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>.
+      <p class="privacy-note">
+        By entering, you confirm you are 18+ years of age and agree to our <a href="#" style="color:var(--red)">Terms & Conditions</a>. We will never sell your data or send spam.
       </p>
-    </div>
+    </form>
 
-    <!-- Benefits -->
-    <div class="grid grid-cols-3 gap-4 mt-8 text-center animate-fade-in" style="animation-delay:0.4s">
-      <div class="glass rounded-xl p-4">
-        <div class="text-2xl mb-2">🔒</div>
-        <p class="text-gray-500 text-xs">Secure Entry</p>
-      </div>
-      <div class="glass rounded-xl p-4">
-        <div class="text-2xl mb-2">🚚</div>
-        <p class="text-gray-500 text-xs">Free Delivery</p>
-      </div>
-      <div class="glass rounded-xl p-4">
-        <div class="text-2xl mb-2">⚡</div>
-        <p class="text-gray-500 text-xs">Instant Chance</p>
-      </div>
+    <div class="trust-badges">
+      <span class="trust-badge"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> SSL Secured</span>
+      <span class="trust-badge"><svg width="13" height="13" fill="var(--success)" viewBox="0 0 20 20"><path d="M10 2l2.5 5.5 6 .9-4.3 4.2 1 6-5.2-2.8L4.8 18.6l1-6L1.5 8.4l6-.9L10 2z"/></svg> Verified Program</span>
+      <span class="trust-badge"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Privacy Protected</span>
     </div>
   </div>
-</main>
+</div>
+
+<!-- Loading overlay -->
+<div id="entryLoader">
+  <div class="loader-content">
+    <div class="loader-icon" id="loaderIcon">✅</div>
+    <div class="loader-step" id="loaderStep">Submitting your entry...</div>
+    <div class="loader-sub" id="loaderSub">Please wait while we process your information</div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar" id="loaderBar"></div>
+    </div>
+    <div id="loaderSpinner" style="display:flex;justify-content:center;"><div class="spinner"></div></div>
+  </div>
+</div>
 
 <script src="/js/app.js"></script>
 <script>
-document.getElementById('entryForm').addEventListener('submit', async function(e) {
+const form = document.getElementById('entryForm');
+const submitBtn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  const form = e.target;
-  const email = form.email.value.trim();
-  const phone = form.phone.value.trim();
-  const countryCode = form.countryCode.value;
-  const firstName = form.firstName.value.trim();
-  const lastName = form.lastName.value.trim();
-  
-  // Reset errors
-  document.getElementById('emailError').classList.add('hidden');
-  document.getElementById('phoneError').classList.add('hidden');
-  form.email.classList.remove('error');
-  form.phone.classList.remove('error');
-  
-  let hasError = false;
-  
+  document.getElementById('alreadyMsg').style.display = 'none';
+
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+
+  let valid = true;
+  document.querySelectorAll('.field-error').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
+
   if (!isValidEmail(email)) {
-    document.getElementById('emailError').classList.remove('hidden');
-    form.email.classList.add('error');
-    hasError = true;
+    document.getElementById('emailError').style.display = 'block';
+    document.getElementById('email').classList.add('error');
+    valid = false;
   }
-  
-  if (!isValidPhone(countryCode + phone)) {
-    document.getElementById('phoneError').classList.remove('hidden');
-    form.phone.classList.add('error');
-    hasError = true;
+  if (!isValidPhone(phone)) {
+    document.getElementById('phoneError').style.display = 'block';
+    document.getElementById('phone').classList.add('error');
+    valid = false;
   }
-  
-  if (hasError) return;
-  
-  // Show loading
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2 align-middle"></span> Processing...';
-  
-  showLoading('Submitting your entry...');
-  
+  if (!valid) return;
+
+  // Show loader
+  const loader = document.getElementById('entryLoader');
+  loader.classList.add('show');
+  submitBtn.disabled = true;
+
+  const bar = document.getElementById('loaderBar');
+  const step = document.getElementById('loaderStep');
+  const sub = document.getElementById('loaderSub');
+
+  // Animate progress
+  setTimeout(() => { bar.style.width = '35%'; step.textContent = 'Validating your information...'; }, 300);
+  setTimeout(() => { bar.style.width = '65%'; step.textContent = 'Securing your entry...'; sub.textContent = 'Checking for duplicate entries'; }, 1200);
+
   try {
-    const result = await apiCall('/entry', 'POST', {
-      email,
-      phone: countryCode + phone,
-      firstName,
-      lastName
-    });
-    
-    hideLoading();
-    
-    // Redirect to congratulations page
-    window.location.href = `/congratulations.html?email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(firstName || 'there')}`;
-    
-  } catch (error) {
-    hideLoading();
-    btn.disabled = false;
-    btn.innerHTML = '⚡ Submit Entry';
-    showToast(error.message, 'error');
+    const data = await apiCall('/entry', 'POST', { email, phone, firstName, lastName });
+
+    setTimeout(() => { bar.style.width = '90%'; step.textContent = 'Sending verification email...'; sub.textContent = 'Almost done!'; }, 2200);
+    setTimeout(() => {
+      bar.style.width = '100%';
+      document.getElementById('loaderSpinner').style.display = 'none';
+      document.getElementById('loaderIcon').classList.add('show');
+      step.textContent = 'Entry Confirmed!';
+      sub.textContent = 'Redirecting you now...';
+    }, 3400);
+
+    setTimeout(() => {
+      window.location.href = `/congratulations.html?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName || 'there')}`;
+    }, 4200);
+
+  } catch (err) {
+    loader.classList.remove('show');
+    submitBtn.disabled = false;
+    if (err.message && err.message.toLowerCase().includes('already')) {
+      document.getElementById('alreadyMsg').style.display = 'block';
+      document.getElementById('alreadyMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      showToast(err.message || 'Something went wrong. Please try again.', 'error');
+    }
   }
 });
-
-// Auto-focus email
-document.getElementById('emailInput').focus();
 </script>
 </body>
 </html>

