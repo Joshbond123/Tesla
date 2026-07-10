@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <title>Track Your Order | Tesla Giveaway</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{tesla:{red:'#E82127',dark:'#000000'}}}}}</script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map{height:350px;border-radius:12px;z-index:1}
+    .leaflet-container{background:#0a0a0a!important}
+    .leaflet-control-zoom a{background:#1a1a1a!important;color:#fff!important;border-color:#333!important}
+    .timeline-stage{position:relative;padding-left:32px}
+    .timeline-stage::before{content:'';position:absolute;left:5px;top:24px;bottom:-16px;width:2px;background:#1a1a1a}
+    .timeline-stage:last-child::before{display:none}
+    .timeline-stage.completed::before{background:#E82127}
+    .timeline-dot{position:absolute;left:0;top:6px;width:12px;height:12px;border-radius:50%;background:#1a1a1a;border:2px solid #333}
+    .timeline-stage.completed .timeline-dot{background:#E82127;border-color:#E82127;box-shadow:0 0 10px rgba(232,33,39,0.5)}
+    .timeline-stage.active .timeline-dot{background:#E82127;border-color:#E82127;animation:pulseRed 2s infinite}
+    @keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(232,33,39,0.4)}50%{box-shadow:0 0 0 8px rgba(232,33,39,0)}}
+  </style>
+</head>
+<body class="min-h-screen bg-black">
+
+<nav class="w-full bg-black/95 backdrop-blur-md border-b border-gray-900 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="/" class="flex items-center gap-2">
+        <svg width="28" height="28" viewBox="0 0 100 100"><path d="M50 5 L85 25 L85 75 L50 95 L15 75 L15 25 Z" fill="none" stroke="#E82127" stroke-width="4"/><text x="50" y="64" text-anchor="middle" fill="#E82127" font-size="28" font-weight="bold">T</text></svg>
+        <span class="text-lg font-bold tracking-[0.15em] text-red-500">TESLA</span>
+      </a>
+      <a href="/dashboard.html" class="text-gray-400 hover:text-white text-sm transition-colors">← Dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+
+  <!-- Track by ID Form -->
+  <div id="lookupSection" class="max-w-md mx-auto">
+    <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4">Track Your <span class="gradient-text">Order</span></h1>
+    <p class="text-gray-400 text-center mb-8">Enter your Order ID or Tracking Number</p>
+    <div class="glass rounded-2xl p-6">
+      <div class="space-y-4">
+        <input type="text" id="trackInput" class="tesla-input" placeholder="e.g. TSLA-XXXXXXXX or TRK-XXXXXXXX">
+        <button onclick="lookupOrder()" class="glow-btn w-full text-center">🔍 Track Order</button>
+      </div>
+      <p class="text-gray-600 text-xs text-center mt-4">Check your confirmation email for your tracking details.</p>
+    </div>
+  </div>
+
+  <!-- Tracking Results -->
+  <div id="trackingSection" class="hidden">
+    <!-- Order Header -->
+    <div class="glass rounded-2xl p-6 mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-2xl font-bold mb-1" id="orderTitle">Order <span class="gradient-text" id="orderIdDisplay"></span></h1>
+          <p class="text-gray-500 text-sm">Tracking: <span class="text-red-400 font-mono" id="trackingDisplay"></span></p>
+        </div>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm">
+          <span class="w-2 h-2 rounded-full animate-pulse-red" id="statusDot"></span>
+          <span class="text-gray-300" id="statusText"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="glass rounded-2xl p-6 mb-6">
+      <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-4">Delivery Progress</h3>
+      <div class="progress-bar mb-6">
+        <div class="progress-fill" id="progressFill" style="width:20%"></div>
+      </div>
+      <div class="space-y-1" id="timeline"></div>
+    </div>
+
+    <!-- Map -->
+    <div class="glass rounded-2xl p-6 mb-6">
+      <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-4">Live Delivery Map</h3>
+      <div id="map"></div>
+    </div>
+
+    <!-- Order Details -->
+    <div class="glass rounded-2xl p-6 mb-6">
+      <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-4">Order Details</h3>
+      <div class="grid sm:grid-cols-2 gap-4 text-sm" id="orderDetails"></div>
+    </div>
+
+    <!-- New Lookup -->
+    <div class="text-center mt-6">
+      <button onclick="resetTracking()" class="text-gray-500 hover:text-gray-400 text-sm transition-colors">
+        ← Track a different order
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<script src="/js/app.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/track.js"></script>
+</body>
+</html>

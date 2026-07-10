@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <title>Verification Error | Tesla Giveaway</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 bg-black">
+  <div class="max-w-md w-full text-center">
+    <div class="text-6xl mb-6">⚠️</div>
+    <h1 class="text-3xl font-bold mb-4">Verification <span class="gradient-text">Failed</span></h1>
+    <p class="text-gray-400 mb-8" id="errorMsg">
+      The verification link is invalid or has expired. Please try entering the giveaway again.
+    </p>
+    <div class="glass rounded-2xl p-6 mb-6">
+      <p class="text-gray-500 text-sm mb-4">Possible reasons:</p>
+      <ul class="text-gray-400 text-sm text-left space-y-2">
+        <li>• The link has expired</li>
+        <li>• The email address is not registered</li>
+        <li>• The verification token is invalid</li>
+      </ul>
+    </div>
+    <a href="/entry.html" class="glow-btn inline-block">Try Again</a>
+  </div>
+  
+  <script>
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    const messages = {
+      'invalid': 'The verification link is invalid. Please check your email and try again.',
+      'notfound': 'No entry was found for this email address. Please enter the giveaway first.',
+      'invalid_token': 'The verification token has expired or is invalid. Please request a new verification email.',
+      'expired': 'This verification link has expired. Please request a new one.'
+    };
+    if (reason && messages[reason]) {
+      document.getElementById('errorMsg').textContent = messages[reason];
+    }
+  </script>
+</body>
+</html>

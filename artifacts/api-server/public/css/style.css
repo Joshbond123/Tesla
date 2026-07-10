@@ -1,0 +1,133 @@
+/* ===== TESLA GIVEAWAY - SHARED STYLES ===== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#000;color:#fff;overflow-x:hidden}
+
+/* Glass morphism */
+.glass{background:rgba(255,255,255,0.03);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06)}
+.glass-hover{transition:all .3s ease}
+.glass-hover:hover{background:rgba(255,255,255,0.06);border-color:rgba(232,33,39,0.3);transform:translateY(-2px)}
+
+/* Gradient text */
+.gradient-text{background:linear-gradient(135deg,#E82127,#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Glow button */
+.glow-btn{
+  display:inline-block;background:linear-gradient(135deg,#E82127,#cc0000);color:#fff;
+  border:none;padding:16px 40px;border-radius:8px;font-size:18px;font-weight:700;
+  cursor:pointer;text-transform:uppercase;letter-spacing:2px;position:relative;
+  overflow:hidden;transition:all .3s ease;box-shadow:0 0 20px rgba(232,33,39,0.3);text-decoration:none;
+}
+.glow-btn:hover{box-shadow:0 0 40px rgba(232,33,39,0.6);transform:translateY(-2px)}
+.glow-btn::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);
+  transform:rotate(45deg);animation:shimmer 3s infinite}
+@keyframes shimmer{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#000}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+
+/* Tesla loading spinner */
+.tesla-spinner{
+  width:60px;height:60px;border:3px solid rgba(232,33,39,0.2);
+  border-top-color:#E82127;border-radius:50%;animation:spin .8s linear infinite
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Tesla charging animation */
+.charging-bar{
+  width:200px;height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden;margin:0 auto
+}
+.charging-fill{
+  height:100%;background:linear-gradient(90deg,#E82127,#ff6b6b);border-radius:3px;
+  animation:charge 2.5s ease-in-out forwards
+}
+@keyframes charge{0%{width:0}50%{width:70%}100%{width:100%}}
+
+/* Pulse */
+@keyframes pulseRed{0%,100%{opacity:1}50%{opacity:0.5}}
+.animate-pulse-red{animation:pulseRed 2s ease-in-out infinite}
+
+/* Fade in */
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.animate-fade-in{animation:fadeIn .6s ease-out}
+
+/* Slide up */
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+.animate-slide-up{animation:slideUp .8s ease-out}
+
+/* Float */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+.animate-float{animation:float 5s ease-in-out infinite}
+
+/* Hero background */
+.hero-bg{
+  background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.7) 50%,#000 100%),
+    url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Model-Y-Desktop-US.png');
+  background-size:cover;background-position:center;background-repeat:no-repeat
+}
+
+@media(max-width:768px){
+  .hero-bg{
+    background-image:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.7) 50%,#000 100%),
+      url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Model-Y-Mobile-US.png')
+  }
+}
+
+/* Parallax */
+.parallax-section{
+  background:linear-gradient(180deg,rgba(0,0,0,0.5) 0%,rgba(0,0,0,0.8) 100%),
+    url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Cybertruck-Desktop.jpg');
+  background-attachment:fixed;background-size:cover;background-position:center
+}
+
+/* Countdown numbers */
+.countdown-num{font-size:clamp(2rem,5vw,4rem);font-weight:700;color:#E82127;text-shadow:0 0 20px rgba(232,33,39,0.5);font-variant-numeric:tabular-nums}
+
+/* Mobile menu */
+.mobile-menu{transition:transform .3s ease,opacity .3s ease}
+.mobile-menu.hidden-menu{transform:translateY(-10px);opacity:0;pointer-events:none}
+.mobile-menu.visible-menu{transform:translateY(0);opacity:1}
+
+/* Progress bar */
+.progress-bar{height:4px;background:#1a1a1a;border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#E82127,#ff3b3f);border-radius:2px;transition:width .5s ease}
+
+/* Form styles */
+.tesla-input{
+  width:100%;padding:14px 16px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:8px;
+  color:#fff;font-size:16px;transition:all .3s ease;outline:none
+}
+.tesla-input:focus{border-color:#E82127;box-shadow:0 0 0 3px rgba(232,33,39,0.15)}
+.tesla-input::placeholder{color:#555}
+.tesla-input.error{border-color:#ff4444;box-shadow:0 0 0 3px rgba(255,68,68,0.15)}
+
+/* Card selection */
+.car-card{transition:all .3s ease;cursor:pointer}
+.car-card.selected{border-color:#E82127!important;box-shadow:0 0 30px rgba(232,33,39,0.2)}
+.car-card:hover{border-color:rgba(232,33,39,0.3)}
+
+/* Success animation */
+@keyframes successPop{0%{transform:scale(0);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+.success-anim{animation:successPop .5s cubic-bezier(0.68, -0.55, 0.265, 1.55)}
+
+/* Notification toast */
+.toast{
+  position:fixed;top:20px;right:20px;z-index:9999;padding:16px 24px;border-radius:8px;
+  color:#fff;font-weight:600;animation:slideIn .3s ease;max-width:400px
+}
+.toast-success{background:linear-gradient(135deg,#006400,#00cc44)}
+.toast-error{background:linear-gradient(135deg,#640000,#cc0000)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
+
+/* Loading overlay */
+.loading-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px
+}
+
+/* Particles */
+.particle{position:absolute;border-radius:50%;pointer-events:none}
