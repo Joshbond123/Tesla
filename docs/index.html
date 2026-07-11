@@ -186,12 +186,12 @@
               <div style="color:rgba(255,255,255,.35);font-size:11px;">28.4M subscribers</div>
             </div>
           </div>
-          <button style="background:white;color:#0a0a0a;border:0;padding:9px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;">Subscribe</button>
+          <button onclick="this.textContent=this.textContent==='Subscribe'?'Subscribed ✓':'Subscribe';this.style.background=this.textContent==='Subscribe'?'white':'#e5e5e5'" style="background:white;color:#0a0a0a;border:0;padding:9px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;" onmouseover="if(this.textContent==='Subscribe')this.style.background='#e5e5e5'" onmouseout="if(this.textContent==='Subscribe')this.style.background='white'">Subscribe</button>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
-          <span style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);padding:5px 12px;border-radius:999px;font-size:11px;">👍 1.2M</span>
-          <span style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);padding:5px 12px;border-radius:999px;font-size:11px;">↗ Share</span>
-          <span style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);padding:5px 12px;border-radius:999px;font-size:11px;">⬇ Download</span>
+          <button class="action-btn" onclick="void(0)" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border:0;padding:5px 12px;border-radius:999px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.06)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> 1.2M</button>
+          <button class="btn-share action-btn" onclick="sharePage()" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border:0;padding:5px 12px;border-radius:999px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.06)'"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</button>
+          <button class="btn-download action-btn" onclick="scrollToVideo(this)" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border:0;padding:5px 12px;border-radius:999px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.06)'"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download</button>
         </div>
         <div style="border-top:1px solid rgba(255,255,255,.05);padding-top:12px;">
           <div style="color:rgba(255,255,255,.45);font-size:12px;font-weight:600;margin-bottom:10px;">💬 Comments · 70,842</div>
@@ -205,7 +205,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Just received my Tesla Model 3 2024!! I paid the delivery fee and within 9 days the car was at my door. This is REAL! 🚗⚡</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 48.2K</span>
               </div>
@@ -221,7 +221,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">I received my Tesla Model Y 2025 after paying the delivery fee. I cried when I saw the car parked outside! 🙏</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 32.4K</span>
               </div>
@@ -237,7 +237,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Mexico! I received my Tesla Model 3 2024 after paying the delivery fee. This giveaway is 100% real!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 29.2K</span>
               </div>
@@ -253,7 +253,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">I was skeptical at first but I paid the delivery fee and received my Tesla Model S 2025. So real! Best decision ever.</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 26.1K</span>
               </div>
@@ -269,7 +269,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Ghana 🇬🇭 I paid the delivery fee and received my Tesla Model 3 2025! God bless Tesla!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 24K</span>
               </div>
@@ -285,7 +285,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Tesla Model Y delivered to London! The delivery team was professional and the car is absolutely stunning. Thank you Tesla!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 22.8K</span>
               </div>
@@ -301,7 +301,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Incroyable! My Tesla Model 3 arrived in Paris after just 7 days. The delivery fee was worth every cent!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 21.3K</span>
               </div>
@@ -317,7 +317,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">東京に住んでいます。手数料を支払ったら、本当にテスラが届きました！信じられません！🚗⚡</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 20.1K</span>
               </div>
@@ -333,7 +333,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Desde Barcelona! Pagué el envío y mi Tesla Model Y 2025 llegó en 5 días. Esto es totalmente real!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 19.7K</span>
               </div>
@@ -349,7 +349,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Unglaublich! Habe die Liefergebühr bezahlt und mein Tesla Model S stand nach 8 Tagen vor meiner Tür in Berlin.</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 18.9K</span>
               </div>
@@ -365,7 +365,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Got my Tesla Cybertruck in Dubai! Paid the delivery fee and it arrived in just 5 days. Absolutely stunning vehicle!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 18.2K</span>
               </div>
@@ -381,7 +381,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Mumbai here! I was nervous about international shipping but paid the delivery fee and my Tesla Model 3 arrived perfectly!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 17.5K</span>
               </div>
@@ -397,7 +397,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Toronto 🇨🇦 My Tesla Model Y LR arrived yesterday! The Canadian delivery was smooth and the car is gorgeous!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 16.8K</span>
               </div>
@@ -413,7 +413,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">서울에서 받았습니다! 배송비 지불 후 6일 만에 테슬라 모델3가 도착했습니다. 정말 감사합니다!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">5 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 16.1K</span>
               </div>
@@ -429,7 +429,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Do Brasil! Paguei a taxa de entrega e recebi meu Tesla Model X em São Paulo. Isso é real!!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 15.4K</span>
               </div>
@@ -445,7 +445,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Dublin delivered! My Tesla Model 3 arrived in 10 days after paying the delivery fee. The Irish Tesla community is growing!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 14.9K</span>
               </div>
@@ -461,7 +461,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Из Москвы! Оплатила доставку и получила Tesla Model Y 2025. Это настоящее чудо! Спасибо Tesla!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 14.2K</span>
               </div>
@@ -477,7 +477,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Cairo! Paid the delivery fee and my brand new Tesla Model 3 arrived in 12 days. This program is legitimate!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 13.8K</span>
               </div>
@@ -493,7 +493,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Da Roma! Ho pagato la consegna e la mia Tesla Model S Plaid è arrivata in 4 giorni. Incredibile!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 13.3K</span>
               </div>
@@ -509,7 +509,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Lisbon here! Paid the delivery fee and got my Tesla Model Y 2025. The European delivery network is amazing!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 12.9K</span>
               </div>
@@ -525,7 +525,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Stockholm! My Tesla Model 3 arrived after paying the delivery fee. Even in the cold Swedish winter, this EV is perfect!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">5 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 12.4K</span>
               </div>
@@ -541,7 +541,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Riyadh! Paid the delivery fee and received my Tesla Model X in just 6 days. Shukran Tesla!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 12.1K</span>
               </div>
@@ -557,7 +557,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Kyiv! Paid the delivery fee and my Tesla Model 3 2025 arrived safely. The delivery team was exceptional!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 11.8K</span>
               </div>
@@ -573,7 +573,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Johannesburg! Paid my delivery fee and the Tesla Cybertruck arrived in 10 days. African Tesla community is real!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 11.3K</span>
               </div>
@@ -589,7 +589,7 @@
               <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Kuala Lumpur! Paid the delivery fee and my Tesla Model Y arrived. The Asian delivery network is fantastic!</p>
               <div style="display:flex;align-items:center;gap:16px;">
                 <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.3)'" style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:3px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.3)'"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 10.9K</span>
               </div>
@@ -625,7 +625,7 @@
               <div style="color:rgba(255,255,255,.35);font-size:11px;">12.8M subscribers</div>
             </div>
           </div>
-          <button style="background:white;color:#0a0a0a;border:0;padding:9px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;">Subscribe</button>
+          <button onclick="this.textContent=this.textContent==='Subscribe'?'Subscribed ✓':'Subscribe';this.style.background=this.textContent==='Subscribe'?'white':'#e5e5e5'" style="background:white;color:#0a0a0a;border:0;padding:9px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;" onmouseover="if(this.textContent==='Subscribe')this.style.background='#e5e5e5'" onmouseout="if(this.textContent==='Subscribe')this.style.background='white'">Subscribe</button>
         </div>
         <div style="border-top:1px solid rgba(255,255,255,.05);padding-top:12px;">
           <div style="color:rgba(255,255,255,.45);font-size:12px;font-weight:600;margin-bottom:10px;">💬 Comments · 62,789</div>
@@ -640,7 +640,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">I received my Tesla car!! I paid the delivery fee and within a week my brand new Tesla Model 3 arrived at my door. 🚗⚡</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 4,821</span>
               </div>
@@ -657,7 +657,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Just received my Tesla car after paying for the delivery fee. I cried when I saw the car parked outside! 🙏</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 3,244</span>
               </div>
@@ -674,7 +674,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Mexico! I received my Tesla car after paying the delivery fee. This giveaway is 100% real.</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,918</span>
               </div>
@@ -691,7 +691,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">I was skeptical at first but I paid the delivery fee and received my Tesla EV. Amazing! Thank you Tesla!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,611</span>
               </div>
@@ -708,7 +708,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Ghana 🇬🇭 I paid for the delivery fee and received my Tesla car! God bless Tesla!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,403</span>
               </div>
@@ -725,7 +725,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">My Tesla Model Y arrived in Berlin! The whole process was smooth and the delivery fee was very reasonable.</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">4 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,198</span>
               </div>
@@ -742,7 +742,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Tokyo! Paid delivery and got my brand new Tesla in just 5 days. This is the best thing that happened to me!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,087</span>
               </div>
@@ -759,7 +759,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Rome! Ho ricevuto la mia Tesla Model 3 dopo aver pagato la spedizione. È tutto vero!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,976</span>
               </div>
@@ -776,7 +776,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Sydney! My Tesla Model Y 2025 arrived after paying the delivery fee. Even to Australia it came fast!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,865</span>
               </div>
@@ -793,7 +793,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Warsaw! Paid the shipping and my Tesla Model 3 arrived in just 8 days. The car is perfect!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">5 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,754</span>
               </div>
@@ -810,7 +810,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Mumbai! The delivery fee was worth it. My Tesla Model 3 2025 is now parked outside my home.</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,643</span>
               </div>
@@ -827,7 +827,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Istanbul! Paid the delivery fee and received my Tesla Model Y in perfect condition.</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,532</span>
               </div>
@@ -844,7 +844,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Paris! J'ai reçu ma Tesla Model S après avoir payé les frais de livraison. Magnifique!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,421</span>
               </div>
@@ -861,7 +861,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Madrid! Paid the delivery and my Tesla Model X arrived. The Spanish Tesla community is real!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">4 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,310</span>
               </div>
@@ -878,7 +878,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Seoul! Paid my delivery fee and the Tesla Model Y LR arrived in perfect condition. 감사합니다!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,199</span>
               </div>
@@ -895,7 +895,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Moscow! My Tesla Model 3 arrived after I paid the delivery fee. The car is absolutely incredible!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,088</span>
               </div>
@@ -912,7 +912,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Stockholm! The delivery was fast and my Tesla Model S Plaid is everything I dreamed of.</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">5 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 977</span>
               </div>
@@ -929,7 +929,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">São Paulo! Paguei a entrega e recebi meu Tesla Model 3 2025. Isso mudou minha vida!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 866</span>
               </div>
@@ -946,7 +946,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Singapore! My Tesla arrived in just 4 days after paying the delivery fee. The car is amazing!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 755</span>
               </div>
@@ -963,7 +963,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Casablanca! Paid the delivery and received my Tesla Model Y. African Tesla community growing!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">4 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 644</span>
               </div>
@@ -980,7 +980,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Copenhagen! My Tesla Model 3 arrived. The Danish EV infrastructure is perfect for this car!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 533</span>
               </div>
@@ -997,7 +997,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Lisbon! Recebi o meu Tesla Model Y depois de pagar o envio. Melhor decisão da minha vida!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 422</span>
               </div>
@@ -1014,7 +1014,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Brussels! My Tesla Model 3 arrived in 6 days. The delivery was perfect and the car is immaculate!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 311</span>
               </div>
@@ -1031,7 +1031,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Nairobi! I paid the delivery fee and my Tesla Model Y arrived. The African delivery network works!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">5 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 200</span>
               </div>
@@ -1048,7 +1048,7 @@
               <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Sofia! Paid delivery fee and my Tesla Model 3 2025 arrived. The European delivery is amazing!</p>
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
-                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span onclick="this.classList.toggle('liked');this.style.color=this.classList.contains('liked')?'var(--red)':'rgba(255,255,255,.25)'" style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;display:inline-flex;align-items:center;gap:2px;" onmouseover="this.style.color='var(--red)'" onmouseout="if(!this.classList.contains('liked'))this.style.color='rgba(255,255,255,.25)'"><svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M2 8.437h3.955v11.126H2V8.437zm19.823 0c-.813-.546-1.805-.632-2.648-.38l-1.168.35V7.125c0-.855-.564-1.625-1.355-1.86a1.75 1.75 0 00-1.398.226l-4.087 2.724v8.771l4.15 2.765c.396.264.87.386 1.353.34l5.784-.649a1.75 1.75 0 001.546-1.728V8.437z"/></svg> Like</span>
                 <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
                 <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 189</span>
               </div>
@@ -1165,18 +1165,27 @@
     </div>
     <div class="reveal" style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;">
       <a href="https://twitter.com/Tesla" target="_blank" rel="noopener" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px 32px;text-decoration:none;text-align:center;min-width:180px;transition:all .3s;" onmouseover="this.style.borderColor='var(--red)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)';this.style.transform='translateY(0)'">
-        <div style="font-size:28px;margin-bottom:10px;">𝕏</div>
-        <div style="color:white;font-weight:700;font-size:15px;">Tesla Official</div>
+                <div style="position:relative;display:inline-block;">
+          <svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" style="position:absolute;bottom:-4px;right:-4px;"><circle cx="12" cy="12" r="11" fill="#0a0a0a" stroke="#1d9bf0" stroke-width="1.5"/><path d="M9 16.2l-3.5-3.5L4 14l5 5 12-12-1.5-1.5L9 16.2z" fill="#1d9bf0"/></svg>
+        </div>
+        <div style="color:white;font-weight:700;font-size:15px;">Tesla <span style="color:#1d9bf0;font-size:11px;">✓</span></div>
         <div style="color:rgba(255,255,255,.4);font-size:12px;margin-top:4px;">@Tesla · 28.4M followers</div>
       </a>
       <a href="https://www.facebook.com/Tesla" target="_blank" rel="noopener" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px 32px;text-decoration:none;text-align:center;min-width:180px;transition:all .3s;" onmouseover="this.style.borderColor='var(--red)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)';this.style.transform='translateY(0)'">
-        <div style="font-size:28px;margin-bottom:10px;">📘</div>
-        <div style="color:white;font-weight:700;font-size:15px;">Tesla</div>
+                <div style="position:relative;display:inline-block;">
+          <svg width="32" height="32" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#1877F2"/><path d="M25.6 25.6l.8-5.3h-5.2v-3.4c0-1.5.7-2.9 3-2.9h2.3v-4.5s-2.1-.4-4.1-.4c-4.2 0-6.9 2.5-6.9 7.1v4h-4.6v5.3h4.6v12.9c.9.1 1.9.2 2.8.2s1.9-.1 2.8-.2v-12.9h4.5z" fill="white"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" style="position:absolute;bottom:-4px;right:-4px;"><circle cx="12" cy="12" r="11" fill="#0a0a0a" stroke="#1877F2" stroke-width="1.5"/><path d="M9 16.2l-3.5-3.5L4 14l5 5 12-12-1.5-1.5L9 16.2z" fill="#1877F2"/></svg>
+        </div>
+        <div style="color:white;font-weight:700;font-size:15px;">Tesla <span style="color:#1877F2;font-size:11px;">✓</span></div>
         <div style="color:rgba(255,255,255,.4);font-size:12px;margin-top:4px;">14.2M likes</div>
       </a>
       <a href="https://www.instagram.com/teslamotors/" target="_blank" rel="noopener" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px 32px;text-decoration:none;text-align:center;min-width:180px;transition:all .3s;" onmouseover="this.style.borderColor='var(--red)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)';this.style.transform='translateY(0)'">
-        <div style="font-size:28px;margin-bottom:10px;">📷</div>
-        <div style="color:white;font-weight:700;font-size:15px;">Tesla</div>
+                <div style="position:relative;display:inline-block;">
+          <svg width="32" height="32" viewBox="0 0 40 40"><defs><radialGradient id="igG" cx="30%" cy="110%" r="120%"><stop offset="0%" stop-color="#F58529"/><stop offset="30%" stop-color="#DD2A7B"/><stop offset="60%" stop-color="#8134AF"/><stop offset="100%" stop-color="#515BD4"/></radialGradient></defs><rect width="40" height="40" rx="10" fill="url(#igG)"/><circle cx="20" cy="20" r="9" fill="none" stroke="white" stroke-width="2.5"/><circle cx="30.5" cy="9.5" r="2.5" fill="white"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" style="position:absolute;bottom:-4px;right:-4px;"><circle cx="12" cy="12" r="11" fill="#0a0a0a" stroke="#DD2A7B" stroke-width="1.5"/><path d="M9 16.2l-3.5-3.5L4 14l5 5 12-12-1.5-1.5L9 16.2z" fill="#DD2A7B"/></svg>
+        </div>
+        <div style="color:white;font-weight:700;font-size:15px;">Tesla <span style="color:#DD2A7B;font-size:11px;">✓</span></div>
         <div style="color:rgba(255,255,255,.4);font-size:12px;margin-top:4px;">@teslamotors · 12.8M followers</div>
       </a>
     </div>
@@ -1389,6 +1398,18 @@ function showMoreComments(visibleId, hiddenId, buttonId, totalToShow) {
     
     index++;
   }, 120);
+}
+</script>
+
+<script>
+function sharePage(){
+  var u=window.location.href;
+  if(navigator.share){navigator.share({title:"Win a Brand New Tesla Electric Car",url:u}).catch(function(){})}
+  else{navigator.clipboard.writeText(u).then(function(){alert("Link copied!")}).catch(function(){})}
+}
+function scrollToVideo(el){
+  var iframe=el.closest("section").querySelector("iframe");
+  if(iframe)iframe.scrollIntoView({behavior:"smooth",block:"center"});
 }
 </script>
 </body>
