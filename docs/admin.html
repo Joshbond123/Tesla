@@ -236,24 +236,35 @@
 </div>
 </div></div></div>
 <div class="toast-container" id="toastContainer"></div>
-<script src="js/config.js"></script>
+<!-- self-contained admin panel -->
 <script>
 
 (function(){
 'use strict';
-var API=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+var API='https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';(function(){try{if(window.TESLA_API_BASE&&window.TESLA_API_BASE.indexOf('__')===-1)API=window.TESLA_API_BASE;var ls=localStorage.getItem('tesla_api_base');if(ls)API=ls.replace(/\/+$/,'');}catch(e){}})();
 var allUsers=[],allOrders=[],deliveryFee=299,adminPassword=localStorage.getItem('tesla_admin_pwd')||'admin123';
 
 function init(){
-  document.getElementById('loginInput').focus();
-  document.querySelectorAll('.nav-item').forEach(function(b){b.addEventListener('click',function(){switchTab(this.dataset.tab)})});
-  if(localStorage.getItem('tesla_admin_pwd'))adminPassword=localStorage.getItem('tesla_admin_pwd');
-  document.getElementById('feeInput').value=deliveryFee;
+  try {
+    var li=document.getElementById('loginInput');if(li)li.focus();
+    document.querySelectorAll('.nav-item').forEach(function(b){b.addEventListener('click',function(){switchTab(this.dataset.tab)})});
+    if(localStorage.getItem('tesla_admin_pwd'))adminPassword=localStorage.getItem('tesla_admin_pwd');
+    var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;
+  } catch(e) { console.error('init:',e); }
 }
 function doLogin(){
-  var p=document.getElementById('loginInput').value;
-  if(p===adminPassword){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.add('active');document.getElementById('loginError').style.display='none';refreshAll()}
-  else{document.getElementById('loginError').style.display='block';document.getElementById('loginInput').value='';document.getElementById('loginInput').focus()}
+  try {
+    var li=document.getElementById('loginInput');var p=li?li.value:'';
+    if(p===adminPassword){
+      var ls=document.getElementById('loginScreen');if(ls)ls.classList.add('hidden');
+      var app=document.getElementById('app');if(app)app.classList.add('active');
+      var le=document.getElementById('loginError');if(le)le.style.display='none';
+      refreshAll();
+    } else {
+      var le2=document.getElementById('loginError');if(le2)le2.style.display='block';
+      if(li){li.value='';li.focus();}
+    }
+  } catch(e) { console.error('doLogin:',e); }
 }
 function doLogout(){document.getElementById('app').classList.remove('active');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginInput').value='';document.getElementById('loginInput').focus()}
 function switchTab(t){
