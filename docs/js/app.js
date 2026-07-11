@@ -239,9 +239,9 @@ function hideLoading() {
 
 
 function enhanceBranding() {
-  var logoMarkup = '<span class="brand-logo"><img class="brand-logo-img" src="assets/tesla-award-logo.svg" alt="Tesla Award Program"></span>';
-  document.querySelectorAll('.nav-logo').forEach(function(el) { el.innerHTML = logoMarkup; });
-  document.querySelectorAll('.entry-logo .logo-text').forEach(function(el) { el.innerHTML = logoMarkup; });
+  // Branding is handled by inline <img> tags directly in each HTML page.
+  // This function intentionally does nothing to avoid duplicate logos.
+  // The PNG logo (tesla-award-logo.png) is embedded in nav-logo and entry-logo elements.
 }
 
 function initHiddenAdminAccess() {

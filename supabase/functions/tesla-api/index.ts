@@ -133,12 +133,15 @@ async function authConfirmUser(uid: string) {
 
 // ── EMAIL VIA GMAIL SMTPS (NON-BLOCKING) ──────────────────────────────────────
 function sendEmailBackground(to: string, subject: string, html: string) {
+  console.log('[Email] Queuing background email to:', to);
   // Fire-and-forget: don't await this in request handlers.
   // Uses EdgeRuntime.waitUntil to keep the isolate alive until email is sent.
   const promise = (async () => {
     const fromAddr = '"Tesla Award Program" <' + SMTP_USER + ">";
     try {
-      const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
+      console.log('[Email] Connecting to smtp.gmail.com:465...');
+    const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
+    console.log('[Email] SMTP connection established');
       const enc = new TextEncoder();
       const dec = new TextDecoder();
       const buf = new Uint8Array(4096);
