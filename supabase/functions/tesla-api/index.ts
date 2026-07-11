@@ -467,7 +467,7 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   // Strip /functions/v1/tesla-api prefix if present (Supabase runtime may or may not strip it)
-  const route = url.pathname.replace(/^\/functions\/v1\/[^/]+/, "").replace(/\/$/, "") || "/";
+  const route = url.pathname.replace(/^\/(functions\/v1\/)?tesla-api/, "").replace(/\/$/, "") || "/";
 
   console.log("Route:", route, "| Full path:", url.pathname);
 
