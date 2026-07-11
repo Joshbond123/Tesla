@@ -1,13 +1,12 @@
-// Tesla Award Program — Supabase Edge Function (v7)
-// Zero external imports — all Supabase access via direct REST/Auth API fetch calls
-// Fixes: route extraction now handles prefix-stripped URLs; SELF_BASE from env
+// Tesla Award Program — Supabase Edge Function (v10)
+// Fixes: Non-blocking email sending via EdgeRuntime.waitUntil, SMTP timeout,
+//        proper error handling, fast response to frontend.
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SMTP_USER = Deno.env.get("SMTP_USER") ?? "techledger10@gmail.com";
 const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "kkpy bzvy xyhk vljr";
 const FRONTEND_URL = (Deno.env.get("FRONTEND_URL") ?? "https://joshbond123.github.io/Tesla").replace(/\/$/, "");
-// Build self-base from env so verify links work whether or not runtime strips prefix
 const SELF_BASE = SUPABASE_URL + "/functions/v1/tesla-api";
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
@@ -17,7 +16,7 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-function json(data, status = 200) {
+function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...CORS, "Content-Type": "application/json" },
@@ -25,7 +24,7 @@ function json(data, status = 200) {
 }
 
 // ── CRYPTO HELPERS ────────────────────────────────────────────────────────────
-function hexRandom(bytes) {
+function hexRandom(bytes: number): string {
   const arr = new Uint8Array(bytes);
   crypto.getRandomValues(arr);
   return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
@@ -35,25 +34,25 @@ function hexRandom(bytes) {
 const REST = SUPABASE_URL + "/rest/v1";
 const AUTH = SUPABASE_URL + "/auth/v1";
 
-const SB_HEADERS = {
+const SB_HEADERS: Record<string, string> = {
   apikey: SERVICE_ROLE_KEY,
   Authorization: "Bearer " + SERVICE_ROLE_KEY,
   "Content-Type": "application/json",
 };
 
-// Build query string; select is passed raw (PostgREST parses embedded syntax)
-// filter values are percent-encoded for safety
-function buildQs(select, filters, extra) {
-  const parts = [];
+function buildQs(select?: string, filters?: Record<string, string>, extra?: string): string {
+  const parts: string[] = [];
   if (select) parts.push("select=" + select);
-  for (const [k, v] of Object.entries(filters || {})) {
-    parts.push(k + "=" + encodeURIComponent(String(v)));
+  if (filters) {
+    for (const [k, v] of Object.entries(filters)) {
+      parts.push(k + "=" + encodeURIComponent(String(v)));
+    }
   }
   if (extra) parts.push(extra);
   return parts.join("&");
 }
 
-async function dbGet1(table, select, filters) {
+async function dbGet1(table: string, select: string, filters: Record<string, string>) {
   const qs = buildQs(select, filters, "limit=1");
   const r = await fetch(REST + "/" + table + "?" + qs, { headers: SB_HEADERS });
   if (!r.ok) {
@@ -64,7 +63,7 @@ async function dbGet1(table, select, filters) {
   return { data: rows[0] ?? null, error: null };
 }
 
-async function dbInsert(table, body, select) {
+async function dbInsert(table: string, body: Record<string, unknown>, select?: string) {
   const url = select
     ? REST + "/" + table + "?select=" + select
     : REST + "/" + table;
@@ -75,16 +74,16 @@ async function dbInsert(table, body, select) {
   });
   if (!r.ok) {
     const err = await r.text();
-    let code;
-    try { code = JSON.parse(err).code; } catch {}
+    let code: string | undefined;
+    try { code = JSON.parse(err).code; } catch { /* ignore */ }
     return { data: null, error: { message: err, code } };
   }
   const rows = await r.json();
   return { data: Array.isArray(rows) ? rows[0] : rows, error: null };
 }
 
-async function dbUpdate(table, patch, filters) {
-  const qs = buildQs(null, filters, null);
+async function dbUpdate(table: string, patch: Record<string, unknown>, filters: Record<string, string>) {
+  const qs = buildQs(undefined, filters, undefined);
   const r = await fetch(REST + "/" + table + (qs ? "?" + qs : ""), {
     method: "PATCH",
     headers: { ...SB_HEADERS, Prefer: "return=minimal" },
@@ -97,7 +96,7 @@ async function dbUpdate(table, patch, filters) {
   return { error: null };
 }
 
-async function authCreateUser(email, phone, metadata) {
+async function authCreateUser(email: string, phone: string, metadata: Record<string, string>) {
   const r = await fetch(AUTH + "/admin/users", {
     method: "POST",
     headers: SB_HEADERS,
@@ -106,14 +105,24 @@ async function authCreateUser(email, phone, metadata) {
   const data = await r.json();
   if (!r.ok) {
     const msg = data?.msg ?? data?.message ?? "";
+    // "already exists" is OK — user may exist from previous attempt
     if (!msg.toLowerCase().includes("already")) {
       return { data: null, error: { message: msg || "create user failed" } };
+    }
+    // Try to look up the existing user
+    const lookR = await fetch(
+      AUTH + "/admin/users?filter=" + encodeURIComponent(email),
+      { headers: SB_HEADERS }
+    );
+    const existingUsers = await lookR.json();
+    if (Array.isArray(existingUsers) && existingUsers.length > 0) {
+      return { data: { user: existingUsers[0] }, error: null };
     }
   }
   return { data, error: null };
 }
 
-async function authConfirmUser(uid) {
+async function authConfirmUser(uid: string) {
   if (!uid) return;
   await fetch(AUTH + "/admin/users/" + uid, {
     method: "PUT",
@@ -122,65 +131,81 @@ async function authConfirmUser(uid) {
   });
 }
 
-// ── EMAIL VIA GMAIL SMTPS ─────────────────────────────────────────────────────
-async function sendEmail(to, subject, html) {
-  const fromAddr = '"Tesla Award Program" <' + SMTP_USER + ">";
-  try {
-    const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
-    const enc = new TextEncoder();
-    const dec = new TextDecoder();
+// ── EMAIL VIA GMAIL SMTPS (NON-BLOCKING) ──────────────────────────────────────
+function sendEmailBackground(to: string, subject: string, html: string) {
+  // Fire-and-forget: don't await this in request handlers.
+  // Uses EdgeRuntime.waitUntil to keep the isolate alive until email is sent.
+  const promise = (async () => {
+    const fromAddr = '"Tesla Award Program" <' + SMTP_USER + ">";
+    try {
+      const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
+      const enc = new TextEncoder();
+      const dec = new TextDecoder();
+      const buf = new Uint8Array(4096);
 
-    async function readLine() {
-      const buf = new Uint8Array(1024);
-      let result = "";
-      while (true) {
-        const n = await conn.read(buf);
-        if (!n) break;
-        result += dec.decode(buf.subarray(0, n));
-        if (result.endsWith("\r\n")) break;
+      async function readLine(timeoutMs = 15000): Promise<string> {
+        let result = "";
+        const start = Date.now();
+        while (true) {
+          if (Date.now() - start > timeoutMs) throw new Error("SMTP read timeout");
+          const n = await conn.read(buf);
+          if (!n) break;
+          result += dec.decode(buf.subarray(0, n));
+          if (result.endsWith("\r\n")) break;
+        }
+        return result.trim();
       }
-      return result.trim();
-    }
 
-    async function send(data) {
-      await conn.write(enc.encode(data + "\r\n"));
-    }
+      async function send(data: string) {
+        await conn.write(enc.encode(data + "\r\n"));
+      }
 
-    function b64(s) {
-      return btoa(unescape(encodeURIComponent(s)));
-    }
+      function b64(s: string): string {
+        return btoa(unescape(encodeURIComponent(s)));
+      }
 
-    await readLine(); // greeting
-    await send("EHLO localhost");
-    let line = "";
-    do { line = await readLine(); } while (line.startsWith("250-"));
-    await send("AUTH LOGIN");
-    await readLine();
-    await send(b64(SMTP_USER));
-    await readLine();
-    await send(b64(SMTP_PASS));
-    const authResp = await readLine();
-    if (!authResp.startsWith("235")) throw new Error("SMTP AUTH failed: " + authResp);
-    await send("MAIL FROM:<" + SMTP_USER + ">");
-    await readLine();
-    await send("RCPT TO:<" + to + ">");
-    await readLine();
-    await send("DATA");
-    await readLine();
-    await send(
-      "From: " + fromAddr + "\r\n" +
-      "To: " + to + "\r\n" +
-      "Subject: " + subject + "\r\n" +
-      "MIME-Version: 1.0\r\n" +
-      "Content-Type: text/html; charset=UTF-8\r\n\r\n" +
-      html + "\r\n."
-    );
-    await readLine();
-    await send("QUIT");
-    conn.close();
-    console.log("Email sent to " + to);
-  } catch (err) {
-    console.error("Email send failed (non-fatal):", err);
+      // Read greeting with timeout
+      const greeting = await readLine(10000);
+      if (!greeting.startsWith("220")) throw new Error("SMTP greeting failed: " + greeting);
+
+      await send("EHLO localhost");
+      let line = "";
+      do { line = await readLine(5000); } while (line.startsWith("250-"));
+
+      await send("AUTH LOGIN");
+      await readLine(5000);
+      await send(b64(SMTP_USER));
+      await readLine(5000);
+      await send(b64(SMTP_PASS));
+      const authResp = await readLine(10000);
+      if (!authResp.startsWith("235")) throw new Error("SMTP AUTH failed: " + authResp);
+
+      await send("MAIL FROM:<" + SMTP_USER + ">");
+      await readLine(5000);
+      await send("RCPT TO:<" + to + ">");
+      await readLine(5000);
+      await send("DATA");
+      await readLine(5000);
+      await send(
+        "From: " + fromAddr + "\r\n" +
+        "To: " + to + "\r\n" +
+        "Subject: " + subject + "\r\n" +
+        "MIME-Version: 1.0\r\n" +
+        "Content-Type: text/html; charset=UTF-8\r\n\r\n" +
+        html + "\r\n."
+      );
+      await readLine(15000);
+      await send("QUIT");
+      conn.close();
+      console.log("Email sent to " + to);
+    } catch (err) {
+      console.error("Email send failed (non-fatal):", err);
+    }
+  })();
+
+  // Keep the isolate alive until the email promise resolves
+  if (typeof EdgeRuntime !== "undefined" && "waitUntil" in EdgeRuntime) {
+    (EdgeRuntime as any).waitUntil(promise);
   }
 }
 
@@ -189,8 +214,8 @@ async function handleHealth() {
   return json({ status: "ok" });
 }
 
-async function handleEntry(req) {
-  let body;
+async function handleEntry(req: Request) {
+  let body: { email?: string; phone?: string; firstName?: string; lastName?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
   const { email, phone, firstName = "", lastName = "" } = body;
   if (!email || !phone) return json({ error: "Email and phone number are required." }, 400);
@@ -198,13 +223,16 @@ async function handleEntry(req) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailKey))
     return json({ error: "Please enter a valid email address." }, 400);
 
+  // Check for existing entry
   const { data: existing } = await dbGet1("giveaway_users", "id", { email: "eq." + emailKey });
   if (existing) return json({ error: "This email has already been entered. Only one entry per person is allowed." }, 409);
 
   const verificationToken = hexRandom(32);
-  const authResult = await authCreateUser(emailKey, phone, { firstName, lastName });
-  if (authResult.error) return json({ error: "Server error. Please try again." }, 500);
 
+  // Create auth user (non-fatal if fails — user may already exist)
+  const authResult = await authCreateUser(emailKey, phone, { firstName, lastName });
+
+  // Insert the giveaway entry
   const { data: entry, error } = await dbInsert("giveaway_users", {
     auth_user_id: authResult.data?.user?.id ?? null,
     email: emailKey, phone, first_name: firstName, last_name: lastName,
@@ -217,12 +245,15 @@ async function handleEntry(req) {
     return json({ error: "Server error. Please try again." }, 500);
   }
 
+  // Send email in background — does NOT block the response
   const verifyLink = SELF_BASE + "/api/verify?token=" + verificationToken + "&email=" + encodeURIComponent(emailKey);
-  await sendEmail(emailKey, "⚡ Verify Your Email — Tesla Award Program", buildVerificationEmail(firstName || "there", verifyLink, entry.id));
+  sendEmailBackground(emailKey, "⚡ Verify Your Email — Tesla Award Program", buildVerificationEmail(firstName || "there", verifyLink, entry.id));
+
+  // Return response immediately — email is sent in background
   return json({ success: true, message: "Entry submitted! Check your email to verify.", entryId: entry.id });
 }
 
-async function handleVerify(req) {
+async function handleVerify(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
   const email = url.searchParams.get("email");
@@ -242,8 +273,8 @@ async function handleVerify(req) {
   return Response.redirect(FRONTEND_URL + "/dashboard.html?session=" + sessionToken, 302);
 }
 
-async function handleResend(req) {
-  let body;
+async function handleResend(req: Request) {
+  let body: { email?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
   const { email } = body;
   if (!email) return json({ error: "Email is required." }, 400);
@@ -254,12 +285,12 @@ async function handleResend(req) {
   if (entry.verification_status === "verified") return json({ error: "This email has already been verified." }, 409);
 
   const verifyLink = SELF_BASE + "/api/verify?token=" + entry.verification_token + "&email=" + encodeURIComponent(emailKey);
-  await sendEmail(emailKey, "⚡ Verification Email Resent — Tesla Award Program", buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id));
+  sendEmailBackground(emailKey, "⚡ Verification Email Resent — Tesla Award Program", buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id));
   return json({ success: true, message: "Verification email resent." });
 }
 
-async function handleLogin(req) {
-  let body;
+async function handleLogin(req: Request) {
+  let body: { email?: string; phone?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
   const { email, phone } = body;
   if (!email || !phone) return json({ error: "Email and phone number are required." }, 400);
@@ -272,7 +303,7 @@ async function handleLogin(req) {
 
   if (entry.verification_status !== "verified") {
     const verifyLink = SELF_BASE + "/api/verify?token=" + entry.verification_token + "&email=" + encodeURIComponent(emailKey);
-    await sendEmail(emailKey, "⚡ Complete Your Tesla Award Verification", buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id));
+    sendEmailBackground(emailKey, "⚡ Complete Your Tesla Award Verification", buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id));
     return json({ error: "Your entry is not verified yet. We just resent your verification email." }, 403);
   }
 
@@ -282,7 +313,7 @@ async function handleLogin(req) {
   return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" } });
 }
 
-async function getSessionUser(sessionToken) {
+async function getSessionUser(sessionToken: string) {
   if (!sessionToken) return null;
   const now = new Date().toISOString();
   const { data } = await dbGet1(
@@ -295,19 +326,19 @@ async function getSessionUser(sessionToken) {
   return user ? { ...user, entryId: data.user_id } : null;
 }
 
-async function handleSession(req) {
+async function handleSession(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
-  const user = await getSessionUser(token);
+  const user = await getSessionUser(token || "");
   if (!user) return json({ valid: false }, 401);
   return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" } });
 }
 
-async function handleOrder(req) {
-  let body;
+async function handleOrder(req: Request) {
+  let body: { sessionToken?: string; selectedCar?: any; deliveryDetails?: any; deliveryMethod?: any; paymentMethod?: any };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
   const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = body;
-  const user = await getSessionUser(sessionToken);
+  const user = await getSessionUser(sessionToken || "");
   if (!user) return json({ error: "Invalid session. Please verify your email first." }, 401);
 
   const orderId = "TSLA-" + crypto.randomUUID().substring(0, 8).toUpperCase();
@@ -344,24 +375,24 @@ async function handleOrder(req) {
     status: "confirmed", orderDate: new Date(orderRow.order_date).toISOString(),
     estimatedDelivery, timeline,
   };
-  await sendEmail(user.email, "🎉 Order Confirmed — Your Tesla is on the way!", buildOrderConfirmationEmail(order));
+  sendEmailBackground(user.email, "🎉 Order Confirmed — Your Tesla is on the way!", buildOrderConfirmationEmail(order));
   return json({ success: true, order });
 }
 
-async function handleTracking(trackingNumber) {
+async function handleTracking(trackingNumber: string) {
   const order = await loadOrderBy("tracking_number", trackingNumber);
   if (!order) return json({ error: "Tracking number not found." }, 404);
   return json({ order: simulateProgress(order) });
 }
 
-async function handleOrderLookup(orderId) {
+async function handleOrderLookup(orderId: string) {
   const order = await loadOrderBy("order_id", orderId);
   if (!order) return json({ error: "Order not found." }, 404);
   return json({ order: simulateProgress(order) });
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
-async function loadOrderBy(column, value) {
+async function loadOrderBy(column: string, value: string) {
   const { data, error } = await dbGet1(
     "orders",
     "id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(id,email),selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)",
@@ -371,7 +402,7 @@ async function loadOrderBy(column, value) {
   const user = Array.isArray(data.giveaway_users) ? data.giveaway_users[0] : data.giveaway_users;
   const car = Array.isArray(data.selected_cars) ? data.selected_cars[0] : data.selected_cars;
   const delivery = Array.isArray(data.delivery_details) ? data.delivery_details[0] : data.delivery_details;
-  const tracking = ((data.tracking_data ?? []).sort((a, b) => a.stage_order - b.stage_order)).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+  const tracking = ((data.tracking_data ?? []).sort((a: any, b: any) => a.stage_order - b.stage_order)).map((t: any) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
   return {
     orderId: data.order_id, trackingNumber: data.tracking_number,
     email: user?.email ?? "", entryId: user?.id ?? "",
@@ -382,7 +413,7 @@ async function loadOrderBy(column, value) {
   };
 }
 
-function defaultTimeline(orderDate) {
+function defaultTimeline(orderDate: string) {
   return [
     { stage: "Order Confirmed", timestamp: orderDate, completed: true },
     { stage: "Processing", timestamp: null, completed: false },
@@ -393,18 +424,18 @@ function defaultTimeline(orderDate) {
   ];
 }
 
-function calcEstimatedDelivery(days) {
+function calcEstimatedDelivery(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString().split("T")[0];
 }
 
-function simulateProgress(order) {
+function simulateProgress(order: any) {
   const now = new Date();
   const orderDate = new Date(order.orderDate);
   const hrs = (now.getTime() - orderDate.getTime()) / 3_600_000;
-  const updated = { ...order, timeline: order.timeline.map((t) => ({ ...t })) };
-  function advance(idx, h, status) {
+  const updated = { ...order, timeline: order.timeline.map((t: any) => ({ ...t })) };
+  function advance(idx: number, h: number, status: string) {
     if (hrs > h && !updated.timeline[idx]?.completed) {
       updated.timeline[idx].completed = true;
       updated.timeline[idx].timestamp = new Date(orderDate.getTime() + h * 3_600_000).toISOString();
@@ -417,7 +448,7 @@ function simulateProgress(order) {
 }
 
 // ── EMAIL TEMPLATES ───────────────────────────────────────────────────────────
-function buildVerificationEmail(firstName, verifyLink, entryId) {
+function buildVerificationEmail(firstName: string, verifyLink: string, entryId: string) {
   return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Verify Email</title></head>" +
     "<body style=\"margin:0;padding:0;background:#F7F8FA;font-family:sans-serif;\">" +
     "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F7F8FA;padding:40px 0;\"><tr><td align=\"center\">" +
@@ -435,7 +466,7 @@ function buildVerificationEmail(firstName, verifyLink, entryId) {
     "</td></tr></table></td></tr></table></body></html>";
 }
 
-function buildOrderConfirmationEmail(order) {
+function buildOrderConfirmationEmail(order: any) {
   const car = order.selectedCar;
   const addr = order.deliveryDetails;
   const method = order.deliveryMethod;
@@ -466,10 +497,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 
   const url = new URL(req.url);
-  // Strip /functions/v1/tesla-api prefix if present (Supabase runtime may or may not strip it)
   const route = url.pathname.replace(/^\/(functions\/v1\/)?tesla-api/, "").replace(/\/$/, "") || "/";
 
-  console.log("Route:", route, "| Full path:", url.pathname);
+  console.log("Route:", route, "| Method:", req.method);
 
   try {
     if (route === "/api/health" || route === "/health" || route === "") return await handleHealth();

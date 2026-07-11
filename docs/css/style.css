@@ -776,7 +776,7 @@ main{display:block;}
 .nav-logo .brand-logo-img{height:34px;max-width:64px;}
 .entry-logo .brand-logo-img{height:72px;max-width:96px;margin:0 auto;}
 .loading-brand-logo{width:108px;max-width:34vw;height:auto;filter:drop-shadow(0 0 18px rgba(227,25,55,.55));animation:evLogoPulse 1.8s ease-in-out infinite;}
-.hidden-admin-hotspot{position:fixed;right:12px;bottom:12px;width:44px;height:44px;z-index:20;opacity:.01;cursor:default;}
+.hidden-admin-hotspot{position:fixed;right:12px;bottom:12px;width:auto;height:auto;z-index:20;opacity:.4;cursor:pointer;font-size:10px;color:var(--red);background:rgba(0,0,0,.7);border:1px solid rgba(227,25,55,.2);border-radius:6px;padding:4px 8px;}
 .admin-modal-backdrop{position:fixed;inset:0;background:rgba(9,10,12,.72);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;}
 .admin-modal{width:min(420px,100%);background:#fff;border-radius:20px;box-shadow:0 24px 90px rgba(0,0,0,.35);padding:28px;}
 .admin-modal h2{margin:0 0 8px;color:var(--dark);font-size:24px;}

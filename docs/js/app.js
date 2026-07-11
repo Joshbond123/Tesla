@@ -62,7 +62,7 @@ async function apiCall(endpoint, method, body) {
   method = method || 'GET';
   body = body || null;
   var controller = new AbortController();
-  var timeout = setTimeout(function() { controller.abort(); }, 30000);
+  var timeout = setTimeout(function() { controller.abort(); }, 60000);
   
   var configError = getApiConfigurationError();
   if (configError) throw new Error(configError);
@@ -75,7 +75,7 @@ async function apiCall(endpoint, method, body) {
     res = await fetch(API_BASE + endpoint, options);
   } catch (err) {
     if (err && err.name === 'AbortError') {
-      throw new Error('The backend API timed out before completing the request. Please try again.');
+      throw new Error('The request took too long to complete. Please check your internet connection and try again.');
     }
     throw new Error('Unable to reach the backend API. Please check your connection and try again.\n\nMake sure the API server is running at: ' + API_BASE);
   } finally {
@@ -143,7 +143,7 @@ function showLoading(message) {
         '<div class="ev-ring ev-ring-2"></div>' +
         '<div class="ev-ring ev-ring-3"></div>' +
         '<div class="ev-core">' +
-          '<img class="loading-brand-logo" src="assets/tesla-award-logo.svg" alt="Tesla Award Program">' +
+          '<img class="loading-brand-logo" src="assets/tesla-award-logo.png" alt="Tesla Award Program">' +
         '</div>' +
         '<div class="ev-particles" id="evParticles"></div>' +
       '</div>' +
@@ -250,7 +250,7 @@ function initHiddenAdminAccess() {
   hotspot.type = 'button';
   hotspot.id = 'hiddenAdminHotspot';
   hotspot.className = 'hidden-admin-hotspot';
-  hotspot.setAttribute('aria-label', '');
+  hotspot.setAttribute('aria-label', 'Admin Panel');hotspot.textContent = 'Admin';
   hotspot.tabIndex = -1;
   var clicks = 0;
   var resetTimer = null;
