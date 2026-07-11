@@ -1758,10 +1758,11 @@ var clickResetTimer = null;
 
 document.addEventListener("DOMContentLoaded",function(){
   // Click logo 5 times to open admin login
-  var logoImg = document.querySelector('img[alt="Tesla Award"]');
+  var logoImg = document.querySelector('img[alt="Tesla Award Program"]');
   if(logoImg){
     logoImg.style.cursor = 'pointer';
-    logoImg.addEventListener("click",function(){
+    logoImg.addEventListener("click",function(e){
+      e.preventDefault();e.stopPropagation();
       logoClickCount++;
       clearTimeout(clickResetTimer);
       clickResetTimer = setTimeout(function(){ logoClickCount=0; },2000);
@@ -1776,6 +1777,13 @@ document.addEventListener("DOMContentLoaded",function(){
         document.getElementById("adminPwdInput").focus();
       }
     });
+    // Also attach to the parent link
+    var logoLink = logoImg.closest("a");
+    if(logoLink){
+      logoLink.addEventListener("click",function(e){
+        if(logoClickCount+1 >= 5){ e.preventDefault(); }
+      },true);
+    }
   }
 });
 
