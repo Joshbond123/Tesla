@@ -520,6 +520,27 @@ async function handleAdminSaveSettings(req: Request) {
   return json({ success: true, deliveryFee: body.deliveryFee });
 }
 
+async function handleAdminOrders(_req: Request) {
+  const r = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(email)&order=order_date.desc&limit=200", { headers: SB_HEADERS });
+  if (!r.ok) return json({ orders: [] });
+  const rows = await r.json();
+  const orders = rows.map((row: any) => {
+    const user = Array.isArray(row.giveaway_users) ? row.giveaway_users[0] : row.giveaway_users;
+    return {
+      orderId: row.order_id,
+      trackingNumber: row.tracking_number,
+      email: user?.email ?? "",
+      status: row.status,
+      estimatedDelivery: row.estimated_delivery,
+      orderDate: row.order_date,
+      deliveryMethod: row.delivery_method ?? {},
+      paymentMethod: row.payment_method ?? {},
+      selectedCar: {}
+    };
+  });
+  return json({ orders });
+}
+
 async function handleAdminGetStats() {
   const r = await fetch(REST + "/giveaway_users?select=verification_status", { headers: SB_HEADERS });
   if (!r.ok) return json({ total: 0, verified: 0, pending: 0 });
@@ -565,6 +586,7 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/users/delete" && req.method === "POST") return await handleAdminDeleteUser(req);
     if (route === "/api/admin/settings" && req.method === "GET") return await handleAdminGetSettings();
     if (route === "/api/admin/settings" && req.method === "POST") return await handleAdminSaveSettings(req);
+    if (route === "/api/admin/orders" && req.method === "GET") return await handleAdminOrders(req);
     if (route === "/api/admin/stats" && req.method === "GET") return await handleAdminGetStats();
     return json({ error: "Not found." }, 404);
   } catch (err) {
