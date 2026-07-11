@@ -1,28 +1,54 @@
 // Tesla Giveaway — Backend API Configuration
 // =============================================
-// 
-// Configure the backend API URL. Options:
-//   1. Local:        http://localhost:10000/api
-//   2. Render:       https://YOUR-SERVICE.onrender.com/api
-//   3. Custom:       https://your-domain.com/api
 //
-// To deploy the backend on Render:
-//   1. Go to https://dashboard.render.com
-//   2. Sign in with GitHub
-//   3. Click New > Web Service
-//   4. Connect repository: Joshbond123/Tesla
-//   5. Set Root Directory: api-server
-//   6. Build Command: npm install --legacy-peer-deps && npm run build
-//   7. Start Command: npm start
-//   8. Add environment variables from api-server/.env.production
-//   9. Click Deploy Web Service
-//  10. Copy your service URL and put it below.
-//  11. ALSO update PUBLIC_BASE_URL in your Render env vars to your Render service URL.
+// This file is the single source of truth for browser API discovery.
+// GitHub Actions replaces __TESLA_API_BASE__ during deployment using the
+// TESLA_API_BASE repository/environment variable or secret.
+//
+// The production API is hosted as a Supabase Edge Function at:
+//   https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api
+//
+// Local debugging may override the deployed value with:
+//   ?api_url=http://localhost:10000/api
+//   localStorage.setItem('tesla_api_base', 'http://localhost:10000/api')
 
-// ═══════════════════════════════════════════════════════════
-// CHANGE THIS TO YOUR DEPLOYED API URL:
-// ═══════════════════════════════════════════════════════════
-window.TESLA_API_BASE = window.TESLA_API_BASE || '';
+(function configureTeslaApiBase(global) {
+  'use strict';
 
-// You can also set it via URL parameter: ?api_url=https://your-api.onrender.com/api
-// Or via localStorage: localStorage.setItem('tesla_api_base', 'https://your-api.onrender.com/api')
+  // The built-in production fallback URL — used when GitHub Actions
+  // hasn't injected a custom value via __TESLA_API_BASE__ replacement.
+  var PRODUCTION_API_BASE = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+
+  var deployedApiBase = '__TESLA_API_BASE__';
+  var hasInjectedApiBase = deployedApiBase.indexOf('__') !== 0;
+
+  function normalizeApiBase(value) {
+    return String(value || '').trim().replace(/\/+$/, '');
+  }
+
+  function isValidApiBase(value) {
+    if (!value) return false;
+    try {
+      var url = new URL(value, global.location.origin);
+      return url.pathname.replace(/\/+$/, '').endsWith('/api');
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // Priority: 1) window.TESLA_API_BASE (set by URL param or external script)
+  //           2) Injected value from GitHub Actions (__TESLA_API_BASE__ replacement)
+  //           3) Production fallback (Supabase Edge Function)
+  var resolved = normalizeApiBase(
+    global.TESLA_API_BASE || (hasInjectedApiBase ? deployedApiBase : PRODUCTION_API_BASE)
+  );
+
+  // Validate and fall back to production URL if the resolved value is invalid
+  if (!isValidApiBase(resolved)) {
+    console.warn('[Tesla Config] Resolved API base is invalid, using production fallback:', resolved);
+    resolved = PRODUCTION_API_BASE;
+  }
+
+  global.TESLA_API_BASE = resolved;
+  console.log('[Tesla Config] API base initialized:', resolved);
+})(window);
