@@ -1,22 +1,22 @@
-# Backend deployment note
+# Backend deployment
 
-GitHub Pages hosts the static website from `docs/`. The browser still needs a live HTTPS API for registration, Supabase writes, session checks, order creation, tracking, and Gmail verification mail. GitHub Actions can build, validate, and deploy the static site, but it cannot be the always-on HTTP backend that receives browser requests.
+GitHub Pages hosts the static website from `docs/`. Browser API calls must target a live HTTPS backend whose base URL ends in `/api`.
 
-This repository therefore makes GitHub Actions responsible for backend configuration and deployment validation:
+## Required configuration
 
-1. Deploy the Express API in `api-server` to any always-on HTTPS Node.js host.
-2. Add the API URL as a GitHub repository variable or environment secret named `TESLA_API_BASE`.
-3. The value must be an HTTPS URL ending in `/api`, for example `https://your-secure-api.example.com/api`.
-4. The GitHub Pages workflow injects that value into `docs/js/config.js` at deploy time.
-5. The workflow calls `$TESLA_API_BASE/health` before publishing the site, so a broken or missing backend blocks deployment instead of shipping a broken form.
+Set one of the following in the GitHub repository or `github-pages` environment:
 
-Required backend environment variables on the API host:
+- `TESLA_API_BASE` — full API base URL ending in `/api`.
+- Or `SUPABASE_PROJECT_REF` plus optional `SUPABASE_FUNCTION_NAME` — the Pages workflow derives `https://<project-ref>.supabase.co/functions/v1/<function-name>/api` automatically.
 
-- `PORT`
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SMTP_USER`
-- `SMTP_PASS`
-- `PUBLIC_BASE_URL`
+The Pages workflow injects the resolved URL into `docs/js/config.js`, verifies the injected file, then smoke-tests `$TESLA_API_BASE/health` before publishing. If the backend is missing or unhealthy, deployment fails instead of publishing a broken form.
 
-`PUBLIC_BASE_URL` should point at the public API/frontend host that serves `/api/verify` and the dashboard pages used after email verification.
+## Supabase Edge Function convention
+
+The expected production Edge Function name is `tesla-api`, so the API base is:
+
+```text
+https://<project-ref>.supabase.co/functions/v1/tesla-api/api
+```
+
+Deploy it with the Supabase CLI after setting the project secrets used by the backend (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, SMTP settings, and `PUBLIC_BASE_URL`).
