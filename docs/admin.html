@@ -282,7 +282,15 @@ function api(method,path,body){
   return fetch(API+path,{method:method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):null})
     .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Request failed ('+r.status+')');return d})});
 }
-function refreshAll(){loadUsers(function(){loadDashboard();renderUsers();updateBadges()});loadOrders();loadSettings();}
+function refreshAll(){
+  loadOrders();
+  loadSettings();
+  loadUsers(function(){
+    try { loadDashboard(); } catch(e) { console.error('loadDashboard error:',e); }
+    try { renderUsers(); } catch(e) { console.error('renderUsers error:',e); }
+    try { updateBadges(); } catch(e) { console.error('updateBadges error:',e); }
+  });
+}
 function loadUsers(cb){
   try {
     api('GET','/admin/users').then(function(r){
@@ -367,17 +375,21 @@ function loadDashboard(){
   renderRecentUsers();
 }
 function updateStats(){
-  var verified=allUsers.filter(function(u){return u.verification_status==='verified'}).length;
-  var pending=allUsers.length-verified;
-  document.getElementById('statTotal').textContent=allUsers.length;
-  document.getElementById('statVerified').textContent=verified;
-  document.getElementById('statPending').textContent=pending;
-  document.getElementById('statFee').textContent='$'+deliveryFee;
-  var pctEl=document.getElementById('statVerifiedPct');
-  if(allUsers.length>0){
-    var pct=Math.round((verified/allUsers.length)*100);
-    pctEl.textContent=pct+'% verified';
-  }else{pctEl.textContent='---';}
+  try {
+    var verified=allUsers.filter(function(u){return u.verification_status==='verified'}).length;
+    var pending=allUsers.length-verified;
+    var st=document.getElementById('statTotal');if(st)st.textContent=allUsers.length;
+    var sv=document.getElementById('statVerified');if(sv)sv.textContent=verified;
+    var sp=document.getElementById('statPending');if(sp)sp.textContent=pending;
+    var sf=document.getElementById('statFee');if(sf)sf.textContent='$'+deliveryFee;
+    var pctEl=document.getElementById('statVerifiedPct');
+    if(pctEl){
+      if(allUsers.length>0){
+        var pct=Math.round((verified/allUsers.length)*100);
+        pctEl.textContent=pct+'% verified';
+      }else{pctEl.textContent='---';}
+    }
+  } catch(e) { console.error('updateStats error:',e); }
 }
 function updateBadges(){
   document.getElementById('usersNavBadge').textContent=allUsers.length;
@@ -402,7 +414,9 @@ function renderRecentUsers(){
   }
 }
 function renderUsers(){
-  var query=(document.getElementById('userSearch').value||'').toLowerCase();
+  try {
+  var qEl=document.getElementById('userSearch');
+  var query=(qEl?qEl.value:'').toLowerCase();
   var statusFilter=document.getElementById('statusFilter').value;
   var filtered=allUsers.filter(function(u){
     if(statusFilter==='verified'&&u.verification_status!=='verified')return false;
@@ -416,12 +430,12 @@ function renderUsers(){
   var tbody=document.getElementById('usersTable');
   var empty=document.getElementById('usersEmpty');
   var countEl=document.getElementById('usersCount');
-  countEl.textContent='Showing '+filtered.length+' of '+allUsers.length+' users';
+  if(countEl)countEl.textContent='Showing '+filtered.length+' of '+allUsers.length+' users';
   if(filtered.length===0){
-    tbody.innerHTML='';empty.style.display='block';
+    if(tbody)tbody.innerHTML='';if(empty)empty.style.display='block';
   }else{
-    empty.style.display='none';
-    tbody.innerHTML=filtered.map(function(u,i){
+    if(empty)empty.style.display='none';
+    if(tbody)tbody.innerHTML=filtered.map(function(u,i){
       var name=[u.first_name,u.last_name].filter(Boolean).join(' ')||'---';
       var isVerified=u.verification_status==='verified';
       var verifiedAt=u.verified_at?new Date(u.verified_at).toLocaleDateString():'---';
@@ -437,6 +451,7 @@ function renderUsers(){
         '</tr>';
     }).join('');
   }
+  } catch(e) { console.error('renderUsers error:',e); }
 }
 function deleteUser(id,email){
   var name=email||id;
