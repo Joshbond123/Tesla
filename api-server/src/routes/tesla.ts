@@ -20,9 +20,19 @@ type OrderResponse = {
 
 const resendTimestamps: Record<string, number> = {};
 
-const smtpUser = process.env["SMTP_USER"] ?? "techledger10@gmail.com";
-const smtpPass = process.env["SMTP_PASS"] ?? "kkpy bzvy xyhk vljr";
-const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
+const smtpUser = process.env["SMTP_USER"]?.trim();
+const smtpPass = process.env["SMTP_PASS"]?.trim();
+
+function getMailTransporter() {
+  if (!smtpUser || !smtpPass) {
+    throw new Error("Missing SMTP_USER or SMTP_PASS environment variables.");
+  }
+  return nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
+}
+
+async function sendMail(message: nodemailer.SendMailOptions) {
+  return getMailTransporter().sendMail(message);
+}
 
 function getBaseUrl(): string {
   const configured = process.env["PUBLIC_BASE_URL"]?.trim();
@@ -59,7 +69,7 @@ router.post("/entry", async (req, res) => {
     }
 
     const verifyLink = `${getBaseUrl()}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
-    await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Verify Your Email — Tesla Award Program", html: buildVerificationEmail(firstName || "there", verifyLink, entry.id) });
+    await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Verify Your Email — Tesla Award Program", html: buildVerificationEmail(firstName || "there", verifyLink, entry.id) });
     logger.info({ email: emailKey }, "Verification email sent");
     res.json({ success: true, message: "Entry submitted! Check your email to verify.", entryId: entry.id });
   } catch (err) { logger.error({ err }, "Entry error"); res.status(500).json({ error: "Server error. Please try again." }); }
@@ -99,7 +109,7 @@ router.post("/resend", async (req, res) => {
     if (lastResend && Date.now() - lastResend < 60_000) { res.status(429).json({ error: "Please wait 60 seconds before requesting another email." }); return; }
     resendTimestamps[emailKey] = Date.now();
     const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
-    await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Verification Email Resent — Tesla Award Program", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
+    await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Verification Email Resent — Tesla Award Program", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
     res.json({ success: true, message: "Verification email resent." });
   } catch (err) { logger.error({ err }, "Resend error"); res.status(500).json({ error: "Failed to resend email. Please try again." }); }
 });
@@ -119,7 +129,7 @@ router.post("/login", async (req, res) => {
     }
     if (entry.verification_status !== "verified") {
       const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
-      await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Complete Your Tesla Award Verification", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
+      await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Complete Your Tesla Award Verification", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
       res.status(403).json({ error: "Your entry is not verified yet. We just resent your verification email." });
       return;
     }
@@ -169,7 +179,7 @@ router.post("/order", async (req, res) => {
     const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? { id: "unknown", name: "Not specified" }, status: "confirmed", orderDate: new Date(orderRow.order_date).toISOString(), estimatedDelivery, timeline };
     // Send confirmation email (best effort)
     try {
-      await transporter.sendMail({ from: `"Tesla Giveaway" <${smtpUser}>`, to: user.email, subject: "🎉 Order Confirmed — Your Tesla is on the way!", html: buildOrderConfirmationEmail(order) });
+      await sendMail({ from: `"Tesla Giveaway" <${smtpUser!}>`, to: user.email, subject: "🎉 Order Confirmed — Your Tesla is on the way!", html: buildOrderConfirmationEmail(order) });
       logger.info({ email: user.email, orderId }, "Order confirmation email sent");
     } catch (emailErr) { logger.warn({ err: emailErr }, "Failed to send order confirmation email"); }
     res.json({ success: true, order });

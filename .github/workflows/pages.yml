@@ -20,15 +20,55 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      TESLA_API_BASE: ${{ vars.TESLA_API_BASE || secrets.TESLA_API_BASE }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate backend API configuration
+        run: |
+          set -euo pipefail
+          if [ -z "${TESLA_API_BASE:-}" ]; then
+            echo "TESLA_API_BASE must be configured as a GitHub repository variable or environment secret." >&2
+            echo "Expected format: https://your-secure-api.example.com/api" >&2
+            exit 1
+          fi
+          case "$TESLA_API_BASE" in
+            https://*/api) ;;
+            *) echo "TESLA_API_BASE must be an HTTPS URL ending in /api: $TESLA_API_BASE" >&2; exit 1 ;;
+          esac
+
+      - name: Inject backend API URL into static config
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          api_base = os.environ["TESLA_API_BASE"].rstrip("/")
+          config = Path("docs/js/config.js")
+          text = config.read_text()
+          replacement = f"window.TESLA_API_BASE = window.TESLA_API_BASE || {json.dumps(api_base)};"
+          text = text.replace("window.TESLA_API_BASE = window.TESLA_API_BASE || '';", replacement)
+          config.write_text(text)
+          PY
+
+      - name: Smoke test backend health endpoint
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 20 "$TESLA_API_BASE/health"
+          echo
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

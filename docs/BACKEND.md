@@ -1,23 +1,22 @@
 # Backend deployment note
 
-GitHub Pages can host this website's static files, and GitHub Actions can build and deploy those files. GitHub Actions cannot be used as a live HTTP backend for browser form submissions because actions only run as jobs after repository events or manual dispatches.
+GitHub Pages hosts the static website from `docs/`. The browser still needs a live HTTPS API for registration, Supabase writes, session checks, order creation, tracking, and Gmail verification mail. GitHub Actions can build, validate, and deploy the static site, but it cannot be the always-on HTTP backend that receives browser requests.
 
-The giveaway features that write to Supabase or send Gmail verification mail require the Express API server in `artifacts/api-server` to be deployed to a real HTTP host.
+This repository therefore makes GitHub Actions responsible for backend configuration and deployment validation:
 
-After deploying the API server, set `window.TESLA_API_BASE` in `docs/js/config.js` to the hosted API URL ending in `/api`, for example:
+1. Deploy the Express API in `api-server` to any always-on HTTPS Node.js host.
+2. Add the API URL as a GitHub repository variable or environment secret named `TESLA_API_BASE`.
+3. The value must be an HTTPS URL ending in `/api`, for example `https://your-secure-api.example.com/api`.
+4. The GitHub Pages workflow injects that value into `docs/js/config.js` at deploy time.
+5. The workflow calls `$TESLA_API_BASE/health` before publishing the site, so a broken or missing backend blocks deployment instead of shipping a broken form.
 
-```js
-window.TESLA_API_BASE = 'https://your-api.example.com/api';
-```
+Required backend environment variables on the API host:
 
-Required backend environment variables:
-
-- `SUPABASE_PROJECT_REF`
+- `PORT`
 - `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_SERVICE_ROLE_KEY`
 - `SMTP_USER`
 - `SMTP_PASS`
 - `PUBLIC_BASE_URL`
 
-`PUBLIC_BASE_URL` should point at the public site URL that should receive verification redirects.
+`PUBLIC_BASE_URL` should point at the public API/frontend host that serves `/api/verify` and the dashboard pages used after email verification.
