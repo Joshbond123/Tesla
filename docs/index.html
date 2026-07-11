@@ -1102,44 +1102,64 @@
 </section>
 
 <!-- WHAT WINNERS ARE SAYING -->
-<section class="section section-dark" id="winners" style="padding-bottom:60px;">
+<section class="section section-dark" id="winners" style="padding-bottom:80px;">
   <div class="section-inner">
-    <div class="reveal" style="text-align:center;">
-      <div class="section-tag" style="background:rgba(227,25,55,.2);color:var(--red);">Real Winners</div>
-      <h2 class="section-title" style="color:white;">What Winners <span class="gradient-text">Are Saying</span></h2>
-      <p class="section-sub" style="color:rgba(255,255,255,.5);margin:0 auto 48px;">Real testimonials from verified Tesla recipients across the globe</p>
+    <div style="text-align:center;margin-bottom:56px;">
+      <div style="display:inline-block;background:rgba(227,25,55,.15);color:var(--red);padding:6px 16px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.05em;margin-bottom:16px;">GLOBAL WINNERS</div>
+      <h2 style="font-size:clamp(32px,5vw,52px);font-weight:900;color:white;margin:0;line-height:1.12;">
+        What Winners<br><span style="color:var(--red);">Are Saying</span>
+      </h2>
+      <p style="color:rgba(255,255,255,.45);font-size:16px;max-width:600px;margin:18px auto 0;line-height:1.7;">
+        Verified testimonials from Tesla recipients across 20 countries worldwide.
+      </p>
     </div>
-    <!-- Animated Carousel -->
-    <div class="reveal" style="position:relative;max-width:700px;margin:0 auto;height:340px;overflow:hidden;">
-      <div id="reviewCarousel" style="position:relative;width:100%;height:100%;">
-        <div id="reviewCard" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:32px 36px;transition:transform .6s cubic-bezier(.4,0,.2,1),opacity .6s cubic-bezier(.4,0,.2,1);opacity:0;transform:translateX(80px);display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;">
+
+    <style>
+      @keyframes slideInRight { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      @keyframes slideOutLeft { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-60px); opacity: 0; } }
+      @keyframes pulseDot { 0%,100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+      .carousel-card-enter { animation: slideInRight .55s cubic-bezier(.4,0,.2,1) forwards; }
+      .carousel-card-exit { animation: slideOutLeft .35s cubic-bezier(.4,0,.2,1) forwards; }
+      .dot-active { animation: pulseDot 2.5s ease-in-out infinite; }
+    </style>
+
+    <div style="max-width:680px;margin:0 auto;">
+      <div id="carouselWrapper" style="position:relative;min-height:420px;">
+        <div id="carouselCard" style="background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.07);border-radius:24px;padding:36px 40px;position:relative;overflow:hidden;opacity:0;transform:translateX(60px);">
+          <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(227,25,55,.12),transparent 70%);pointer-events:none;"></div>
+          <div id="cardContent"></div>
         </div>
       </div>
-      <div id="carouselDots" style="display:flex;justify-content:center;gap:8px;margin-top:20px;"></div>
-    </div>
-    <!-- Submit Review Form -->
-    <div class="reveal" style="max-width:600px;margin:80px auto 0;">
-      <div style="text-align:center;margin-bottom:32px;">
-        <div style="display:inline-block;background:rgba(227,25,55,.15);color:var(--red);padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.05em;margin-bottom:12px;">Share Your Experience</div>
-        <h3 style="color:white;font-size:24px;font-weight:800;margin:0 0 8px;">Received Your Tesla?</h3>
-        <p style="color:rgba(255,255,255,.4);font-size:14px;margin:0;">Fill out the form below and your review may be featured!</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:28px;">
+        <button onclick="carouselPrev()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;" onmouseover="this.style.background='var(--red)';this.style.color='white';this.style.borderColor='var(--red)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.7)';this.style.borderColor='rgba(255,255,255,.1)'"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <div id="carouselDots" style="display:flex;gap:8px;align-items:center;"></div>
+        <button onclick="carouselNext()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;" onmouseover="this.style.background='var(--red)';this.style.color='white';this.style.borderColor='var(--red)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.7)';this.style.borderColor='rgba(255,255,255,.1)'"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
-      <form id="reviewForm" onsubmit="submitReview(event)" style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:32px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div id="carouselCounter" style="text-align:center;margin-top:12px;color:rgba(255,255,255,.25);font-size:12px;font-weight:600;letter-spacing:.05em;"></div>
+    </div>
+
+    <div style="max-width:600px;margin:100px auto 0;">
+      <div style="text-align:center;margin-bottom:36px;">
+        <div style="display:inline-block;background:rgba(227,25,55,.15);color:var(--red);padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.05em;margin-bottom:12px;">SHARE YOUR STORY</div>
+        <h3 style="color:white;font-size:26px;font-weight:800;margin:0 0 8px;">Received Your Tesla?</h3>
+        <p style="color:rgba(255,255,255,.4);font-size:14px;margin:0;">Submit your review and inspire others around the world.</p>
+      </div>
+      <form id="reviewForm" onsubmit="submitReview(event)" style="background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:36px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
           <div>
-            <label style="color:rgba(255,255,255,.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Full Name</label>
-            <input type="text" name="name" required placeholder="Your full name" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 16px;color:white;font-size:14px;outline:none;transition:border .2s;box-sizing:border-box;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+            <label style="color:rgba(255,255,255,.55);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:7px;">Full Name</label>
+            <input type="text" name="name" required placeholder="Your full name" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px 18px;color:white;font-size:14px;outline:none;transition:all .2s;box-sizing:border-box;" onfocus="this.style.borderColor='var(--red)';this.style.boxShadow='0 0 0 3px rgba(227,25,55,.1)'" onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'">
           </div>
           <div>
-            <label style="color:rgba(255,255,255,.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Email Address</label>
-            <input type="email" name="email" required placeholder="you@example.com" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 16px;color:white;font-size:14px;outline:none;transition:border .2s;box-sizing:border-box;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+            <label style="color:rgba(255,255,255,.55);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:7px;">Email Address</label>
+            <input type="email" name="email" required placeholder="you@email.com" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px 18px;color:white;font-size:14px;outline:none;transition:all .2s;box-sizing:border-box;" onfocus="this.style.borderColor='var(--red)';this.style.boxShadow='0 0 0 3px rgba(227,25,55,.1)'" onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'">
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
           <div>
-            <label style="color:rgba(255,255,255,.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Country</label>
-            <select name="country" required style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 16px;color:white;font-size:14px;outline:none;cursor:pointer;box-sizing:border-box;appearance:none;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-              <option value="" style="color:#333;">Select your country</option>
+            <label style="color:rgba(255,255,255,.55);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:7px;">Country</label>
+            <select name="country" required style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px 18px;color:white;font-size:14px;outline:none;cursor:pointer;box-sizing:border-box;appearance:none;transition:all .2s;" onfocus="this.style.borderColor='var(--red)';this.style.boxShadow='0 0 0 3px rgba(227,25,55,.1)'" onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'">
+              <option value="" style="color:#888;">Select country</option>
               <option value="USA" style="color:#333;">United States</option>
               <option value="UK" style="color:#333;">United Kingdom</option>
               <option value="Canada" style="color:#333;">Canada</option>
@@ -1165,9 +1185,9 @@
             </select>
           </div>
           <div>
-            <label style="color:rgba(255,255,255,.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Delivered Tesla Model</label>
-            <select name="model" required style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 16px;color:white;font-size:14px;outline:none;cursor:pointer;box-sizing:border-box;appearance:none;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-              <option value="" style="color:#333;">Select your Tesla model</option>
+            <label style="color:rgba(255,255,255,.55);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:7px;">Tesla Model Delivered</label>
+            <select name="model" required style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px 18px;color:white;font-size:14px;outline:none;cursor:pointer;box-sizing:border-box;appearance:none;transition:all .2s;" onfocus="this.style.borderColor='var(--red)';this.style.boxShadow='0 0 0 3px rgba(227,25,55,.1)'" onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'">
+              <option value="" style="color:#888;">Select your Tesla</option>
               <option value="Model 3" style="color:#333;">Model 3</option>
               <option value="Model 3 Performance" style="color:#333;">Model 3 Performance</option>
               <option value="Model Y" style="color:#333;">Model Y</option>
@@ -1182,12 +1202,12 @@
             </select>
           </div>
         </div>
-        <div style="margin-bottom:20px;">
-          <label style="color:rgba(255,255,255,.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Your Review / Feedback</label>
-          <textarea name="review" required rows="4" placeholder="Tell us about your experience receiving your Tesla..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;color:white;font-size:14px;outline:none;resize:vertical;font-family:inherit;transition:border .2s;box-sizing:border-box;min-height:100px;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'"></textarea>
+        <div style="margin-bottom:24px;">
+          <label style="color:rgba(255,255,255,.55);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:7px;">Your Review</label>
+          <textarea name="review" required rows="4" placeholder="Share your delivery experience and how your new Tesla has changed your life..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 18px;color:white;font-size:14px;outline:none;resize:vertical;font-family:inherit;line-height:1.7;transition:all .2s;box-sizing:border-box;min-height:110px;" onfocus="this.style.borderColor='var(--red)';this.style.boxShadow='0 0 0 3px rgba(227,25,55,.1)'" onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'"></textarea>
         </div>
-        <button type="submit" style="width:100%;background:var(--red);color:white;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.02em;" onmouseover="this.style.background='#e81c3a';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='var(--red)';this.style.transform='translateY(0)'">Submit Your Review</button>
-        <p id="reviewFormMsg" style="text-align:center;margin:12px 0 0;font-size:13px;display:none;"></p>
+        <button type="submit" style="width:100%;background:linear-gradient(135deg,var(--red),#e81c3a);color:white;border:0;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;transition:all .25s;letter-spacing:.02em;position:relative;overflow:hidden;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(227,25,55,.35)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">Submit Your Review</button>
+        <p id="reviewFormMsg" style="text-align:center;margin:14px 0 0;font-size:13px;font-weight:600;display:none;"></p>
       </form>
     </div>
   </div>
@@ -1195,93 +1215,82 @@
 
 <script>
 (function(){
-  var reviews = [{name:"James Okonkwo",country:"Nigeria",flag:"🇳🇬",model:"Tesla Model 3 2024",stars:"★★★★★",text:"From Lagos, Nigeria! I thought it was too good to be true but I paid the delivery fee and my Model 3 arrived in 12 days. The car is absolutely stunning and the tracking system kept me informed every step. God bless Tesla!"},
-    {name:"Wei Zhang",country:"China",flag:"🇨🇳",model:"Tesla Model Y 2025",stars:"★★★★★",text:"I'm from Shanghai and I received my Model Y last week. The delivery team was extremely professional and the car's build quality is exceptional. My whole family loves the spacious interior and the panoramic roof!"},
-    {name:"Priya Sharma",country:"India",flag:"🇮🇳",model:"Tesla Model S Plaid",stars:"★★★★★",text:"From Mumbai with love! I chose the Model S Plaid and it's the fastest car I've ever driven. The 0-60 in under 2 seconds is mind-blowing. Paid the delivery fee and received it in 14 days. Absolutely worth it!"},
-    {name:"Carlos Hernandez",country:"Mexico",flag:"🇲🇽",model:"Tesla Cybertruck",stars:"★★★★★",text:"Increible! From Mexico City. I received my Cybertruck after just 10 days. The futuristic design turns heads everywhere I go. The stainless steel body is a masterpiece of engineering. Best decision of my life!"},
-    {name:"Akira Tanaka",country:"Japan",flag:"🇯🇵",model:"Tesla Model 3 2025",stars:"★★★★★",text:"From Tokyo, Japan. The minimalist interior and the responsive touchscreen are pure genius. I charged it at a Supercharger station in Shibuya and it was incredibly fast. Tesla's technology is unmatched!"},
-    {name:"Sophie Laurent",country:"France",flag:"🇫🇷",model:"Tesla Model Y Performance",stars:"★★★★★",text:"From Paris with excitement! My Model Y Performance arrived in pristine condition. The acceleration is breathtaking and the autopilot makes driving through Paris traffic a dream. Merci Tesla!"},
-    {name:"Emily Watson",country:"UK",flag:"🇬🇧",model:"Tesla Model X Plaid",stars:"★★★★★",text:"From London, UK. The Falcon Wing doors on my Model X are a showstopper! My kids absolutely love the rear screens and the entire delivery process was seamless. Premium experience from start to finish!"},
-    {name:"Hans Mueller",country:"Germany",flag:"🇩🇪",model:"Tesla Model S 2025",stars:"★★★★★",text:"From Berlin, Germany. As an engineer, I'm blown away by the precision engineering of my Model S. The build quality rivals and exceeds traditional German luxury cars. The yoke steering is fantastic!"},
-    {name:"Matteo Rossi",country:"Italy",flag:"🇮🇹",model:"Tesla Roadster",stars:"★★★★★",text:"From Rome, Italy! I received my Tesla Roadster and it's pure automotive art. The design is breathtaking and the performance is beyond anything I've experienced. Italians appreciate beauty and this car delivers!"},
-    {name:"Liam Chen",country:"Australia",flag:"🇦🇺",model:"Tesla Cybertruck",stars:"★★★★★",text:"From Sydney, Australia! The Cybertruck handles Australian terrain like a dream. Took it off-road in the Outback and it performed flawlessly. The bulletproof body gives me peace of mind. Unreal machine!"},
-    {name:"Min-ji Park",country:"South Korea",flag:"🇰🇷",model:"Tesla Model Y 2024",stars:"★★★★★",text:"From Seoul, South Korea. The Model Y is perfect for city driving and weekend trips. The Supercharger network in Korea is expanding rapidly and charging is so convenient. Tesla truly delivered on every promise!"},
-    {name:"Pedro Silva",country:"Brazil",flag:"🇧🇷",model:"Tesla Model 3 Performance",stars:"★★★★★",text:"From Sao Paulo, Brasil! I chose the Model 3 Performance in red and it arrived in 11 days. The instant torque and handling are incredible on Brazilian roads. My neighbors are all jealous!"},
-    {name:"Thabo Mbeki",country:"South Africa",flag:"🇿🇦",model:"Tesla Model X 2025",stars:"★★★★★",text:"From Johannesburg, South Africa. My Model X arrived in perfect condition and the seven-seat configuration is perfect for my large family. The air suspension handles our roads beautifully. Highly recommended!"},
-    {name:"Elena Garcia",country:"Spain",flag:"🇪🇸",model:"Tesla Model 3 2024",stars:"★★★★★",text:"From Barcelona, Spain! I received my Model 3 in deep blue and it's the most beautiful car I've ever owned. Driving along the Costa Brava with the glass roof open is an experience like no other. Gracias Tesla!"},
-    {name:"Lars Johansson",country:"Netherlands",flag:"🇳🇱",model:"Tesla Model Y Long Range",stars:"★★★★★",text:"From Amsterdam, Netherlands. The Netherlands has amazing EV infrastructure and my Model Y fits right in. The range is incredible for road trips across Europe. Zero emissions and maximum style!"},
-    {name:"Erik Nilsson",country:"Sweden",flag:"🇸🇪",model:"Tesla Model S Plaid",stars:"★★★★★",text:"From Stockholm, Sweden. I drove my Model S Plaid through a Swedish winter and the dual-motor AWD handled snow and ice effortlessly. The heated seats and steering wheel kept me warm in -20C. Swedish winter approved!"},
-    {name:"Ingrid Olsen",country:"Norway",flag:"🇳🇴",model:"Tesla Model Y Performance",stars:"★★★★★",text:"From Oslo, Norway. The EV capital of the world! My Model Y Performance is the perfect Norwegian car. Zero emissions, incredible range even in cold weather, and there are Superchargers everywhere. Norway loves Tesla!"},
-    {name:"Raj Patel",country:"Singapore",flag:"🇸🇬",model:"Tesla Model 3 2025",stars:"★★★★★",text:"From Singapore! The Model 3 is perfect for our city. Compact enough for tight parking yet spacious inside. The autopilot makes navigating Singapore's expressways effortless. Charging is so convenient island-wide!"},
-    {name:"Fatima Al-Mansoori",country:"UAE",flag:"🇦🇪",model:"Tesla Model X Plaid",stars:"★★★★★",text:"From Dubai, UAE. My Model X Plaid is the ultimate luxury family vehicle. The falcon doors are perfect for the Dubai heat and the Ludicrous mode is incredible on Sheikh Zayed Road. Tesla redefines automotive luxury!"},
-    {name:"Olivia Tremblay",country:"Canada",flag:"🇨🇦",model:"Tesla Cybertruck",stars:"★★★★★",text:"From Toronto, Canada! My Cybertruck conquered the Canadian winter with ease. The stainless steel body laughs at road salt and the range held up well in -30C. The perfect vehicle for the Great White North!"}  ];
+  var reviews = [{"name": "James Okonkwo", "country": "Nigeria", "flag": "🇳🇬", "model": "Model 3 2024", "stars": "★★★★★", "text": "From Lagos, Nigeria! I thought it was too good to be true but I paid the delivery fee and my Model 3 arrived in 12 days. The car is absolutely stunning and the tracking system kept me informed every step. God bless Tesla!"}, {"name": "Wei Zhang", "country": "China", "flag": "🇨🇳", "model": "Model Y 2025", "stars": "★★★★★", "text": "From Shanghai, China! Received my Model Y last week. The delivery team was extremely professional and the build quality is exceptional. My whole family loves the spacious interior and the panoramic roof!"}, {"name": "Priya Sharma", "country": "India", "flag": "🇮🇳", "model": "Model S Plaid", "stars": "★★★★★", "text": "From Mumbai with love! I chose the Model S Plaid and it is the fastest car I have ever driven. The 0-60 in under 2 seconds is mind-blowing. Paid the delivery fee and received it in 14 days. Absolutely worth it!"}, {"name": "Carlos Hernandez", "country": "Mexico", "flag": "🇲🇽", "model": "Cybertruck", "stars": "★★★★★", "text": "From Mexico City! I received my Cybertruck after just 10 days. The futuristic design turns heads everywhere I go. The stainless steel body is a masterpiece of engineering. Best decision of my life!"}, {"name": "Akira Tanaka", "country": "Japan", "flag": "🇯🇵", "model": "Model 3 2025", "stars": "★★★★★", "text": "From Tokyo, Japan. The minimalist interior and responsive touchscreen are pure genius. Charged at a Supercharger in Shibuya and it was incredibly fast. Tesla technology is unmatched!"}, {"name": "Sophie Laurent", "country": "France", "flag": "🇫🇷", "model": "Model Y Performance", "stars": "★★★★★", "text": "From Paris! My Model Y Performance arrived in pristine condition. The acceleration is breathtaking and autopilot makes driving through Paris traffic a dream. Merci Tesla!"}, {"name": "Emily Watson", "country": "UK", "flag": "🇬🇧", "model": "Model X Plaid", "stars": "★★★★★", "text": "From London, UK. The Falcon Wing doors on my Model X are a showstopper! My kids absolutely love the rear screens and the entire delivery process was seamless. Premium experience from start to finish!"}, {"name": "Hans Mueller", "country": "Germany", "flag": "🇩🇪", "model": "Model S 2025", "stars": "★★★★★", "text": "From Berlin, Germany. As an engineer, I am blown away by the precision engineering of my Model S. The build quality rivals and exceeds traditional German luxury cars. The yoke steering is fantastic!"}, {"name": "Matteo Rossi", "country": "Italy", "flag": "🇮🇹", "model": "Roadster", "stars": "★★★★★", "text": "From Rome, Italy! I received my Tesla Roadster and it is pure automotive art. The design is breathtaking and the performance is beyond anything I have experienced. Italians appreciate beauty and this car delivers!"}, {"name": "Liam Chen", "country": "Australia", "flag": "🇦🇺", "model": "Cybertruck", "stars": "★★★★★", "text": "From Sydney, Australia! The Cybertruck handles Australian terrain like a dream. Took it off-road in the Outback and it performed flawlessly. The bulletproof body gives me peace of mind. Unreal machine!"}, {"name": "Min-ji Park", "country": "South Korea", "flag": "🇰🇷", "model": "Model Y 2024", "stars": "★★★★★", "text": "From Seoul, South Korea. The Model Y is perfect for city driving and weekend trips. The Supercharger network in Korea is expanding rapidly and charging is so convenient. Tesla truly delivered on every promise!"}, {"name": "Pedro Silva", "country": "Brazil", "flag": "🇧🇷", "model": "Model 3 Performance", "stars": "★★★★★", "text": "From Sao Paulo, Brasil! I chose the Model 3 Performance in red and it arrived in 11 days. The instant torque and handling are incredible on Brazilian roads. My neighbors are all jealous!"}, {"name": "Thabo Mbeki", "country": "South Africa", "flag": "🇿🇦", "model": "Model X 2025", "stars": "★★★★★", "text": "From Johannesburg, South Africa. My Model X arrived in perfect condition and the seven-seat configuration is perfect for my large family. The air suspension handles our roads beautifully. Highly recommended!"}, {"name": "Elena Garcia", "country": "Spain", "flag": "🇪🇸", "model": "Model 3 2024", "stars": "★★★★★", "text": "From Barcelona, Spain! I received my Model 3 in deep blue and it is the most beautiful car I have ever owned. Driving along the Costa Brava with the glass roof open is an experience like no other. Gracias Tesla!"}, {"name": "Lars Johansson", "country": "Netherlands", "flag": "🇳🇱", "model": "Model Y Long Range", "stars": "★★★★★", "text": "From Amsterdam, Netherlands. The Netherlands has amazing EV infrastructure and my Model Y fits right in. The range is incredible for road trips across Europe. Zero emissions and maximum style!"}, {"name": "Erik Nilsson", "country": "Sweden", "flag": "🇸🇪", "model": "Model S Plaid", "stars": "★★★★★", "text": "From Stockholm, Sweden. Drove my Model S Plaid through a Swedish winter and the dual-motor AWD handled snow and ice effortlessly. Heated seats and steering wheel kept me warm in -20C. Swedish winter approved!"}, {"name": "Ingrid Olsen", "country": "Norway", "flag": "🇳🇴", "model": "Model Y Performance", "stars": "★★★★★", "text": "From Oslo, Norway - the EV capital of the world! My Model Y Performance is the perfect Norwegian car. Zero emissions, incredible range even in cold weather, and Superchargers are everywhere. Norway loves Tesla!"}, {"name": "Raj Patel", "country": "Singapore", "flag": "🇸🇬", "model": "Model 3 2025", "stars": "★★★★★", "text": "From Singapore! The Model 3 is perfect for our city - compact enough for tight parking yet spacious inside. Autopilot makes navigating Singapore expressways effortless. Charging is so convenient island-wide!"}, {"name": "Fatima Al-Mansoori", "country": "UAE", "flag": "🇦🇪", "model": "Model X Plaid", "stars": "★★★★★", "text": "From Dubai, UAE. My Model X Plaid is the ultimate luxury family vehicle. The falcon doors are perfect for the Dubai heat and Ludicrous mode is incredible on Sheikh Zayed Road. Tesla redefines automotive luxury!"}, {"name": "Olivia Tremblay", "country": "Canada", "flag": "🇨🇦", "model": "Cybertruck", "stars": "★★★★★", "text": "From Toronto, Canada! My Cybertruck conquered the Canadian winter with ease. The stainless steel body laughs at road salt and the range held up well in -30C. The perfect vehicle for the Great White North!"}];
 
-  var currentIdx = 0;
-  var autoTimer = null;
-  var card = document.getElementById('reviewCard');
-  var dotsContainer = document.getElementById('carouselDots');
+  var current = 0, timer = null;
+  var card = document.getElementById('carouselCard');
+  var contentEl = document.getElementById('cardContent');
+  var dotsEl = document.getElementById('carouselDots');
+  var counterEl = document.getElementById('carouselCounter');
 
   for (var i = 0; i < reviews.length; i++) {
-    var dot = document.createElement('span');
-    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (i===0?'var(--red)':'rgba(255,255,255,.2)') + ';transition:all .4s;cursor:pointer;';
-    (function(idx){ dot.onclick = function(){ goTo(idx); }; })(i);
-    dotsContainer.appendChild(dot);
+    var d = document.createElement('span');
+    d.style.cssText = 'width:' + (i === 0 ? '28px' : '8px') + ';height:8px;border-radius:999px;background:' + (i === 0 ? 'var(--red)' : 'rgba(255,255,255,.15)') + ';transition:all .35s;cursor:pointer;';
+    (function(idx){ d.onclick = function(){ goTo(idx); }; })(i);
+    dotsEl.appendChild(d);
   }
 
   function render(idx) {
     var r = reviews[idx];
-    card.style.opacity = '0';
-    card.style.transform = 'translateX(80px)';
+    card.style.animation = 'slideOutLeft .35s cubic-bezier(.4,0,.2,1) forwards';
     setTimeout(function(){
-      card.innerHTML = 
-        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">' +
-          '<div style="width:48px;height:48px;background:linear-gradient(135deg,var(--red),#e81c3a);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;flex-shrink:0;">' + r.name.charAt(0) + '</div>' +
-          '<div>' +
-            '<div style="color:white;font-weight:700;font-size:16px;">' + r.name + '</div>' +
-            '<div style="color:rgba(255,255,255,.45);font-size:13px;">' + r.flag + ' ' + r.country + '</div>' +
+      contentEl.innerHTML =
+        '<div style="display:flex;align-items:center;gap:16px;margin-bottom:22px;">' +
+          '<div style="width:52px;height:52px;background:linear-gradient(135deg,var(--red),#c9122a);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:20px;flex-shrink:0;box-shadow:0 4px 20px rgba(227,25,55,.25);">' + r.name.charAt(0) + '</div>' +
+          '<div style="flex:1;">' +
+            '<div style="color:white;font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;">' + r.name + ' <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" fill="#1877F2"/><path d="M8.5 12l2.5 2.5 5-5" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
+            '<div style="color:rgba(255,255,255,.4);font-size:13px;">' + r.flag + ' ' + r.country + '</div>' +
           '</div>' +
         '</div>' +
-        '<p style="color:rgba(255,255,255,.75);font-size:14px;line-height:1.75;margin:0 0 16px;">&ldquo;' + r.text + '&rdquo;</p>' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;">' +
-          '<div style="display:flex;align-items:center;gap:6px;color:var(--success);font-size:12px;font-weight:600;">&check; Received: ' + r.model + '</div>' +
-          '<div style="color:#F59E0B;font-size:14px;">' + r.stars + '</div>' +
+        '<div style="position:relative;margin-bottom:20px;">' +
+          '<svg width="28" height="22" fill="var(--red)" opacity=".25" viewBox="0 0 24 24" style="position:absolute;top:-4px;left:-2px;"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151C7.563 6.068 6 8.789 6 11h4v10H0z"/></svg>' +
+          '<p style="color:rgba(255,255,255,.8);font-size:15px;line-height:1.85;margin:0;padding-left:28px;">' + r.text + '</p>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid rgba(255,255,255,.05);">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span style="width:10px;height:10px;background:var(--success);border-radius:50%;display:inline-block;"></span>' +
+            '<span style="color:rgba(255,255,255,.5);font-size:13px;">' + r.model + '</span>' +
+          '</div>' +
+          '<div style="color:#F59E0B;font-size:15px;letter-spacing:2px;">' + r.stars + '</div>' +
         '</div>';
+      card.style.animation = 'slideInRight .55s cubic-bezier(.4,0,.2,1) forwards';
       card.style.opacity = '1';
-      card.style.transform = 'translateX(0)';
     }, 350);
 
-    var dots = dotsContainer.children;
-    for (var i = 0; i < dots.length; i++) {
-      dots[i].style.background = i === idx ? 'var(--red)' : 'rgba(255,255,255,.2)';
-      dots[i].style.width = i === idx ? '24px' : '8px';
-      dots[i].style.borderRadius = i === idx ? '999px' : '50%';
+    var dots = dotsEl.children;
+    for (var j = 0; j < dots.length; j++) {
+      dots[j].style.width = j === idx ? '28px' : '8px';
+      dots[j].style.background = j === idx ? 'var(--red)' : 'rgba(255,255,255,.15)';
+      if (j === idx) dots[j].classList.add('dot-active');
+      else dots[j].classList.remove('dot-active');
     }
+    counterEl.textContent = (idx + 1) + ' / ' + reviews.length;
   }
 
-  function next() {
-    currentIdx = (currentIdx + 1) % reviews.length;
-    render(currentIdx);
-  }
+  function next() { current = (current + 1) % reviews.length; render(current); }
+  function prev() { current = (current - 1 + reviews.length) % reviews.length; render(current); }
 
   function goTo(idx) {
-    currentIdx = idx;
-    render(currentIdx);
-    clearInterval(autoTimer);
-    autoTimer = setInterval(next, 5000);
+    current = idx; render(current);
+    clearInterval(timer);
+    timer = setInterval(next, 5500);
   }
 
+  window.carouselNext = function() { next(); clearInterval(timer); timer = setInterval(next, 5500); };
+  window.carouselPrev = function() { prev(); clearInterval(timer); timer = setInterval(next, 5500); };
+
   render(0);
-  autoTimer = setInterval(next, 5000);
+  timer = setInterval(next, 5500);
 })();
 
 function submitReview(e) {
   e.preventDefault();
-  var msg = document.getElementById('reviewFormMsg');
-  msg.style.display = 'block';
-  msg.style.color = 'var(--success)';
-  msg.textContent = 'Thank you! Your review has been submitted and is pending approval.';
+  var m = document.getElementById('reviewFormMsg');
+  m.style.display = 'block';
+  m.style.color = '#22c55e';
+  m.textContent = 'Thank you! Your review has been submitted and is pending approval.';
   e.target.reset();
-  setTimeout(function(){ msg.style.display = 'none'; }, 4000);
+  setTimeout(function(){ m.style.display = 'none'; }, 4500);
 }
 </script>
 
