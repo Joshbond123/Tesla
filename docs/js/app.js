@@ -1,11 +1,12 @@
 // ╔══════════════════════════════════════════════════════════╗
 // ║     Tesla Vehicle Award Program — Shared Utilities       ║
-// ║     Production v3.0 — Premium Experience                 ║
+// ║     Production v3.1 — Premium Experience                 ║
 // ╚══════════════════════════════════════════════════════════╝
 
 // ── API CONFIGURATION ──────────────────────────────────────────────────
-// Allow setting API base via URL param, localStorage, or config file
-const urlApiParam = new URLSearchParams(window.location.search).get('api_url');
+// Allow overriding API base via URL param or localStorage (for local dev).
+// config.js (loaded first) is the single source of truth for window.TESLA_API_BASE.
+var urlApiParam = new URLSearchParams(window.location.search).get('api_url');
 if (urlApiParam) {
   localStorage.setItem('tesla_api_base', urlApiParam);
   window.TESLA_API_BASE = urlApiParam;
@@ -18,35 +19,34 @@ function normalizeApiBase(value) {
 function isValidApiBase(value) {
   if (!value) return false;
   try {
-    const url = new URL(value, window.location.origin);
+    var url = new URL(value, window.location.origin);
     return url.pathname.replace(/\/+$/, '').endsWith('/api');
   } catch (err) {
     return false;
   }
 }
 
-const configuredApiBase = normalizeApiBase(
+// Use the configured value from config.js (or URL param override above)
+var API_BASE = normalizeApiBase(
+  urlApiParam ||
   window.TESLA_API_BASE ||
   localStorage.getItem('tesla_api_base') ||
   ''
 );
 
-const isGitHubPages = window.location.hostname.endsWith('github.io');
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-if (configuredApiBase && !isValidApiBase(configuredApiBase)) {
-  console.error('[Tesla] Invalid API base URL. It must end in /api:', configuredApiBase);
+// Final validation — ensure API_BASE is usable
+if (!isValidApiBase(API_BASE)) {
+  console.error('[Tesla] API_BASE is invalid or not configured:', API_BASE);
+  // Don't clear API_BASE — keep the raw value so the error message in apiCall() can show what's wrong
 }
-
-const API_BASE = isValidApiBase(configuredApiBase)
-  ? configuredApiBase
-  : (isLocalhost ? '/api' : (isGitHubPages ? '' : '/api'));
 
 window.TESLA_API_BASE = API_BASE;
 
 function getApiConfigurationError() {
-  if (!API_BASE) {
+  if (!API_BASE || !isValidApiBase(API_BASE)) {
+    var isGitHubPages = window.location.hostname.endsWith('github.io');
     if (isGitHubPages) {
-      return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 Configure the GitHub Pages workflow with a TESLA_API_BASE repository variable or environment secret that points to your hosted API URL ending in /api.\n\nFor quick local testing, add ?api_url=YOUR_API_URL to the URL, e.g.:\n?api_url=https://your-secure-api.example.com/api';
+      return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 Configure the GitHub Pages workflow with a TESLA_API_BASE repository variable or environment secret that points to your hosted API URL ending in /api.\n\nFor quick local testing, add ?api_url=YOUR_API_URL to the URL, e.g.:\n?api_url=https://your-api.example.com/api';
     }
     return 'API base URL is not configured. Please set window.TESLA_API_BASE or deploy the backend server.';
   }
@@ -56,7 +56,6 @@ function getApiConfigurationError() {
 // Log API configuration for debugging
 console.log('[Tesla] API_BASE:', API_BASE || '(not configured — backend features will be unavailable)');
 console.log('[Tesla] Hostname:', window.location.hostname);
-console.log('[Tesla] isGitHubPages:', isGitHubPages);
 
 // ── API CALLS ──────────────────────────────────────────────────────────
 async function apiCall(endpoint, method, body) {
@@ -65,13 +64,13 @@ async function apiCall(endpoint, method, body) {
   var controller = new AbortController();
   var timeout = setTimeout(function() { controller.abort(); }, 30000);
   
-  const configError = getApiConfigurationError();
+  var configError = getApiConfigurationError();
   if (configError) throw new Error(configError);
 
-  const options = { method, headers: { 'Content-Type': 'application/json' }, signal: controller.signal };
+  var options = { method: method, headers: { 'Content-Type': 'application/json' }, signal: controller.signal };
   if (body) options.body = JSON.stringify(body);
 
-  let res;
+  var res;
   try {
     res = await fetch(API_BASE + endpoint, options);
   } catch (err) {
@@ -83,8 +82,8 @@ async function apiCall(endpoint, method, body) {
     clearTimeout(timeout);
   }
 
-  const contentType = res.headers.get('content-type') || '';
-  let data;
+  var contentType = res.headers.get('content-type') || '';
+  var data;
   try {
     data = contentType.includes('application/json') ? await res.json() : { error: await res.text() };
   } catch (e) {
@@ -167,7 +166,6 @@ function showLoading(message) {
   var fill = overlay.querySelector('#evProgressFill');
   var pct = overlay.querySelector('#evProgressPct');
   var width = 0;
-  var speed = 0.8;
   var interval = setInterval(function() {
     if (!document.getElementById('globalLoader')) { clearInterval(interval); return; }
     // Simulate a charging curve that slows down near 90%
