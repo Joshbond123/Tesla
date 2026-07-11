@@ -257,7 +257,7 @@ function initHiddenAdminAccess() {
   hotspot.addEventListener('click', function() {
     clicks += 1;
     clearTimeout(resetTimer);
-    resetTimer = setTimeout(function() { clicks = 0; }, 1800);
+    resetTimer = setTimeout(function() { clicks = 0; }, 3000);
     if (clicks >= 5) {
       clicks = 0;
       showAdminLoginModal();
