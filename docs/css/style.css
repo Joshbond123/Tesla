@@ -783,3 +783,8 @@ main{display:block;}
 .admin-modal p{margin:0 0 18px;color:var(--gray-2);line-height:1.55;}
 .admin-error{display:none;margin-top:12px;color:var(--red);font-weight:700;font-size:14px;}
 @media(max-width:560px){.brand-logo-img{height:34px;max-width:64px}.entry-logo .brand-logo-img{height:62px;max-width:86px;}}
+
+/* ── Admin Panel Hidden Trigger ──────────────── */
+#adminPanelTrigger{cursor:pointer;transition:color .3s,transform .2s;display:inline-block;}
+#adminPanelTrigger:hover{color:rgba(255,255,255,.35) !important;}
+#adminClickIndicator{pointer-events:none;}
