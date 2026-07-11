@@ -177,36 +177,427 @@
       <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
         <iframe src="https://www.youtube.com/embed/tw4jkyiYlHE" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="Tesla Official Announcement"></iframe>
       </div>
-      <div style="margin-top:16px;padding:16px 20px;background:rgba(255,255,255,.05);border-radius:12px;border:1px solid rgba(255,255,255,.08);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:40px;height:40px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:18px;">T</div>
-          <div>
-            <div style="color:white;font-weight:700;font-size:14px;">Tesla Official</div>
-            <div style="color:rgba(255,255,255,.4);font-size:12px;">28.4M subscribers</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-          <span style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:6px 14px;border-radius:999px;font-size:12px;">👍 1.2M</span>
-          <span style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:6px 14px;border-radius:999px;font-size:12px;">🔗 Share</span>
-          <span style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:6px 14px;border-radius:999px;font-size:12px;">⬇ Download</span>
-        </div>
-        <div style="margin-top:16px;padding:12px 16px;background:rgba(255,255,255,.03);border-radius:8px;border-left:3px solid var(--red);">
-          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
-            <div style="width:32px;height:32px;background:rgba(227,25,55,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red);font-weight:700;font-size:14px;flex-shrink:0;">MJ</div>
+      <div style="margin-top:16px;padding:16px 20px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid rgba(255,255,255,.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="assets/tesla-logo.png" alt="Tesla Official" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:#E31937;">
             <div>
-              <div style="color:white;font-weight:600;font-size:13px;">Mike Johnson <span style="color:rgba(255,255,255,.4);font-weight:400;">2 days ago</span> <span style="background:var(--red);color:white;padding:2px 6px;border-radius:4px;font-size:10px;">📌 Pinned</span></div>
-              <p style="color:rgba(255,255,255,.65);font-size:13px;margin:4px 0;">Just received my Tesla Model 3 2024!! I paid the delivery fee and within 9 days the car was at my door. This is REAL! 🚗⚡</p>
-              <span style="color:rgba(255,255,255,.3);font-size:11px;">48.2K Reply</span>
+              <div style="color:white;font-weight:700;font-size:14px;">Tesla Official</div>
+              <div style="color:rgba(255,255,255,.35);font-size:11px;">28.4M subscribers</div>
             </div>
           </div>
-          <div style="display:flex;align-items:flex-start;gap:10px;">
-            <div style="width:32px;height:32px;background:rgba(227,25,55,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red);font-weight:700;font-size:14px;flex-shrink:0;">SW</div>
-            <div>
-              <div style="color:white;font-weight:600;font-size:13px;">Sarah Williams <span style="color:rgba(255,255,255,.4);font-weight:400;">1 day ago</span></div>
-              <p style="color:rgba(255,255,255,.65);font-size:13px;margin:4px 0;">I received my Tesla Model Y 2025 after paying the delivery fee. I cried when I saw the car parked outside! 🙏</p>
-              <span style="color:rgba(255,255,255,.3);font-size:11px;">32.4K Reply</span>
+          <button style="background:white;color:#0a0a0a;border:0;padding:9px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;">Subscribe</button>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <span style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);padding:5px 12px;border-radius:999px;font-size:11px;">👍 1.2M</span>
+          <span style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);padding:5px 12px;border-radius:999px;font-size:11px;">↗ Share</span>
+          <span style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);padding:5px 12px;border-radius:999px;font-size:11px;">⬇ Download</span>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,.05);padding-top:12px;">
+          <div style="color:rgba(255,255,255,.45);font-size:12px;font-weight:600;margin-bottom:10px;">💬 Comments · 70,842</div>
+          <div id="teslaOfficialComments">          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">MJ</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Mike Johnson</span>
+                <span style="background:var(--red);color:white;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;">📌 Pinned</span>
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Just received my Tesla Model 3 2024!! I paid the delivery fee and within 9 days the car was at my door. This is REAL! 🚗⚡</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 48.2K</span>
+              </div>
             </div>
           </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">SW</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Sarah Williams</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">I received my Tesla Model Y 2025 after paying the delivery fee. I cried when I saw the car parked outside! 🙏</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 32.4K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">CM</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Carlos Mendez</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Mexico! I received my Tesla Model 3 2024 after paying the delivery fee. This giveaway is 100% real!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 29.2K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">DC</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">David Chen</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">I was skeptical at first but I paid the delivery fee and received my Tesla Model S 2025. So real! Best decision ever.</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 26.1K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">AO</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Amara Osei</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Ghana 🇬🇭 I paid the delivery fee and received my Tesla Model 3 2025! God bless Tesla!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 24K</span>
+              </div>
+            </div>
+          </div></div>
+          <div id="teslaOfficialHidden" style="display:none;">          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">JA</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">James Anderson</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Tesla Model Y delivered to London! The delivery team was professional and the car is absolutely stunning. Thank you Tesla!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 22.8K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">PD</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Pierre Dubois</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Incroyable! My Tesla Model 3 arrived in Paris after just 7 days. The delivery fee was worth every cent!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 21.3K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">YT</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Yuki Tanaka</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">東京に住んでいます。手数料を支払ったら、本当にテスラが届きました！信じられません！🚗⚡</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 20.1K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">SR</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Sofia Rodriguez</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Desde Barcelona! Pagué el envío y mi Tesla Model Y 2025 llegó en 5 días. Esto es totalmente real!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 19.7K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">HM</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Hans Mueller</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Unglaublich! Habe die Liefergebühr bezahlt und mein Tesla Model S stand nach 8 Tagen vor meiner Tür in Berlin.</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 18.9K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">FA</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Fatima Al-Rashid</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Got my Tesla Cybertruck in Dubai! Paid the delivery fee and it arrived in just 5 days. Absolutely stunning vehicle!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 18.2K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">RP</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Raj Patel</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Mumbai here! I was nervous about international shipping but paid the delivery fee and my Tesla Model 3 arrived perfectly!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 17.5K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">EW</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Emma Wilson</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Toronto 🇨🇦 My Tesla Model Y LR arrived yesterday! The Canadian delivery was smooth and the car is gorgeous!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 16.8K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">KM</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Kim Min-Jun</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">서울에서 받았습니다! 배송비 지불 후 6일 만에 테슬라 모델3가 도착했습니다. 정말 감사합니다!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">5 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 16.1K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">MS</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Maria Silva</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Do Brasil! Paguei a taxa de entrega e recebi meu Tesla Model X em São Paulo. Isso é real!!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 15.4K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">LO</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Liam O'Brien</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Dublin delivered! My Tesla Model 3 arrived in 10 days after paying the delivery fee. The Irish Tesla community is growing!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 14.9K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">OP</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Olga Petrova</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Из Москвы! Оплатила доставку и получила Tesla Model Y 2025. Это настоящее чудо! Спасибо Tesla!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 14.2K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">AH</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Ahmed Hassan</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Cairo! Paid the delivery fee and my brand new Tesla Model 3 arrived in 12 days. This program is legitimate!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 13.8K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">IR</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Isabella Rossi</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Da Roma! Ho pagato la consegna e la mia Tesla Model S Plaid è arrivata in 4 giorni. Incredibile!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 13.3K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">LS</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Lucas Silva</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Lisbon here! Paid the delivery fee and got my Tesla Model Y 2025. The European delivery network is amazing!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 12.9K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">EJ</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Eva Johansson</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Stockholm! My Tesla Model 3 arrived after paying the delivery fee. Even in the cold Swedish winter, this EV is perfect!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">5 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 12.4K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">MA</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Mohammed Ali</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Riyadh! Paid the delivery fee and received my Tesla Model X in just 6 days. Shukran Tesla!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 12.1K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">AP</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Anya Petrova</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">From Kyiv! Paid the delivery fee and my Tesla Model 3 2025 arrived safely. The delivery team was exceptional!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">4 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 11.8K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">BD</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Bongani Dlamini</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Johannesburg! Paid my delivery fee and the Tesla Cybertruck arrived in 10 days. African Tesla community is real!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 11.3K</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">NH</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="color:white;font-weight:600;font-size:13px;">Nurul Hassan</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.75);font-size:13px;margin:0 0 6px;line-height:1.55;">Kuala Lumpur! Paid the delivery fee and my Tesla Model Y arrived. The Asian delivery network is fantastic!</p>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="color:rgba(255,255,255,.3);font-size:11px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.3)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">👍 10.9K</span>
+              </div>
+            </div>
+          </div></div>
+          <button id="officialViewMore" onclick="showMoreComments('teslaOfficialComments','teslaOfficialHidden','officialViewMore',20)" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.4);padding:10px;border-radius:8px;cursor:pointer;font-size:12px;margin-top:10px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.03);this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.background='transparent;this.style.color='rgba(255,255,255,.4)'">
+            View 70,842 more comments ▾
+          </button>
         </div>
       </div>
     </div>
@@ -222,42 +613,450 @@
       <p class="section-sub" style="color:rgba(255,255,255,.5);margin:0 auto 48px;">Real testimonials from Tesla car recipients around the world.</p>
     </div>
     <div class="reveal" style="max-width:800px;margin:0 auto;">
-      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:24px;">
+      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:20px;">
         <iframe src="https://www.youtube.com/embed/OYNo_IX4-PE" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="Tesla Winner Testimonials"></iframe>
       </div>
-      <div style="padding:16px 20px;background:rgba(255,255,255,.05);border-radius:12px;border:1px solid rgba(255,255,255,.08);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div style="width:40px;height:40px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:18px;">T</div>
-          <div>
-            <div style="color:white;font-weight:700;font-size:14px;">Tesla Global</div>
-            <div style="color:rgba(255,255,255,.4);font-size:12px;">12.8M subscribers</div>
+      <div style="padding:16px 20px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid rgba(255,255,255,.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="assets/tesla-logo.png" alt="Tesla Global" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:#E31937;">
+            <div>
+              <div style="color:white;font-weight:700;font-size:14px;">Tesla Global</div>
+              <div style="color:rgba(255,255,255,.35);font-size:11px;">12.8M subscribers</div>
+            </div>
           </div>
+          <button style="background:white;color:#0a0a0a;border:0;padding:9px 18px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;">Subscribe</button>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="display:flex;align-items:flex-start;gap:10px;">
-            <div style="width:28px;height:28px;background:rgba(227,25,55,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red);font-weight:700;font-size:12px;flex-shrink:0;">MJ</div>
-            <div>
-              <div style="color:white;font-weight:600;font-size:12px;">Mike Johnson 🇺🇸 USA <span style="color:rgba(255,255,255,.4);font-weight:400;">2 days ago</span></div>
-              <p style="color:rgba(255,255,255,.6);font-size:12px;margin:3px 0;">I received my Tesla car!! I paid the delivery fee and within a week my brand new Tesla Model 3 arrived at my door. 🚗⚡</p>
-              <span style="color:var(--red);font-size:11px;">4,821 👍</span>
+        <div style="border-top:1px solid rgba(255,255,255,.05);padding-top:12px;">
+          <div style="color:rgba(255,255,255,.45);font-size:12px;font-weight:600;margin-bottom:10px;">💬 Comments · 62,789</div>
+          <div id="teslaGlobalComments">          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">MJ</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Mike Johnson</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇺🇸 USA</span>
+                <span style="background:var(--red);color:white;padding:1px 5px;border-radius:2px;font-size:9px;font-weight:700;">📌</span>
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">I received my Tesla car!! I paid the delivery fee and within a week my brand new Tesla Model 3 arrived at my door. 🚗⚡</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 4,821</span>
+              </div>
             </div>
           </div>
-          <div style="display:flex;align-items:flex-start;gap:10px;">
-            <div style="width:28px;height:28px;background:rgba(227,25,55,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red);font-weight:700;font-size:12px;flex-shrink:0;">SW</div>
-            <div>
-              <div style="color:white;font-weight:600;font-size:12px;">Sarah Williams 🇺🇸 USA <span style="color:rgba(255,255,255,.4);font-weight:400;">1 day ago</span></div>
-              <p style="color:rgba(255,255,255,.6);font-size:12px;margin:3px 0;">Just received my Tesla car after paying for the delivery fee. I cried when I saw the car parked outside! 🙏</p>
-              <span style="color:var(--red);font-size:11px;">3,244 👍</span>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">SW</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Sarah Williams</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇺🇸 USA</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Just received my Tesla car after paying for the delivery fee. I cried when I saw the car parked outside! 🙏</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 3,244</span>
+              </div>
             </div>
           </div>
-          <div style="display:flex;align-items:flex-start;gap:10px;">
-            <div style="width:28px;height:28px;background:rgba(227,25,55,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red);font-weight:700;font-size:12px;flex-shrink:0;">CM</div>
-            <div>
-              <div style="color:white;font-weight:600;font-size:12px;">Carlos Mendez 🇲🇽 Mexico <span style="color:rgba(255,255,255,.4);font-weight:400;">3 days ago</span></div>
-              <p style="color:rgba(255,255,255,.6);font-size:12px;margin:3px 0;">From Mexico! I received my Tesla car after paying the delivery fee. This giveaway is 100% real.</p>
-              <span style="color:var(--red);font-size:11px;">2,918 👍</span>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">CM</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Carlos Mendez</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇲🇽 Mexico</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Mexico! I received my Tesla car after paying the delivery fee. This giveaway is 100% real.</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,918</span>
+              </div>
             </div>
           </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">DC</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">David Chen</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇨🇳 China</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">I was skeptical at first but I paid the delivery fee and received my Tesla EV. Amazing! Thank you Tesla!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,611</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">AO</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Amara Osei</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇬🇭 Ghana</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Ghana 🇬🇭 I paid for the delivery fee and received my Tesla car! God bless Tesla!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,403</span>
+              </div>
+            </div>
+          </div></div>
+          <div id="teslaGlobalHidden" style="display:none;">          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">TM</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Thomas Mueller</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇩🇪 Germany</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">My Tesla Model Y arrived in Berlin! The whole process was smooth and the delivery fee was very reasonable.</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">4 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,198</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">AS</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Aiko Sato</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇯🇵 Japan</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Tokyo! Paid delivery and got my brand new Tesla in just 5 days. This is the best thing that happened to me!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 2,087</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">GB</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Giovanni Bianchi</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇮🇹 Italy</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Rome! Ho ricevuto la mia Tesla Model 3 dopo aver pagato la spedizione. È tutto vero!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,976</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">EP</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Emily Parker</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇦🇺 Australia</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Sydney! My Tesla Model Y 2025 arrived after paying the delivery fee. Even to Australia it came fast!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,865</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">RK</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Robert Kowalski</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇵🇱 Poland</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Warsaw! Paid the shipping and my Tesla Model 3 arrived in just 8 days. The car is perfect!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">5 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,754</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">PS</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Priya Sharma</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇮🇳 India</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Mumbai! The delivery fee was worth it. My Tesla Model 3 2025 is now parked outside my home.</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,643</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">AY</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Ali Yilmaz</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇹🇷 Turkey</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Istanbul! Paid the delivery fee and received my Tesla Model Y in perfect condition.</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,532</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">SL</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Sophie Laurent</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇫🇷 France</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Paris! J'ai reçu ma Tesla Model S après avoir payé les frais de livraison. Magnifique!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,421</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">JG</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Juan Garcia</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇪🇸 Spain</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">From Madrid! Paid the delivery and my Tesla Model X arrived. The Spanish Tesla community is real!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">4 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,310</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">MK</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Min-Jae Kim</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇰🇷 South Korea</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Seoul! Paid my delivery fee and the Tesla Model Y LR arrived in perfect condition. 감사합니다!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,199</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">OI</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Olga Ivanova</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇷🇺 Russia</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Moscow! My Tesla Model 3 arrived after I paid the delivery fee. The car is absolutely incredible!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 1,088</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">HL</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Henrik Larsson</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇸🇪 Sweden</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Stockholm! The delivery was fast and my Tesla Model S Plaid is everything I dreamed of.</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">5 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 977</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">MC</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Maria Costa</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇧🇷 Brazil</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">São Paulo! Paguei a entrega e recebi meu Tesla Model 3 2025. Isso mudou minha vida!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 866</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">CW</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Chen Wei</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇸🇬 Singapore</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Singapore! My Tesla arrived in just 4 days after paying the delivery fee. The car is amazing!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 755</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">FZ</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Fatima Zahra</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇲🇦 Morocco</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Casablanca! Paid the delivery and received my Tesla Model Y. African Tesla community growing!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">4 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 644</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">AN</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Anders Nielsen</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇩🇰 Denmark</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Copenhagen! My Tesla Model 3 arrived. The Danish EV infrastructure is perfect for this car!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 533</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">BS</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Beatriz Santos</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇵🇹 Portugal</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Lisbon! Recebi o meu Tesla Model Y depois de pagar o envio. Melhor decisão da minha vida!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">1 day ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 422</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">HD</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Henri Dubois</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇧🇪 Belgium</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Brussels! My Tesla Model 3 arrived in 6 days. The delivery was perfect and the car is immaculate!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">2 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 311</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">KA</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Kwame Asante</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇰🇪 Kenya</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Nairobi! I paid the delivery fee and my Tesla Model Y arrived. The African delivery network works!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">5 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 200</span>
+              </div>
+            </div>
+          </div>
+          <div class="tesla-comment-global" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--red),#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">NP</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                <span style="color:white;font-weight:600;font-size:12px;">Nadia Petrov</span>
+                <span style="color:rgba(255,255,255,.35);font-size:10px;">🇧🇬 Bulgaria</span>
+                
+              </div>
+              <p style="color:rgba(255,255,255,.65);font-size:12px;margin:0 0 5px;line-height:1.55;">Sofia! Paid delivery fee and my Tesla Model 3 2025 arrived. The European delivery is amazing!</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="color:rgba(255,255,255,.25);font-size:10px;">3 days ago</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">👍 Like</span>
+                <span style="color:rgba(255,255,255,.25);font-size:10px;cursor:pointer;transition:color .2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='rgba(255,255,255,.25)'">💬 Reply</span>
+                <span style="color:rgba(255,255,255,.2);font-size:9px;">👍 189</span>
+              </div>
+            </div>
+          </div></div>
+          <button id="globalViewMore" onclick="showMoreComments('teslaGlobalComments','teslaGlobalHidden','globalViewMore',20)" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.4);padding:10px;border-radius:8px;cursor:pointer;font-size:12px;margin-top:10px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.03);this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.background='transparent;this.style.color='rgba(255,255,255,.4)'">
+            View 62,789 more comments ▾
+          </button>
         </div>
       </div>
     </div>
@@ -290,7 +1089,7 @@
       </div>
       <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:28px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
-          <div style="width:52px;height:52px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:22px;">T</div>
+          <img src="assets/tesla-logo.png" alt="Tesla Official" style="width:52px;height:52px;border-radius:50%;object-fit:cover;background:#E31937;">
           <div>
             <div style="color:white;font-weight:800;font-size:16px;">Tesla Official</div>
             <div style="color:rgba(255,255,255,.4);font-size:13px;">@Tesla · Official Account</div>
@@ -540,6 +1339,57 @@ function toggleFaq(btn){
 
 // Scroll reveal
 initScrollAnimations();
+</script>
+
+<script>
+// Animated comment reveal system
+function showMoreComments(visibleId, hiddenId, buttonId, totalToShow) {
+  var visible = document.getElementById(visibleId);
+  var hidden = document.getElementById(hiddenId);
+  var button = document.getElementById(buttonId);
+  
+  if (!hidden || hidden.children.length === 0) {
+    if (button) button.textContent = 'No more comments';
+    return;
+  }
+  
+  var hiddenComments = Array.from(hidden.children);
+  if (hiddenComments.length === 0) return;
+  
+  // Disable button during animation
+  if (button) {
+    button.disabled = true;
+    button.style.opacity = '0.5';
+    button.textContent = 'Loading comments...';
+  }
+  
+  var index = 0;
+  var interval = setInterval(function() {
+    if (index >= hiddenComments.length) {
+      clearInterval(interval);
+      if (button) {
+        button.style.display = 'none';
+      }
+      return;
+    }
+    
+    var comment = hiddenComments[index];
+    hidden.removeChild(comment);
+    visible.appendChild(comment);
+    
+    // Fade in animation
+    comment.style.opacity = '0';
+    comment.style.transform = 'translateY(10px)';
+    comment.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    
+    requestAnimationFrame(function() {
+      comment.style.opacity = '1';
+      comment.style.transform = 'translateY(0)';
+    });
+    
+    index++;
+  }, 120);
+}
 </script>
 </body>
 </html>
