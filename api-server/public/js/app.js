@@ -24,7 +24,7 @@ const API_BASE = configuredApiBase || (isLocalhost ? '/api' : (isGitHubPages ? '
 function getApiConfigurationError() {
   if (!API_BASE) {
     if (isGitHubPages) {
-      return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 The API server needs to be deployed. Deploy it to Render (see api-server/ directory) and set the URL.\n\nFor quick testing, add ?api_url=YOUR_API_URL to the URL, e.g.:\n?api_url=https://your-service.onrender.com/api';
+      return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 Configure the GitHub Pages workflow with a TESLA_API_BASE repository variable or environment secret that points to your hosted API URL ending in /api.\n\nFor quick local testing, add ?api_url=YOUR_API_URL to the URL, e.g.:\n?api_url=https://your-secure-api.example.com/api';
     }
     return 'API base URL is not configured. Please set window.TESLA_API_BASE or deploy the backend server.';
   }
