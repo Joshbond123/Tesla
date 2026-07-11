@@ -11,15 +11,37 @@ if (urlApiParam) {
   window.TESLA_API_BASE = urlApiParam;
 }
 
-const configuredApiBase = (
+function normalizeApiBase(value) {
+  return String(value || '').trim().replace(/\/+$/, '');
+}
+
+function isValidApiBase(value) {
+  if (!value) return false;
+  try {
+    const url = new URL(value, window.location.origin);
+    return url.pathname.replace(/\/+$/, '').endsWith('/api');
+  } catch (err) {
+    return false;
+  }
+}
+
+const configuredApiBase = normalizeApiBase(
   window.TESLA_API_BASE ||
   localStorage.getItem('tesla_api_base') ||
   ''
-).replace(/\/$/, '');
+);
 
 const isGitHubPages = window.location.hostname.endsWith('github.io');
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE = configuredApiBase || (isLocalhost ? '/api' : (isGitHubPages ? '' : '/api'));
+if (configuredApiBase && !isValidApiBase(configuredApiBase)) {
+  console.error('[Tesla] Invalid API base URL. It must end in /api:', configuredApiBase);
+}
+
+const API_BASE = isValidApiBase(configuredApiBase)
+  ? configuredApiBase
+  : (isLocalhost ? '/api' : (isGitHubPages ? '' : '/api'));
+
+window.TESLA_API_BASE = API_BASE;
 
 function getApiConfigurationError() {
   if (!API_BASE) {
