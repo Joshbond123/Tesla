@@ -220,7 +220,8 @@
       // Success — complete loading animation then redirect
       hideLoading();
       setTimeout(function() {
-        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
+        var verifyLink = data.verifyLink || '';
+        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there') + '&verify=' + encodeURIComponent(verifyLink);
       }, 800);
 
     } catch (err) {

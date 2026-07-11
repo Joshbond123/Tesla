@@ -140,7 +140,47 @@ function sendEmailBackground(to: string, subject: string, html: string) {
     const fromAddr = '"Tesla Award Program" <' + SMTP_USER + ">";
     try {
       console.log('[Email] Connecting to smtp.gmail.com:465...');
-    const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
+    // Try port 587 (STARTTLS) — more commonly allowed in serverless environments
+    let conn;
+    try {
+      conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
+      console.log('[Email] Connected via SMTPS (port 465)');
+    } catch (err465) {
+      console.warn('[Email] Port 465 failed, trying 587:', err465.message);
+      // Try port 587 with STARTTLS
+      const tcp = await Deno.connect({ hostname: "smtp.gmail.com", port: 587 });
+      const tcpEnc = new TextEncoder();
+      const tcpDec = new TextDecoder();
+      const tcpBuf = new Uint8Array(4096);
+      
+      const tcpRead = async (timeoutMs = 15000): Promise<string> => {
+        let res = "";
+        const start = Date.now();
+        while (true) {
+          if (Date.now() - start > timeoutMs) throw new Error("SMTP read timeout");
+          const n = await tcp.read(tcpBuf);
+          if (!n) break;
+          res += tcpDec.decode(tcpBuf.subarray(0, n));
+          if (res.endsWith("\r\n")) break;
+        }
+        return res.trim();
+      };
+      
+      const tcpSend = async (data: string) => {
+        await tcp.write(tcpEnc.encode(data + "\r\n"));
+      };
+      
+      let line = await tcpRead(10000);
+      if (!line.startsWith("220")) throw new Error("SMTP greeting: " + line);
+      await tcpSend("EHLO localhost");
+      do { line = await tcpRead(5000); } while (line.startsWith("250-"));
+      await tcpSend("STARTTLS");
+      line = await tcpRead(5000);
+      if (!line.startsWith("220")) throw new Error("STARTTLS: " + line);
+      
+      conn = await Deno.startTls(tcp, { hostname: "smtp.gmail.com" });
+      console.log('[Email] Connected via STARTTLS (port 587)');
+    }
     console.log('[Email] SMTP connection established');
       const enc = new TextEncoder();
       const dec = new TextDecoder();
@@ -253,7 +293,12 @@ async function handleEntry(req: Request) {
   sendEmailBackground(emailKey, "⚡ Verify Your Email — Tesla Award Program", buildVerificationEmail(firstName || "there", verifyLink, entry.id));
 
   // Return response immediately — email is sent in background
-  return json({ success: true, message: "Entry submitted! Check your email to verify.", entryId: entry.id });
+  return json({ 
+    success: true, 
+    message: "Entry submitted! Check your email to verify.", 
+    entryId: entry.id,
+    verifyLink: verifyLink 
+  });
 }
 
 async function handleVerify(req: Request) {
