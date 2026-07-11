@@ -272,7 +272,11 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:20px;overflow:hidden;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.08);">
   <tr><td style="background:#171A20;padding:32px 40px;text-align:center;">
-    <span style="color:#E31937;font-size:26px;font-weight:900;letter-spacing:.12em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</span>
+    <svg width="84" height="84" viewBox="0 0 1280 1280" role="img" aria-label="Tesla T" style="display:block;margin:0 auto 10px;max-width:84px;height:auto;">
+      <path fill="#E31937" d="M0 128C189 44 406 0 640 0s451 44 640 128l-38 74C1054 123 851 80 640 80S226 123 38 202L0 128Z"/>
+      <path fill="#E31937" d="M57 235c156-68 353-109 583-109s427 41 583 109c-44 58-102 101-174 130-9-38-25-68-48-90-55-51-159-76-312-76h-51L640 1280 459 199h-51c-153 0-257 25-312 76-23 22-39 52-48 90-72-29-130-72-174-130Z"/>
+    </svg>
+    <div style="color:#E31937;font-size:18px;font-weight:900;letter-spacing:.16em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</div>
   </td></tr>
   <tr><td style="padding:0;"><div style="height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);"></div></td></tr>
   <tr><td style="padding:44px 40px;">
@@ -313,7 +317,11 @@ function buildOrderConfirmationEmail(order: OrderResponse) {
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:20px;overflow:hidden;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.08);">
   <tr><td style="background:#171A20;padding:32px 40px;text-align:center;">
-    <span style="color:#E31937;font-size:26px;font-weight:900;letter-spacing:.12em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</span>
+    <svg width="84" height="84" viewBox="0 0 1280 1280" role="img" aria-label="Tesla T" style="display:block;margin:0 auto 10px;max-width:84px;height:auto;">
+      <path fill="#E31937" d="M0 128C189 44 406 0 640 0s451 44 640 128l-38 74C1054 123 851 80 640 80S226 123 38 202L0 128Z"/>
+      <path fill="#E31937" d="M57 235c156-68 353-109 583-109s427 41 583 109c-44 58-102 101-174 130-9-38-25-68-48-90-55-51-159-76-312-76h-51L640 1280 459 199h-51c-153 0-257 25-312 76-23 22-39 52-48 90-72-29-130-72-174-130Z"/>
+    </svg>
+    <div style="color:#E31937;font-size:18px;font-weight:900;letter-spacing:.16em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</div>
   </td></tr>
   <tr><td style="padding:0;"><div style="height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);"></div></td></tr>
   <tr><td style="padding:44px 40px;text-align:center;">

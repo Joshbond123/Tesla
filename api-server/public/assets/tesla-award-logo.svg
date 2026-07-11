@@ -1,9 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" role="img" aria-labelledby="title desc">
-  <title id="title">Tesla Award Program</title>
-  <desc id="desc">Premium red and black Tesla Award Program logo.</desc>
-  <rect width="320" height="80" rx="18" fill="#171A20"/>
-  <path d="M42 18h76l-8 12H84v34H66V30H50z" fill="#E31937"/>
-  <path d="M55 14h50l8 10H47z" fill="#fff" opacity=".92"/>
-  <text x="132" y="38" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="800" letter-spacing="3">TESLA</text>
-  <text x="132" y="59" fill="#E31937" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="2">AWARD PROGRAM</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Tesla T logo</title>
+  <desc id="desc">Red Tesla T mark on a transparent background.</desc>
+  <path fill="#ed1b24" d="M0 128C189 44 406 0 640 0s451 44 640 128l-38 74C1054 123 851 80 640 80S226 123 38 202L0 128Z"/>
+  <path fill="#ed1b24" d="M57 235c156-68 353-109 583-109s427 41 583 109c-44 58-102 101-174 130-9-38-25-68-48-90-55-51-159-76-312-76h-51L640 1280 459 199h-51c-153 0-257 25-312 76-23 22-39 52-48 90-72-29-130-72-174-130Z"/>
 </svg>
