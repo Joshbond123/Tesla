@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Tesla Award Program</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+</head>
+<body>
+<nav class="nav" id="navbar"><a href="index.html" class="nav-logo">TESLA</a><div class="nav-links"><a href="index.html">Home</a><a href="entry.html">Entry</a></div></nav>
+<main class="section" style="padding-top:120px;min-height:100svh;">
+  <div class="container">
+    <div class="card" style="max-width:900px;margin:0 auto;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;"><img src="assets/tesla-award-logo.svg" alt="Tesla Award Program" style="height:52px;width:auto;"><div><h1 style="margin:0;">Admin Dashboard</h1><p style="margin:6px 0 0;color:var(--gray-2);">Registration operations and verification checks.</p></div></div>
+      <div id="adminDenied" style="display:none;"><h2>Access denied</h2><p>Please return to the homepage and use the hidden administrator login.</p><a class="btn btn-primary" href="index.html">Return Home</a></div>
+      <div id="adminContent" style="display:none;">
+        <div class="grid-3" style="margin-top:20px;">
+          <div class="card"><div class="section-tag">Status</div><h3>Frontend</h3><p>Static assets loaded successfully.</p></div>
+          <div class="card"><div class="section-tag">API</div><h3 id="apiStatus">Checking…</h3><p id="apiStatusCopy">Validating backend health.</p></div>
+          <div class="card"><div class="section-tag">Security</div><h3>Hidden Access</h3><p>Admin panel is not linked in normal navigation.</p></div>
+        </div>
+        <button class="btn btn-ghost" id="adminLogout" style="margin-top:24px;">Sign out</button>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+(function(){
+  var allowed = sessionStorage.getItem('tesla_admin_authenticated') === 'true';
+  document.getElementById(allowed ? 'adminContent' : 'adminDenied').style.display = 'block';
+  if (!allowed) return;
+  document.getElementById('adminLogout').addEventListener('click', function(){ sessionStorage.removeItem('tesla_admin_authenticated'); window.location.href='index.html'; });
+  apiCall('/health').then(function(){ document.getElementById('apiStatus').textContent='Healthy'; document.getElementById('apiStatusCopy').textContent='Backend health check succeeded.'; }).catch(function(err){ document.getElementById('apiStatus').textContent='Unavailable'; document.getElementById('apiStatusCopy').textContent=err.message; });
+})();
+</script>
+</body>
+</html>

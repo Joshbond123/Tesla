@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" role="img" aria-labelledby="title desc">
+  <title id="title">Tesla Award Program</title>
+  <desc id="desc">Premium red and black Tesla Award Program logo.</desc>
+  <rect width="320" height="80" rx="18" fill="#171A20"/>
+  <path d="M42 18h76l-8 12H84v34H66V30H50z" fill="#E31937"/>
+  <path d="M55 14h50l8 10H47z" fill="#fff" opacity=".92"/>
+  <text x="132" y="38" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="800" letter-spacing="3">TESLA</text>
+  <text x="132" y="59" fill="#E31937" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="2">AWARD PROGRAM</text>
+</svg>

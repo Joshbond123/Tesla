@@ -62,18 +62,25 @@ console.log('[Tesla] isGitHubPages:', isGitHubPages);
 async function apiCall(endpoint, method, body) {
   method = method || 'GET';
   body = body || null;
+  var controller = new AbortController();
+  var timeout = setTimeout(function() { controller.abort(); }, 30000);
   
   const configError = getApiConfigurationError();
   if (configError) throw new Error(configError);
 
-  const options = { method, headers: { 'Content-Type': 'application/json' } };
+  const options = { method, headers: { 'Content-Type': 'application/json' }, signal: controller.signal };
   if (body) options.body = JSON.stringify(body);
 
   let res;
   try {
     res = await fetch(API_BASE + endpoint, options);
   } catch (err) {
+    if (err && err.name === 'AbortError') {
+      throw new Error('The backend API timed out before completing the request. Please try again.');
+    }
     throw new Error('Unable to reach the backend API. Please check your connection and try again.\n\nMake sure the API server is running at: ' + API_BASE);
+  } finally {
+    clearTimeout(timeout);
   }
 
   const contentType = res.headers.get('content-type') || '';
@@ -137,9 +144,7 @@ function showLoading(message) {
         '<div class="ev-ring ev-ring-2"></div>' +
         '<div class="ev-ring ev-ring-3"></div>' +
         '<div class="ev-core">' +
-          '<svg class="ev-tesla-logo" viewBox="0 0 24 24" fill="none">' +
-            '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z" fill="#E31937" stroke="#E31937" stroke-width="0.5"/>' +
-          '</svg>' +
+          '<img class="loading-brand-logo" src="assets/tesla-award-logo.svg" alt="Tesla Award Program">' +
         '</div>' +
         '<div class="ev-particles" id="evParticles"></div>' +
       '</div>' +
@@ -232,6 +237,65 @@ function hideLoading() {
     el.style.transition = 'opacity 0.5s ease';
     setTimeout(function() { if (el.parentNode) el.remove(); }, 500);
   }, 600);
+}
+
+
+function enhanceBranding() {
+  var logoMarkup = '<span class="brand-logo"><img class="brand-logo-img" src="assets/tesla-award-logo.svg" alt="Tesla Award Program"></span>';
+  document.querySelectorAll('.nav-logo').forEach(function(el) { el.innerHTML = logoMarkup; });
+  document.querySelectorAll('.entry-logo .logo-text').forEach(function(el) { el.innerHTML = logoMarkup; });
+}
+
+function initHiddenAdminAccess() {
+  if (!document.body || document.getElementById('hiddenAdminHotspot')) return;
+  var hotspot = document.createElement('button');
+  hotspot.type = 'button';
+  hotspot.id = 'hiddenAdminHotspot';
+  hotspot.className = 'hidden-admin-hotspot';
+  hotspot.setAttribute('aria-label', '');
+  hotspot.tabIndex = -1;
+  var clicks = 0;
+  var resetTimer = null;
+  hotspot.addEventListener('click', function() {
+    clicks += 1;
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(function() { clicks = 0; }, 1800);
+    if (clicks >= 5) {
+      clicks = 0;
+      showAdminLoginModal();
+    }
+  });
+  document.body.appendChild(hotspot);
+}
+
+function showAdminLoginModal() {
+  if (document.getElementById('adminLoginModal')) return;
+  var backdrop = document.createElement('div');
+  backdrop.className = 'admin-modal-backdrop';
+  backdrop.id = 'adminLoginModal';
+  backdrop.innerHTML = '<form class="admin-modal" id="adminLoginForm">' +
+    '<h2>Administrator Login</h2>' +
+    '<p>Enter the administrator password to continue.</p>' +
+    '<label class="form-label" for="adminPassword">Password</label>' +
+    '<input class="form-input" id="adminPassword" type="password" autocomplete="current-password" required>' +
+    '<button class="btn btn-primary btn-full" type="submit" style="margin-top:16px;">Open Admin Dashboard</button>' +
+    '<button class="btn btn-ghost btn-full" type="button" id="adminCancelBtn" style="margin-top:10px;">Cancel</button>' +
+    '<div class="admin-error" id="adminLoginError">Incorrect password. Access denied.</div>' +
+  '</form>';
+  document.body.appendChild(backdrop);
+  document.getElementById('adminPassword').focus();
+  document.getElementById('adminCancelBtn').addEventListener('click', function() { backdrop.remove(); });
+  backdrop.addEventListener('click', function(e) { if (e.target === backdrop) backdrop.remove(); });
+  document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var password = document.getElementById('adminPassword').value;
+    if (password === 'admin123') {
+      sessionStorage.setItem('tesla_admin_authenticated', 'true');
+      window.location.href = 'admin.html';
+      return;
+    }
+    document.getElementById('adminLoginError').style.display = 'block';
+  });
 }
 
 // ── VALIDATION ────────────────────────────────────────────────────────
@@ -341,10 +405,14 @@ function initNavbar() {
 // ── AUTO INIT ─────────────────────────────────────────────────────────
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
+    enhanceBranding();
+    initHiddenAdminAccess();
     initScrollAnimations();
     initNavbar();
   });
 } else {
+  enhanceBranding();
+  initHiddenAdminAccess();
   initScrollAnimations();
   initNavbar();
 }

@@ -69,9 +69,15 @@ router.post("/entry", async (req, res) => {
     }
 
     const verifyLink = `${getBaseUrl()}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
-    await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Verify Your Email — Tesla Award Program", html: buildVerificationEmail(firstName || "there", verifyLink, entry.id) });
-    logger.info({ email: emailKey }, "Verification email sent");
-    res.json({ success: true, message: "Entry submitted! Check your email to verify.", entryId: entry.id });
+    let emailSent = false;
+    try {
+      await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Verify Your Email — Tesla Award Program", html: buildVerificationEmail(firstName || "there", verifyLink, entry.id) });
+      emailSent = true;
+      logger.info({ email: emailKey }, "Verification email sent");
+    } catch (emailErr) {
+      logger.error({ err: emailErr, email: emailKey }, "Entry saved but verification email failed");
+    }
+    res.json({ success: true, message: emailSent ? "Entry submitted! Check your email to verify." : "Entry submitted. Verification email delivery is delayed; please use resend or contact support.", entryId: entry.id, emailSent });
   } catch (err) { logger.error({ err }, "Entry error"); res.status(500).json({ error: "Server error. Please try again." }); }
 });
 
