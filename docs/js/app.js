@@ -245,25 +245,52 @@ function enhanceBranding() {
 }
 
 function initHiddenAdminAccess() {
-  if (!document.body || document.getElementById('hiddenAdminHotspot')) return;
-  var hotspot = document.createElement('button');
-  hotspot.type = 'button';
-  hotspot.id = 'hiddenAdminHotspot';
-  hotspot.className = 'hidden-admin-hotspot';
-  hotspot.setAttribute('aria-label', 'Admin Panel');hotspot.textContent = 'Admin';
-  hotspot.tabIndex = -1;
+  // Use the visible "Admin Panel" element in the footer
+  var adminTrigger = document.getElementById('adminPanelTrigger');
+  if (!adminTrigger || adminTrigger._adminInitialized) return;
+  adminTrigger._adminInitialized = true;
+  
+  adminTrigger.style.cursor = 'pointer';
+  adminTrigger.title = 'Click 5 times for Admin Access';
+  
   var clicks = 0;
   var resetTimer = null;
-  hotspot.addEventListener('click', function() {
+  
+  // Create click indicator
+  var clickIndicator = document.createElement('div');
+  clickIndicator.id = 'adminClickIndicator';
+  clickIndicator.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:99998;display:none;align-items:center;gap:6px;background:rgba(0,0,0,.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-family:Inter,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.4);border:1px solid rgba(227,25,55,.3);';
+  document.body.appendChild(clickIndicator);
+  
+  adminTrigger.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     clicks += 1;
     clearTimeout(resetTimer);
-    resetTimer = setTimeout(function() { clicks = 0; }, 3000);
+    
+    var remaining = 5 - clicks;
+    if (remaining > 0) {
+      clickIndicator.style.display = 'flex';
+      clickIndicator.innerHTML = '<span style=\'color:#E31937;font-weight:700;font-size:16px;\'>' + clicks + '/5</span><span style=\'color:rgba(255,255,255,.7);\'>• ' + remaining + ' more click' + (remaining > 1 ? 's' : '') + ' for admin</span>';
+      clickIndicator.style.opacity = '1';
+      adminTrigger.style.color = 'rgba(227,25,55,' + (0.4 + clicks * 0.15) + ')';
+    }
+    
+    resetTimer = setTimeout(function() {
+      clicks = 0;
+      clickIndicator.style.opacity = '0';
+      setTimeout(function() { clickIndicator.style.display = 'none'; }, 300);
+      adminTrigger.style.color = 'rgba(255,255,255,.15)';
+    }, 2500);
+    
     if (clicks >= 5) {
       clicks = 0;
+      clearTimeout(resetTimer);
+      clickIndicator.style.display = 'none';
+      adminTrigger.style.color = 'rgba(255,255,255,.15)';
       showAdminLoginModal();
     }
   });
-  document.body.appendChild(hotspot);
 }
 
 function showAdminLoginModal() {
