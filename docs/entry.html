@@ -217,6 +217,9 @@
         lastName: lastName 
       });
 
+      // Store user locally for admin panel
+      window.__teslaStoreUser({ email: email, phone: phone, firstName: firstName, lastName: lastName, verified: false });
+
       // Success — complete loading animation then redirect
       hideLoading();
       setTimeout(function() {

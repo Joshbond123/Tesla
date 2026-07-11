@@ -81,40 +81,6 @@
     .footer-links a:hover{color:rgba(255,255,255,.7);}
     .footer-legal{font-size:12px;color:rgba(255,255,255,.3);text-align:center;line-height:1.7;max-width:640px;}
 
-    /* Admin Panel */
-    #adminOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:99999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
-    #adminOverlay.show{display:flex;}
-    #adminPanel{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:95%;max-width:1100px;max-height:90vh;overflow-y:auto;color:white;padding:0;}
-    .admin-header{background:linear-gradient(135deg,#1a1a1a,#0d0d0d);border-bottom:1px solid rgba(255,255,255,.06);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:16px 16px 0 0;}
-    .admin-tabs{display:flex;gap:4px;padding:0 28px;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,.06);}
-    .admin-tab{padding:14px 20px;color:rgba(255,255,255,.4);font-size:13px;font-weight:700;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.02em;}
-    .admin-tab:hover{color:white;}
-    .admin-tab.active{color:var(--red);border-bottom-color:var(--red);}
-    .admin-content{padding:28px;}
-    .admin-table{width:100%;border-collapse:collapse;}
-    .admin-table th{text-align:left;padding:12px 16px;background:rgba(255,255,255,.03);color:rgba(255,255,255,.4);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid rgba(255,255,255,.06);}
-    .admin-table td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.03);color:rgba(255,255,255,.7);font-size:13px;}
-    .admin-table tr:hover td{background:rgba(255,255,255,.015);}
-    .admin-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:white;font-size:14px;outline:none;width:100%;box-sizing:border-box;transition:all .2s;}
-    .admin-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.1);}
-    .admin-btn{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:0;transition:all .2s;letter-spacing:.02em;}
-    .admin-btn-red{background:var(--red);color:white;}
-    .admin-btn-red:hover{background:#c9122a;}
-    .admin-btn-outline{background:transparent;border:1px solid rgba(255,255,255,.2);color:white;}
-    .admin-btn-outline:hover{background:rgba(255,255,255,.05);}
-    .admin-btn-danger{background:transparent;border:1px solid rgba(239,68,68,.4);color:#ef4444;}
-    .admin-btn-danger:hover{background:rgba(239,68,68,.1);}
-    .admin-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;text-align:center;}
-    .admin-stat-val{font-size:28px;font-weight:900;color:white;margin-bottom:4px;}
-    .admin-stat-lbl{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;}
-    #adminLoginModal{background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:36px;width:90%;max-width:400px;text-align:center;}
-    .admin-empty{text-align:center;padding:48px 24px;color:rgba(255,255,255,.25);font-size:14px;}
-
-    /* Toast */
-    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:white;padding:12px 28px;border-radius:999px;font-size:13px;font-weight:600;z-index:100000;box-shadow:0 10px 40px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);animation:toastIn .35s ease,toastOut .35s ease 2.5s forwards;}
-    @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-    @keyframes toastOut{from{opacity:1}to{opacity:0}}
-
   </style>
   <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
 </head>
@@ -1160,40 +1126,6 @@
       .carousel-card-exit { animation: slideOutLeft .35s cubic-bezier(.4,0,.2,1) forwards; }
       .dot-active { animation: pulseDot 2.5s ease-in-out infinite; }
   
-    /* Admin Panel */
-    #adminOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:99999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
-    #adminOverlay.show{display:flex;}
-    #adminPanel{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:95%;max-width:1100px;max-height:90vh;overflow-y:auto;color:white;padding:0;}
-    .admin-header{background:linear-gradient(135deg,#1a1a1a,#0d0d0d);border-bottom:1px solid rgba(255,255,255,.06);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:16px 16px 0 0;}
-    .admin-tabs{display:flex;gap:4px;padding:0 28px;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,.06);}
-    .admin-tab{padding:14px 20px;color:rgba(255,255,255,.4);font-size:13px;font-weight:700;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.02em;}
-    .admin-tab:hover{color:white;}
-    .admin-tab.active{color:var(--red);border-bottom-color:var(--red);}
-    .admin-content{padding:28px;}
-    .admin-table{width:100%;border-collapse:collapse;}
-    .admin-table th{text-align:left;padding:12px 16px;background:rgba(255,255,255,.03);color:rgba(255,255,255,.4);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid rgba(255,255,255,.06);}
-    .admin-table td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.03);color:rgba(255,255,255,.7);font-size:13px;}
-    .admin-table tr:hover td{background:rgba(255,255,255,.015);}
-    .admin-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:white;font-size:14px;outline:none;width:100%;box-sizing:border-box;transition:all .2s;}
-    .admin-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.1);}
-    .admin-btn{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:0;transition:all .2s;letter-spacing:.02em;}
-    .admin-btn-red{background:var(--red);color:white;}
-    .admin-btn-red:hover{background:#c9122a;}
-    .admin-btn-outline{background:transparent;border:1px solid rgba(255,255,255,.2);color:white;}
-    .admin-btn-outline:hover{background:rgba(255,255,255,.05);}
-    .admin-btn-danger{background:transparent;border:1px solid rgba(239,68,68,.4);color:#ef4444;}
-    .admin-btn-danger:hover{background:rgba(239,68,68,.1);}
-    .admin-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px 24px;text-align:center;}
-    .admin-stat-val{font-size:28px;font-weight:900;color:white;margin-bottom:4px;}
-    .admin-stat-lbl{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;}
-    #adminLoginModal{background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:36px;width:90%;max-width:400px;text-align:center;}
-    .admin-empty{text-align:center;padding:48px 24px;color:rgba(255,255,255,.25);font-size:14px;}
-
-    /* Toast */
-    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:white;padding:12px 28px;border-radius:999px;font-size:13px;font-weight:600;z-index:100000;box-shadow:0 10px 40px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);animation:toastIn .35s ease,toastOut .35s ease 2.5s forwards;}
-    @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-    @keyframes toastOut{from{opacity:1}to{opacity:0}}
-
   </style>
 
     <div style="max-width:680px;margin:0 auto;">
@@ -1358,6 +1290,21 @@
 
 function submitReview(e) {
   e.preventDefault();
+  var form = e.target;
+  var review = {
+    name: form.name.value,
+    email: form.email.value,
+    country: form.country.value,
+    model: form.model.value,
+    review: form.review.value,
+    date: new Date().toISOString().split('T')[0]
+  };
+  // Store for admin panel
+  try {
+    var reviews = JSON.parse(localStorage.getItem('tesla_reviews') || '[]');
+    reviews.push(review);
+    localStorage.setItem('tesla_reviews', JSON.stringify(reviews));
+  } catch(ex) {}
   var m = document.getElementById('reviewFormMsg');
   m.style.display = 'block';
   m.style.color = '#22c55e';
@@ -1650,275 +1597,6 @@ function scrollToVideo(el){
   var iframe=el.closest("section").querySelector("iframe");
   if(iframe)iframe.scrollIntoView({behavior:"smooth",block:"center"});
 }
-</script>
-
-<!-- ADMIN PANEL OVERLAY -->
-<div id="adminOverlay">
-  <div id="adminLoginModal">
-    <div style="font-size:48px;margin-bottom:12px;">🔐</div>
-    <h3 style="color:white;font-size:20px;font-weight:800;margin:0 0 6px;">Admin Access</h3>
-    <p style="color:rgba(255,255,255,.4);font-size:13px;margin:0 0 20px;">Enter the administrator password to continue</p>
-    <input type="password" id="adminPwdInput" placeholder="Password" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;color:white;font-size:14px;outline:none;text-align:center;box-sizing:border-box;margin-bottom:16px;transition:all .2s;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'">
-    <button onclick="adminLogin()" style="width:100%;background:var(--red);color:white;border:0;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#c9122a'" onmouseout="this.style.background='var(--red)'">Login</button>
-    <p id="adminLoginError" style="color:#ef4444;font-size:12px;margin:10px 0 0;display:none;"></p>
-  </div>
-  <div id="adminPanel" style="display:none;">
-    <div class="admin-header">
-      <div style="display:flex;align-items:center;gap:14px;">
-        <svg width="28" height="28" fill="var(--red)" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-        <div>
-          <div style="color:white;font-weight:800;font-size:16px;">Tesla Admin Panel</div>
-          <div style="color:rgba(255,255,255,.35);font-size:11px;">Management Dashboard</div>
-        </div>
-      </div>
-      <button onclick="closeAdmin()" style="background:rgba(255,255,255,.06);border:0;color:rgba(255,255,255,.6);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.6)'">✕</button>
-    </div>
-    <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchTab(this,'tabDashboard')">📊 Dashboard</button>
-      <button class="admin-tab" onclick="switchTab(this,'tabUsers')">👥 Users</button>
-      <button class="admin-tab" onclick="switchTab(this,'tabSettings')">⚙️ Settings</button>
-    </div>
-    <div class="admin-content">
-      <!-- Dashboard Tab -->
-      <div id="tabDashboard" class="admin-tab-content">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;">
-          <div class="admin-stat">
-            <div class="admin-stat-val" id="statTotalUsers">0</div>
-            <div class="admin-stat-lbl">Total Users</div>
-          </div>
-          <div class="admin-stat">
-            <div class="admin-stat-val" id="statVerified">0</div>
-            <div class="admin-stat-lbl">Verified</div>
-          </div>
-          <div class="admin-stat">
-            <div class="admin-stat-val" id="statPending">0</div>
-            <div class="admin-stat-lbl">Pending</div>
-          </div>
-          <div class="admin-stat">
-            <div class="admin-stat-val" style="color:var(--red);" id="statDeliveryFee">$0</div>
-            <div class="admin-stat-lbl">Delivery Fee</div>
-          </div>
-        </div>
-        <h4 style="color:white;font-size:16px;font-weight:700;margin:0 0 16px;">Recent Users</h4>
-        <div id="adminRecentUsers"></div>
-      </div>
-      <!-- Users Tab -->
-      <div id="tabUsers" class="admin-tab-content" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-          <h4 style="color:white;font-size:16px;font-weight:700;margin:0;">All Registered Users</h4>
-          <input type="text" id="userSearch" placeholder="Search users..." oninput="searchUsers()" class="admin-input" style="max-width:280px;">
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="admin-table" id="adminUsersTable">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Country</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="adminUsersBody"><tr><td colspan="6" class="admin-empty">No users registered yet</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-      <!-- Settings Tab -->
-      <div id="tabSettings" class="admin-tab-content" style="display:none;">
-        <h4 style="color:white;font-size:16px;font-weight:700;margin:0 0 20px;">Delivery Fee</h4>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px;flex-wrap:wrap;">
-          <input type="number" id="deliveryFeeInput" class="admin-input" style="max-width:200px;" placeholder="Amount in USD" value="0" step="1" min="0">
-          <button onclick="saveDeliveryFee()" class="admin-btn admin-btn-red">Save Fee</button>
-        </div>
-        <h4 style="color:white;font-size:16px;font-weight:700;margin:0 0 20px;">Change Admin Password</h4>
-        <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;">
-          <input type="password" id="currentPwd" class="admin-input" placeholder="Current password">
-          <input type="password" id="newPwd" class="admin-input" placeholder="New password">
-          <input type="password" id="confirmPwd" class="admin-input" placeholder="Confirm new password">
-          <div>
-            <button onclick="changeAdminPassword()" class="admin-btn admin-btn-red">Change Password</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-<script>
-// === Admin Panel ===
-var adminPassword = "admin123";
-var adminStorageKey = "tesla_admin_pwd";
-if(localStorage.getItem(adminStorageKey)) adminPassword = localStorage.getItem(adminStorageKey);
-
-var logoClickCount = 0;
-var clickResetTimer = null;
-
-document.addEventListener("DOMContentLoaded",function(){
-  // Click logo 5 times to open admin login
-  var logoImg = document.querySelector('img[alt="Tesla Award Program"]');
-  if(logoImg){
-    logoImg.style.cursor = 'pointer';
-    logoImg.addEventListener("click",function(e){
-      e.preventDefault();e.stopPropagation();
-      logoClickCount++;
-      clearTimeout(clickResetTimer);
-      clickResetTimer = setTimeout(function(){ logoClickCount=0; },2000);
-      if(logoClickCount >= 5){
-        logoClickCount=0;
-        clearTimeout(clickResetTimer);
-        document.getElementById("adminOverlay").classList.add("show");
-        document.getElementById("adminLoginModal").style.display="block";
-        document.getElementById("adminPanel").style.display="none";
-        document.getElementById("adminPwdInput").value="";
-        document.getElementById("adminLoginError").style.display="none";
-        document.getElementById("adminPwdInput").focus();
-      }
-    });
-    // Also attach to the parent link
-    var logoLink = logoImg.closest("a");
-    if(logoLink){
-      logoLink.addEventListener("click",function(e){
-        if(logoClickCount+1 >= 5){ e.preventDefault(); }
-      },true);
-    }
-  }
-});
-
-function adminLogin(){
-  var pwd = document.getElementById("adminPwdInput").value;
-  if(pwd === adminPassword){
-    document.getElementById("adminLoginModal").style.display="none";
-    document.getElementById("adminPanel").style.display="block";
-    loadAdminData();
-  }else{
-    document.getElementById("adminLoginError").style.display="block";
-    document.getElementById("adminLoginError").textContent="Incorrect password. Please try again.";
-  }
-}
-
-function closeAdmin(){
-  document.getElementById("adminOverlay").classList.remove("show");
-  document.getElementById("adminLoginModal").style.display="block";
-  document.getElementById("adminPanel").style.display="none";
-}
-
-function switchTab(btn,tabId){
-  document.querySelectorAll(".admin-tab").forEach(function(t){ t.classList.remove("active"); });
-  btn.classList.add("active");
-  document.querySelectorAll(".admin-tab-content").forEach(function(d){ d.style.display="none"; });
-  document.getElementById(tabId).style.display="block";
-  if(tabId==="tabDashboard") loadAdminData();
-  if(tabId==="tabUsers") renderUsersTable();
-}
-
-function loadAdminData(){
-  // Load from localStorage
-  var users = JSON.parse(localStorage.getItem("tesla_users") || "[]");
-  var deliveryFee = localStorage.getItem("tesla_delivery_fee") || "0";
-  var verified = users.filter(function(u){ return u.verified; }).length;
-  var pending = users.filter(function(u){ return !u.verified || u.status==="pending"; }).length;
-
-  document.getElementById("statTotalUsers").textContent = users.length;
-  document.getElementById("statVerified").textContent = verified;
-  document.getElementById("statPending").textContent = pending;
-  document.getElementById("statDeliveryFee").textContent = "$" + deliveryFee;
-  document.getElementById("deliveryFeeInput").value = deliveryFee;
-
-  // Recent users
-  var recentHtml = "";
-  var recentUsers = users.slice(-5).reverse();
-  if(recentUsers.length===0){
-    recentHtml = '<div class="admin-empty">No users registered yet</div>';
-  }else{
-    recentHtml = '<table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Date</th></tr></thead><tbody>';
-    for(var i=0;i<recentUsers.length;i++){
-      var u = recentUsers[i];
-      recentHtml += '<tr><td>'+(u.name||"-")+'</td><td>'+(u.email||"-")+'</td><td>'+(u.verified?'<span style="color:var(--success);font-weight:600;">Verified</span>':'<span style="color:#f59e0b;font-weight:600;">Pending</span>')+'</td><td>'+(u.date||"-")+'</td></tr>';
-    }
-    recentHtml += '</tbody></table>';
-  }
-  document.getElementById("adminRecentUsers").innerHTML = recentHtml;
-}
-
-function renderUsersTable(filter){
-  var users = JSON.parse(localStorage.getItem("tesla_users") || "[]");
-  if(filter){ users = users.filter(function(u){ return (u.email||"").toLowerCase().indexOf(filter)>-1 || (u.name||"").toLowerCase().indexOf(filter)>-1; }); }
-  if(users.length===0){
-    document.getElementById("adminUsersBody").innerHTML = '<tr><td colspan="6" class="admin-empty">No users registered yet</td></tr>';
-    return;
-  }
-  var html = "";
-  for(var i=users.length-1;i>=0;i--){
-    var u = users[i];
-    var idx = i;
-    html += '<tr>' +
-      '<td style="color:white;font-weight:600;">'+(u.name||"-")+'</td>' +
-      '<td>'+(u.email||"-")+'</td>' +
-      '<td>'+(u.verified?'<span style="color:var(--success);font-weight:600;">Verified</span>':'<span style="color:#f59e0b;font-weight:600;">Pending</span>')+'</td>' +
-      '<td>'+(u.country||"-")+'</td>' +
-      '<td>'+(u.date||"-")+'</td>' +
-      '<td><button onclick="deleteUser('+idx+')" class="admin-btn admin-btn-danger" style="padding:6px 14px;font-size:11px;">Delete</button></td>' +
-      '</tr>';
-  }
-  document.getElementById("adminUsersBody").innerHTML = html;
-}
-
-function searchUsers(){
-  var q = document.getElementById("userSearch").value.toLowerCase();
-  if(q) renderUsersTable(q);
-  else renderUsersTable();
-}
-
-function deleteUser(idx){
-  if(!confirm("Are you sure you want to permanently delete this user?")) return;
-  var users = JSON.parse(localStorage.getItem("tesla_users") || "[]");
-  users.splice(idx,1);
-  localStorage.setItem("tesla_users",JSON.stringify(users));
-  showAdminToast("User deleted successfully");
-  renderUsersTable();
-  loadAdminData();
-}
-
-function saveDeliveryFee(){
-  var fee = document.getElementById("deliveryFeeInput").value;
-  localStorage.setItem("tesla_delivery_fee",fee);
-  document.getElementById("statDeliveryFee").textContent = "$" + fee;
-  showAdminToast("Delivery fee updated to $" + fee);
-}
-
-function changeAdminPassword(){
-  var current = document.getElementById("currentPwd").value;
-  var newPwd = document.getElementById("newPwd").value;
-  var confirm = document.getElementById("confirmPwd").value;
-  if(current !== adminPassword){ showAdminToast("Current password is incorrect","error"); return; }
-  if(!newPwd || newPwd.length < 3){ showAdminToast("New password must be at least 3 characters","error"); return; }
-  if(newPwd !== confirm){ showAdminToast("Passwords do not match","error"); return; }
-  adminPassword = newPwd;
-  localStorage.setItem(adminStorageKey,newPwd);
-  showAdminToast("Password changed successfully!");
-  document.getElementById("currentPwd").value="";
-  document.getElementById("newPwd").value="";
-  document.getElementById("confirmPwd").value="";
-}
-
-function showAdminToast(msg,type){
-  var existing = document.querySelector(".toast");
-  if(existing) existing.remove();
-  var t = document.createElement("div");
-  t.className = "toast";
-  t.style.background = type==="error" ? "#7f1d1d" : "#1a1a1a";
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(function(){ t.remove(); },3000);
-}
-
-// Also hook into existing registration to store users in localStorage
-// Override store to also save locally
-var origSetItem = localStorage.setItem;
-var origGetItem = localStorage.getItem;
 </script>
 
 </body>

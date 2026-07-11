@@ -338,6 +338,48 @@ function saveSession(token) {
 function getSession() { 
   return localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token') || getParam('session'); 
 }
+
+// ── ADMIN LOCAL STORAGE HOOK ──────────────────────────────────────────
+window.__teslaStoreUser = function(userData) {
+  try {
+    var key = 'tesla_registered_users';
+    var users = JSON.parse(localStorage.getItem(key) || '[]');
+    // Avoid duplicates
+    var existing = users.find(function(u){ return u.email && u.email.toLowerCase() === (userData.email||'').toLowerCase(); });
+    if (!existing) {
+      users.push({
+        name: (userData.firstName||'') + ' ' + (userData.lastName||'').trim() || userData.email,
+        first_name: userData.firstName || '', last_name: userData.lastName || '',
+        email: userData.email || '', phone: userData.phone || '',
+        date: new Date().toISOString().split('T')[0],
+        verified: userData.verified || false,
+        verification_status: userData.verified ? 'verified' : 'pending',
+        status: userData.verified ? 'verified' : 'pending',
+        country: userData.country || ''
+      });
+      localStorage.setItem(key, JSON.stringify(users));
+      localStorage.setItem('tesla_entry_users', JSON.stringify(users));
+    }
+  } catch(e) { console.warn('Admin storage hook failed:', e); }
+};
+
+window.__teslaMarkVerified = function(email) {
+  try {
+    var key = 'tesla_registered_users';
+    var users = JSON.parse(localStorage.getItem(key) || '[]');
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].email && users[i].email.toLowerCase() === email.toLowerCase()) {
+        users[i].verified = true;
+        users[i].verification_status = 'verified';
+        users[i].status = 'verified';
+        users[i].verified_at = new Date().toISOString();
+      }
+    }
+    localStorage.setItem(key, JSON.stringify(users));
+    localStorage.setItem('tesla_entry_users', JSON.stringify(users));
+  } catch(e) {}
+};
+
 function clearSession() { 
   localStorage.removeItem('tesla_session'); 
   localStorage.removeItem('tesla_session_token'); 
