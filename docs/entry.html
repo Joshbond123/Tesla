@@ -225,8 +225,7 @@
       // We wait 2000ms so users clearly see the 100% green completion state
       hideLoading();
       setTimeout(function() {
-        var verifyLink = data.verifyLink || '';
-        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there') + '&verify=' + encodeURIComponent(verifyLink);
+        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
       }, 2000);
 
     } catch (err) {
