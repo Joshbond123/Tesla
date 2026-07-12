@@ -221,11 +221,13 @@
       window.__teslaStoreUser({ email: email, phone: phone, firstName: firstName, lastName: lastName, verified: false });
 
       // Success — complete loading animation then redirect
+      // Complete loading animation: hideLoading() takes 600ms delay + 500ms fade = 1100ms
+      // We wait 2000ms so users clearly see the 100% green completion state
       hideLoading();
       setTimeout(function() {
         var verifyLink = data.verifyLink || '';
         window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there') + '&verify=' + encodeURIComponent(verifyLink);
-      }, 800);
+      }, 2000);
 
     } catch (err) {
       hideLoading();
