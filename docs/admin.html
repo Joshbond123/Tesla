@@ -177,10 +177,10 @@
 <div class="page-content">
 <div class="tab-panel active" id="panelDashboard">
   <div class="stats-grid">
-    <div class="stat-card primary"><span class="stat-icon">&#x1F465;</span><div class="stat-value" id="statTotal">&mdash;</div><div class="stat-label">Total Registered Users</div></div>
-    <div class="stat-card success"><span class="stat-icon">&#x2705;</span><div class="stat-value" id="statVerified">&mdash;</div><div class="stat-label">Verified Users</div><span class="stat-change up" id="statVerifiedPct">&mdash;</span></div>
-    <div class="stat-card warning"><span class="stat-icon">&#x23F3;</span><div class="stat-value" id="statPending">&mdash;</div><div class="stat-label">Pending Verification</div></div>
-    <div class="stat-card info"><span class="stat-icon">&#x1F4B0;</span><div class="stat-value" id="statFee">&mdash;</div><div class="stat-label">Delivery Fee (USD)</div></div>
+    <div class="stat-card primary"><span class="stat-icon">&#x1F465;</span><div class="stat-value" id="statTotal" style="font-size:24px;">Loading...</div><div class="stat-label">Total Registered Users</div></div>
+    <div class="stat-card success"><span class="stat-icon">&#x2705;</span><div class="stat-value" id="statVerified" style="font-size:24px;">Loading...</div><div class="stat-label">Verified Users</div><span class="stat-change up" id="statVerifiedPct">&mdash;</span></div>
+    <div class="stat-card warning"><span class="stat-icon">&#x23F3;</span><div class="stat-value" id="statPending" style="font-size:24px;">Loading...</div><div class="stat-label">Pending Verification</div></div>
+    <div class="stat-card info"><span class="stat-icon">&#x1F4B0;</span><div class="stat-value" id="statFee" style="font-size:24px;">Loading...</div><div class="stat-label">Delivery Fee (USD)</div></div>
   </div>
   <div class="section-header"><h3>&#x1F4C8; Registration Activity (Last 7 Days)</h3></div>
   <div class="card" style="padding:24px;margin-bottom:24px"><div class="activity-chart" id="activityChart"></div><div class="chart-labels" id="chartLabels"></div></div>
@@ -316,6 +316,11 @@ function loadUsers(cb){
         if(local.length===0)local=JSON.parse(localStorage.getItem('tesla_entry_users')||'[]');
         allUsers=local;
       } catch(ex){ allUsers=[]; }
+      // Show error state in stats
+      var st=document.getElementById('statTotal');if(st)st.textContent='API Error';
+      var sv=document.getElementById('statVerified');if(sv)sv.textContent='API Error';
+      var sp=document.getElementById('statPending');if(sp)sp.textContent='API Error';
+      showToast('Could not load data from server. Check your connection.',true);
       try { if(cb)cb(); } catch(e2){ console.error(e2); }
     });
   } catch(e) {
@@ -542,6 +547,18 @@ function esc(str){
   if(!str)return'---';
   var d=document.createElement('div');d.textContent=str;return d.innerHTML;
 }
+// Immediate connectivity check on load
+(function(){
+  var testUrl='https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api/health';
+  fetch(testUrl).then(function(r){return r.json()}).then(function(d){
+    console.log('API Health Check: OK',d);
+  }).catch(function(e){
+    console.error('API Health Check FAILED:',e.message);
+    console.error('This means the admin panel cannot reach the Supabase API.');
+    console.error('Possible causes: network firewall, adblocker, or CORS policy.');
+    console.error('Try opening this URL directly to test: '+testUrl);
+  });
+})();
 document.addEventListener('DOMContentLoaded',init);
 // Expose functions globally for onclick handlers
 window.doLogin = doLogin;

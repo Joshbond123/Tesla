@@ -177,10 +177,10 @@
 <div class="page-content">
 <div class="tab-panel active" id="panelDashboard">
   <div class="stats-grid">
-    <div class="stat-card primary"><span class="stat-icon">&#x1F465;</span><div class="stat-value" id="statTotal">&mdash;</div><div class="stat-label">Total Registered Users</div></div>
-    <div class="stat-card success"><span class="stat-icon">&#x2705;</span><div class="stat-value" id="statVerified">&mdash;</div><div class="stat-label">Verified Users</div><span class="stat-change up" id="statVerifiedPct">&mdash;</span></div>
-    <div class="stat-card warning"><span class="stat-icon">&#x23F3;</span><div class="stat-value" id="statPending">&mdash;</div><div class="stat-label">Pending Verification</div></div>
-    <div class="stat-card info"><span class="stat-icon">&#x1F4B0;</span><div class="stat-value" id="statFee">&mdash;</div><div class="stat-label">Delivery Fee (USD)</div></div>
+    <div class="stat-card primary"><span class="stat-icon">&#x1F465;</span><div class="stat-value" id="statTotal" style="font-size:24px;">Loading...</div><div class="stat-label">Total Registered Users</div></div>
+    <div class="stat-card success"><span class="stat-icon">&#x2705;</span><div class="stat-value" id="statVerified" style="font-size:24px;">Loading...</div><div class="stat-label">Verified Users</div><span class="stat-change up" id="statVerifiedPct">&mdash;</span></div>
+    <div class="stat-card warning"><span class="stat-icon">&#x23F3;</span><div class="stat-value" id="statPending" style="font-size:24px;">Loading...</div><div class="stat-label">Pending Verification</div></div>
+    <div class="stat-card info"><span class="stat-icon">&#x1F4B0;</span><div class="stat-value" id="statFee" style="font-size:24px;">Loading...</div><div class="stat-label">Delivery Fee (USD)</div></div>
   </div>
   <div class="section-header"><h3>&#x1F4C8; Registration Activity (Last 7 Days)</h3></div>
   <div class="card" style="padding:24px;margin-bottom:24px"><div class="activity-chart" id="activityChart"></div><div class="chart-labels" id="chartLabels"></div></div>
@@ -236,24 +236,35 @@
 </div>
 </div></div></div>
 <div class="toast-container" id="toastContainer"></div>
-<script src="js/config.js"></script>
+<!-- self-contained admin panel -->
 <script>
 
 (function(){
 'use strict';
-var API=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+var API='https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';(function(){try{if(window.TESLA_API_BASE&&window.TESLA_API_BASE.indexOf('__')===-1)API=window.TESLA_API_BASE;var ls=localStorage.getItem('tesla_api_base');if(ls)API=ls.replace(/\/+$/,'');}catch(e){}})();
 var allUsers=[],allOrders=[],deliveryFee=299,adminPassword=localStorage.getItem('tesla_admin_pwd')||'admin123';
 
 function init(){
-  document.getElementById('loginInput').focus();
-  document.querySelectorAll('.nav-item').forEach(function(b){b.addEventListener('click',function(){switchTab(this.dataset.tab)})});
-  if(localStorage.getItem('tesla_admin_pwd'))adminPassword=localStorage.getItem('tesla_admin_pwd');
-  document.getElementById('feeInput').value=deliveryFee;
+  try {
+    var li=document.getElementById('loginInput');if(li)li.focus();
+    document.querySelectorAll('.nav-item').forEach(function(b){b.addEventListener('click',function(){switchTab(this.dataset.tab)})});
+    if(localStorage.getItem('tesla_admin_pwd'))adminPassword=localStorage.getItem('tesla_admin_pwd');
+    var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;
+  } catch(e) { console.error('init:',e); }
 }
 function doLogin(){
-  var p=document.getElementById('loginInput').value;
-  if(p===adminPassword){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.add('active');document.getElementById('loginError').style.display='none';refreshAll()}
-  else{document.getElementById('loginError').style.display='block';document.getElementById('loginInput').value='';document.getElementById('loginInput').focus()}
+  try {
+    var li=document.getElementById('loginInput');var p=li?li.value:'';
+    if(p===adminPassword){
+      var ls=document.getElementById('loginScreen');if(ls)ls.classList.add('hidden');
+      var app=document.getElementById('app');if(app)app.classList.add('active');
+      var le=document.getElementById('loginError');if(le)le.style.display='none';
+      refreshAll();
+    } else {
+      var le2=document.getElementById('loginError');if(le2)le2.style.display='block';
+      if(li){li.value='';li.focus();}
+    }
+  } catch(e) { console.error('doLogin:',e); }
 }
 function doLogout(){document.getElementById('app').classList.remove('active');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginInput').value='';document.getElementById('loginInput').focus()}
 function switchTab(t){
@@ -305,6 +316,11 @@ function loadUsers(cb){
         if(local.length===0)local=JSON.parse(localStorage.getItem('tesla_entry_users')||'[]');
         allUsers=local;
       } catch(ex){ allUsers=[]; }
+      // Show error state in stats
+      var st=document.getElementById('statTotal');if(st)st.textContent='API Error';
+      var sv=document.getElementById('statVerified');if(sv)sv.textContent='API Error';
+      var sp=document.getElementById('statPending');if(sp)sp.textContent='API Error';
+      showToast('Could not load data from server. Check your connection.',true);
       try { if(cb)cb(); } catch(e2){ console.error(e2); }
     });
   } catch(e) {
@@ -531,6 +547,18 @@ function esc(str){
   if(!str)return'---';
   var d=document.createElement('div');d.textContent=str;return d.innerHTML;
 }
+// Immediate connectivity check on load
+(function(){
+  var testUrl='https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api/health';
+  fetch(testUrl).then(function(r){return r.json()}).then(function(d){
+    console.log('API Health Check: OK',d);
+  }).catch(function(e){
+    console.error('API Health Check FAILED:',e.message);
+    console.error('This means the admin panel cannot reach the Supabase API.');
+    console.error('Possible causes: network firewall, adblocker, or CORS policy.');
+    console.error('Try opening this URL directly to test: '+testUrl);
+  });
+})();
 document.addEventListener('DOMContentLoaded',init);
 // Expose functions globally for onclick handlers
 window.doLogin = doLogin;
