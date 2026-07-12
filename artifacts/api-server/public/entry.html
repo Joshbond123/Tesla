@@ -227,7 +227,7 @@ form.addEventListener('submit', async (e) => {
     }, 3400);
 
     setTimeout(() => {
-      window.location.href = `/congratulations.html?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName || 'there')}&verifyLink=${encodeURIComponent(data.verifyLink || '')}`;
+      window.location.href = `/congratulations.html?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName || 'there')}`;
     }, 4200);
 
   } catch (err) {

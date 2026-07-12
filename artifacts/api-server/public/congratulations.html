@@ -332,68 +332,12 @@
       word-break: break-all;
     }
 
-    /* Instant Verify Button */
-    .instant-verify-section {
-      background: var(--red-light);
-      border: 1.5px dashed var(--red-border);
-      border-radius: var(--radius-md);
-      padding: 24px;
-      margin-bottom: 28px;
-      display: none; /* Shown dynamically if verifyLink is present */
-      flex-direction: column;
-      gap: 12px;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .instant-verify-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--dark);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .instant-verify-title svg {
-      width: 16px;
-      height: 16px;
-      color: var(--red);
-    }
-
-    .instant-verify-desc {
-      font-size: 13px;
-      color: var(--dark-muted);
-      line-height: 1.5;
-    }
-
-    .btn-tesla-solid {
-      background: var(--dark);
-      color: #ffffff;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 14px 24px;
-      border-radius: var(--radius-sm);
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: var(--transition);
-      width: 100%;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .btn-tesla-solid:hover {
-      background: #2b303a;
-      transform: translateY(-1px);
-    }
-
     /* Resend Email section */
     .resend-section {
       text-align: center;
       padding: 10px 0;
+      border-top: 1px solid var(--border-color);
+      padding-top: 24px;
     }
 
     .resend-text {
@@ -403,14 +347,14 @@
       line-height: 1.5;
     }
 
-    .btn-tesla-outline {
-      background: transparent;
-      border: 1.5px solid var(--dark);
-      color: var(--dark);
+    .btn-tesla-solid {
+      background: var(--dark);
+      color: #ffffff;
       font-size: 14px;
       font-weight: 600;
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: var(--radius-sm);
+      border: none;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -419,18 +363,18 @@
       transition: var(--transition);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      width: 100%;
     }
 
-    .btn-tesla-outline:hover:not(:disabled) {
-      background: var(--dark);
-      color: #ffffff;
+    .btn-tesla-solid:hover:not(:disabled) {
+      background: #2b303a;
+      transform: translateY(-1px);
     }
 
-    .btn-tesla-outline:disabled {
-      opacity: 0.5;
+    .btn-tesla-solid:disabled {
+      background: rgba(23, 26, 32, 0.4);
+      color: rgba(255, 255, 255, 0.7);
       cursor: not-allowed;
-      border-color: rgba(23, 26, 32, 0.2);
-      color: rgba(23, 26, 32, 0.4);
     }
 
     .countdown-timer {
@@ -472,6 +416,7 @@
       font-weight: 900;
       letter-spacing: 0.15em;
       color: var(--dark);
+      text-decoration: none;
     }
 
     .nav-logo img {
@@ -620,37 +565,17 @@
         </div>
       </div>
 
-      <!-- Instant Verification Option (Bypass for Testing & Convenience) -->
-      <div class="instant-verify-section" id="instantVerifyContainer">
-        <div class="instant-verify-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-          <span>Instant Bypass Option Available</span>
-        </div>
-        <p class="instant-verify-desc">
-          For testing convenience or if you experience delays receiving our automated email, you can bypass email confirmation and verify your entry instantly.
-        </p>
-        <button class="btn-tesla-solid" id="instantVerifyBtn" onclick="triggerInstantVerify()">
-          Instant Verification & Proceed
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-            <polyline points="12 5 19 12 12 19"/>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Manual Resend Action -->
+      <!-- Resend Action -->
       <div class="resend-section">
         <p class="resend-text">
-          Can't find our verification email? Check your spam folder, or request a new secure verification link.
+          Can't find our verification email? Check your spam folder, or request a new secure verification link below.
         </p>
-        <button class="btn-tesla-outline" id="resendBtn" onclick="resendEmail()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">
+        <button class="btn-tesla-solid" id="resendBtn" onclick="resendEmail()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px;">
             <polyline points="23 4 23 10 17 10"/>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
           </svg>
-          Resend Email
+          Resend Verification Email
         </button>
         <div class="countdown-timer" id="resendCountdown"></div>
       </div>
@@ -665,27 +590,11 @@
   // Parse query parameters
   var email = getParam('email') || '';
   var name = getParam('name') || 'there';
-  var verifyLink = getParam('verifyLink') || '';
 
   // Update UI with details
   document.getElementById('userName').textContent = name;
   if (email) {
     document.getElementById('emailShown').textContent = email;
-  }
-
-  // Handle display of Instant Verification if link is available
-  var instantSection = document.getElementById('instantVerifyContainer');
-  if (verifyLink) {
-    instantSection.style.display = 'flex';
-  }
-
-  function triggerInstantVerify() {
-    if (verifyLink) {
-      showToast('Redirecting to secure verification gateway...', 'info');
-      setTimeout(function() {
-        window.location.href = verifyLink;
-      }, 800);
-    }
   }
 
   var resendCooldown = 0;
@@ -702,17 +611,8 @@
 
     try {
       showToast('Requesting new verification link...', 'info');
-      var response = await apiCall('/resend', 'POST', { email: email });
+      await apiCall('/resend', 'POST', { email: email });
       showToast('Verification email resent successfully.', 'success');
-
-      // If resend returns a verifyLink, dynamically reveal the Instant Verify option!
-      if (response && response.verifyLink) {
-        verifyLink = response.verifyLink;
-        instantSection.style.display = 'flex';
-        // Add subtle animation highlight
-        instantSection.style.transform = 'scale(1.02)';
-        setTimeout(function() { instantSection.style.transform = 'none'; }, 300);
-      }
 
       // Start Countdown Cooldown
       resendCooldown = 60;
