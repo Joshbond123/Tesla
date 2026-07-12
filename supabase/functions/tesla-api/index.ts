@@ -122,6 +122,58 @@ async function authConfirmUser(uid: string) {
 
 // ── EMAIL: Try SMTP on port 587 (STARTTLS), fall back to 465 (SSL) ───────────
 // Both are non-blocking fire-and-forget.
+class SmtpConn {
+  private conn: any;
+  private buffer = "";
+  private decoder = new TextDecoder();
+  private encoder = new TextEncoder();
+
+  constructor(conn: any) {
+    this.conn = conn;
+  }
+
+  async send(data: string) {
+    await this.conn.write(this.encoder.encode(data + "\r\n"));
+  }
+
+  async readResponse(timeoutMs = 15000): Promise<string> {
+    const buf = new Uint8Array(4096);
+    const startTime = Date.now();
+
+    while (true) {
+      const lines = this.buffer.split("\r\n");
+      if (lines.length > 1) {
+        const lastCompleteLine = lines[lines.length - 2];
+        if (lastCompleteLine.length >= 3) {
+          const sep = lastCompleteLine.charAt(3);
+          if (sep !== "-") {
+            const responseLength = lines.slice(0, -1).join("\r\n").length + 2;
+            const response = this.buffer.substring(0, responseLength);
+            this.buffer = this.buffer.substring(responseLength);
+            return response;
+          }
+        }
+      }
+
+      if (Date.now() - startTime > timeoutMs) {
+        throw new Error("SMTP read timeout. Buffer: " + this.buffer);
+      }
+
+      const n = await this.conn.read(buf);
+      if (!n) {
+        throw new Error("SMTP connection closed by peer. Buffer: " + this.buffer);
+      }
+      this.buffer += this.decoder.decode(buf.subarray(0, n));
+    }
+  }
+
+  close() {
+    try {
+      this.conn.close();
+    } catch (_) {}
+  }
+}
+
 function sendEmailBackground(to: string, subject: string, html: string) {
   const promise = (async () => {
     // Try port 587 first (STARTTLS)
@@ -138,112 +190,98 @@ function sendEmailBackground(to: string, subject: string, html: string) {
   }
 }
 
+async function runSmtpAuthAndSend(smtp: SmtpConn, to: string, fromAddr: string, subject: string, html: string) {
+  // AUTH LOGIN
+  await smtp.send("AUTH LOGIN");
+  let resp = await smtp.readResponse(10000);
+  if (!resp.startsWith("334")) throw new Error("AUTH LOGIN response: " + resp);
+
+  // Username
+  await smtp.send(btoa(SMTP_USER));
+  resp = await smtp.readResponse(10000);
+  if (!resp.startsWith("334")) throw new Error("Username response: " + resp);
+
+  // Password
+  await smtp.send(btoa(SMTP_PASS));
+  resp = await smtp.readResponse(10000);
+  if (!resp.startsWith("235")) throw new Error("Password response: " + resp);
+
+  // MAIL FROM
+  await smtp.send("MAIL FROM:<" + SMTP_USER + ">");
+  resp = await smtp.readResponse(10000);
+  if (!resp.startsWith("250")) throw new Error("MAIL FROM response: " + resp);
+
+  // RCPT TO
+  await smtp.send("RCPT TO:<" + to + ">");
+  resp = await smtp.readResponse(10000);
+  if (!resp.startsWith("250")) throw new Error("RCPT TO response: " + resp);
+
+  // DATA
+  await smtp.send("DATA");
+  resp = await smtp.readResponse(10000);
+  if (!resp.startsWith("354")) throw new Error("DATA response: " + resp);
+
+  // Send body
+  await smtp.send("From: " + fromAddr + "\r\nTo: " + to + "\r\nSubject: " + subject + "\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + html + "\r\n.");
+  resp = await smtp.readResponse(10000);
+  if (!resp.startsWith("250")) throw new Error("Body response: " + resp);
+
+  // QUIT
+  await smtp.send("QUIT");
+  await smtp.readResponse(5000).catch(() => {});
+}
+
 async function trySmtpSend(port: number, useTls: boolean, to: string, subject: string, html: string): Promise<boolean> {
   const fromAddr = '"Tesla Award Program" <' + SMTP_USER + ">";
+  let conn: any = null;
   try {
-    const conn = useTls
-      ? await Deno.connectTls({ hostname: "smtp.gmail.com", port })
-      : await Deno.connect({ hostname: "smtp.gmail.com", port, transport: "tcp" });
-
-    const enc = new TextEncoder();
-    const dec = new TextDecoder();
-    const buf = new Uint8Array(4096);
-
-    async function readLine(timeoutMs = 10000): Promise<string> {
-      let result = "";
-      const start = Date.now();
-      while (true) {
-        if (Date.now() - start > timeoutMs) throw new Error("SMTP read timeout");
-        const n = await conn.read(buf);
-        if (!n) break;
-        result += dec.decode(buf.subarray(0, n));
-        if (result.endsWith("\r\n")) break;
-      }
-      return result.trim();
+    if (useTls) {
+      conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port });
+    } else {
+      conn = await Deno.connect({ hostname: "smtp.gmail.com", port, transport: "tcp" });
     }
 
-    async function send(data: string) {
-      await conn.write(enc.encode(data + "\r\n"));
-    }
+    const smtp = new SmtpConn(conn);
 
-    const greeting = await readLine(8000);
-    if (!greeting.startsWith("220")) throw new Error("SMTP greeting: " + greeting);
+    // 1. Read greeting
+    let resp = await smtp.readResponse(15000);
+    if (!resp.startsWith("220")) throw new Error("SMTP greeting: " + resp);
 
-    await send("EHLO localhost");
-    let line = "";
-    do { line = await readLine(5000); } while (line.startsWith("250-"));
+    // 2. Send EHLO
+    await smtp.send("EHLO localhost");
+    resp = await smtp.readResponse(15000);
+    if (!resp.startsWith("250")) throw new Error("EHLO response: " + resp);
 
-    // For port 587, send STARTTLS before AUTH
+    // 3. For STARTTLS (port 587), upgrade the connection
     if (!useTls) {
-      await send("STARTTLS");
-      const starttlsResp = await readLine(5000);
-      if (!starttlsResp.startsWith("220")) throw new Error("STARTTLS failed: " + starttlsResp);
-      // Upgrade to TLS
-      const tlsConn = await Deno.startTls(conn as any, { hostname: "smtp.gmail.com" });
-      // Re-send EHLO after STARTTLS
-      await (async () => {
-        const tlsEnc = new TextEncoder();
-        const tlsDec = new TextDecoder();
-        const tlsBuf = new Uint8Array(4096);
-        const tlsReadLine = async (): Promise<string> => {
-          let r = "";
-          while (true) {
-            const n = await tlsConn.read(tlsBuf);
-            if (!n) break;
-            r += tlsDec.decode(tlsBuf.subarray(0, n));
-            if (r.endsWith("\r\n")) break;
-          }
-          return r.trim();
-        };
-        const tlsSend = async (d: string) => { await tlsConn.write(enc.encode(d + "\r\n")); };
-        await tlsSend("EHLO localhost");
-        let l = "";
-        do { l = await tlsReadLine(); } while (l.startsWith("250-"));
-        await tlsSend("AUTH LOGIN");
-        await tlsReadLine();
-        await tlsSend(btoa(SMTP_USER));
-        await tlsReadLine();
-        await tlsSend(btoa(SMTP_PASS));
-        const authR = await tlsReadLine();
-        if (!authR.startsWith("235")) throw new Error("AUTH: " + authR);
-        await tlsSend("MAIL FROM:<" + SMTP_USER + ">");
-        await tlsReadLine();
-        await tlsSend("RCPT TO:<" + to + ">");
-        await tlsReadLine();
-        await tlsSend("DATA");
-        await tlsReadLine();
-        await tlsSend("From: " + fromAddr + "\r\nTo: " + to + "\r\nSubject: " + subject + "\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + html + "\r\n.");
-        await tlsReadLine();
-        await tlsSend("QUIT");
-        tlsConn.close();
-      })();
-      console.log("Email sent via STARTTLS port 587 to " + to);
+      await smtp.send("STARTTLS");
+      resp = await smtp.readResponse(10000);
+      if (!resp.startsWith("220")) throw new Error("STARTTLS response: " + resp);
+
+      // Upgrade connection to TLS
+      const tlsConn = await Deno.startTls(conn, { hostname: "smtp.gmail.com" });
+      const secureSmtp = new SmtpConn(tlsConn);
+
+      // Send EHLO again over secure connection
+      await secureSmtp.send("EHLO localhost");
+      resp = await secureSmtp.readResponse(15000);
+      if (!resp.startsWith("250")) throw new Error("Secure EHLO response: " + resp);
+
+      // Perform auth and send email using the secure connection
+      await runSmtpAuthAndSend(secureSmtp, to, fromAddr, subject, html);
+      secureSmtp.close();
+      return true;
+    } else {
+      // For SSL (port 465), we are already secure. Just do auth and send.
+      await runSmtpAuthAndSend(smtp, to, fromAddr, subject, html);
+      smtp.close();
       return true;
     }
-
-    // Direct SSL (port 465)
-    await send("AUTH LOGIN");
-    await readLine(5000);
-    await send(btoa(SMTP_USER));
-    await readLine(5000);
-    await send(btoa(SMTP_PASS));
-    const authResp = await readLine(8000);
-    if (!authResp.startsWith("235")) throw new Error("AUTH: " + authResp);
-
-    await send("MAIL FROM:<" + SMTP_USER + ">");
-    await readLine(5000);
-    await send("RCPT TO:<" + to + ">");
-    await readLine(5000);
-    await send("DATA");
-    await readLine(5000);
-    await send("From: " + fromAddr + "\r\nTo: " + to + "\r\nSubject: " + subject + "\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + html + "\r\n.");
-    await readLine(12000);
-    await send("QUIT");
-    conn.close();
-    console.log("Email sent via SSL port 465 to " + to);
-    return true;
   } catch (err) {
     console.error("SMTP port " + port + " failed: " + (err?.message || err));
+    if (conn) {
+      try { conn.close(); } catch (_) {}
+    }
     return false;
   }
 }

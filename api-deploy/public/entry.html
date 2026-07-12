@@ -225,7 +225,7 @@
       // then plays the 100% completion animation (600ms + 500ms fade = 1100ms)
       // Total: ~2.6s minimum of visible progress animation
       // Redirect happens after all of this completes
-      var redirectUrl = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
+      var redirectUrl = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there') + '&verifyLink=' + encodeURIComponent(data.verifyLink || '');
       hideLoading();
       // hideLoading: 2.5s minDisplay + 0.6s delay + 0.5s fade = 3.6s
       // Plus 5.5s progress bar animation = ~6s total visible loading

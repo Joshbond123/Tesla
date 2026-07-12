@@ -222,7 +222,7 @@
 
       setTimeout(function() {
         hideLoading();
-        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
+        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there') + '&verifyLink=' + encodeURIComponent(data.verifyLink || '');
       }, 2500);
 
     } catch (err) {
