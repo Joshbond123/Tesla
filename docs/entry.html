@@ -227,11 +227,12 @@
       // Redirect happens after all of this completes
       var redirectUrl = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
       hideLoading();
-      // hideLoading takes ~1100ms (600ms delay + 500ms fade) after minDisplay wait
-      // So we redirect at 2600ms which ensures everything is complete
+      // hideLoading: 2.5s minDisplay + 0.6s delay + 0.5s fade = 3.6s
+      // Plus 5.5s progress bar animation = ~6s total visible loading
+      // Redirect at 6000ms to ensure user sees the full experience
       setTimeout(function() {
         window.location.href = redirectUrl;
-      }, 2600);
+      }, 6000);
 
     } catch (err) {
       hideLoading();

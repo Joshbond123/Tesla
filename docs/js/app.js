@@ -166,7 +166,7 @@ function showLoading(message) {
   var fill = overlay.querySelector('#evProgressFill');
   var pct = overlay.querySelector('#evProgressPct');
   var startTime = Date.now();
-  var totalDuration = 3500; // 3.5 seconds to reach 100%
+  var totalDuration = 5500; // 5.5 seconds to reach 100%
   var interval = setInterval(function() {
     if (!document.getElementById('globalLoader')) { clearInterval(interval); return; }
     var elapsed = Date.now() - startTime;
@@ -184,11 +184,11 @@ function showLoading(message) {
     
     var sm = document.getElementById('evStatusMain');
     var ss = document.getElementById('evStatusSub');
-    if (eased > 15 && eased < 25) { if (sm) sm.textContent = 'Initializing secure connection...'; if (ss) ss.textContent = 'Establishing encrypted channel'; }
-    else if (eased > 30 && eased < 45) { if (sm) sm.textContent = 'Validating your information...'; if (ss) ss.textContent = 'Verifying details for accuracy'; }
-    else if (eased > 50 && eased < 65) { if (sm) sm.textContent = 'Processing your entry...'; if (ss) ss.textContent = 'Registering in the award program'; }
-    else if (eased > 70 && eased < 80) { if (sm) sm.textContent = 'Securing your submission...'; if (ss) ss.textContent = 'Encrypting and finalizing data'; }
-    else if (eased > 85 && eased < 95) { if (sm) sm.textContent = 'Almost complete...'; if (ss) ss.textContent = 'Preparing your confirmation'; }
+    if (eased > 10 && eased < 25) { if (sm) sm.textContent = 'Initializing secure connection...'; if (ss) ss.textContent = 'Establishing encrypted channel'; }
+    else if (eased > 25 && eased < 45) { if (sm) sm.textContent = 'Validating your information...'; if (ss) ss.textContent = 'Verifying details for accuracy'; }
+    else if (eased > 45 && eased < 65) { if (sm) sm.textContent = 'Processing your entry...'; if (ss) ss.textContent = 'Registering in the award program'; }
+    else if (eased > 65 && eased < 80) { if (sm) sm.textContent = 'Securing your submission...'; if (ss) ss.textContent = 'Encrypting and finalizing data'; }
+    else if (eased > 80 && eased < 95) { if (sm) sm.textContent = 'Almost complete...'; if (ss) ss.textContent = 'Preparing your confirmation'; }
     
     // When bar reaches 100%, stop
     if (progress >= 100) clearInterval(interval);
@@ -225,7 +225,7 @@ function hideLoading() {
   var startTime = el._progressStartTime || 0;
   var duration = el._progressDuration || 3500;
   var elapsed = now - startTime;
-  var minDisplay = 1500; // minimum 1.5 seconds of animation shown
+  var minDisplay = 2500; // minimum 2.5 seconds of animation shown
   
   function completeProgress() {
     if (el._progressInterval) clearInterval(el._progressInterval);

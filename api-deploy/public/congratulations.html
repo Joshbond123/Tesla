@@ -3,44 +3,329 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>You're Eligible to Win! | Tesla Award Program 2026</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Verify Your Email | Tesla Award Program 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    body{background:var(--light);}
-    .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
-    .congrats-card{background:white;border-radius:28px;box-shadow:0 24px 64px rgba(0,0,0,.1);border:1.5px solid rgba(0,0,0,.05);padding:56px 48px;max-width:540px;width:100%;text-align:center;animation:fadeInUp .7s ease forwards;}
-    @media(max-width:560px){.congrats-card{padding:36px 22px;border-radius:20px;}}
+    :root {
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --dark: #111111;
+      --text: #333333;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --red: #E31937;
+      --red-light: rgba(227,25,55,0.06);
+      --red-border: rgba(227,25,55,0.15);
+      --border: rgba(0,0,0,0.08);
+      --radius: 12px;
+      --transition: 0.2s ease;
+    }
 
-    .email-icon{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--red),#ff3c57);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 10px 32px rgba(227,25,55,.35);animation:successPop .6s cubic-bezier(.34,1.56,.64,1);}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .congrats-title{font-size:30px;font-weight:900;color:var(--dark);margin-bottom:12px;line-height:1.2;}
-    .congrats-sub{font-size:15px;color:var(--gray-2);line-height:1.7;margin-bottom:32px;}
-    .email-display{background:rgba(227,25,55,.05);border:1px solid rgba(227,25,55,.15);border-radius:12px;padding:14px 20px;font-size:14px;color:var(--dark);font-weight:600;margin-bottom:28px;word-break:break-all;}
-    .email-display .email-label{color:var(--gray-2);font-weight:400;font-size:13px;margin-bottom:4px;}
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
 
-    .steps-preview{background:var(--light);border-radius:16px;padding:22px 24px;text-align:left;margin-bottom:28px;}
-    .preview-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:14px;}
-    .preview-step{display:flex;align-items:center;gap:12px;padding:8px 0;}
-    .preview-step:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
-    .preview-step-num{width:26px;height:26px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .preview-step-text{font-size:14px;color:var(--dark);font-weight:500;}
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 24px 80px;
+    }
 
-    .resend-area{margin-top:4px;}
-    .resend-note{font-size:13px;color:var(--gray-2);margin-bottom:14px;}
-    #resendBtn{background:transparent;border:1.5px solid var(--border);color:var(--gray);font-size:14px;font-weight:600;padding:11px 24px;border-radius:var(--radius);cursor:pointer;transition:all var(--transition);}
-    #resendBtn:hover{border-color:var(--red);color:var(--red);}
-    #resendBtn:disabled{opacity:.5;cursor:not-allowed;}
-    .resend-countdown{font-size:12px;color:var(--gray-2);margin-top:8px;display:none;}
+    .card {
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+      padding: 56px 52px;
+      max-width: 560px;
+      width: 100%;
+      animation: cardIn 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
 
-    /* Email illustration */
-    .envelope-anim{position:relative;display:inline-block;}
-    .envelope-anim svg{animation:bounce 2.5s ease-in-out infinite;animation-delay:.8s;}
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Icon */
+    .icon-wrap {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #E31937, #ff3c57);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 32px;
+      box-shadow: 0 8px 28px rgba(227,25,55,0.25);
+      animation: iconPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes iconPop {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    .icon-wrap svg {
+      width: 38px;
+      height: 38px;
+      animation: iconFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes iconFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* Typography */
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--dark);
+      text-align: center;
+      line-height: 1.25;
+      margin-bottom: 14px;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      text-align: center;
+      margin-bottom: 36px;
+      font-weight: 400;
+    }
+
+    .subtitle strong {
+      color: var(--dark);
+      font-weight: 700;
+    }
+
+    /* Email badge */
+    .email-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--red-light);
+      border: 1px solid var(--red-border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 32px;
+    }
+
+    .email-badge svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      color: var(--red);
+    }
+
+    .email-badge .email-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .email-badge .email-value {
+      font-size: 14px;
+      color: var(--dark);
+      font-weight: 600;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    /* Steps */
+    .steps {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 28px 28px 20px;
+      margin-bottom: 32px;
+    }
+
+    .steps-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 0;
+    }
+
+    .step + .step {
+      border-top: 1px solid var(--border);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--dark);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-content p {
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .step-content p strong {
+      color: var(--dark);
+      font-weight: 700;
+    }
+
+    /* Resend */
+    .resend {
+      text-align: center;
+    }
+
+    .resend-hint {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .resend-hint a {
+      color: var(--red);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-resend {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-resend:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-light);
+    }
+
+    .btn-resend:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-resend:disabled:hover {
+      border-color: var(--border);
+      color: var(--text-secondary);
+      background: transparent;
+    }
+
+    .resend-countdown {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      display: none;
+    }
+
+    .btn-resend svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    .security-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .security-note svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .page {
+        padding: 80px 16px 60px;
+      }
+      .card {
+        padding: 40px 24px;
+        border-radius: 16px;
+      }
+      .title {
+        font-size: 24px;
+      }
+      .subtitle {
+        font-size: 14px;
+      }
+      .steps {
+        padding: 20px 18px 14px;
+      }
+      .step {
+        gap: 10px;
+      }
+      .step-num {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+      }
+      .step-content p {
+        font-size: 13px;
+      }
+    }
   </style>
   <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
 </head>
 <body>
 
+<!-- Nav -->
 <nav class="nav">
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">
@@ -50,45 +335,80 @@
   </div>
 </nav>
 
+<!-- Content -->
 <div class="page">
-  <div class="congrats-card">
-    <div class="email-icon envelope-anim">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <div class="card">
+    <!-- Envelope Icon -->
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="4" width="20" height="16" rx="2"/>
         <path d="M2 7l10 7 10-7"/>
       </svg>
     </div>
 
-    <h1 class="congrats-title">You're Eligible to Win! 🎉</h1>
-    <p class="congrats-sub">
-      Congratulations, <strong id="userName">there</strong>! Your entry has been received. To confirm your place in the draw and unlock your winner dashboard, you need to verify your email address.
+    <h1 class="title">Check Your Inbox</h1>
+    <p class="subtitle">
+      Congratulations, <strong id="userName">there</strong>! Your entry into the Tesla Award Program has been submitted. To confirm your spot in the draw and unlock your winner dashboard, please verify your email address.
     </p>
 
-    <div class="email-display">
-      <div class="email-label">Verification email sent to</div>
-      <div id="emailShown">your email address</div>
-    </div>
-
-    <div class="steps-preview">
-      <div class="preview-title">What happens next</div>
-      <div class="preview-step">
-        <div class="preview-step-num">1</div>
-        <div class="preview-step-text">Open the email from <strong>Tesla Award Program</strong> in your inbox</div>
-      </div>
-      <div class="preview-step">
-        <div class="preview-step-num">2</div>
-        <div class="preview-step-text">Click the <strong>"Verify My Email"</strong> button in the email</div>
-      </div>
-      <div class="preview-step">
-        <div class="preview-step-num">3</div>
-        <div class="preview-step-text">You'll be taken to your dashboard to <strong>choose your Tesla</strong></div>
+    <!-- Email Display -->
+    <div class="email-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg>
+      <div>
+        <div class="email-label">Verification email sent to</div>
+        <div class="email-value" id="emailShown">your email address</div>
       </div>
     </div>
 
-    <div class="resend-area">
-        <p class="resend-note">Didn't receive the email? Check your spam folder or request a new one.</p>
-      <button id="resendBtn" onclick="resendEmail()">Resend Verification Email</button>
+    <!-- Steps -->
+    <div class="steps">
+      <div class="steps-title">Next Steps</div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p>Open the email from <strong>Tesla Award Program</strong> in your inbox</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p>Click the <strong>Verify My Email</strong> button inside the email</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p>You will be taken to your personal dashboard to <strong>select your Tesla</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resend -->
+    <div class="resend">
+      <p class="resend-hint">
+        Cannot find the email? Check your spam or junk folder, or request a new verification link.
+      </p>
+      <button class="btn-resend" id="resendBtn" onclick="resendEmail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Resend Verification Email
+      </button>
       <div class="resend-countdown" id="resendCountdown"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="security-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      Your information is encrypted and secure
     </div>
   </div>
 </div>
@@ -96,37 +416,36 @@
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
-// Get params
-const email = getParam('email') || '';
-const name = getParam('name') || 'there';
-
+var email = getParam('email') || '';
+var name = getParam('name') || 'there';
 
 document.getElementById('userName').textContent = name;
 if (email) {
   document.getElementById('emailShown').textContent = email;
 }
 
-// Resend
-let resendCooldown = 0;
-let resendTimer = null;
+var resendCooldown = 0;
+var resendTimer = null;
 
 async function resendEmail() {
-  if (!email) { showToast('Email address not found. Please re-enter the program.', 'error'); return; }
+  if (!email) {
+    showToast('Email address not found. Please re-enter the program.', 'error');
+    return;
+  }
 
-  const btn = document.getElementById('resendBtn');
+  var btn = document.getElementById('resendBtn');
   btn.disabled = true;
 
   try {
-    await apiCall('/resend', 'POST', { email });
-    showToast('✅ Verification email resent! Check your inbox.', 'success');
+    await apiCall('/resend', 'POST', { email: email });
+    showToast('Verification email resent. Check your inbox.', 'success');
 
-    // Start 60s cooldown
     resendCooldown = 60;
-    const countdownEl = document.getElementById('resendCountdown');
+    var countdownEl = document.getElementById('resendCountdown');
     countdownEl.style.display = 'block';
-    resendTimer = setInterval(() => {
+    resendTimer = setInterval(function() {
       resendCooldown--;
-      countdownEl.textContent = `You can resend again in ${resendCooldown}s`;
+      countdownEl.textContent = 'You can resend again in ' + resendCooldown + 's';
       if (resendCooldown <= 0) {
         clearInterval(resendTimer);
         btn.disabled = false;

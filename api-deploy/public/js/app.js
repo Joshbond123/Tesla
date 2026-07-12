@@ -1,30 +1,52 @@
 // ╔══════════════════════════════════════════════════════════╗
 // ║     Tesla Vehicle Award Program — Shared Utilities       ║
-// ║     Production v3.0 — Premium Experience                 ║
+// ║     Production v3.1 — Premium Experience                 ║
 // ╚══════════════════════════════════════════════════════════╝
 
 // ── API CONFIGURATION ──────────────────────────────────────────────────
-// Allow setting API base via URL param, localStorage, or config file
-const urlApiParam = new URLSearchParams(window.location.search).get('api_url');
+// Allow overriding API base via URL param or localStorage (for local dev).
+// config.js (loaded first) is the single source of truth for window.TESLA_API_BASE.
+var urlApiParam = new URLSearchParams(window.location.search).get('api_url');
 if (urlApiParam) {
   localStorage.setItem('tesla_api_base', urlApiParam);
   window.TESLA_API_BASE = urlApiParam;
 }
 
-const configuredApiBase = (
+function normalizeApiBase(value) {
+  return String(value || '').trim().replace(/\/+$/, '');
+}
+
+function isValidApiBase(value) {
+  if (!value) return false;
+  try {
+    var url = new URL(value, window.location.origin);
+    return url.pathname.replace(/\/+$/, '').endsWith('/api');
+  } catch (err) {
+    return false;
+  }
+}
+
+// Use the configured value from config.js (or URL param override above)
+var API_BASE = normalizeApiBase(
+  urlApiParam ||
   window.TESLA_API_BASE ||
   localStorage.getItem('tesla_api_base') ||
   ''
-).replace(/\/$/, '');
+);
 
-const isGitHubPages = window.location.hostname.endsWith('github.io');
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE = configuredApiBase || (isLocalhost ? '/api' : (isGitHubPages ? '' : '/api'));
+// Final validation — ensure API_BASE is usable
+if (!isValidApiBase(API_BASE)) {
+  console.error('[Tesla] API_BASE is invalid or not configured:', API_BASE);
+  // Don't clear API_BASE — keep the raw value so the error message in apiCall() can show what's wrong
+}
+
+window.TESLA_API_BASE = API_BASE;
 
 function getApiConfigurationError() {
-  if (!API_BASE) {
+  if (!API_BASE || !isValidApiBase(API_BASE)) {
+    var isGitHubPages = window.location.hostname.endsWith('github.io');
     if (isGitHubPages) {
-      return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 The API server needs to be deployed. Deploy it to Render (see api-server/ directory) and set the URL.\n\nFor quick testing, add ?api_url=YOUR_API_URL to the URL, e.g.:\n?api_url=https://your-service.onrender.com/api';
+      return 'The secure backend API is not configured for this GitHub Pages deployment.\n\n👉 Configure the GitHub Pages workflow with a TESLA_API_BASE repository variable or environment secret that points to your hosted API URL ending in /api.\n\nFor quick local testing, add ?api_url=YOUR_API_URL to the URL, e.g.:\n?api_url=https://your-api.example.com/api';
     }
     return 'API base URL is not configured. Please set window.TESLA_API_BASE or deploy the backend server.';
   }
@@ -34,28 +56,34 @@ function getApiConfigurationError() {
 // Log API configuration for debugging
 console.log('[Tesla] API_BASE:', API_BASE || '(not configured — backend features will be unavailable)');
 console.log('[Tesla] Hostname:', window.location.hostname);
-console.log('[Tesla] isGitHubPages:', isGitHubPages);
 
 // ── API CALLS ──────────────────────────────────────────────────────────
 async function apiCall(endpoint, method, body) {
   method = method || 'GET';
   body = body || null;
+  var controller = new AbortController();
+  var timeout = setTimeout(function() { controller.abort(); }, 60000);
   
-  const configError = getApiConfigurationError();
+  var configError = getApiConfigurationError();
   if (configError) throw new Error(configError);
 
-  const options = { method, headers: { 'Content-Type': 'application/json' } };
+  var options = { method: method, headers: { 'Content-Type': 'application/json' }, signal: controller.signal };
   if (body) options.body = JSON.stringify(body);
 
-  let res;
+  var res;
   try {
     res = await fetch(API_BASE + endpoint, options);
   } catch (err) {
+    if (err && err.name === 'AbortError') {
+      throw new Error('The request took too long to complete. Please check your internet connection and try again.');
+    }
     throw new Error('Unable to reach the backend API. Please check your connection and try again.\n\nMake sure the API server is running at: ' + API_BASE);
+  } finally {
+    clearTimeout(timeout);
   }
 
-  const contentType = res.headers.get('content-type') || '';
-  let data;
+  var contentType = res.headers.get('content-type') || '';
+  var data;
   try {
     data = contentType.includes('application/json') ? await res.json() : { error: await res.text() };
   } catch (e) {
@@ -115,9 +143,7 @@ function showLoading(message) {
         '<div class="ev-ring ev-ring-2"></div>' +
         '<div class="ev-ring ev-ring-3"></div>' +
         '<div class="ev-core">' +
-          '<svg class="ev-tesla-logo" viewBox="0 0 24 24" fill="none">' +
-            '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z" fill="#E31937" stroke="#E31937" stroke-width="0.5"/>' +
-          '</svg>' +
+          '<img class="loading-brand-logo" src="assets/tesla-award-logo.png" alt="Tesla Award Program">' +
         '</div>' +
         '<div class="ev-particles" id="evParticles"></div>' +
       '</div>' +
@@ -136,34 +162,40 @@ function showLoading(message) {
 
   document.body.appendChild(overlay);
   
-  // Animate progress bar with realistic charging curve
+  // Animate progress bar — fast 3-second animated sweep to 100%
   var fill = overlay.querySelector('#evProgressFill');
   var pct = overlay.querySelector('#evProgressPct');
-  var width = 0;
-  var speed = 0.8;
+  var startTime = Date.now();
+  var totalDuration = 5500; // 5.5 seconds to reach 100%
   var interval = setInterval(function() {
     if (!document.getElementById('globalLoader')) { clearInterval(interval); return; }
-    // Simulate a charging curve that slows down near 90%
-    var target = Math.min(92, 92 * (1 - Math.exp(-width / 30)));
-    width += (target - width) * 0.04 + 0.15;
-    if (width > 91) width = 91;
+    var elapsed = Date.now() - startTime;
+    var progress = Math.min(100, (elapsed / totalDuration) * 100);
+    // Use ease-out curve for smooth deceleration near 100
+    var eased = 100 * (1 - Math.pow(1 - (progress / 100), 3));
+    
     if (fill) {
-      fill.style.width = width + '%';
-      fill.style.background = width > 50 
+      fill.style.width = eased + '%';
+      fill.style.background = eased > 50 
         ? 'linear-gradient(90deg, #E31937, #ff3c57)' 
         : 'linear-gradient(90deg, #E31937, #ff6b6b)';
     }
-    if (pct) pct.textContent = Math.round(width) + '%';
+    if (pct) pct.textContent = Math.round(eased) + '%';
     
     var sm = document.getElementById('evStatusMain');
     var ss = document.getElementById('evStatusSub');
-    if (width > 18 && width < 22) { if (sm) sm.textContent = 'Initializing secure connection...'; if (ss) ss.textContent = 'Establishing encrypted channel'; }
-    else if (width > 35 && width < 39) { if (sm) sm.textContent = 'Validating your information...'; if (ss) ss.textContent = 'Verifying details for accuracy'; }
-    else if (width > 55 && width < 59) { if (sm) sm.textContent = 'Processing your entry...'; if (ss) ss.textContent = 'Registering in the award program'; }
-    else if (width > 72 && width < 76) { if (sm) sm.textContent = 'Securing your submission...'; if (ss) ss.textContent = 'Encrypting and finalizing data'; }
-    else if (width > 85 && width < 89) { if (sm) sm.textContent = 'Almost complete...'; if (ss) ss.textContent = 'Preparing your confirmation'; }
-  }, 80);
+    if (eased > 10 && eased < 25) { if (sm) sm.textContent = 'Initializing secure connection...'; if (ss) ss.textContent = 'Establishing encrypted channel'; }
+    else if (eased > 25 && eased < 45) { if (sm) sm.textContent = 'Validating your information...'; if (ss) ss.textContent = 'Verifying details for accuracy'; }
+    else if (eased > 45 && eased < 65) { if (sm) sm.textContent = 'Processing your entry...'; if (ss) ss.textContent = 'Registering in the award program'; }
+    else if (eased > 65 && eased < 80) { if (sm) sm.textContent = 'Securing your submission...'; if (ss) ss.textContent = 'Encrypting and finalizing data'; }
+    else if (eased > 80 && eased < 95) { if (sm) sm.textContent = 'Almost complete...'; if (ss) ss.textContent = 'Preparing your confirmation'; }
+    
+    // When bar reaches 100%, stop
+    if (progress >= 100) clearInterval(interval);
+  }, 50);
   overlay._progressInterval = interval;
+  overlay._progressStartTime = startTime;
+  overlay._progressDuration = totalDuration;
   
   // Create glowing particles that orbit around the Tesla core
   var particles = overlay.querySelector('#evParticles');
@@ -189,27 +221,127 @@ function hideLoading() {
   var pct = document.getElementById('evProgressPct');
   var sm = document.getElementById('evStatusMain');
   var ss = document.getElementById('evStatusSub');
+  var now = Date.now();
+  var startTime = el._progressStartTime || 0;
+  var duration = el._progressDuration || 3500;
+  var elapsed = now - startTime;
+  var minDisplay = 2500; // minimum 2.5 seconds of animation shown
   
-  // Complete the progress bar
-  if (fill) {
-    fill.style.width = '100%';
-    fill.style.background = 'linear-gradient(90deg, #00A550, #00C853)';
+  function completeProgress() {
+    if (el._progressInterval) clearInterval(el._progressInterval);
+    // Complete the progress bar
+    if (fill) {
+      fill.style.width = '100%';
+      fill.style.background = 'linear-gradient(90deg, #00A550, #00C853)';
+    }
+    if (pct) {
+      pct.textContent = '100%';
+      pct.style.color = '#00A550';
+    }
+    if (sm) sm.textContent = '✓ Complete!';
+    if (ss) ss.textContent = 'Success — redirecting you now...';
+    
+    // Fade out with a slight delay for the success animation
+    setTimeout(function() {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.5s ease';
+      setTimeout(function() { if (el.parentNode) el.remove(); }, 500);
+    }, 600);
   }
-  if (pct) {
-    pct.textContent = '100%';
-    pct.style.color = '#00A550';
+  
+  // If enough time has passed, complete immediately
+  if (elapsed >= minDisplay) {
+    completeProgress();
+  } else {
+    // Wait until at least minDisplay has passed
+    setTimeout(completeProgress, minDisplay - elapsed);
   }
-  if (sm) sm.textContent = '✓ Complete!';
-  if (ss) ss.textContent = 'Success — redirecting you now...';
+}
+
+
+function enhanceBranding() {
+  // Branding is handled by inline <img> tags directly in each HTML page.
+  // This function intentionally does nothing to avoid duplicate logos.
+  // The PNG logo (tesla-award-logo.png) is embedded in nav-logo and entry-logo elements.
+}
+
+function initHiddenAdminAccess() {
+  // Use the visible "Admin Panel" element in the footer
+  var adminTrigger = document.getElementById('adminPanelTrigger');
+  if (!adminTrigger || adminTrigger._adminInitialized) return;
+  adminTrigger._adminInitialized = true;
   
-  if (el._progressInterval) clearInterval(el._progressInterval);
+  adminTrigger.style.cursor = 'pointer';
+  adminTrigger.title = 'Click 5 times for Admin Access';
   
-  // Fade out with a slight delay for the success animation
-  setTimeout(function() {
-    el.style.opacity = '0';
-    el.style.transition = 'opacity 0.5s ease';
-    setTimeout(function() { if (el.parentNode) el.remove(); }, 500);
-  }, 600);
+  var clicks = 0;
+  var resetTimer = null;
+  
+  // Create click indicator
+  var clickIndicator = document.createElement('div');
+  clickIndicator.id = 'adminClickIndicator';
+  clickIndicator.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:99998;display:none;align-items:center;gap:6px;background:rgba(0,0,0,.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-family:Inter,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.4);border:1px solid rgba(227,25,55,.3);';
+  document.body.appendChild(clickIndicator);
+  
+  adminTrigger.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    clicks += 1;
+    clearTimeout(resetTimer);
+    
+    var remaining = 5 - clicks;
+    if (remaining > 0) {
+      clickIndicator.style.display = 'flex';
+      clickIndicator.innerHTML = '<span style=\'color:#E31937;font-weight:700;font-size:16px;\'>' + clicks + '/5</span><span style=\'color:rgba(255,255,255,.7);\'>• ' + remaining + ' more click' + (remaining > 1 ? 's' : '') + ' for admin</span>';
+      clickIndicator.style.opacity = '1';
+      adminTrigger.style.color = 'rgba(227,25,55,' + (0.4 + clicks * 0.15) + ')';
+    }
+    
+    resetTimer = setTimeout(function() {
+      clicks = 0;
+      clickIndicator.style.opacity = '0';
+      setTimeout(function() { clickIndicator.style.display = 'none'; }, 300);
+      adminTrigger.style.color = 'rgba(255,255,255,.15)';
+    }, 2500);
+    
+    if (clicks >= 5) {
+      clicks = 0;
+      clearTimeout(resetTimer);
+      clickIndicator.style.display = 'none';
+      adminTrigger.style.color = 'rgba(255,255,255,.15)';
+      showAdminLoginModal();
+    }
+  });
+}
+
+function showAdminLoginModal() {
+  if (document.getElementById('adminLoginModal')) return;
+  var backdrop = document.createElement('div');
+  backdrop.className = 'admin-modal-backdrop';
+  backdrop.id = 'adminLoginModal';
+  backdrop.innerHTML = '<form class="admin-modal" id="adminLoginForm">' +
+    '<h2>Administrator Login</h2>' +
+    '<p>Enter the administrator password to continue.</p>' +
+    '<label class="form-label" for="adminPassword">Password</label>' +
+    '<input class="form-input" id="adminPassword" type="password" autocomplete="current-password" required>' +
+    '<button class="btn btn-primary btn-full" type="submit" style="margin-top:16px;">Open Admin Dashboard</button>' +
+    '<button class="btn btn-ghost btn-full" type="button" id="adminCancelBtn" style="margin-top:10px;">Cancel</button>' +
+    '<div class="admin-error" id="adminLoginError">Incorrect password. Access denied.</div>' +
+  '</form>';
+  document.body.appendChild(backdrop);
+  document.getElementById('adminPassword').focus();
+  document.getElementById('adminCancelBtn').addEventListener('click', function() { backdrop.remove(); });
+  backdrop.addEventListener('click', function(e) { if (e.target === backdrop) backdrop.remove(); });
+  document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var password = document.getElementById('adminPassword').value;
+    if (password === 'admin123') {
+      sessionStorage.setItem('tesla_admin_authenticated', 'true');
+      window.location.href = 'admin.html';
+      return;
+    }
+    document.getElementById('adminLoginError').style.display = 'block';
+  });
 }
 
 // ── VALIDATION ────────────────────────────────────────────────────────
@@ -227,6 +359,48 @@ function saveSession(token) {
 function getSession() { 
   return localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token') || getParam('session'); 
 }
+
+// ── ADMIN LOCAL STORAGE HOOK ──────────────────────────────────────────
+window.__teslaStoreUser = function(userData) {
+  try {
+    var key = 'tesla_registered_users';
+    var users = JSON.parse(localStorage.getItem(key) || '[]');
+    // Avoid duplicates
+    var existing = users.find(function(u){ return u.email && u.email.toLowerCase() === (userData.email||'').toLowerCase(); });
+    if (!existing) {
+      users.push({
+        name: (userData.firstName||'') + ' ' + (userData.lastName||'').trim() || userData.email,
+        first_name: userData.firstName || '', last_name: userData.lastName || '',
+        email: userData.email || '', phone: userData.phone || '',
+        date: new Date().toISOString().split('T')[0],
+        verified: userData.verified || false,
+        verification_status: userData.verified ? 'verified' : 'pending',
+        status: userData.verified ? 'verified' : 'pending',
+        country: userData.country || ''
+      });
+      localStorage.setItem(key, JSON.stringify(users));
+      localStorage.setItem('tesla_entry_users', JSON.stringify(users));
+    }
+  } catch(e) { console.warn('Admin storage hook failed:', e); }
+};
+
+window.__teslaMarkVerified = function(email) {
+  try {
+    var key = 'tesla_registered_users';
+    var users = JSON.parse(localStorage.getItem(key) || '[]');
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].email && users[i].email.toLowerCase() === email.toLowerCase()) {
+        users[i].verified = true;
+        users[i].verification_status = 'verified';
+        users[i].status = 'verified';
+        users[i].verified_at = new Date().toISOString();
+      }
+    }
+    localStorage.setItem(key, JSON.stringify(users));
+    localStorage.setItem('tesla_entry_users', JSON.stringify(users));
+  } catch(e) {}
+};
+
 function clearSession() { 
   localStorage.removeItem('tesla_session'); 
   localStorage.removeItem('tesla_session_token'); 
@@ -319,10 +493,14 @@ function initNavbar() {
 // ── AUTO INIT ─────────────────────────────────────────────────────────
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
+    enhanceBranding();
+    initHiddenAdminAccess();
     initScrollAnimations();
     initNavbar();
   });
 } else {
+  enhanceBranding();
+  initHiddenAdminAccess();
   initScrollAnimations();
   initNavbar();
 }

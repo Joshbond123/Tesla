@@ -221,12 +221,18 @@
       window.__teslaStoreUser({ email: email, phone: phone, firstName: firstName, lastName: lastName, verified: false });
 
       // Success — complete loading animation then redirect
-      // Complete loading animation: hideLoading() takes 600ms delay + 500ms fade = 1100ms
-      // We wait 2000ms so users clearly see the 100% green completion state
+      // hideLoading() now waits until the progress bar has shown for at least 1.5s,
+      // then plays the 100% completion animation (600ms + 500ms fade = 1100ms)
+      // Total: ~2.6s minimum of visible progress animation
+      // Redirect happens after all of this completes
+      var redirectUrl = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
       hideLoading();
+      // hideLoading: 2.5s minDisplay + 0.6s delay + 0.5s fade = 3.6s
+      // Plus 5.5s progress bar animation = ~6s total visible loading
+      // Redirect at 6000ms to ensure user sees the full experience
       setTimeout(function() {
-        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
-      }, 2000);
+        window.location.href = redirectUrl;
+      }, 6000);
 
     } catch (err) {
       hideLoading();
