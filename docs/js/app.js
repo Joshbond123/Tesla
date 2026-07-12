@@ -162,33 +162,40 @@ function showLoading(message) {
 
   document.body.appendChild(overlay);
   
-  // Animate progress bar with realistic charging curve
+  // Animate progress bar — fast 3-second animated sweep to 100%
   var fill = overlay.querySelector('#evProgressFill');
   var pct = overlay.querySelector('#evProgressPct');
-  var width = 0;
+  var startTime = Date.now();
+  var totalDuration = 3500; // 3.5 seconds to reach 100%
   var interval = setInterval(function() {
     if (!document.getElementById('globalLoader')) { clearInterval(interval); return; }
-    // Simulate a charging curve that slows down near 90%
-    var target = Math.min(92, 92 * (1 - Math.exp(-width / 30)));
-    width += (target - width) * 0.04 + 0.15;
-    if (width > 91) width = 91;
+    var elapsed = Date.now() - startTime;
+    var progress = Math.min(100, (elapsed / totalDuration) * 100);
+    // Use ease-out curve for smooth deceleration near 100
+    var eased = 100 * (1 - Math.pow(1 - (progress / 100), 3));
+    
     if (fill) {
-      fill.style.width = width + '%';
-      fill.style.background = width > 50 
+      fill.style.width = eased + '%';
+      fill.style.background = eased > 50 
         ? 'linear-gradient(90deg, #E31937, #ff3c57)' 
         : 'linear-gradient(90deg, #E31937, #ff6b6b)';
     }
-    if (pct) pct.textContent = Math.round(width) + '%';
+    if (pct) pct.textContent = Math.round(eased) + '%';
     
     var sm = document.getElementById('evStatusMain');
     var ss = document.getElementById('evStatusSub');
-    if (width > 18 && width < 22) { if (sm) sm.textContent = 'Initializing secure connection...'; if (ss) ss.textContent = 'Establishing encrypted channel'; }
-    else if (width > 35 && width < 39) { if (sm) sm.textContent = 'Validating your information...'; if (ss) ss.textContent = 'Verifying details for accuracy'; }
-    else if (width > 55 && width < 59) { if (sm) sm.textContent = 'Processing your entry...'; if (ss) ss.textContent = 'Registering in the award program'; }
-    else if (width > 72 && width < 76) { if (sm) sm.textContent = 'Securing your submission...'; if (ss) ss.textContent = 'Encrypting and finalizing data'; }
-    else if (width > 85 && width < 89) { if (sm) sm.textContent = 'Almost complete...'; if (ss) ss.textContent = 'Preparing your confirmation'; }
-  }, 80);
+    if (eased > 15 && eased < 25) { if (sm) sm.textContent = 'Initializing secure connection...'; if (ss) ss.textContent = 'Establishing encrypted channel'; }
+    else if (eased > 30 && eased < 45) { if (sm) sm.textContent = 'Validating your information...'; if (ss) ss.textContent = 'Verifying details for accuracy'; }
+    else if (eased > 50 && eased < 65) { if (sm) sm.textContent = 'Processing your entry...'; if (ss) ss.textContent = 'Registering in the award program'; }
+    else if (eased > 70 && eased < 80) { if (sm) sm.textContent = 'Securing your submission...'; if (ss) ss.textContent = 'Encrypting and finalizing data'; }
+    else if (eased > 85 && eased < 95) { if (sm) sm.textContent = 'Almost complete...'; if (ss) ss.textContent = 'Preparing your confirmation'; }
+    
+    // When bar reaches 100%, stop
+    if (progress >= 100) clearInterval(interval);
+  }, 50);
   overlay._progressInterval = interval;
+  overlay._progressStartTime = startTime;
+  overlay._progressDuration = totalDuration;
   
   // Create glowing particles that orbit around the Tesla core
   var particles = overlay.querySelector('#evParticles');
@@ -214,27 +221,41 @@ function hideLoading() {
   var pct = document.getElementById('evProgressPct');
   var sm = document.getElementById('evStatusMain');
   var ss = document.getElementById('evStatusSub');
+  var now = Date.now();
+  var startTime = el._progressStartTime || 0;
+  var duration = el._progressDuration || 3500;
+  var elapsed = now - startTime;
+  var minDisplay = 1500; // minimum 1.5 seconds of animation shown
   
-  // Complete the progress bar
-  if (fill) {
-    fill.style.width = '100%';
-    fill.style.background = 'linear-gradient(90deg, #00A550, #00C853)';
+  function completeProgress() {
+    if (el._progressInterval) clearInterval(el._progressInterval);
+    // Complete the progress bar
+    if (fill) {
+      fill.style.width = '100%';
+      fill.style.background = 'linear-gradient(90deg, #00A550, #00C853)';
+    }
+    if (pct) {
+      pct.textContent = '100%';
+      pct.style.color = '#00A550';
+    }
+    if (sm) sm.textContent = '✓ Complete!';
+    if (ss) ss.textContent = 'Success — redirecting you now...';
+    
+    // Fade out with a slight delay for the success animation
+    setTimeout(function() {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.5s ease';
+      setTimeout(function() { if (el.parentNode) el.remove(); }, 500);
+    }, 600);
   }
-  if (pct) {
-    pct.textContent = '100%';
-    pct.style.color = '#00A550';
+  
+  // If enough time has passed, complete immediately
+  if (elapsed >= minDisplay) {
+    completeProgress();
+  } else {
+    // Wait until at least minDisplay has passed
+    setTimeout(completeProgress, minDisplay - elapsed);
   }
-  if (sm) sm.textContent = '✓ Complete!';
-  if (ss) ss.textContent = 'Success — redirecting you now...';
-  
-  if (el._progressInterval) clearInterval(el._progressInterval);
-  
-  // Fade out with a slight delay for the success animation
-  setTimeout(function() {
-    el.style.opacity = '0';
-    el.style.transition = 'opacity 0.5s ease';
-    setTimeout(function() { if (el.parentNode) el.remove(); }, 500);
-  }, 600);
 }
 
 
