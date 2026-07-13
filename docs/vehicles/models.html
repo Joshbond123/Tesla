@@ -98,23 +98,9 @@
   </div>
   <script>
     function selectVehicle(vehicleId) {
-      try {
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.setItem('selectedTeslaVehicle', vehicleId);
-        }
-        var session = null;
-        try {
-          var s = localStorage.getItem('tesla_session');
-          if (s) session = JSON.parse(s);
-        } catch(e) {}
-        if (session) {
-          window.location.href = '../dashboard.html?vehicle=' + vehicleId;
-        } else {
-          window.location.href = '../entry.html?vehicle=' + vehicleId;
-        }
-      } catch(e) {
-        window.location.href = '../entry.html?vehicle=' + vehicleId;
-      }
+      if (typeof saveSelectedVehicle === 'function') saveSelectedVehicle(vehicleId);
+      try { sessionStorage.setItem('selectedTeslaVehicle', vehicleId); } catch(e) {}
+      window.location.href = '../delivery-details.html';
     }
   </script>
 </body>

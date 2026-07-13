@@ -161,7 +161,7 @@ const sessionToken  = localStorage.getItem('tesla_session_token') || getSession(
 
 if (!savedCar || !savedDelivery || !savedMethod) { window.location.href = 'dashboard.html'; }
 
-const carValues = { model3:'$38,990', modely:'$44,990', models:'$74,990', modelx:'$79,990', cybertruck:'$60,990', roadster:'$200,000' };
+const carValues = { model3:'$38,380', modely:'$41,380', models:'$111,380', modelx:'$116,380', cybertruck:'$71,985' };
 
 // Populate summary
 document.getElementById('vehicleValue').textContent = savedCar ? (carValues[savedCar.id] || '—') : '—';

@@ -122,7 +122,13 @@
   </div>
 
   <!-- Actions -->
-  <div class="action-row anim-fade-up delay-5">
+  <!-- Delivery method CTA (shown when no method selected) -->
+  <div class="action-row anim-fade-up delay-5" id="chooseMethodRow" style="display:none;">
+    <a href="delivery-method.html" class="btn btn-primary btn-lg" style="flex:1;text-align:center;">📦 Choose Delivery Method →</a>
+    <a href="delivery-details.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">← Edit Details</a>
+  </div>
+  <!-- Normal track/home buttons (shown when method selected) -->
+  <div class="action-row anim-fade-up delay-5" id="trackHomeRow">
     <a id="trackBtn" href="track.html" class="btn btn-primary btn-lg" style="flex:1;text-align:center;">📍 Track My Order</a>
     <a href="index.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">← Back to Home</a>
   </div>
@@ -153,6 +159,22 @@ function launchConfetti() {
   }
 }
 launchConfetti();
+
+// === Check delivery method status ===
+var savedMethodChk = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
+if (!savedMethodChk) {
+  // No delivery method selected yet — show the choose method button
+  document.getElementById('chooseMethodRow').style.display = 'flex';
+  document.getElementById('trackHomeRow').style.display = 'none';
+} else {
+  // Method already selected
+  document.getElementById('chooseMethodRow').style.display = 'none';
+  document.getElementById('trackHomeRow').style.display = 'flex';
+  // Show method name
+  var el = document.getElementById('delivMethod');
+  if (el) el.textContent = savedMethodChk.name || '--';
+}
+
 
 // Load order data
 const order = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');

@@ -65,6 +65,27 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     window._userData = data.user;
 
+    // === PROGRESS RESUMPTION: Detect saved progress and redirect ===
+    var savedOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+    var savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+    var savedMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
+    var savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+
+    if (savedOrder && savedDelivery && savedMethod) {
+      // Full progress: delivery method chosen -> go to order success
+      window.location.href = 'order-success.html';
+      return;
+    } else if (savedOrder && savedDelivery) {
+      // Has order and delivery but no method -> go to delivery method
+      window.location.href = 'delivery-method.html';
+      return;
+    } else if (savedCar && savedDelivery) {
+      // Has car and delivery but no order -> go to delivery details
+      window.location.href = 'delivery-details.html';
+      return;
+    }
+    // === END PROGRESS RESUMPTION ===
+
     var nameInput = document.querySelector('[name="fullName"]');
     if (nameInput && data.user.firstName) {
       nameInput.value = (data.user.firstName + ' ' + (data.user.lastName || '')).trim();
