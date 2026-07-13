@@ -34,24 +34,15 @@
     .section-hdr h2{font-size:26px;font-weight:800;color:var(--dark);}
     .section-hdr p{font-size:14px;color:var(--gray-2);margin-top:6px;}
 
-    /* Car grid */
-    .cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px;}
+    /* Car grid — Premium Tesla-inspired */
+    .cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(310px,100%),1fr));gap:24px;margin-bottom:28px;}
     @media(max-width:900px){.cars-grid{grid-template-columns:repeat(2,1fr);}}
     @media(max-width:540px){.cars-grid{grid-template-columns:1fr;}}
-    .car-card{cursor:pointer;border-radius:16px;border:2px solid rgba(0,0,0,.06);box-shadow:var(--shadow);overflow:hidden;transition:all var(--transition);background:white;position:relative;}
-    .car-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:rgba(227,25,55,.25);}
-    .car-card.selected{border-color:var(--red);box-shadow:0 0 0 4px rgba(227,25,55,.14);}
-    .car-card .sel-check{display:none;position:absolute;top:10px;right:10px;width:28px;height:28px;background:var(--red);color:white;border-radius:50%;align-items:center;justify-content:center;font-size:14px;font-weight:700;z-index:2;}
-    .car-card.selected .sel-check{display:flex;}
-    .car-img-area{height:148px;background:linear-gradient(135deg,#f7f8fa,#edf0f5);display:flex;align-items:center;justify-content:center;padding:12px;}
-    .car-img-area img{height:100%;object-fit:contain;transition:transform var(--transition);}
-    .car-card:hover .car-img-area img{transform:scale(1.06);}
-    .car-body{padding:16px;}
-    .car-title{font-size:16px;font-weight:700;color:var(--dark);}
-    .car-meta{font-size:12px;color:var(--gray-2);margin-bottom:10px;}
-    .car-specs{display:flex;flex-wrap:wrap;gap:6px;}
-    .car-spec-pill{font-size:11px;background:var(--light);color:var(--gray);padding:3px 9px;border-radius:999px;font-weight:500;}
-    .car-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(227,25,55,.08);color:var(--red);margin-bottom:6px;}
+    .dash-car-card{cursor:pointer;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;overflow:hidden;transition:all .35s cubic-bezier(.4,0,.2,1);box-shadow:0 6px 24px rgba(0,0,0,.04);display:flex;flex-direction:column;height:100%;}
+    .dash-car-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.08);border-color:rgba(227,25,55,.3);}
+    .dash-car-card:hover img{transform:scale(1.06) !important;}
+    .dash-specs > div{transition:all .2s}
+    .dash-specs > div:hover{background:rgba(227,25,55,.03) !important;border-color:rgba(227,25,55,.08) !important}
 
     /* Delivery form */
     .delivery-wrap{background:white;border-radius:20px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:36px;}
@@ -115,7 +106,7 @@
   <div id="stepSelectCar">
     <div class="section-hdr">
       <h2>🏆 Choose Your Tesla</h2>
-      <p>You've won the right to select any Tesla vehicle from our fleet. Pick the one that excites you most — it will be delivered to your door.</p>
+      <p>You've won the right to select any Tesla vehicle from our fleet. Click a card to view details, then choose your Tesla on the detail page.</p>
     </div>
     <div class="cars-grid" id="carGrid"></div>
   </div>
