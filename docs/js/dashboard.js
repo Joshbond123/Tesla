@@ -124,8 +124,18 @@ function selectCar(carId) {
     if (cars[j].id === carId) { selectedCar = cars[j]; break; }
   }
   
-  var btn = document.getElementById('confirmCarBtn');
-  if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+  // Auto-advance to delivery step
+  if (selectedCar) {
+    setStep(3);
+    document.getElementById('stepSelectCar').style.display = 'none';
+    var deliveryStep = document.getElementById('stepDelivery');
+    deliveryStep.style.display = 'block';
+    deliveryStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    document.getElementById('selectedCarTitle').textContent = 'Tesla ' + selectedCar.name;
+    document.getElementById('selectedCarColor').textContent = selectedCar.color;
+    document.getElementById('selectedCarEmoji').textContent = selectedCar.emoji;
+  }
 }
 
 function confirmCar() {
