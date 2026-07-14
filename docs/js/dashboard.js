@@ -169,7 +169,7 @@ function renderCars() {
     return '<div class="dash-car-card" onclick="selectCar('" + car.id + "')" style="cursor:pointer;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;overflow:hidden;transition:all .35s cubic-bezier(.4,0,.2,1);box-shadow:0 6px 24px rgba(0,0,0,.04);display:flex;flex-direction:column;height:100%;">' +
       '<div style="height:220px;background:radial-gradient(circle at center,rgba(227,25,55,.012) 0%,rgba(0,0,0,.02) 100%),#fcfcfc;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;border-bottom:1px solid rgba(0,0,0,.04);">' +
         '<span style="position:absolute;top:16px;right:16px;background:rgba(227,25,55,.07);color:var(--red);border:1px solid rgba(227,25,55,.12);padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.04em;z-index:2;">' + car.badge + '</span>' +
-        '<img src="' + car.img + '" alt="Tesla ' + car.name + '" style="height:92%;max-width:100%;object-fit:contain;transition:transform .5s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 6px 12px rgba(0,0,0,.1));" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=font-size:56px;line-height:220px;text-align:center>'+car.emoji+'</div>')">' +
+        '<img src="' + car.img + '" alt="Tesla ' + car.name + '" style="height:92%;max-width:100%;object-fit:contain;transition:transform .5s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 6px 12px rgba(0,0,0,.1));" >' +
       '</div>' +
       '<div style="padding:24px 22px 26px;">' +
         '<h3 style="font-size:22px;font-weight:800;color:#111;letter-spacing:-.5px;margin:0 0 4px;">Tesla ' + car.name + '</h3>' +
