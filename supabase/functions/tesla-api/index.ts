@@ -318,6 +318,9 @@ async function handleEntry(req: Request) {
     return json({ error: "Server error. Please try again." }, 500);
   }
 
+  const sessionToken = hexRandom(32);
+  await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+
   const verifyLink = SELF_BASE + "/api/verify?token=" + verificationToken + "&email=" + encodeURIComponent(emailKey);
   // Non-blocking email send (tries both ports)
   sendEmailBackground(emailKey, "⚡ Verify Your Email — Tesla Award Program",
@@ -325,9 +328,11 @@ async function handleEntry(req: Request) {
 
   return json({
     success: true,
+    sessionToken,
     message: "Entry submitted! Check your email or use the instant verify button.",
     entryId: entry.id,
-    verifyLink: verifyLink
+    verifyLink: verifyLink,
+    user: { email: emailKey, firstName: firstName, lastName: lastName, entryId: entry.id, phone: phone }
   });
 }
 
