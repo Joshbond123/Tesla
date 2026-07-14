@@ -66,8 +66,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     window._userData = data.user;
 
     // === PROGRESS RESUMPTION: Detect saved progress and redirect ===
-    var savedOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+    // First, verify saved progress belongs to the current user.
+    // If user was deleted and re-registered, clear stale progress.
     var savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+    var sessionEmail = data.user.email || '';
+    if (savedDelivery && savedDelivery.email && sessionEmail) {
+      if (savedDelivery.email.toLowerCase() !== sessionEmail.toLowerCase()) {
+        // Stale progress from a deleted user — wipe everything
+        try {
+          localStorage.removeItem('tesla_selected_car');
+          localStorage.removeItem('tesla_delivery_details');
+          localStorage.removeItem('tesla_delivery_method');
+          localStorage.removeItem('tesla_last_order');
+          localStorage.removeItem('tesla_session_token');
+          localStorage.removeItem('tesla_session');
+          sessionStorage.removeItem('selectedTeslaVehicle');
+        } catch(e) {}
+        savedDelivery = null;
+      }
+    }
+    
+    var savedOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
     var savedMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
     var savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
 

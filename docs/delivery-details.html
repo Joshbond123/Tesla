@@ -164,6 +164,38 @@ var savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') ||
 // If no car selected, redirect to dashboard
 if (!selectedCar) { window.location.href = 'dashboard.html'; }
 
+// Validate that saved progress belongs to the current user session.
+// If the user was deleted and re-registered, clear stale progress.
+(function checkSessionOwnership() {
+  try {
+    var sessionData = localStorage.getItem('tesla_session');
+    var sessionToken = localStorage.getItem('tesla_session_token');
+    if ((!sessionData && !sessionToken) || !savedDelivery || !savedDelivery.email) return;
+    
+    // If we have a session token, validate it against the server
+    if (sessionToken) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', (window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api') + '/session?token=' + encodeURIComponent(sessionToken), false);
+      try { xhr.send(); } catch(e) { return; }
+      if (xhr.status === 200) {
+        var data = JSON.parse(xhr.responseText || '{}');
+        if (!data.valid) {
+          // Session invalid — wipe all progress
+          localStorage.removeItem('tesla_selected_car');
+          localStorage.removeItem('tesla_delivery_details');
+          localStorage.removeItem('tesla_delivery_method');
+          localStorage.removeItem('tesla_last_order');
+          localStorage.removeItem('tesla_session_token');
+          localStorage.removeItem('tesla_session');
+          sessionStorage.removeItem('selectedTeslaVehicle');
+          window.location.href = 'dashboard.html';
+          return;
+        }
+      }
+    }
+  } catch(e) {}
+})();
+
 // Resume: if delivery already submitted and order exists, redirect to order-success
 var existingOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
 if (existingOrder && savedDelivery) {

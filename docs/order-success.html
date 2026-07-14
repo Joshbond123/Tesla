@@ -176,6 +176,34 @@ if (!savedMethodChk) {
 }
 
 
+// Validate session ownership before loading order.
+// If user was deleted and re-registered, clear stale data.
+(function validateSession() {
+  try {
+    var sessionToken = localStorage.getItem('tesla_session_token');
+    if (sessionToken) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', (window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api') + '/session?token=' + encodeURIComponent(sessionToken), false);
+      try { xhr.send(); } catch(e) { return; }
+      if (xhr.status === 200) {
+        var data = JSON.parse(xhr.responseText || '{}');
+        if (!data.valid) {
+          // Session invalid (user deleted) — wipe all stale progress
+          localStorage.removeItem('tesla_selected_car');
+          localStorage.removeItem('tesla_delivery_details');
+          localStorage.removeItem('tesla_delivery_method');
+          localStorage.removeItem('tesla_last_order');
+          localStorage.removeItem('tesla_session_token');
+          localStorage.removeItem('tesla_session');
+          sessionStorage.removeItem('selectedTeslaVehicle');
+          window.location.href = 'entry.html';
+          return;
+        }
+      }
+    }
+  } catch(e) {}
+})();
+
 // Load order data
 const order = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
 if (!order) { window.location.href = 'index.html'; }
