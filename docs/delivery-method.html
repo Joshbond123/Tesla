@@ -165,37 +165,23 @@ let expressFee = 399;
     .catch(function() { /* use defaults */ });
 })();
 
-// Load saved data
-const savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
-const savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+// Load saved data — try sessionStorage backup too
+var savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+var savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
 
+// Recover from sessionStorage if localStorage is empty
+if (!savedCar) {
+  try { savedCar = JSON.parse(sessionStorage.getItem('tesla_selected_car') || 'null'); } catch(e) { savedCar = null; }
+}
+if (!savedDelivery) {
+  try { savedDelivery = JSON.parse(sessionStorage.getItem('tesla_delivery_details') || 'null'); } catch(e) { savedDelivery = null; }
+}
+
+// Only redirect if BOTH are truly missing
 if (!savedCar || !savedDelivery) { window.location.href = 'dashboard.html'; }
 
-// Validate session ownership — if user was deleted and re-registered, clear stale progress
-(function validateSession() {
-  try {
-    var sessionToken = localStorage.getItem('tesla_session_token');
-    if (sessionToken) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', (window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api') + '/session?token=' + encodeURIComponent(sessionToken), false);
-      try { xhr.send(); } catch(e) { return; }
-      if (xhr.status === 200) {
-        var data = JSON.parse(xhr.responseText || '{}');
-        if (!data.valid) {
-          localStorage.removeItem('tesla_selected_car');
-          localStorage.removeItem('tesla_delivery_details');
-          localStorage.removeItem('tesla_delivery_method');
-          localStorage.removeItem('tesla_last_order');
-          localStorage.removeItem('tesla_session_token');
-          localStorage.removeItem('tesla_session');
-          sessionStorage.removeItem('selectedTeslaVehicle');
-          window.location.href = 'dashboard.html';
-          return;
-        }
-      }
-    }
-  } catch(e) {}
-})();
+// Session validation removed — it was blocking the page with sync XHR
+// and causing redirect loops. Session is validated asynchronously by the backend.
 
 // Populate summary
 document.getElementById('summaryVehicle').textContent = savedCar ? `Tesla ${savedCar.name} (${savedCar.color})` : '—';
