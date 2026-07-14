@@ -196,6 +196,7 @@
         <div class="search-box"><span class="search-icon">&#x1F50D;</span><input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="renderUsers()"></div>
         <select class="field-select" id="statusFilter" onchange="renderUsers()"><option value="all">All Status</option><option value="verified">Verified</option><option value="pending">Pending</option></select>
         <button class="btn btn-primary btn-sm" onclick="refreshAll()">&#x1F504; Refresh</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteAllUsers()" id="deleteAllBtn" style="margin-left:8px;">&#x1F5D1; Delete All Users</button>
       </div>
     </div>
     <div class="table-wrap"><table><thead><tr><th>#</th><th>User</th><th>Email</th><th>Phone</th><th>Status</th><th>Verified</th><th>Registered</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="8" class="loading-row"><span class="spinner"></span> Loading...</td></tr></tbody></table></div>
@@ -471,13 +472,65 @@ function renderUsers(){
 }
 function deleteUser(id,email){
   var name=email||id;
-  if(!confirm('Permanently delete user "'+name+'" and all their data? This cannot be undone.'))return;
+  if(!confirm('Permanently delete user "'+name+'" and all their data? This WILL clear their saved progress, selected car, delivery details, and order information. This cannot be undone.'))return;
   api('POST','/admin/users/delete',{id:id,email:email}).then(function(){
+    // Clear all localStorage data associated with this user's session
+    try {
+      localStorage.removeItem('tesla_selected_car');
+      localStorage.removeItem('tesla_delivery_details');
+      localStorage.removeItem('tesla_delivery_method');
+      localStorage.removeItem('tesla_last_order');
+      localStorage.removeItem('tesla_session_token');
+      localStorage.removeItem('tesla_session');
+      localStorage.removeItem('tesla_entry_users');
+      localStorage.removeItem('selectedTeslaVehicle');
+    } catch(e) {}
+    
     allUsers=allUsers.filter(function(u){return u.id!==id});
-    showToast('User deleted successfully');
+    showToast('User deleted successfully. All saved data cleared.');
     renderUsers();loadDashboard();updateBadges();
   }).catch(function(e){
     showToast('Failed to delete user: '+e.message,true);
+  });
+}
+
+function deleteAllUsers(){
+  if(allUsers.length===0){showToast('No users to delete.',true);return;}
+  if(!confirm('WARNING: Permanently delete ALL '+allUsers.length+' users and ALL their saved data?\n\nThis will clear:\n- All registered users\n- All selected Tesla vehicles\n- All delivery details\n- All delivery method selections\n- All saved orders\n- All browser session data\n\nThis CANNOT be undone.'))return;
+  
+  showToast('Deleting all users... please wait.');
+  
+  var promises=[];
+  for(var i=0;i<allUsers.length;i++){
+    (function(u){
+      promises.push(
+        api('POST','/admin/users/delete',{id:u.id,email:u.email})
+          .then(function(){ return true; })
+          .catch(function(){ return false; })
+      );
+    })(allUsers[i]);
+  }
+  
+  Promise.all(promises).then(function(){
+    // Clear all localStorage data
+    try {
+      localStorage.removeItem('tesla_selected_car');
+      localStorage.removeItem('tesla_delivery_details');
+      localStorage.removeItem('tesla_delivery_method');
+      localStorage.removeItem('tesla_last_order');
+      localStorage.removeItem('tesla_session_token');
+      localStorage.removeItem('tesla_session');
+      localStorage.removeItem('tesla_registered_users');
+      localStorage.removeItem('tesla_entry_users');
+      localStorage.removeItem('selectedTeslaVehicle');
+      sessionStorage.clear();
+    } catch(e) {}
+    
+    allUsers=[];
+    showToast('All users deleted. All data wiped clean.');
+    renderUsers();loadDashboard();updateBadges();
+  }).catch(function(e){
+    showToast('Some users could not be deleted: '+e.message,true);
   });
 }
 function saveDeliveryFee(){
@@ -570,7 +623,7 @@ window.loadOrders = loadOrders;
 window.saveDeliveryFee = saveDeliveryFee;
 window.changePassword = changePassword;
 window.clearLocalData = clearLocalData;
-window.deleteUser = deleteUser;
+window.deleteUser = deleteUser; window.deleteAllUsers = deleteAllUsers;
 })();
 
 
