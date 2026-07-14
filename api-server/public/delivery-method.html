@@ -151,6 +151,19 @@ let selectedMethod = null;
 const savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
 const savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
 
+// Try to recover from sessionStorage backup if localStorage empty
+if (!savedCar) {
+  try { savedCar = JSON.parse(sessionStorage.getItem('tesla_selected_car') || 'null'); } catch(_) { savedCar = null; }
+}
+if (!savedDelivery) { 
+  try { savedDelivery = JSON.parse(sessionStorage.getItem('tesla_delivery_details') || 'null'); } catch(_) { savedDelivery = null; }
+}
+// Only redirect if BOTH are truly missing after recovery attempt
+if (!savedCar || !savedDelivery) {
+  // Try one more time with alternative keys
+  try { savedCar = savedCar || JSON.parse(localStorage.getItem('selectedCar')); } catch(_) {}
+  try { savedDelivery = savedDelivery || JSON.parse(localStorage.getItem('deliveryDetails')); } catch(_) {}
+}
 if (!savedCar || !savedDelivery) { window.location.href = 'dashboard.html'; }
 
 // Populate summary

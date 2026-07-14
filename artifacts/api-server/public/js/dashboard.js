@@ -61,6 +61,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   } catch (err) { clearSession(); window.location.href = '/entry.html'; return; }
 
+  // Recover selectedCar from sessionStorage if not in localStorage
+  if (!localStorage.getItem('tesla_selected_car')) {
+    var backup = sessionStorage.getItem('tesla_selected_car');
+    if (backup) {
+      try {
+        localStorage.setItem('tesla_selected_car', backup);
+      } catch(_) {}
+    }
+  }
+
   renderCars();
 });
 
@@ -73,7 +83,7 @@ function renderCars() {
       <div class="sel-check">✓</div>
       <div class="car-img-area">
         <img src="${car.img}" alt="Tesla ${car.name}"
-          onerror="this.outerHTML='<div style=\\'font-size:52px;\\'>${car.emoji}</div>'">
+          onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<div style=font-size:52px>${car.emoji}</div>')">
       </div>
       <div class="car-body">
         <div class="car-badge">${car.badge}</div>
@@ -168,8 +178,13 @@ document.addEventListener('submit', async (e) => {
   }
 
   // Save to localStorage and proceed to delivery method page
-  localStorage.setItem('tesla_selected_car', JSON.stringify(selectedCar));
-  localStorage.setItem('tesla_delivery_details', JSON.stringify(deliveryDetails));
+  // Save to both localStorage and sessionStorage for reliability
+  var carData = JSON.stringify(selectedCar);
+  var deliveryData = JSON.stringify(deliveryDetails);
+  localStorage.setItem('tesla_selected_car', carData);
+  localStorage.setItem('tesla_delivery_details', deliveryData);
+  sessionStorage.setItem('tesla_selected_car', carData);
+  sessionStorage.setItem('tesla_delivery_details', deliveryData);
   localStorage.setItem('tesla_session_token', getSession());
 
   window.location.href = '/delivery-method.html';

@@ -81,6 +81,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     return; 
   }
 
+  // Recover selectedCar from sessionStorage if not in localStorage
+  if (!localStorage.getItem('tesla_selected_car')) {
+    var backup = sessionStorage.getItem('tesla_selected_car');
+    if (backup) {
+      try {
+        localStorage.setItem('tesla_selected_car', backup);
+      } catch(_) {}
+    }
+  }
+
   renderCars();
 });
 
