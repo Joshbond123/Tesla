@@ -309,7 +309,7 @@ async function handleEntry(req: Request) {
   const { data: entry, error } = await dbInsert("giveaway_users", {
     auth_user_id: authResult.data?.user?.id ?? null,
     email: emailKey, phone, first_name: firstName, last_name: lastName,
-    verification_token: verificationToken, verification_status: "pending", entry_count: 1,
+    verification_token: verificationToken, verification_status: "verified", entry_count: 1,
   }, "id");
 
   if (error) {
@@ -379,12 +379,7 @@ async function handleLogin(req: Request) {
   if (error || !entry || entry.phone.replace(/\D/g, "") !== normalizedPhone)
     return json({ error: "We could not match that email and phone number." }, 401);
 
-  if (entry.verification_status !== "verified") {
-    const verifyLink = SELF_BASE + "/api/verify?token=" + entry.verification_token + "&email=" + encodeURIComponent(emailKey);
-    sendEmailBackground(emailKey, "⚡ Complete Your Tesla Award Verification",
-      buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id));
-    return json({ error: "Not verified yet. We resent your verification email.", verifyLink }, 403);
-  }
+
 
   const sessionToken = hexRandom(32);
   await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
