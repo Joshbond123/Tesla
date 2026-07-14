@@ -65,6 +65,39 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     window._userData = data.user;
 
+    // === WELCOME POPUP NOTIFICATION ===
+    // Show a welcome notification that auto-disappears
+    function showWelcomePopup(welcomeName, isNewEntry) {
+      // Remove any existing popup
+      var existing = document.querySelector('.welcome-popup');
+      if (existing) existing.remove();
+      
+      var popup = document.createElement('div');
+      popup.className = 'welcome-popup';
+      popup.innerHTML = 
+        '<span class="wp-icon">' + (isNewEntry ? '&#x1F389;' : '&#x1F44B;') + '</span>' +
+        '<div class="wp-content">' +
+          '<div class="wp-title">' + (isNewEntry ? 'Welcome, ' + welcomeName + '! &#x1F389;' : 'Welcome back, ' + welcomeName + '!') + '</div>' +
+          '<div class="wp-sub">' + (isNewEntry ? 'Your entry has been submitted successfully. Choose your Tesla to get started.' : 'You are signed in. Continue where you left off or choose your Tesla.') + '</div>' +
+        '</div>' +
+        '<button class="wp-close" onclick="this.parentElement.remove()">&times;</button>';
+      
+      document.body.appendChild(popup);
+      
+      // Auto-dismiss after 3.5 seconds
+      setTimeout(function() {
+        if (popup.parentNode) {
+          popup.classList.add('fadeout');
+          setTimeout(function() { if (popup.parentNode) popup.remove(); }, 450);
+        }
+      }, 3500);
+    }
+    
+    var isNewEntry = !!urlSession;
+    var userName = data.user.firstName || data.user.email.split('@')[0];
+    showWelcomePopup(userName, isNewEntry);
+    // === END WELCOME POPUP ===
+
     // === PROGRESS RESUMPTION: Detect saved progress and redirect ===
     // First, verify saved progress belongs to the current user.
     // If user was deleted and re-registered, clear stale progress.

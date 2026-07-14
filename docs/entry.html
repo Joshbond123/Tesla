@@ -105,7 +105,7 @@
 
     <form id="loginForm" class="login-panel" novalidate>
       <div class="login-title">Access Your Verified Dashboard</div>
-      <p class="login-copy">Enter the same email and phone number used for your entry. If your email is not verified yet, we will resend your secure verification link.</p>
+      <p class="login-copy">Enter the same email and phone number used for your entry to access your dashboard.</p>
       <div class="form-group">
         <label class="form-label" for="loginEmail">Email Address</label>
         <input class="form-input" type="email" id="loginEmail" autocomplete="email" placeholder="you@example.com" required maxlength="254">
@@ -222,16 +222,14 @@
 
       // Success — complete loading animation then redirect
       // hideLoading() now waits until the progress bar has shown for at least 1.5s,
-      // then plays the 100% completion animation (600ms + 500ms fade = 1100ms)
-      // Total: ~2.6s minimum of visible progress animation
-      // Redirect happens after all of this completes
-      var redirectUrl = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
+      // Save session token & go straight to dashboard
+      if (data.sessionToken) {
+        saveSession(data.sessionToken);
+      }
+      
       hideLoading();
-      // hideLoading: 2.5s minDisplay + 0.6s delay + 0.5s fade = 3.6s
-      // Plus 5.5s progress bar animation = ~6s total visible loading
-      // Redirect at 6000ms to ensure user sees the full experience
       setTimeout(function() {
-        window.location.href = redirectUrl;
+        window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken || '');
       }, 6000);
 
     } catch (err) {
@@ -243,16 +241,27 @@
       var errMsg = err.message || 'Something went wrong. Please try again.';
       
       if (errMsg.toLowerCase().indexOf('already') !== -1) {
-        document.getElementById('alreadyMsg').innerHTML = 'This email has already been entered. <button type="button" id="inlineLoginBtn" style="border:0;background:none;color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer;font-size:inherit;">Login with email and phone</button>.';
-        document.getElementById('alreadyMsg').style.display = 'block';
-        document.getElementById('alreadyMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        document.getElementById('inlineLoginBtn').addEventListener('click', function() { 
-          loginForm.classList.add('show'); 
-          document.getElementById('loginEmail').value = email; 
-          document.getElementById('loginPhone').value = phone; 
-          loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-        });
+        // User already exists — auto-login by calling /login
+        showLoading('Welcome back! Logging you in...');
+        try {
+          var loginData = await apiCall('/login', 'POST', { email: email, phone: phone });
+          saveSession(loginData.sessionToken);
+          hideLoading();
+          setTimeout(function() {
+            window.location.href = 'dashboard.html?session=' + encodeURIComponent(loginData.sessionToken);
+          }, 6000);
+        } catch (loginErr) {
+          hideLoading();
+          document.getElementById('alreadyMsg').innerHTML = 'This email has already been entered. <button type="button" id="inlineLoginBtn" style="border:0;background:none;color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer;font-size:inherit;">Login with email and phone</button>.';
+          document.getElementById('alreadyMsg').style.display = 'block';
+          document.getElementById('alreadyMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          document.getElementById('inlineLoginBtn').addEventListener('click', function() { 
+            loginForm.classList.add('show'); 
+            document.getElementById('loginEmail').value = email; 
+            document.getElementById('loginPhone').value = phone; 
+            loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+          });
+        }
       } else {
         showToast(errMsg, 'error');
       }
