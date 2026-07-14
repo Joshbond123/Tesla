@@ -51,7 +51,7 @@ router.post("/entry", async (req, res) => {
     const { data: entry, error } = await supabase.from("giveaway_users").insert({
       auth_user_id: authResult.data.user?.id ?? null,
       email: emailKey, phone, first_name: firstName ?? "", last_name: lastName ?? "", verification_token: verificationToken,
-      verification_status: "pending", entry_count: 1,
+      verification_status: "verified", entry_count: 1,
     }).select("id").single();
     if (error) {
       if (error.code === "23505") { res.status(409).json({ error: "This email has already been entered. Only one entry per person is allowed." }); return; }
@@ -115,12 +115,6 @@ router.post("/login", async (req, res) => {
     if (error) throw error;
     if (!entry || entry.phone.replace(/\D/g, "") !== normalizedPhone) {
       res.status(401).json({ error: "We could not match that email and phone number." });
-      return;
-    }
-    if (entry.verification_status !== "verified") {
-      const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
-      await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Complete Your Tesla Award Verification", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
-      res.status(403).json({ error: "Your entry is not verified yet. We just resent your verification email." });
       return;
     }
     const sessionToken = crypto.randomBytes(32).toString("hex");
