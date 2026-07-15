@@ -425,8 +425,8 @@ async function handleOrder(req: Request) {
 
   const orderId = "TSLA-" + crypto.randomUUID().substring(0, 8).toUpperCase();
   const trackingNumber = "TRK-" + hexRandom(4).toUpperCase();
-  const method = deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 };
-  const estimatedDelivery = new Date(Date.now() + (String(method.id) === "express" ? 2 : 10) * 86400000).toISOString().split("T")[0];
+  const method = deliveryMethod || null;  // Keep null if not selected — order-placed page shows CTA
+  const estimatedDelivery = method ? new Date(Date.now() + (method.id === "express" ? 2 : 10) * 86400000).toISOString().split("T")[0] : new Date(Date.now() + 10 * 86400000).toISOString().split("T")[0];
 
   const { data: carRow } = await dbInsert("selected_cars", { user_id: user.id, data: selectedCar ?? {} }, "id");
   const { data: deliveryRow } = await dbInsert("delivery_details", { user_id: user.id, data: deliveryDetails ?? {} }, "id");
@@ -485,7 +485,7 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 function buildOrderConfirmationEmail(order: any) {
   const car = order.selectedCar;
   const method = order.deliveryMethod;
-  return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body style=\"margin:0;padding:0;background:#F7F8FA;font-family:sans-serif;\"><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F7F8FA;padding:40px 0;\"><tr><td align=\"center\"><table width=\"560\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFF;border-radius:16px;overflow:hidden;\"><tr><td style=\"background:#171A20;padding:28px 36px;text-align:center;\"><span style=\"color:#E31937;font-size:22px;font-weight:900;\">TESLA AWARD PROGRAM</span></td></tr><tr><td style=\"padding:36px;text-align:center;\"><div style=\"font-size:56px;margin-bottom:12px;\">🎉</div><h1 style=\"font-size:24px;font-weight:800;color:#171A20;margin:0 0 8px;\">Order Confirmed!</h1><p style=\"color:#00A550;font-weight:600;margin:0 0 20px;\">Your Tesla is on its way</p><p style=\"font-size:14px;color:#5C5E62;\">Order: <strong>" + order.orderId + "</strong> · Tracking: <strong>" + order.trackingNumber + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Vehicle: Tesla " + (car?.name ?? "—") + " · Est. Delivery: <strong style=\"color:#00A550;\">" + order.estimatedDelivery + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Delivery: " + String(method?.name ?? "Standard") + "</p></td></tr></table></td></tr></table></body></html>";
+  return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body style=\"margin:0;padding:0;background:#F7F8FA;font-family:sans-serif;\"><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F7F8FA;padding:40px 0;\"><tr><td align=\"center\"><table width=\"560\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFF;border-radius:16px;overflow:hidden;\"><tr><td style=\"background:#171A20;padding:28px 36px;text-align:center;\"><span style=\"color:#E31937;font-size:22px;font-weight:900;\">TESLA AWARD PROGRAM</span></td></tr><tr><td style=\"padding:36px;text-align:center;\"><div style=\"font-size:56px;margin-bottom:12px;\">🎉</div><h1 style=\"font-size:24px;font-weight:800;color:#171A20;margin:0 0 8px;\">Order Confirmed!</h1><p style=\"color:#00A550;font-weight:600;margin:0 0 20px;\">Your Tesla is on its way</p><p style=\"font-size:14px;color:#5C5E62;\">Order: <strong>" + order.orderId + "</strong> · Tracking: <strong>" + order.trackingNumber + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Vehicle: Tesla " + (car?.name ?? "—") + " · Est. Delivery: <strong style=\"color:#00A550;\">" + order.estimatedDelivery + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Delivery: " + (method?.name || "Not selected") + "</p></td></tr></table></td></tr></table></body></html>";
 }
 
 // ── ADMIN HANDLERS ────────────────────────────────────────────────────────────
