@@ -215,14 +215,8 @@ document.getElementById('deliveryDetailsForm').addEventListener('submit', async 
 
     var result = await apiCall('/order', 'POST', orderData);
 
-    // Save order
+    // Save order to localStorage for order-placed page to read
     localStorage.setItem('tesla_last_order', JSON.stringify(result.order));
-
-    // Populate summary
-    document.getElementById('summaryOrderId').textContent = result.order.orderId || '—';
-    document.getElementById('summaryVehicle').textContent = 'Tesla ' + (selectedCar.name || '');
-    document.getElementById('summaryAddress').textContent = deliveryDetails.city + ', ' + deliveryDetails.country;
-    document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
 
     // Redirect to Order Placed page
     hideLoading();
