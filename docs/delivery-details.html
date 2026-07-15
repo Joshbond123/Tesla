@@ -65,7 +65,7 @@
     <!-- Selected car -->
     <div class="selected-car-box" id="selectedCarBox">
       <span id="selectedCarEmoji" style="display:none;font-size:48px">🚗</span>
-      <img src="" alt="" id="selectedCarImg" onerror="this.style.display='none';document.getElementById('selectedCarEmoji').style.display='block'">
+      <img alt="" id="selectedCarImg">
       <div class="car-info">
         <div class="car-name" id="selectedCarName">Tesla —</div>
         <div class="car-price">
@@ -201,10 +201,26 @@ if (existingOrder && savedDelivery) {
 // Populate car box
 var vi = VEHICLE_DATA[selectedCar.id] || null;
 var carImgSrc = (vi && vi.img) || (selectedCar.img) || '';
-document.getElementById('selectedCarImg').src = carImgSrc;
+var carImg = document.getElementById('selectedCarImg');
+var carEmoji = document.getElementById('selectedCarEmoji');
+
+// Set up error handler BEFORE setting src (avoids race conditions)
+carImg.onerror = function() {
+  this.style.display = 'none';
+  carEmoji.style.display = 'block';
+};
+carImg.onload = function() {
+  this.style.display = '';
+  carEmoji.style.display = 'none';
+};
+
 if (carImgSrc) {
-  document.getElementById('selectedCarEmoji').style.display = 'none';
+  carImg.src = carImgSrc;
+} else {
+  carImg.style.display = 'none';
+  carEmoji.style.display = 'block';
 }
+
 document.getElementById('selectedCarName').textContent = 'Tesla ' + (selectedCar.name || '');
 document.getElementById('selectedCarPrice').textContent = selectedCar.price || '';
 
