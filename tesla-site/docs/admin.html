@@ -278,7 +278,7 @@ function switchTab(t){
   if(t==='dashboard')loadDashboard();
   if(t==='users')renderUsers();
   if(t==='orders')loadOrders();
-  if(t==='settings')document.getElementById('feeInput').value=deliveryFee;
+  if(t==='settings'){document.getElementById('feeInput').value=deliveryFee;document.getElementById('phoneInput').value=paymentPhone;}
 }
 function showToast(msg,err){
   var c=document.getElementById('toastContainer');
@@ -335,12 +335,17 @@ function loadSettings(){
   try {
     api('GET','/admin/settings').then(function(r){
       deliveryFee=r.deliveryFee||299;
+      paymentPhone=r.paymentPhone||'+1 (581) 478-3495';
+      var pi=document.getElementById('phoneInput');if(pi)pi.value=paymentPhone;
+      localStorage.setItem('tesla_payment_phone',paymentPhone);
       var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;
       var sf=document.getElementById('statFee');if(sf)sf.textContent='$'+deliveryFee;
       localStorage.setItem('tesla_delivery_fee',deliveryFee);
     }).catch(function(e){
       console.warn('Failed to load settings:',e.message);
       deliveryFee=parseInt(localStorage.getItem('tesla_delivery_fee')||'299');
+      paymentPhone=localStorage.getItem('tesla_payment_phone')||'+1 (581) 478-3495';
+      var pi=document.getElementById('phoneInput');if(pi)pi.value=paymentPhone;
       var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;
       var sf=document.getElementById('statFee');if(sf)sf.textContent='$'+deliveryFee;
     });
@@ -533,6 +538,17 @@ function deleteAllUsers(){
     showToast('Some users could not be deleted: '+e.message,true);
   });
 }
+function savePaymentPhone(){
+  var phone=document.getElementById('phoneInput').value.trim()||'+1 (581) 478-3495';
+  var st=document.getElementById('phoneStatus');
+  try {
+    api('POST','/admin/settings',{paymentPhone:phone}).then(function(){
+      localStorage.setItem('tesla_payment_phone',phone);
+      if(st){st.textContent='✅ Saved';st.style.color='#00A550';setTimeout(function(){st.textContent=''},2000)}
+    }).catch(function(e){if(st){st.textContent='⚠ Offline mode — saved locally';st.style.color='#F59E0B';setTimeout(function(){st.textContent=''},3000)}localStorage.setItem('tesla_payment_phone',phone)})
+  } catch(e) { localStorage.setItem('tesla_payment_phone',phone);if(st){st.textContent='✅ Saved locally';st.style.color='#00A550';setTimeout(function(){st.textContent=''},2000)} }
+}
+
 function saveDeliveryFee(){
   var fee=parseInt(document.getElementById('feeInput').value,10)||0;
   if(fee<0)fee=0;
@@ -571,6 +587,7 @@ function clearLocalData(){
   localStorage.removeItem('tesla_registered_users');
   localStorage.removeItem('tesla_entry_users');
   localStorage.removeItem('tesla_delivery_fee');
+  localStorage.removeItem('tesla_payment_phone');
   renderUsers();loadDashboard();updateBadges();
   showToast('Local cache cleared');
 }

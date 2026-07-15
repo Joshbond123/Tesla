@@ -7,206 +7,127 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    body{background:var(--light);}
-    .page-wrap{max-width:680px;margin:0 auto;padding:88px 24px 64px;}
-    .page-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.09);border:1.5px solid rgba(0,0,0,.05);padding:48px;}
+    body{background:#f5f5f7;}
+    .page-wrap{max-width:720px;margin:0 auto;padding:88px 24px 64px;}
+    .page-card{background:white;border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);padding:48px;}
     @media(max-width:560px){.page-card{padding:28px 20px;border-radius:18px;}}
-    .page-icon{font-size:48px;margin-bottom:16px;text-align:center;}
-    .page-title{font-size:26px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:8px;}
-    .page-sub{font-size:15px;color:var(--gray-2);text-align:center;line-height:1.65;margin-bottom:36px;}
-
-    /* Progress crumbs */
-    .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-2);margin-bottom:32px;justify-content:center;flex-wrap:wrap;}
-    .crumb-done{color:var(--success);font-weight:600;}
-    .crumb-active{color:var(--red);font-weight:700;}
-    .crumb-sep{color:var(--border);}
-
-    .option-card{background:white;border-radius:18px;border:2px solid var(--border);padding:28px;cursor:pointer;transition:all var(--transition);position:relative;overflow:hidden;margin-bottom:16px;}
-    .option-card:hover{border-color:rgba(227,25,55,.4);box-shadow:var(--shadow-md);transform:translateY(-2px);}
-    .option-card.selected{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.12);}
-    .option-card.selected::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);}
+    .page-title{font-size:28px;font-weight:900;color:#111;text-align:center;margin-bottom:6px;letter-spacing:-0.5px;}
+    .page-sub{font-size:15px;color:#666;text-align:center;line-height:1.65;margin-bottom:36px;}
+    .option-card{background:white;border-radius:18px;border:2px solid #e5e5e5;padding:28px 30px;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;margin-bottom:16px;}
+    .option-card:hover{border-color:rgba(227,25,55,.4);box-shadow:0 8px 28px rgba(0,0,0,.08);transform:translateY(-3px);}
+    .option-card.selected{border-color:#E31937;box-shadow:0 0 0 3px rgba(227,25,55,.12);}
+    .option-card.selected::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);}
     .option-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
-    .option-icon{font-size:36px;}
-    .option-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all var(--transition);}
-    .option-card.selected .option-check{background:var(--red);border-color:var(--red);color:white;font-size:12px;font-weight:700;}
-    .option-name{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:2px;}
-    .option-days{font-size:13px;color:var(--gray-2);margin-bottom:12px;}
-    .option-price{font-size:28px;font-weight:900;color:var(--dark);}
-    .option-price span{font-size:14px;font-weight:400;color:var(--gray-2);}
-    .option-features{margin-top:16px;display:flex;flex-direction:column;gap:6px;}
-    .option-feature{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--gray);}
-    .feature-check{width:18px;height:18px;background:rgba(0,165,80,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--success);font-size:10px;font-weight:700;flex-shrink:0;}
-    .recommended-badge{position:absolute;top:16px;right:16px;background:var(--red);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
-
-    .order-summary{background:var(--light);border-radius:14px;padding:18px 20px;margin-bottom:28px;}
-    .summary-row{display:flex;align-items:center;justify-content:space-between;font-size:14px;padding:5px 0;}
-    .summary-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
-    .summary-label{color:var(--gray-2);}
-    .summary-value{color:var(--dark);font-weight:600;}
+    .option-icon{font-size:38px;}
+    .option-check{width:26px;height:26px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;}
+    .option-card.selected .option-check{background:#E31937;border-color:#E31937;color:white;font-size:13px;font-weight:700;}
+    .option-name{font-size:19px;font-weight:800;color:#111;margin-bottom:3px;}
+    .option-days{font-size:13px;color:#888;margin-bottom:12px;}
+    .option-price{font-size:30px;font-weight:900;color:#111;}
+    .option-price span{font-size:14px;font-weight:400;color:#888;}
+    .option-features{margin-top:18px;display:flex;flex-direction:column;gap:8px;}
+    .option-feature{display:flex;align-items:center;gap:10px;font-size:14px;color:#555;}
+    .feature-dot{width:20px;height:20px;background:rgba(0,165,80,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#00A550;font-size:11px;font-weight:700;flex-shrink:0;}
+    .recommended-badge{position:absolute;top:18px;right:18px;background:#E31937;color:white;font-size:11px;font-weight:700;padding:5px 14px;border-radius:999px;letter-spacing:.03em;}
+    .car-summary{background:#f8f9fa;border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;border:1px solid rgba(0,0,0,.04);}
+    .car-summary img{height:56px;object-fit:contain;}
+    .car-summary .cs-info{flex:1;}
+    .car-summary .cs-name{font-size:16px;font-weight:800;color:#111;}
+    .car-summary .cs-addr{font-size:13px;color:#777;margin-top:2px;}
+    .info-section{background:linear-gradient(135deg,rgba(227,25,55,.03),rgba(227,25,55,.01));border:1px solid rgba(227,25,55,.12);border-radius:18px;padding:28px 32px;margin-bottom:28px;}
+    .info-section h3{font-size:16px;font-weight:800;color:#111;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+    .info-section p{font-size:14px;color:#555;line-height:1.7;margin-bottom:14px;}
+    .info-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    @media(max-width:560px){.info-list{grid-template-columns:1fr;}}
+    .info-item{display:flex;align-items:center;gap:8px;font-size:13px;color:#555;padding:8px 12px;background:rgba(255,255,255,.7);border-radius:8px;}
+    .info-dot{width:8px;height:8px;border-radius:50%;background:#E31937;flex-shrink:0;}
   </style>
   <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo">
-      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle">
-      TESLA
-    </a>
-    <a href="dashboard.html" class="btn btn-ghost" style="font-size:14px;">← Back</a>
+    <a href="index.html" class="nav-logo"><img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle"> TESLA</a>
+    <a href="delivery-details.html" class="btn btn-ghost" style="font-size:14px;">← Back</a>
   </div>
 </nav>
-
 <div class="page-wrap">
-  <div class="crumbs">
-    <span class="crumb-done">✓ Verified</span><span class="crumb-sep">›</span>
-    <span class="crumb-done">✓ Vehicle Selected</span><span class="crumb-sep">›</span>
-    <span class="crumb-done">✓ Delivery Details</span><span class="crumb-sep">›</span>
-    <span class="crumb-active">Delivery Method</span><span class="crumb-sep">›</span>
-    <span>Payment</span>
-  </div>
+<div class="page-card anim-fade-up">
+<h1 class="page-title">📦 Choose Your Delivery Method</h1>
+<p class="page-sub">Select how you would like your Tesla delivered. The vehicle itself is completely free — you only cover the delivery logistics.</p>
 
-  <div class="page-card anim-fade-up">
-    <div class="page-icon">🚚</div>
-    <h1 class="page-title">Choose Your Delivery Method</h1>
-    <p class="page-sub">Select how you'd like your Tesla delivered. Both options include fully insured, professional vehicle transport.</p>
-
-    <!-- Car summary -->
-    <div class="order-summary" id="orderSummary">
-      <div class="summary-row">
-        <span class="summary-label">Selected Vehicle</span>
-        <span class="summary-value" id="summaryVehicle">Tesla —</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">Delivery To</span>
-        <span class="summary-value" id="summaryAddress">—</span>
-      </div>
-    </div>
-
-    <!-- Standard Delivery -->
-    <div class="option-card" id="card-standard" onclick="selectMethod('standard')">
-      <div class="option-header">
-        <div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-            <span class="option-icon">📦</span>
-            <div>
-              <div class="option-name">Standard Delivery</div>
-              <div class="option-days">7 – 12 business days</div>
-            </div>
-          </div>
-          <div class="option-price" id="standardFeePrice">$299 <span>delivery fee</span></div>
-        </div>
-        <div class="option-check" id="check-standard">✓</div>
-      </div>
-      <div class="option-features">
-        <div class="option-feature"><div class="feature-check">✓</div> Standard international shipping & customs clearance</div>
-        <div class="option-feature"><div class="feature-check">✓</div> Fully insured vehicle transport</div>
-        <div class="option-feature"><div class="feature-check">✓</div> Email delivery notifications</div>
-        <div class="option-feature"><div class="feature-check">✓</div> Order tracking included</div>
-      </div>
-    </div>
-
-    <!-- Express Delivery -->
-    <div class="option-card" id="card-express" onclick="selectMethod('express')">
-      <div class="recommended-badge">Recommended</div>
-      <div class="option-header">
-        <div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-            <span class="option-icon">⚡</span>
-            <div>
-              <div class="option-name">Express Delivery</div>
-              <div class="option-days">1 – 3 business days</div>
-            </div>
-          </div>
-          <div class="option-price" id="expressFeePrice">$399 <span>delivery fee</span></div>
-        </div>
-        <div class="option-check" id="check-express">✓</div>
-      </div>
-      <div class="option-features">
-        <div class="option-feature"><div class="feature-check">✓</div> Priority shipping with expedited customs clearance</div>
-        <div class="option-feature"><div class="feature-check">✓</div> Real-time GPS tracking updates</div>
-        <div class="option-feature"><div class="feature-check">✓</div> Dedicated delivery specialist assigned</div>
-        <div class="option-feature"><div class="feature-check">✓</div> White-glove delivery service</div>
-        <div class="option-feature"><div class="feature-check">✓</div> Same-day dispatch guaranteed</div>
-      </div>
-    </div>
-
-    <button class="btn btn-primary btn-full btn-lg" id="continueBtn" onclick="continueToPayment()" disabled style="opacity:.45;cursor:not-allowed;margin-top:8px;">
-      Continue to Payment →
-    </button>
-
-    <p style="font-size:12px;color:var(--gray-2);text-align:center;margin-top:14px;">
-      Delivery fee covers professional vehicle transport, insurance, and logistics. Your Tesla itself is completely free.
-    </p>
+<div class="car-summary" id="carSummary">
+  <img src="" alt="" id="summaryCarImg" onerror="this.style.display='none'">
+  <div class="cs-info">
+    <div class="cs-name" id="summaryVehicle">Tesla —</div>
+    <div class="cs-addr" id="summaryAddress">—</div>
   </div>
 </div>
 
+<div class="info-section">
+  <h3>ℹ️ About the Delivery Fee</h3>
+  <p>Your Tesla vehicle is awarded <strong style="color:#E31937;">completely free of charge</strong>. The delivery fee covers only the logistics and services required to transport your vehicle safely to your address:</p>
+  <div class="info-list">
+    <div class="info-item"><span class="info-dot"></span> Vehicle Transportation</div>
+    <div class="info-item"><span class="info-dot"></span> Shipping & Logistics</div>
+    <div class="info-item"><span class="info-dot"></span> Insurance During Transit</div>
+    <div class="info-item"><span class="info-dot"></span> Handling & Processing</div>
+    <div class="info-item"><span class="info-dot"></span> Delivery Coordination</div>
+    <div class="info-item"><span class="info-dot"></span> Customs Clearance (if applicable)</div>
+  </div>
+</div>
+
+<div class="option-card" id="card-standard" onclick="selectMethod('standard')">
+  <div class="option-header"><div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <span class="option-icon">📦</span><div><div class="option-name">Standard Delivery</div><div class="option-days">7 – 12 business days</div></div>
+    </div>
+    <div class="option-price" id="standardFeePrice">$299 <span>delivery fee</span></div>
+  </div><div class="option-check" id="check-standard">✓</div></div>
+  <div class="option-features">
+    <div class="option-feature"><div class="feature-dot">✓</div>Standard international shipping & customs clearance</div>
+    <div class="option-feature"><div class="feature-dot">✓</div>Fully insured vehicle transport</div>
+    <div class="option-feature"><div class="feature-dot">✓</div>Email delivery notifications</div>
+    <div class="option-feature"><div class="feature-dot">✓</div>Order tracking included</div>
+  </div>
+</div>
+
+<div class="option-card" id="card-express" onclick="selectMethod('express')">
+  <div class="recommended-badge">⚡ Recommended</div>
+  <div class="option-header"><div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <span class="option-icon">⚡</span><div><div class="option-name">Express Delivery</div><div class="option-days">1 – 3 business days</div></div>
+    </div>
+    <div class="option-price" id="expressFeePrice">$399 <span>delivery fee</span></div>
+  </div><div class="option-check" id="check-express">✓</div></div>
+  <div class="option-features">
+    <div class="option-feature"><div class="feature-dot">✓</div>Priority shipping with expedited customs clearance</div>
+    <div class="option-feature"><div class="feature-dot">✓</div>Real-time GPS tracking updates</div>
+    <div class="option-feature"><div class="feature-dot">✓</div>Dedicated delivery specialist assigned</div>
+    <div class="option-feature"><div class="feature-dot">✓</div>White-glove delivery service</div>
+    <div class="option-feature"><div class="feature-dot">✓</div>Same-day dispatch guaranteed</div>
+  </div>
+</div>
+
+<button class="btn btn-primary btn-full btn-lg" id="continueBtn" onclick="continueToPayment()" disabled style="opacity:.45;cursor:not-allowed;margin-top:8px;">Continue to Payment →</button>
+</div></div>
+
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
+<script src="js/vehicle-data.js"></script>
 <script>
-let selectedMethod = null;
-let standardFee = 299;
-let expressFee = 399;
-
-// Load delivery fee from API (with fallback to defaults)
-(function loadDeliveryFee() {
-  var API = window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-  fetch(API + '/admin/settings')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.deliveryFee) {
-        standardFee = d.deliveryFee;
-        expressFee = Math.round(d.deliveryFee * 1.33);
-        document.getElementById('standardFeePrice').innerHTML = '$' + standardFee + ' <span>delivery fee</span>';
-        document.getElementById('expressFeePrice').innerHTML = '$' + expressFee + ' <span>delivery fee</span>';
-      }
-    })
-    .catch(function() { /* use defaults */ });
-})();
-
-// Load saved data — try sessionStorage backup too
-var savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
-var savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
-
-// Recover from sessionStorage if localStorage is empty
-if (!savedCar) {
-  try { savedCar = JSON.parse(sessionStorage.getItem('tesla_selected_car') || 'null'); } catch(e) { savedCar = null; }
-}
-if (!savedDelivery) {
-  try { savedDelivery = JSON.parse(sessionStorage.getItem('tesla_delivery_details') || 'null'); } catch(e) { savedDelivery = null; }
-}
-
-// Only redirect if BOTH are truly missing
-if (!savedCar || !savedDelivery) { window.location.href = 'dashboard.html'; }
-
-// Session validation removed — it was blocking the page with sync XHR
-// and causing redirect loops. Session is validated asynchronously by the backend.
-
-// Populate summary
-document.getElementById('summaryVehicle').textContent = savedCar ? `Tesla ${savedCar.name} (${savedCar.color})` : '—';
-document.getElementById('summaryAddress').textContent = savedDelivery ? `${savedDelivery.city}, ${savedDelivery.country}` : '—';
-
-function selectMethod(method) {
-  selectedMethod = method;
-  document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById(`card-${method}`).classList.add('selected');
-  const btn = document.getElementById('continueBtn');
-  btn.disabled = false; btn.style.opacity='1'; btn.style.cursor='pointer';
-}
-
-function continueToPayment() {
-  if (!selectedMethod) return;
-  const methodData = {
-    id: selectedMethod,
-    name: selectedMethod === 'express' ? 'Express Delivery' : 'Standard Delivery',
-    price: selectedMethod === 'express' ? expressFee : standardFee,
-    priceDisplay: selectedMethod === 'express' ? '$' + expressFee : '$' + standardFee,
-    days: selectedMethod === 'express' ? '1–3 days' : '7–12 days',
-  };
-  localStorage.setItem('tesla_delivery_method', JSON.stringify(methodData));
-  window.location.href = 'payment.html';
-}
+var sm=null,sf=299,ef=399;
+(function(){var A=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';fetch(A+'/admin/settings').then(function(r){return r.json()}).then(function(d){if(d.deliveryFee){sf=d.deliveryFee;ef=Math.round(d.deliveryFee*1.33);document.getElementById('standardFeePrice').innerHTML='$'+sf+' <span>delivery fee</span>';document.getElementById('expressFeePrice').innerHTML='$'+ef+' <span>delivery fee</span>'}}).catch(function(){})})();
+var sc=JSON.parse(localStorage.getItem('tesla_selected_car')||'null');
+var sd=JSON.parse(localStorage.getItem('tesla_delivery_details')||'null');
+if(!sc||!sd)window.location.href='dashboard.html';
+document.getElementById('summaryVehicle').textContent=sc?'Tesla '+(sc.name||''):'—';
+document.getElementById('summaryAddress').textContent=sd?(sd.city||'')+', '+(sd.country||''):'—';
+var vi=VEHICLE_DATA?(VEHICLE_DATA[sc.id]||null):null;
+var im=document.getElementById('summaryCarImg');
+if(vi&&vi.img)im.src=vi.img;else if(sc.img)im.src=sc.img;
+function selectMethod(m){sm=m;document.querySelectorAll('.option-card').forEach(function(e){e.classList.remove('selected')});document.getElementById('card-'+m).classList.add('selected');var b=document.getElementById('continueBtn');b.disabled=false;b.style.opacity='1';b.style.cursor='pointer'}
+function continueToPayment(){if(!sm)return;localStorage.setItem('tesla_delivery_method',JSON.stringify({id:sm,name:sm==='express'?'Express Delivery':'Standard Delivery',price:sm==='express'?ef:sf,priceDisplay:sm==='express'?'$'+ef:'$'+sf,days:sm==='express'?'1–3 days':'7–12 days'}));window.location.href='payment.html'}
 </script>
 </body>
 </html>

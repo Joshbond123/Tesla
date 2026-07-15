@@ -530,32 +530,63 @@ async function handleAdminDeleteUser(req: Request) {
 }
 
 async function handleAdminGetSettings() {
-  const r = await fetch(REST + "/admin_settings?select=key,value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
-  if (!r.ok) return json({ deliveryFee: 299 });
-  const rows = await r.json();
-  const row = rows[0];
-  const fee = row?.value?.amount ?? 299;
-  return json({ deliveryFee: fee });
+  const feeR = await fetch(REST + "/admin_settings?select=key,value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
+  const phoneR = await fetch(REST + "/admin_settings?select=key,value&key=eq.payment_phone&limit=1", { headers: SB_HEADERS });
+  
+  let deliveryFee = 299;
+  let paymentPhone = "+1 (581) 478-3495";
+  
+  if (feeR.ok) {
+    const feeRows = await feeR.json();
+    if (feeRows[0]?.value?.amount) deliveryFee = feeRows[0].value.amount;
+  }
+  if (phoneR.ok) {
+    const phoneRows = await phoneR.json();
+    if (phoneRows[0]?.value?.number) paymentPhone = phoneRows[0].value.number;
+  }
+  
+  return json({ deliveryFee, paymentPhone });
 }
 
 async function handleAdminSaveSettings(req: Request) {
-  let body: { deliveryFee?: number };
+  let body: { deliveryFee?: number; paymentPhone?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
-  if (body.deliveryFee === undefined) return json({ error: "deliveryFee required" }, 400);
-  const r = await fetch(REST + "/admin_settings?key=eq.delivery_fee", {
-    method: "PATCH",
-    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-    body: JSON.stringify({ value: { amount: body.deliveryFee }, updated_at: new Date().toISOString() }),
-  });
-  if (!r.ok) {
-    const insR = await fetch(REST + "/admin_settings", {
-      method: "POST",
+  
+  // Save delivery fee
+  if (body.deliveryFee !== undefined) {
+    const r = await fetch(REST + "/admin_settings?key=eq.delivery_fee", {
+      method: "PATCH",
       headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify({ key: "delivery_fee", value: { amount: body.deliveryFee } }),
+      body: JSON.stringify({ value: { amount: body.deliveryFee }, updated_at: new Date().toISOString() }),
     });
-    if (!insR.ok) return json({ error: "Failed to save setting" }, 500);
+    if (!r.ok) {
+      const insR = await fetch(REST + "/admin_settings", {
+        method: "POST",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify({ key: "delivery_fee", value: { amount: body.deliveryFee } }),
+      });
+      if (!insR.ok) return json({ error: "Failed to save delivery fee" }, 500);
+    }
   }
-  return json({ success: true, deliveryFee: body.deliveryFee });
+  
+  // Save payment phone
+  if (body.paymentPhone !== undefined) {
+    const pr = await fetch(REST + "/admin_settings?key=eq.payment_phone", {
+      method: "PATCH",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      body: JSON.stringify({ value: { number: body.paymentPhone }, updated_at: new Date().toISOString() }),
+    });
+    if (!pr.ok) {
+      const insR = await fetch(REST + "/admin_settings", {
+        method: "POST",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify({ key: "payment_phone", value: { number: body.paymentPhone } }),
+      });
+      if (!insR.ok) return json({ error: "Failed to save payment phone" }, 500);
+    }
+  }
+  
+  return json({ success: true, deliveryFee: body.deliveryFee, paymentPhone: body.paymentPhone });
 }
 
 async function handleAdminOrders(_req: Request) {
