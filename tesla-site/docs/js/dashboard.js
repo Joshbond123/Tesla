@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     var savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
 
     if (savedOrder && savedDelivery && savedMethod) {
-      window.location.href = 'order-success.html';
+      window.location.href = 'order-placed.html';
       return;
     } else if (savedOrder && savedDelivery) {
       window.location.href = 'delivery-method.html';

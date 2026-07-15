@@ -187,7 +187,7 @@ if (!selectedCar) { window.location.href = 'dashboard.html'; }
 // Resume: if delivery already submitted and order exists, redirect to order-success
 var existingOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
 if (existingOrder && savedDelivery) {
-  window.location.href = 'order-success.html';
+  window.location.href = 'order-placed.html';
 }
 
 // Populate car box
@@ -283,12 +283,9 @@ document.getElementById('deliveryDetailsForm').addEventListener('submit', async 
     document.getElementById('summaryAddress').textContent = deliveryDetails.city + ', ' + deliveryDetails.country;
     document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
 
-    // Show success
+    // Redirect to Order Placed page
     hideLoading();
-    document.getElementById('deliveryFormSection').style.display = 'none';
-    document.getElementById('successSection').style.display = 'block';
-    document.getElementById('successSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    launchConfetti(40);
+    window.location.href = 'order-placed.html';
 
   } catch(err) {
     hideLoading();

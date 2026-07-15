@@ -66,6 +66,8 @@
 <div class="detail-row"><span class="dr-key">Order ID</span><span class="dr-val red" id="orderId" style="font-family:monospace;font-size:13px;">—</span></div>
 <div class="detail-row"><span class="dr-key">Order Date</span><span class="dr-val" id="orderDate">—</span></div>
 <div class="detail-row"><span class="dr-key">Est. Delivery</span><span class="dr-val green" id="estDelivery">—</span></div>
+<div class="detail-row"><span class="dr-key">Delivery Method</span><span class="dr-val" id="delivMethod">—</span></div>
+<div class="detail-row"><span class="dr-key">Payment Method</span><span class="dr-val" id="payMethod">—</span></div>
 <div class="detail-row"><span class="dr-key">Status</span><span class="dr-val green" id="orderStatus">Order Confirmed</span></div>
 </div>
 <div class="order-detail-card"><div class="detail-label">Delivery Information</div>
@@ -77,7 +79,7 @@
 <div class="detail-row"><span class="dr-key">State</span><span class="dr-val" id="delivState">—</span></div>
 <div class="detail-row"><span class="dr-key">Country</span><span class="dr-val" id="delivCountry">—</span></div>
 <div class="detail-row"><span class="dr-key">Postal Code</span><span class="dr-val" id="delivZip">—</span></div>
-<div class="detail-row"><span class="dr-key">Method</span><span class="dr-val" id="delivMethod">—</span></div>
+
 </div>
 </div>
 
@@ -116,7 +118,7 @@ document.getElementById('delivZip').textContent=a.zipCode||'—';
 document.getElementById('delivMethod').textContent=(order.deliveryMethod||{}).name||'—';
 
 document.getElementById('carHeroName').textContent=order.selectedCar&&order.selectedCar.name?'Tesla '+order.selectedCar.name:'—';
-document.getElementById('carHeroRetail').textContent=order.selectedCar&&order.selectedCar.price?order.selectedCar.price:'—';
+document.getElementById('carHeroRetail').textContent=(order.selectedCar&&order.selectedCar.price)?order.selectedCar.price:'—';
 var vi=VEHICLE_DATA?(VEHICLE_DATA[order.selectedCar.id]||null):null;
 var im=document.getElementById('carHeroImg');
 if(vi&&vi.img)im.src=vi.img;else if(order.selectedCar&&order.selectedCar.img)im.src=order.selectedCar.img;
