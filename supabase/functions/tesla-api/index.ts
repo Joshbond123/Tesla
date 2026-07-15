@@ -412,8 +412,16 @@ async function handleOrder(req: Request) {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
   const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = body;
-  const user = await getSessionUser(sessionToken || "");
-  if (!user) return json({ error: "Invalid session. Verify your email first." }, 401);
+  // Allow orders without session validation — create guest context from delivery details
+  let user = await getSessionUser(sessionToken || "");
+  if (!user) {
+    user = {
+      id: 0, email: (deliveryDetails?.email) || "guest@tesla.com",
+      phone: (deliveryDetails?.phone) || "",
+      firstName: (deliveryDetails?.fullName) || "Guest",
+      lastName: "", entryId: 0
+    };
+  }
 
   const orderId = "TSLA-" + crypto.randomUUID().substring(0, 8).toUpperCase();
   const trackingNumber = "TRK-" + hexRandom(4).toUpperCase();
