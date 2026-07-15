@@ -134,9 +134,6 @@ if(vi&&vi.img)im.src=vi.img;else if(order.selectedCar&&order.selectedCar.img)im.
 
 if(order.orderId)document.getElementById('trackBtn').href='track.html?order='+order.orderId+'&tracking='+order.trackingNumber;
 
-// Show CTA if no delivery method selected yet
-if(!(order.deliveryMethod&&order.deliveryMethod.name)){document.getElementById('methodCTA').style.display='block';document.getElementById('trackActions').style.display='none';}else{document.getElementById('methodCTA').style.display='none';document.getElementById('trackActions').style.display='flex';}
-
 // Show Choose Delivery Method CTA if no method selected yet
 if(!(order.deliveryMethod&&order.deliveryMethod.name)){
   document.getElementById('chooseMethodCTA').style.display='block';
