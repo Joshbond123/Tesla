@@ -134,7 +134,24 @@ document.getElementById('carHeroName').textContent=order.selectedCar&&order.sele
 document.getElementById('carHeroRetail').textContent=(order.selectedCar&&order.selectedCar.price)?order.selectedCar.price:'—';
 var vi=VEHICLE_DATA?(VEHICLE_DATA[order.selectedCar.id]||null):null;
 var im=document.getElementById('carHeroImg');
-if(vi&&vi.img)im.src=vi.img;else if(order.selectedCar&&order.selectedCar.img)im.src=order.selectedCar.img;
+var carId = (order.selectedCar&&order.selectedCar.id) || '';
+// Try VEHICLE_DATA first, then order data img, then construct from known URLs
+if(vi&&vi.img) {
+  im.src = vi.img;
+} else if(order.selectedCar&&order.selectedCar.img) {
+  im.src = order.selectedCar.img;
+} else if(carId) {
+  // Fallback: construct image URL from car ID
+  var imgMap = {
+    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
+    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
+    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
+    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
+    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+  };
+  im.src = imgMap[carId] || '';
+}
+if(im.src) im.style.display = '';
 
 if(order.orderId)document.getElementById('trackBtn').href='track.html?order='+order.orderId+'&tracking='+order.trackingNumber;
 

@@ -212,6 +212,10 @@ document.getElementById('deliveryDetailsForm').addEventListener('submit', async 
       deliveryMethod: null,
       paymentMethod: null
     };
+    // Ensure car image is always preserved
+    if (!orderData.selectedCar.img && vi && vi.img) {
+      orderData.selectedCar.img = vi.img;
+    }
 
     var result = await apiCall('/order', 'POST', orderData);
 
