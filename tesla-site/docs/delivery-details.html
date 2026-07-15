@@ -64,7 +64,8 @@
 
     <!-- Selected car -->
     <div class="selected-car-box" id="selectedCarBox">
-      <img src="" alt="" id="selectedCarImg" onerror="this.style.display='none';var fb=document.getElementById('selectedCarEmoji');if(fb)fb.style.display='block'">
+      <span id="selectedCarEmoji" style="display:none;font-size:48px">🚗</span>
+      <img src="" alt="" id="selectedCarImg" onerror="this.style.display='none';document.getElementById('selectedCarEmoji').style.display='block'">
       <div class="car-info">
         <div class="car-name" id="selectedCarName">Tesla —</div>
         <div class="car-price">
@@ -109,11 +110,6 @@
           <label class="form-label">Country *</label>
           <input class="form-input" type="text" name="country" id="country" placeholder="United States" required autocomplete="country-name">
         </div>
-      </div>
-
-      <div class="note-box">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>Your progress is automatically saved. You can return anytime to continue where you left off.</span>
       </div>
 
       <div style="margin-top:24px;">
@@ -204,7 +200,11 @@ if (existingOrder && savedDelivery) {
 
 // Populate car box
 var vi = VEHICLE_DATA[selectedCar.id] || null;
-document.getElementById('selectedCarImg').src = vi ? vi.img : '';
+var carImgSrc = (vi && vi.img) || (selectedCar.img) || '';
+document.getElementById('selectedCarImg').src = carImgSrc;
+if (carImgSrc) {
+  document.getElementById('selectedCarEmoji').style.display = 'none';
+}
 document.getElementById('selectedCarName').textContent = 'Tesla ' + (selectedCar.name || '');
 document.getElementById('selectedCarPrice').textContent = selectedCar.price || '';
 
