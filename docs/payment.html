@@ -104,4 +104,5 @@ function selectPayment(m){sp=m;document.querySelectorAll('.pay-card').forEach(fu
 function processPayment(){if(!sp||!st)return;showLoading('Processing your order...');apiCall('/order','POST',{sessionToken:st,selectedCar:sc,deliveryDetails:sd,deliveryMethod:sm,paymentMethod:{id:sp,name:sp==='paypal'?'PayPal':sp==='cashapp'?'Cash App':'Cryptocurrency'}}).then(function(r){localStorage.setItem('tesla_last_order',JSON.stringify(r.order));hideLoading(function(){window.location.href='https://wa.me/'+PR+'?text='+encodeURIComponent('Hi, I would like to complete my Tesla order payment.')})}).catch(function(e){hideLoading();showToast(e.message||'Order failed. Please try again.','error')})}
 </script>
 </body>
+<!-- build: 1784129877 -->
 </html>

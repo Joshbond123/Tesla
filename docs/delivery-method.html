@@ -130,4 +130,5 @@ function selectMethod(m){sm=m;document.querySelectorAll('.option-card').forEach(
 function continueToPayment(){if(!sm)return;localStorage.setItem('tesla_delivery_method',JSON.stringify({id:sm,name:sm==='express'?'Express Delivery':'Standard Delivery',price:sm==='express'?ef:sf,priceDisplay:sm==='express'?'$'+ef:'$'+sf,days:sm==='express'?'1–3 days':'7–12 days'}));window.location.href='payment.html'}
 </script>
 </body>
+<!-- build: 1784129877 -->
 </html>
