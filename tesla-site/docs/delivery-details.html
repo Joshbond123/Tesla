@@ -64,7 +64,7 @@
 
     <!-- Selected car -->
     <div class="selected-car-box" id="selectedCarBox">
-      <img src="" alt="" id="selectedCarImg" onerror="this.outerHTML='<span style=font-size:48px id=selectedCarImgFallback>🚗</span>'">
+      <img src="" alt="" id="selectedCarImg" onerror="this.style.display='none';var fb=document.getElementById('selectedCarEmoji');if(fb)fb.style.display='block'">
       <div class="car-info">
         <div class="car-name" id="selectedCarName">Tesla —</div>
         <div class="car-price">
