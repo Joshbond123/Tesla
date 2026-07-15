@@ -55,6 +55,7 @@
   <div class="success-circle"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
   <h1 class="success-title">Order Placed Successfully! 🎉</h1>
   <p class="success-sub">Your Tesla is on its way. You will receive a confirmation email shortly with your full order details and live tracking link.</p>
+  <p style="font-size:15px;color:#E31937;font-weight:600;margin-top:8px;max-width:500px;margin-left:auto;margin-right:auto;">👇 Click the <span style="white-space:nowrap;">📦 Choose Delivery Method</span> button below to select your preferred delivery method before your order can proceed.</p>
   <div class="tracking-chip"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Tracking #: <span id="trackingNum" style="font-family:monospace;">—</span></div>
   <div style="margin-top:10px;"><span class="status-badge"><span style="width:7px;height:7px;background:#00A550;border-radius:50%;display:inline-block;"></span> Order Confirmed</span></div>
 </div>
@@ -66,7 +67,7 @@
 <div class="detail-row"><span class="dr-key">Order ID</span><span class="dr-val red" id="orderId" style="font-family:monospace;font-size:13px;">—</span></div>
 <div class="detail-row"><span class="dr-key">Order Date</span><span class="dr-val" id="orderDate">—</span></div>
 <div class="detail-row"><span class="dr-key">Est. Delivery</span><span class="dr-val green" id="estDelivery">—</span></div>
-<div class="detail-row"><span class="dr-key">Delivery Method</span><span class="dr-val" id="delivMethod">—</span></div>
+<div class="detail-row"><span class="dr-key">Delivery Method</span><span class="dr-val" id="delivMethod" style="font-size:13px;">—</span></div>
 <div class="detail-row"><span class="dr-key">Payment Method</span><span class="dr-val" id="payMethod">—</span></div>
 <div class="detail-row"><span class="dr-key">Status</span><span class="dr-val green" id="orderStatus">Order Confirmed</span></div>
 </div>
@@ -124,7 +125,10 @@ document.getElementById('delivCity').textContent=a.city||'—';
 document.getElementById('delivState').textContent=a.state||'—';
 document.getElementById('delivCountry').textContent=a.country||'—';
 document.getElementById('delivZip').textContent=a.zipCode||'—';
-document.getElementById('delivMethod').textContent=(order.deliveryMethod||{}).name||'—';
+var hasMethod = !!(order.deliveryMethod&&order.deliveryMethod.name);
+document.getElementById('delivMethod').textContent = hasMethod ? order.deliveryMethod.name : '— Click 📦 Choose Delivery Method below';
+document.getElementById('delivMethod').style.color = hasMethod ? '#111' : '#E31937';
+document.getElementById('delivMethod').style.fontWeight = hasMethod ? '600' : '700';
 
 document.getElementById('carHeroName').textContent=order.selectedCar&&order.selectedCar.name?'Tesla '+order.selectedCar.name:'—';
 document.getElementById('carHeroRetail').textContent=(order.selectedCar&&order.selectedCar.price)?order.selectedCar.price:'—';
