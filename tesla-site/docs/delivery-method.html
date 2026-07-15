@@ -28,7 +28,7 @@
     .option-features{margin-top:18px;display:flex;flex-direction:column;gap:8px;}
     .option-feature{display:flex;align-items:center;gap:10px;font-size:14px;color:#555;}
     .feature-dot{width:20px;height:20px;background:rgba(0,165,80,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#00A550;font-size:11px;font-weight:700;flex-shrink:0;}
-    .recommended-badge{position:absolute;top:18px;right:18px;background:#E31937;color:white;font-size:11px;font-weight:700;padding:5px 14px;border-radius:999px;letter-spacing:.03em;}
+    .recommended-badge{display:inline-block;background:#E31937;color:white;font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.03em;margin-left:8px;vertical-align:middle;position:relative;top:-1px;}
     .car-summary{background:#f8f9fa;border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;border:1px solid rgba(0,0,0,.04);}
     .car-summary img{height:56px;object-fit:contain;}
     .car-summary .cs-info{flex:1;}
@@ -93,10 +93,9 @@
 </div>
 
 <div class="option-card" id="card-express" onclick="selectMethod('express')">
-  <div class="recommended-badge">⚡ Recommended</div>
   <div class="option-header"><div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
-      <span class="option-icon">⚡</span><div><div class="option-name">Express Delivery</div><div class="option-days">1 – 3 business days</div></div>
+      <span class="option-icon">⚡</span><div><div class="option-name">Express Delivery <span class="recommended-badge">⚡ Recommended</span></div><div class="option-days">1 – 3 business days</div></div>
     </div>
     <div class="option-price" id="expressFeePrice">$399 <span>delivery fee</span></div>
   </div><div class="option-check" id="check-express">✓</div></div>
@@ -117,7 +116,7 @@
 <script src="js/vehicle-data.js"></script>
 <script>
 var sm=null,sf=299,ef=399;
-(function(){var A=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';fetch(A+'/admin/settings').then(function(r){return r.json()}).then(function(d){if(d.deliveryFee){sf=d.deliveryFee;ef=Math.round(d.deliveryFee*1.33);document.getElementById('standardFeePrice').innerHTML='$'+sf+' <span>delivery fee</span>';document.getElementById('expressFeePrice').innerHTML='$'+ef+' <span>delivery fee</span>'}}).catch(function(){})})();
+(function(){var A=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';fetch(A+'/admin/settings').then(function(r){return r.json()}).then(function(d){if(d.deliveryFee){sf=d.deliveryFee;ef=399;document.getElementById('standardFeePrice').innerHTML='$'+sf+' <span>delivery fee</span>';document.getElementById('expressFeePrice').innerHTML='$'+ef+' <span>delivery fee</span>'}}).catch(function(){})})();
 var sc=JSON.parse(localStorage.getItem('tesla_selected_car')||'null');
 var sd=JSON.parse(localStorage.getItem('tesla_delivery_details')||'null');
 if(!sc||!sd)window.location.href='dashboard.html';
