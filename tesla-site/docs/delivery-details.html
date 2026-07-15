@@ -29,9 +29,7 @@
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     @media(max-width:580px){.form-grid{grid-template-columns:1fr}}
     .form-full{grid-column:1/-1}
-    .success-check{width:80px;height:80px;background:var(--success);border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center}
-    .success-check svg{width:38px;height:38px}
-    .note-box{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-radius:12px;padding:14px 18px;margin-top:20px;font-size:13px;color:#3B82F6;line-height:1.6;display:flex;align-items:flex-start;gap:10px}
+        .note-box{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-radius:12px;padding:14px 18px;margin-top:20px;font-size:13px;color:#3B82F6;line-height:1.6;display:flex;align-items:flex-start;gap:10px}
     .note-box svg{flex-shrink:0;margin-top:1px}
   </style>
   <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
@@ -110,38 +108,7 @@
     </form>
   </div>
 
-  <!-- STEP 2: Success view (hidden initially) -->
-  <div id="successSection" style="display:none;" class="page-card anim-fade-up">
-    <div class="success-check">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-    </div>
-    <h1 class="page-title">Order Placed! 🎉</h1>
-    <p class="page-sub">Your Tesla order has been created successfully. You must now choose a delivery method to proceed with the shipment.</p>
-    
-    <div id="orderSummaryBox" style="background:var(--light);border-radius:16px;padding:20px 24px;margin-bottom:24px;">
-      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:14px;">Order Summary</div>
-      <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 20px;font-size:14px;">
-        <span style="color:var(--gray-2)">Order #:</span>
-        <span style="color:var(--dark);font-weight:700;font-family:monospace" id="summaryOrderId">—</span>
-        <span style="color:var(--gray-2)">Vehicle:</span>
-        <span style="color:var(--dark);font-weight:600" id="summaryVehicle">—</span>
-        <span style="color:var(--gray-2)">Delivery:</span>
-        <span style="color:var(--dark);font-weight:600" id="summaryAddress">—</span>
-        <span style="color:var(--gray-2)">Date:</span>
-        <span style="color:var(--dark);font-weight:600" id="summaryDate">—</span>
-        <span style="color:var(--gray-2)">Status:</span>
-        <span class="status-badge status-confirmed" style="display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(0,165,80,.1);color:#00A550;">
-          <span style="width:7px;height:7px;background:#00A550;border-radius:50%;display:inline-block"></span>
-          Order Confirmed
-        </span>
-      </div>
-    </div>
-
-    <a href="delivery-method.html" class="btn btn-primary btn-full btn-lg">📦 Choose Delivery Method →</a>
-    <p style="font-size:12px;color:var(--gray-2);text-align:center;margin-top:14px;">You must select a delivery method before your order can be processed.</p>
-  </div>
 </div>
-
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/vehicle-data.js"></script>
@@ -184,7 +151,7 @@ if (!selectedCar) { window.location.href = 'dashboard.html'; }
   } catch(e) {}
 })();
 
-// Resume: if delivery already submitted and order exists, redirect to order-success
+// Resume: if delivery already submitted and order exists, redirect to order-placed
 var existingOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
 if (existingOrder && savedDelivery) {
   window.location.href = 'order-placed.html';

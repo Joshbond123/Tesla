@@ -234,7 +234,7 @@ async function placeOrder() {
 
     localStorage.setItem('tesla_last_order', JSON.stringify(result.order));
 
-    setTimeout(() => { window.location.href = '/order-success.html'; }, 5000);
+    setTimeout(() => { window.location.href = '/order-placed.html'; }, 5000);
 
   } catch (err) {
     loader.style.display = 'none';
