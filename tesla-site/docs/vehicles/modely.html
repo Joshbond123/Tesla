@@ -3,106 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tesla Model Y - Vehicle Details | Tesla Global Award Program 2026</title>
+  <title>Tesla Model Y — Vehicle Details | Tesla Award Program 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../assets/tesla-award-logo.png">
   <style>
-    :root { --red: #e31937; --dark: #111; --gray: #555; --light: #f8f9fa; }
+    :root { --red: #e31937; --dark: #111; --gray: #555; --light: #f8f9fa; --success: #00A550; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #1a1a1a; line-height: 1.6; }
-    .detail-container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
-    .back-link { display: inline-flex; align-items: center; gap: 8px; color: #555; text-decoration: none; font-size: 14px; font-weight: 600; margin-bottom: 32px; transition: color 0.2s; }
+
+    /* ── Navigation Bar ── */
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 18px; font-weight: 900; color: var(--dark); letter-spacing: .06em; }
+    .nav-logo img { height: 28px; width: auto; }
+    .nav-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--gray); border: 1px solid rgba(0,0,0,0.08); background: white; transition: all .2s; cursor: pointer; font-family: inherit; }
+    .nav-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .detail-container { max-width: 1200px; margin: 0 auto; padding: 88px 24px 60px; }
+
+    /* ── Back Link ── */
+    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); text-decoration: none; font-size: 14px; font-weight: 600; margin-bottom: 28px; transition: color 0.2s; }
     .back-link:hover { color: var(--red); }
     .back-link svg { transition: transform 0.2s; }
     .back-link:hover svg { transform: translateX(-4px); }
-    .hero-section { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.06); margin-bottom: 32px; }
-    .hero-img-wrap { background: radial-gradient(circle at center, rgba(227,25,55,0.015) 0%, rgba(0,0,0,0.02) 100%), #fcfcfc; display: flex; align-items: center; justify-content: center; padding: 48px 24px; border-bottom: 1px solid rgba(0,0,0,0.04); min-height: 320px; }
-    .hero-img-wrap img { height: 300px; max-width: 100%; object-fit: contain; transition: transform 0.5s ease; }
+
+    /* ── Hero Section ── */
+    .hero-section { background: #fff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.06); margin-bottom: 32px; }
+    .hero-img-wrap { background: radial-gradient(circle at center, rgba(227,25,55,0.012) 0%, rgba(0,0,0,0.015) 100%), #fcfcfc; display: flex; align-items: center; justify-content: center; padding: 48px 24px; border-bottom: 1px solid rgba(0,0,0,0.04); min-height: 340px; position: relative; }
+    .hero-img-wrap img { height: 300px; max-width: 100%; object-fit: contain; transition: transform 0.5s cubic-bezier(.4,0,.2,1); filter: drop-shadow(0 8px 20px rgba(0,0,0,0.12)); }
+    .hero-img-wrap:hover img { transform: scale(1.04); }
     @media (max-width: 640px) { .hero-img-wrap img { height: 200px; } }
-    .hero-info { padding: 36px 40px; }
-    @media (max-width: 640px) { .hero-info { padding: 24px 20px; } }
-    .hero-info h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 900; letter-spacing: -1px; color: var(--dark); margin-bottom: 8px; }
+
+    .hero-info { padding: 40px 44px; }
+    @media (max-width: 640px) { .hero-info { padding: 28px 22px; } }
+    .hero-info h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 900; letter-spacing: -0.8px; color: var(--dark); margin-bottom: 6px; }
     .hero-badge { display: inline-block; background: rgba(227,25,55,0.07); color: var(--red); font-size: 12px; font-weight: 700; padding: 5px 16px; border-radius: 99px; margin-bottom: 20px; border: 1px solid rgba(227,25,55,0.15); letter-spacing: 0.04em; }
     .hero-price-row { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
     .hero-price-row .strikethrough { font-size: 20px; text-decoration: line-through; color: #999; font-weight: 600; }
-    .hero-price-row .free-badge { font-size: 15px; font-weight: 800; background: var(--red); color: #fff; padding: 6px 18px; border-radius: 10px; letter-spacing: 0.05em; box-shadow: 0 4px 16px rgba(227,25,55,0.35); }
-    .hero-desc { font-size: 15px; color: #555; line-height: 1.75; margin-bottom: 28px; max-width: 700px; }
+    .hero-price-row .free-badge { font-size: 15px; font-weight: 800; background: var(--red); color: #fff; padding: 7px 20px; border-radius: 10px; letter-spacing: 0.05em; box-shadow: 0 4px 18px rgba(227,25,55,0.35); }
+    .hero-desc { font-size: 16px; color: #555; line-height: 1.8; margin-bottom: 32px; max-width: 750px; }
     .select-btn { display: inline-flex; align-items: center; gap: 10px; background: var(--red); color: #fff; border: none; padding: 16px 40px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); text-decoration: none; letter-spacing: 0.02em; box-shadow: 0 6px 28px rgba(227,25,55,0.3); font-family: inherit; }
-    .select-btn:hover { background: #c4152e; transform: translateY(-3px); box-shadow: 0 12px 36px rgba(227,25,55,0.4); }
+    .select-btn:hover { background: #c4152e; transform: translateY(-3px); box-shadow: 0 12px 40px rgba(227,25,55,0.4); }
+    .select-btn:active { transform: translateY(0); }
+
+    /* ── Gallery Section ── */
     .gallery-section { margin-bottom: 32px; }
-    .gallery-section h2 { font-size: 22px; font-weight: 800; margin-bottom: 18px; color: var(--dark); letter-spacing: -0.5px; }
-    .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .gallery-section h2 { font-size: 22px; font-weight: 800; margin-bottom: 18px; color: var(--dark); letter-spacing: -0.4px; display: flex; align-items: center; gap: 10px; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     @media (max-width: 700px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
-    .gallery-item { background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 12px rgba(0,0,0,0.03); height: 180px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
-    .gallery-item:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.08); border-color: rgba(227,25,55,0.2); }
-    .gallery-item img { height: 85%; max-width: 90%; object-fit: contain; }
-    .specs-section { background: #fff; border-radius: 20px; padding: 36px 40px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 24px rgba(0,0,0,0.05); margin-bottom: 24px; }
-    @media (max-width: 640px) { .specs-section { padding: 24px 20px; } }
-    .specs-section h2 { font-size: 22px; font-weight: 800; margin-bottom: 28px; color: var(--dark); padding-bottom: 16px; border-bottom: 2px solid rgba(0,0,0,0.06); letter-spacing: -0.5px; }
+    .gallery-item { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 12px rgba(0,0,0,0.03); height: 200px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
+    .gallery-item:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); border-color: rgba(227,25,55,0.2); }
+    .gallery-item img { height: 85%; max-width: 90%; object-fit: contain; transition: transform .4s; }
+    .gallery-item:hover img { transform: scale(1.06); }
+
+    /* ── Specs Section ── */
+    .specs-section { background: #fff; border-radius: 24px; padding: 40px 44px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 24px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    @media (max-width: 640px) { .specs-section { padding: 28px 22px; } }
+    .specs-section h2 { font-size: 22px; font-weight: 800; margin-bottom: 32px; color: var(--dark); padding-bottom: 16px; border-bottom: 2px solid rgba(0,0,0,0.06); letter-spacing: -0.4px; }
     .specs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
     @media (max-width: 640px) { .specs-grid { grid-template-columns: 1fr; } }
-    .spec-item { display: flex; flex-direction: column; gap: 6px; padding: 18px 22px; background: #f9fafb; border-radius: 12px; border: 1px solid rgba(0,0,0,0.03); }
-    .spec-item .spec-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #888; }
+    .spec-item { display: flex; flex-direction: column; gap: 6px; padding: 20px 24px; background: #f9fafb; border-radius: 14px; border: 1px solid rgba(0,0,0,0.035); transition: all .2s; }
+    .spec-item:hover { background: rgba(227,25,55,0.02); border-color: rgba(227,25,55,0.08); }
+    .spec-item .spec-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #999; }
     .spec-item .spec-value { font-size: 15px; font-weight: 700; color: #1a1a1a; }
     .spec-full { grid-column: 1 / -1; }
     .spec-full .spec-value { font-size: 14px; font-weight: 400; color: #444; line-height: 1.7; }
+
+    /* ── Lightbox ── */
+    .lightbox { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+    .lightbox.show { display: flex; }
+    .lightbox img { max-height: 85vh; max-width: 90vw; object-fit: contain; border-radius: 8px; }
+    .lightbox-close { position: absolute; top: 24px; right: 32px; background: rgba(255,255,255,0.15); border: none; color: white; font-size: 32px; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+    .lightbox-close:hover { background: rgba(255,255,255,0.25); }
   </style>
 </head>
 <body>
-  <div class="detail-container">
-    <a href="../index.html" class="back-link">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Back to Available Cars
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <img src="../assets/tesla-award-logo.png" alt="Tesla Award Program">
+      TESLA
     </a>
-    <div class="hero-section">
-      <div class="hero-img-wrap">
-        <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png" alt="Tesla Model Y" onerror="this.parentElement.innerHTML='<div style=font-size:100px;padding:40px;>🚙</div>'">
-      </div>
-      <div class="hero-info">
-        <span class="hero-badge">Best Seller</span>
-        <h1>Tesla Model Y</h1>
-        <div class="hero-price-row">
-          <span class="strikethrough">$41,380</span>
-          <span class="free-badge">FREE</span>
-        </div>
-        <p class="hero-desc">The world’s best-selling electric SUV combining versatility, class-leading cargo space, and cutting-edge technology.</p>
-        <button class="select-btn" onclick="selectVehicle('modely')">Select This Tesla
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
+    <a href="../dashboard.html" class="nav-btn">🏠 Dashboard</a>
+  </div>
+</nav>
+
+<div class="detail-container">
+  <a href="../dashboard.html" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Choose Your Tesla
+  </a>
+
+  <div class="hero-section">
+    <div class="hero-img-wrap">
+      <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png" alt="Tesla Model Y" id="heroImage">
     </div>
-    <div class="gallery-section">
-      <h2>Image Gallery</h2>
-      <div class="gallery-grid">
-        <div class="gallery-item"><img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png" alt="Tesla Model Y" loading="lazy"></div>
-        <div class="gallery-item"><img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-gallery-1.png" alt="Tesla Model Y" loading="lazy"></div>
-        <div class="gallery-item"><img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-gallery-2.png" alt="Tesla Model Y" loading="lazy"></div>
-        <div class="gallery-item"><img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-gallery-3.png" alt="Tesla Model Y" loading="lazy"></div>
+    <div class="hero-info">
+      <span class="hero-badge">Best Seller</span>
+      <h1>Tesla Model Y</h1>
+      <div class="hero-price-row">
+        <span class="strikethrough">$41,380</span>
+        <span class="free-badge">FREE</span>
       </div>
-    </div>
-    <div class="specs-section">
-      <h2>Key Specifications</h2>
-      <div class="specs-grid">
-        <div class="spec-item"><span class="spec-label">Driving Range</span><span class="spec-value">321 mi (EPA est.)</span></div>
-        <div class="spec-item"><span class="spec-label">Acceleration</span><span class="spec-value">6.8s 0-60 mph</span></div>
-        <div class="spec-item"><span class="spec-label">Top Speed</span><span class="spec-value">135 mph</span></div>
-        <div class="spec-item"><span class="spec-label">Seating Capacity</span><span class="spec-value">5 adults (7 optional)</span></div>
-        <div class="spec-item"><span class="spec-label">Drivetrain</span><span class="spec-value">Rear-Wheel Drive</span></div>
-        <div class="spec-item"><span class="spec-label">Battery Technology</span><span class="spec-value">82 kWh Lithium-Ion</span></div>
-        <div class="spec-item spec-full"><span class="spec-label">Charging Capabilities</span><span class="spec-value">Up to 250 kW DC fast charging. Up to 169 miles added in 15 minutes at a Supercharger.</span></div>
-        <div class="spec-item spec-full"><span class="spec-label">Safety Features</span><span class="spec-value">5-star NHTSA safety rating, forward collision warning, automatic emergency braking, blind spot monitoring, lane departure avoidance, adaptive cruise control, 30-day Full Self-Driving (Supervised) trial</span></div>
-        <div class="spec-item spec-full"><span class="spec-label">Interior Highlights</span><span class="spec-value">15.4" center touchscreen, heated power front seats, heated steering wheel, panoramic glass roof, two wireless phone chargers, 7-speaker audio system, up to 76 cu ft cargo space</span></div>
-      </div>
+      <p class="hero-desc">The Tesla Model Y is the world's best-selling electric midsize SUV, combining class-leading cargo space of up to 76 cubic feet with versatile seating for up to seven. An expansive all-glass roof, minimalist interior, and access to Tesla's unrivaled global Supercharger network with over 80,000 stations worldwide make it the ultimate family EV.</p>
+      <button class="select-btn" onclick="selectVehicle('modely')">
+        Select This Tesla
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
   </div>
-  <script src="../js/vehicle-data.js"></script>
-  <script>
-    function selectVehicle(vehicleId) {
-      if (typeof saveSelectedVehicle === 'function') saveSelectedVehicle(vehicleId);
-      try { sessionStorage.setItem('selectedTeslaVehicle', vehicleId); } catch(e) {}
-      window.location.href = '../delivery-details.html';
+
+  <div class="gallery-section">
+    <h2>🖼️ Image Gallery</h2>
+    <div class="gallery-grid">
+      
+        <div class="gallery-item">
+          <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png" alt="Tesla Model Y" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-gallery-1.png" alt="Tesla Model Y" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-gallery-2.png" alt="Tesla Model Y" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-gallery-3.png" alt="Tesla Model Y" loading="lazy">
+        </div>
+    </div>
+  </div>
+
+  <div class="specs-section">
+    <h2>📋 Key Specifications</h2>
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-label">Driving Range</span><span class="spec-value">321 mi (EPA est.)</span></div>
+      <div class="spec-item"><span class="spec-label">0–60 mph Acceleration</span><span class="spec-value">6.8s 0–60 mph</span></div>
+      <div class="spec-item"><span class="spec-label">Top Speed</span><span class="spec-value">135 mph</span></div>
+      <div class="spec-item"><span class="spec-label">Seating Capacity</span><span class="spec-value">5 adults (7 optional)</span></div>
+      <div class="spec-item"><span class="spec-label">Drivetrain</span><span class="spec-value">Rear-Wheel Drive</span></div>
+      <div class="spec-item"><span class="spec-label">Battery Technology</span><span class="spec-value">82 kWh Lithium-Ion</span></div>
+      <div class="spec-item spec-full"><span class="spec-label">Charging Capabilities</span><span class="spec-value">Up to 250 kW DC fast charging. Add up to 169 miles in 15 minutes at a Tesla Supercharger.</span></div>
+      <div class="spec-item spec-full"><span class="spec-label">Safety Features</span><span class="spec-value">5-star NHTSA safety rating, forward collision warning, automatic emergency braking, blind spot monitoring, lane departure avoidance, adaptive cruise control, 30-day Full Self-Driving (Supervised) trial included.</span></div>
+      <div class="spec-item spec-full"><span class="spec-label">Interior Highlights</span><span class="spec-value">15.4" center touchscreen, heated power-adjustable front seats, heated steering wheel, panoramic glass roof, dual wireless phone chargers, 7-speaker audio system, up to 76 cu ft cargo space with seats folded.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox for gallery images -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="document.getElementById('lightbox').classList.remove('show')">&times;</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script src="../js/vehicle-data.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  // Lightbox functionality for gallery
+  (function() {
+    var items = document.querySelectorAll('.gallery-item img');
+    for (var i = 0; i < items.length; i++) {
+      items[i].addEventListener('click', function(e) {
+        e.stopPropagation();
+        var lb = document.getElementById('lightbox');
+        var lbImg = document.getElementById('lightboxImg');
+        lbImg.src = this.src;
+        lb.classList.add('show');
+      });
     }
-  </script>
+  })();
+
+  function closeLightbox(e) {
+    if (e.target === document.getElementById('lightbox') || e.target.classList.contains('lightbox-close')) {
+      document.getElementById('lightbox').classList.remove('show');
+    }
+  }
+
+  // Keyboard: Escape to close lightbox
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('show');
+  });
+
+  function selectVehicle(vehicleId) {
+    if (typeof saveSelectedVehicle === 'function') saveSelectedVehicle(vehicleId);
+    try { sessionStorage.setItem('selectedTeslaVehicle', vehicleId); } catch(e) {}
+    window.location.href = '../delivery-details.html';
+  }
+</script>
+
 </body>
 </html>
