@@ -112,7 +112,28 @@ if(!order)window.location.href='index.html';
 
 document.getElementById('trackingNum').textContent=order.trackingNumber||'—';
 document.getElementById('orderId').textContent=order.orderId||'—';
-document.getElementById('orderDate').textContent=order.orderDate?new Date(order.orderDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+// Order Date — robust parsing with fallback
+try {
+  var od = order.orderDate;
+  if (od) {
+    var d = new Date(od);
+    if (!isNaN(d.getTime())) {
+      document.getElementById('orderDate').textContent = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+    } else {
+      // Try parsing as different format or use as-is
+      var parts = od.split('T')[0].split('-');
+      if (parts.length === 3) {
+        document.getElementById('orderDate').textContent = new Date(parts[0], parts[1]-1, parts[2]).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+      } else {
+        document.getElementById('orderDate').textContent = od;
+      }
+    }
+  } else {
+    document.getElementById('orderDate').textContent = '—';
+  }
+} catch(e) {
+  document.getElementById('orderDate').textContent = order.orderDate || '—';
+}
 document.getElementById('estDelivery').textContent=order.estimatedDelivery||'—';
 document.getElementById('orderStatus').textContent=order.status==='confirmed'?'Order Confirmed':order.status||'Processing';
 
