@@ -129,7 +129,14 @@
 <script src="js/app.js"></script>
 <script>
 (function() {
-  // Check if user is already authenticated
+  // ── CRITICAL ORDER CHECK: If user has an existing order, redirect immediately ──
+  var existingOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+  if (existingOrder && existingOrder.orderId) {
+    window.location.href = 'order-placed.html';
+    return;
+  }
+  
+  // ── Check if user is already authenticated ──
   var sessionToken = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session');
   if (sessionToken) {
     // Attempt non-blocking check if session is valid; if so, redirect directly to dashboard

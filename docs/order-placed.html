@@ -106,7 +106,27 @@
 (function(){var c=['#E31937','#171A20','#FFD700','#00A550','#3B82F6'];for(var i=0;i<60;i++){var e=document.createElement('div');e.className='confetti-piece';e.style.cssText='left:'+Math.random()*100+'vw;top:-10px;background:'+c[Math.floor(Math.random()*c.length)]+';width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-duration:'+(2+Math.random()*3)+'s;animation-delay:'+(Math.random()*1.5)+'s;';document.body.appendChild(e);e.addEventListener('animationend',function(){e.remove()})}})();
 
 var order=JSON.parse(localStorage.getItem('tesla_last_order')||'null');
-if(!order)window.location.href='index.html';
+if(!order||!order.orderId){
+  // Try to recover from API via session token
+  var session = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session');
+  if (session) {
+    var apiBase = window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+    fetch(apiBase + '/session?token=' + encodeURIComponent(session))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.valid && d.hasOrder && d.order) {
+          localStorage.setItem('tesla_last_order', JSON.stringify(d.order));
+          window.location.reload();
+        } else {
+          window.location.href = 'index.html';
+        }
+      })
+      .catch(function(){ window.location.href = 'index.html'; });
+    return;
+  }
+  window.location.href = 'index.html';
+  return;
+}
 
 document.getElementById('trackingNum').textContent=order.trackingNumber||'—';
 document.getElementById('orderId').textContent=order.orderId||'—';

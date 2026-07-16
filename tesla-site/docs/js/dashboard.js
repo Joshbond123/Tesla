@@ -39,6 +39,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
+  // FIRST: Check localStorage for an existing order BEFORE any API call.
+  // Even if the session expired, a user with an order should never see the dashboard.
+  var existingOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+  if (existingOrder && existingOrder.orderId) {
+    window.location.href = 'order-placed.html';
+    return;
+  }
+
   var session = getSession();
   if (!session) { 
     window.location.href = 'entry.html'; 
