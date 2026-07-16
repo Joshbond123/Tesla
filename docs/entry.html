@@ -181,6 +181,21 @@
     try {
       var data = await apiCall('/login', 'POST', { email: email, phone: phone });
       saveSession(data.sessionToken);
+      
+      // If user already has an order, redirect directly to order-placed page
+      if (data.hasOrder && data.order) {
+        // Reconstruct order data for localStorage so order-placed page works
+        var orderData = {
+          orderId: data.order.order_id || data.order.orderId,
+          trackingNumber: data.order.tracking_number || data.order.trackingNumber,
+          status: data.order.status || 'confirmed',
+          email: email
+        };
+        localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+        window.location.href = 'order-placed.html';
+        return;
+      }
+      
       window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
     } catch (err) {
       hideLoading();
@@ -245,7 +260,18 @@
       
       // hideLoading shows the completion animation for ~1s, then redirects
       hideLoading(function() {
-        window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken || '');
+        if (data.hasOrder && data.order) {
+          var orderData = {
+            orderId: data.order.order_id || data.order.orderId,
+            trackingNumber: data.order.tracking_number || data.order.trackingNumber,
+            status: data.order.status || 'confirmed',
+            email: document.getElementById('email').value.trim()
+          };
+          localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+          window.location.href = 'order-placed.html';
+        } else {
+          window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken || '');
+        }
       });
 
     } catch (err) {

