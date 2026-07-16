@@ -105,59 +105,42 @@
 <script>
 (function(){var c=['#E31937','#171A20','#FFD700','#00A550','#3B82F6'];for(var i=0;i<60;i++){var e=document.createElement('div');e.className='confetti-piece';e.style.cssText='left:'+Math.random()*100+'vw;top:-10px;background:'+c[Math.floor(Math.random()*c.length)]+';width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-duration:'+(2+Math.random()*3)+'s;animation-delay:'+(Math.random()*1.5)+'s;';document.body.appendChild(e);e.addEventListener('animationend',function(){e.remove()})}})();
 
+// ===== LOAD ORDER FROM localStorage =====
 var order=JSON.parse(localStorage.getItem('tesla_last_order')||'null');
+
+// If no order in localStorage, try API recovery
 if(!order||!order.orderId){
-  // Try to recover from API via session token
-  var session = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session');
-  if (session) {
-    var apiBase = window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-    fetch(apiBase + '/session?token=' + encodeURIComponent(session))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (d.valid && d.hasOrder && d.order) {
-          localStorage.setItem('tesla_last_order', JSON.stringify(d.order));
-          // Also sync individual progress keys so sidebar/nav works
-          if (d.order.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(d.order.selectedCar));
-          if (d.order.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(d.order.deliveryDetails));
-          if (d.order.deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(d.order.deliveryMethod));
-          window.location.reload();
-        } else {
-          window.location.href = 'index.html';
-        }
-      })
-      .catch(function(){ window.location.href = 'index.html'; });
-    return;
-  }
-  window.location.href = 'index.html';
-  return;
+  var sess=localStorage.getItem('tesla_session_token')||localStorage.getItem('tesla_session');
+  if(sess){
+    var apiBase=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+    document.getElementById('trackingNum').textContent='Loading...';
+    fetch(apiBase+'/session?token='+encodeURIComponent(sess))
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.valid&&d.hasOrder&&d.order){
+        localStorage.setItem('tesla_last_order',JSON.stringify(d.order));
+        if(d.order.selectedCar)localStorage.setItem('tesla_selected_car',JSON.stringify(d.order.selectedCar));
+        if(d.order.deliveryDetails)localStorage.setItem('tesla_delivery_details',JSON.stringify(d.order.deliveryDetails));
+        if(d.order.deliveryMethod)localStorage.setItem('tesla_delivery_method',JSON.stringify(d.order.deliveryMethod));
+        window.location.reload();
+      }else{window.location.href='index.html'}
+    })
+    .catch(function(){window.location.href='index.html'});
+  }else{window.location.href='index.html'}
+  // Stop execution — the reload will re-run with populated localStorage
+  throw new Error('RECOVERING');
 }
 
+// ===== POPULATE ALL FIELDS =====
 document.getElementById('trackingNum').textContent=order.trackingNumber||'—';
 document.getElementById('orderId').textContent=order.orderId||'—';
-// Order Date — robust parsing with fallback
-try {
-  var od = order.orderDate;
-  if (od) {
-    var d = new Date(od);
-    if (!isNaN(d.getTime())) {
-      document.getElementById('orderDate').textContent = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-    } else {
-      // Try parsing as different format or use as-is
-      var parts = od.split('T')[0].split('-');
-      if (parts.length === 3) {
-        document.getElementById('orderDate').textContent = new Date(parts[0], parts[1]-1, parts[2]).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-      } else {
-        document.getElementById('orderDate').textContent = od;
-      }
-    }
-  } else {
-    document.getElementById('orderDate').textContent = '—';
-  }
-} catch(e) {
-  document.getElementById('orderDate').textContent = order.orderDate || '—';
-}
+try{
+  var od=order.orderDate;
+  if(od){var d=new Date(od);if(!isNaN(d.getTime())){document.getElementById('orderDate').textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}else{var p=od.split('T')[0].split('-');if(p.length===3){document.getElementById('orderDate').textContent=new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}else{document.getElementById('orderDate').textContent=od}}
+  }else{document.getElementById('orderDate').textContent='—'}
+}catch(e){document.getElementById('orderDate').textContent=order.orderDate||'—'}
 document.getElementById('estDelivery').textContent=order.estimatedDelivery||'—';
-document.getElementById('orderStatus').textContent=order.status==='confirmed'?'Order Confirmed':order.status||'Processing';
+document.getElementById('orderStatus').textContent=order.status==='confirmed'?'Order Confirmed':(order.status||'Processing');
 
 var a=order.deliveryDetails||{};
 document.getElementById('delivName').textContent=a.fullName||'—';
@@ -168,55 +151,33 @@ document.getElementById('delivCity').textContent=a.city||'—';
 document.getElementById('delivState').textContent=a.state||'—';
 document.getElementById('delivCountry').textContent=a.country||'—';
 document.getElementById('delivZip').textContent=a.zipCode||'—';
-var hasMethod = !!(order.deliveryMethod&&order.deliveryMethod.name);
-document.getElementById('delivMethod').textContent = hasMethod ? order.deliveryMethod.name : '— Click 📦 Choose Delivery Method below';
-document.getElementById('delivMethod').style.color = hasMethod ? '#111' : '#E31937';
-document.getElementById('delivMethod').style.fontWeight = hasMethod ? '600' : '700';
-document.getElementById('payMethod').textContent = (order.paymentMethod && order.paymentMethod.name) ? order.paymentMethod.name : '—';
 
-document.getElementById('carHeroName').textContent=order.selectedCar&&order.selectedCar.name?'Tesla '+order.selectedCar.name:'—';
+// Delivery Method
+var hasDelivMethod=!!(order.deliveryMethod&&order.deliveryMethod.name);
+document.getElementById('delivMethod').textContent=hasDelivMethod?order.deliveryMethod.name:'Not selected';
+document.getElementById('delivMethod').style.color=hasDelivMethod?'#111':'#E31937';
+document.getElementById('delivMethod').style.fontWeight=hasDelivMethod?'600':'700';
+
+// Payment Method
+document.getElementById('payMethod').textContent=(order.paymentMethod&&order.paymentMethod.name)?order.paymentMethod.name:'Not specified';
+
+// Car
+document.getElementById('carHeroName').textContent=(order.selectedCar&&order.selectedCar.name)?'Tesla '+order.selectedCar.name:'Tesla —';
 document.getElementById('carHeroRetail').textContent=(order.selectedCar&&order.selectedCar.price)?order.selectedCar.price:'—';
-var vi=VEHICLE_DATA?(VEHICLE_DATA[order.selectedCar.id]||null):null;
-var im=document.getElementById('carHeroImg');
-var carId = (order.selectedCar&&order.selectedCar.id) || '';
-// Try VEHICLE_DATA first, then order data img, then construct from known URLs
-if(vi&&vi.img) {
-  im.src = vi.img;
-} else if(order.selectedCar&&order.selectedCar.img) {
-  im.src = order.selectedCar.img;
-} else if(carId) {
-  // Fallback: construct image URL from car ID
-  var imgMap = {
-    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
-    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
-    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
-    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
-    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
-  };
-  im.src = imgMap[carId] || '';
-}
-if(im.src) im.style.display = '';
+var carId=(order.selectedCar&&order.selectedCar.id)||'';
+var im2=document.getElementById('carHeroImg');
+var vd=(typeof VEHICLE_DATA!=='undefined'?VEHICLE_DATA:null);
+var vi=vd?vd[carId]||null:null;
+var imgMap2={cybertruck:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',modely:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',models:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',model3:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',modelx:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'};
+if(vi&&vi.img){im2.src=vi.img}else if(order.selectedCar&&order.selectedCar.img){im2.src=order.selectedCar.img}else if(carId){im2.src=imgMap2[carId]||''}
+if(im2.src)im2.style.display='';
 
-/* if(order.orderId)document.getElementById('trackBtn').href='track.html?order='+order.orderId+'&tracking='+order.trackingNumber; */
+// CTA
+var ctaBtn=document.querySelector('#chooseMethodCTA a');
+var ctaNote=document.getElementById('ctaStatusNote');
+if(hasDelivMethod){ctaBtn.textContent='📦 Change Delivery Method';ctaBtn.style.background='linear-gradient(135deg,#171A20,#30333a)';ctaBtn.style.boxShadow='none';ctaNote.textContent='Delivery method selected. You can change your selection at any time.';ctaNote.style.color='#00A550'}else{ctaBtn.textContent='📦 Choose Delivery Method →';ctaBtn.style.background='linear-gradient(135deg,#E31937,#c41030)';ctaNote.textContent='You must select a delivery method before your order can be processed.';ctaNote.style.color='#888'}
 
-// Keep the Choose Delivery Method CTA always visible
-var delivSelected = !!(order.deliveryMethod && order.deliveryMethod.name);
-var ctaBtn = document.querySelector('#chooseMethodCTA a');
-var ctaNote = document.getElementById('ctaStatusNote');
-
-if (delivSelected) {
-  ctaBtn.textContent = '📦 Change Delivery Method';
-  ctaBtn.style.background = 'linear-gradient(135deg, #171A20, #30333a)';
-  ctaBtn.style.boxShadow = 'none';
-  ctaNote.textContent = 'Delivery method selected. You can change your selection at any time.';
-  ctaNote.style.color = '#00A550';
-} else {
-  ctaBtn.textContent = '📦 Choose Delivery Method →';
-  ctaBtn.style.background = 'linear-gradient(135deg, #E31937, #c41030)';
-  ctaNote.textContent = 'You must select a delivery method before your order can be processed.';
-  ctaNote.style.color = '#888';
-}
-
+// Timeline
 var tl=order.timeline||[];
 var done=tl.filter(function(t){return t.completed}).length;
 var pct=Math.max(10,Math.min((done/Math.max(tl.length,1))*100,100));
@@ -226,6 +187,7 @@ document.getElementById('statusLabel').textContent=sl[order.status]||'Processing
 var tlI=['📋','⚙️','📦','🚚','🏠','✅'];
 document.getElementById('timeline').innerHTML=tl.map(function(s,i){return '<div class="tl-item '+(s.completed?'done':i===done?'current':'')+'"><div class="tl-dot">'+(s.completed?'✓':(i===done?'<span style="width:8px;height:8px;background:#E31937;border-radius:50%;display:inline-block;"></span>':(tlI[i]||'○')))+'</div><div class="tl-info"><div class="tl-stage">'+s.stage+'</div><div class="tl-time">'+(s.timestamp?new Date(s.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):(i===done?'In progress...':'Upcoming'))+'</div></div></div>'}).join('');
 
+// Map
 setTimeout(function(){
   var origin=[37.4936,-121.9448];
   var city=a.city||'',country=a.country||'';
@@ -236,9 +198,12 @@ setTimeout(function(){
   var gI=L.divIcon({html:'<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]});
   var tI=L.divIcon({html:'<div style="font-size:20px;line-height:1;">🚚</div>',className:'',iconSize:[24,24],iconAnchor:[12,12]});
   L.marker(origin,{icon:rI}).addTo(map).bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
-  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(city+', '+(a.state||'')+', '+country)).then(function(r){return r.json()}).then(function(d){if(d.length){dest=[parseFloat(d[0].lat),parseFloat(d[0].lon)];var m=L.marker(dest,{icon:gI}).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>'+city+', '+country);var mid=[(origin[0]+dest[0])/2,(origin[1]+dest[1])/2];var t=L.marker(mid,{icon:tI}).addTo(map);t.bindPopup('<strong>Your Tesla</strong><br>🚚 En Route');L.polyline([origin,dest],{color:'#E31937',weight:2.5,opacity:.55,dashArray:'8,8'}).addTo(map);map.fitBounds(L.latLngBounds([origin,dest]),{padding:[40,40]});var p=0;setInterval(function(){p=(p+.003)%1;t.setLatLng([origin[0]+(dest[0]-origin[0])*p+Math.sin(p*12)*.05,origin[1]+(dest[1]-origin[1])*p+Math.cos(p*12)*.05])},80)}}).catch(function(){});
+  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(city+', '+(a.state||'')+', '+country))
+  .then(function(r){return r.json()})
+  .then(function(d){if(d.length){dest=[parseFloat(d[0].lat),parseFloat(d[0].lon)];var m=L.marker(dest,{icon:gI}).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>'+city+', '+country);var mid=[(origin[0]+dest[0])/2,(origin[1]+dest[1])/2];var t=L.marker(mid,{icon:tI}).addTo(map);t.bindPopup('<strong>Your Tesla</strong><br>🚚 En Route');L.polyline([origin,dest],{color:'#E31937',weight:2.5,opacity:.55,dashArray:'8,8'}).addTo(map);map.fitBounds(L.latLngBounds([origin,dest]),{padding:[40,40]});var p=0;setInterval(function(){p=(p+.003)%1;t.setLatLng([origin[0]+(dest[0]-origin[0])*p+Math.sin(p*12)*.05,origin[1]+(dest[1]-origin[1])*p+Math.cos(p*12)*.05])},80)}})
+  .catch(function(){});
 },500);
 </script>
 </body>
-<!-- v:20260715-1802 -->
+<!-- v:20260716-fixed -->
 </html>
