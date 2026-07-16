@@ -350,8 +350,16 @@ async function handleVerify(req: Request) {
   await dbUpdate("giveaway_users", { verification_status: "verified", verified_at: new Date().toISOString() }, { id: "eq." + entry.id });
   await authConfirmUser(entry.auth_user_id);
 
+  // Check if user already has an order
+  const { data: verifyExistingOrder } = await dbGet1("orders", "order_id", { user_id: "eq." + entry.id });
+  
   const sessionToken = hexRandom(32);
   await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+  
+  if (verifyExistingOrder) {
+    return Response.redirect(FRONTEND_URL + "/order-placed.html?session=" + sessionToken, 302);
+  }
+  
   return Response.redirect(FRONTEND_URL + "/dashboard.html?session=" + sessionToken, 302);
 }
 
@@ -386,12 +394,38 @@ async function handleLogin(req: Request) {
 
 
 
-  // Check if user already has an order
-  const { data: existingOrder } = await dbGet1("orders", "order_id,tracking_number,status", { user_id: "eq." + entry.id });
+  // Check if user already has an order — load FULL order data
+  let hasOrder = false;
+  let orderData = null;
+  try {
+    const orderR = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)&user_id=eq." + entry.id + "&order=order_date.desc&limit=1", { headers: SB_HEADERS });
+    if (orderR.ok) {
+      const rows = await orderR.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        hasOrder = true;
+        const o = rows[0];
+        const car = Array.isArray(o.selected_cars) ? o.selected_cars[0] : o.selected_cars;
+        const delivery = Array.isArray(o.delivery_details) ? o.delivery_details[0] : o.delivery_details;
+        const tracking = ((o.tracking_data ?? [])).sort((a,b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        orderData = {
+          orderId: o.order_id,
+          trackingNumber: o.tracking_number,
+          status: o.status,
+          orderDate: o.order_date,
+          estimatedDelivery: o.estimated_delivery,
+          deliveryMethod: o.delivery_method || {},
+          paymentMethod: o.payment_method || {},
+          selectedCar: car?.data || {},
+          deliveryDetails: delivery?.data || {},
+          timeline: tracking
+        };
+      }
+    }
+  } catch (_) {}
   
   const sessionToken = hexRandom(32);
   await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
-  return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder: !!existingOrder, order: existingOrder || null });
+  return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
 }
 
 async function getSessionUser(sessionToken: string) {
@@ -409,10 +443,36 @@ async function handleSession(req: Request) {
   const user = await getSessionUser(token || "");
   if (!user) return json({ valid: false }, 401);
   
-  // Check if user already has an order
-  const { data: existingOrder } = await dbGet1("orders", "order_id,tracking_number,status", { user_id: "eq." + user.entryId });
+  // Check if user already has an order — load FULL order data
+  let hasOrder = false;
+  let orderData = null;
+  try {
+    const orderR = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)&user_id=eq." + user.entryId + "&order=order_date.desc&limit=1", { headers: SB_HEADERS });
+    if (orderR.ok) {
+      const rows = await orderR.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        hasOrder = true;
+        const o = rows[0];
+        const car = Array.isArray(o.selected_cars) ? o.selected_cars[0] : o.selected_cars;
+        const delivery = Array.isArray(o.delivery_details) ? o.delivery_details[0] : o.delivery_details;
+        const tracking = ((o.tracking_data ?? [])).sort((a,b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        orderData = {
+          orderId: o.order_id,
+          trackingNumber: o.tracking_number,
+          status: o.status,
+          orderDate: o.order_date,
+          estimatedDelivery: o.estimated_delivery,
+          deliveryMethod: o.delivery_method || {},
+          paymentMethod: o.payment_method || {},
+          selectedCar: car?.data || {},
+          deliveryDetails: delivery?.data || {},
+          timeline: tracking
+        };
+      }
+    }
+  } catch (_) {}
   
-  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder: !!existingOrder, order: existingOrder || null });
+  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
 }
 
 async function handleOrder(req: Request) {

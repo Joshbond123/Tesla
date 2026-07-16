@@ -78,10 +78,18 @@ router.get("/verify", async (req, res) => {
 
     await supabase.from("giveaway_users").update({ verification_status: "verified", verified_at: new Date().toISOString() }).eq("id", entry.id);
     if (entry.auth_user_id) await supabase.auth.admin.updateUserById(entry.auth_user_id, { email_confirm: true });
+    // Check if user already has an order
+    const { data: verifyExistingOrder } = await supabase.from("orders").select("order_id").eq("user_id", entry.id).maybeSingle();
+    
     const sessionToken = crypto.randomBytes(32).toString("hex");
     const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
     if (sessionError) throw sessionError;
-    res.redirect(`/dashboard.html?session=${sessionToken}`);
+    
+    if (verifyExistingOrder) {
+      res.redirect(`/order-placed.html?session=${sessionToken}`);
+    } else {
+      res.redirect(`/dashboard.html?session=${sessionToken}`);
+    }
   } catch (err) { logger.error({ err }, "Verify error"); res.redirect("/verify-error.html?reason=server"); }
 });
 
@@ -120,9 +128,25 @@ router.post("/login", async (req, res) => {
     const sessionToken = crypto.randomBytes(32).toString("hex");
     const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
     if (sessionError) throw sessionError;
-    // Check if user already has an order
-    const { data: existingOrder } = await supabase.from("orders").select("order_id,tracking_number,status").eq("user_id", entry.id).maybeSingle();
-    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder: !!existingOrder, order: existingOrder || null });
+    // Check if user already has an order — load FULL order data
+    let hasOrder = false;
+    let orderData = null;
+    try {
+      const { data: fullOrder } = await supabase.from("orders").select("order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq("user_id", entry.id).order("order_date", { ascending: false }).limit(1).maybeSingle();
+      if (fullOrder) {
+        hasOrder = true;
+        const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
+        const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
+        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        orderData = {
+          orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
+          orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
+          deliveryMethod: fullOrder.delivery_method || {}, paymentMethod: fullOrder.payment_method || {},
+          selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
+        };
+      }
+    } catch (_) {}
+    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
   } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
 });
 
@@ -139,9 +163,25 @@ router.get("/session", async (req, res) => {
   try {
     const user = await getSessionUser((req.query as { token?: string }).token);
     if (!user) { res.status(401).json({ valid: false }); return; }
-    // Check if user already has an order
-    const { data: existingOrder } = await supabase.from("orders").select("order_id,tracking_number,status").eq("user_id", user.id).maybeSingle();
-    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder: !!existingOrder, order: existingOrder || null });
+    // Check if user already has an order — load FULL order data
+    let hasOrder = false;
+    let orderData = null;
+    try {
+      const { data: fullOrder } = await supabase.from("orders").select("order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq("user_id", user.id).order("order_date", { ascending: false }).limit(1).maybeSingle();
+      if (fullOrder) {
+        hasOrder = true;
+        const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
+        const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
+        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        orderData = {
+          orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
+          orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
+          deliveryMethod: fullOrder.delivery_method || {}, paymentMethod: fullOrder.payment_method || {},
+          selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
+        };
+      }
+    } catch (_) {}
+    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
   } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
 });
 

@@ -53,6 +53,13 @@ document.addEventListener('DOMContentLoaded', async function() {
       return; 
     }
 
+    // Server-side order check: redirect immediately if user has an existing order
+    if (data.hasOrder && data.order) {
+      localStorage.setItem('tesla_last_order', JSON.stringify(data.order));
+      window.location.href = 'order-placed.html';
+      return;
+    }
+
     if (urlSession) {
       var banner = document.getElementById('verifiedBanner');
       if (banner) {

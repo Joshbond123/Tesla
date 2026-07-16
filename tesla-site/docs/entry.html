@@ -184,14 +184,8 @@
       
       // If user already has an order, redirect directly to order-placed page
       if (data.hasOrder && data.order) {
-        // Reconstruct order data for localStorage so order-placed page works
-        var orderData = {
-          orderId: data.order.order_id || data.order.orderId,
-          trackingNumber: data.order.tracking_number || data.order.trackingNumber,
-          status: data.order.status || 'confirmed',
-          email: email
-        };
-        localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+        // Store the full order from the API response
+        localStorage.setItem('tesla_last_order', JSON.stringify(data.order));
         window.location.href = 'order-placed.html';
         return;
       }
@@ -261,13 +255,7 @@
       // hideLoading shows the completion animation for ~1s, then redirects
       hideLoading(function() {
         if (data.hasOrder && data.order) {
-          var orderData = {
-            orderId: data.order.order_id || data.order.orderId,
-            trackingNumber: data.order.tracking_number || data.order.trackingNumber,
-            status: data.order.status || 'confirmed',
-            email: document.getElementById('email').value.trim()
-          };
-          localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+          localStorage.setItem('tesla_last_order', JSON.stringify(data.order));
           window.location.href = 'order-placed.html';
         } else {
           window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken || '');
