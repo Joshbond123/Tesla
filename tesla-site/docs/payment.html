@@ -78,13 +78,15 @@
 <script src="js/app.js"></script>
 <script src="js/vehicle-data.js"></script>
 <script>
-var sc=JSON.parse(localStorage.getItem('tesla_selected_car')||'null');
-var sd=JSON.parse(localStorage.getItem('tesla_delivery_details')||'null');
-var sm=JSON.parse(localStorage.getItem('tesla_delivery_method')||'null');
-var st=localStorage.getItem('tesla_session_token')||getSession();
+var sc = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+var sd = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+var sm = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
+var st = localStorage.getItem('tesla_session_token') || getSession();
+
 if(!sc||!sd||!sm)window.location.href='dashboard.html';
 var PR='15814783495';
 (function(){var A=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';fetch(A+'/admin/settings').then(function(r){return r.json()}).then(function(d){if(d.paymentPhone){PR=d.paymentPhone.replace(/\D/g,'')}}).catch(function(){})})();
+
 document.getElementById('smModel').textContent=sc?'Tesla '+(sc.name||''):'—';
 document.getElementById('smMethod').textContent=sm?sm.name:'—';
 document.getElementById('smTime').textContent=sm?sm.days:'—';

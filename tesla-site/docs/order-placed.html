@@ -94,8 +94,6 @@
     <p id="ctaStatusNote" style="text-align:center;margin-top:12px;font-size:13px;color:#888;">You must select a delivery method before your order can be processed.</p>
   </div>
   <div id="normalActions" style="display:flex;gap:14px;flex-wrap:wrap;width:100%;">
-    <a id="trackBtn" href="track.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">📍 Track My Order</a>
-    <a href="index.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">← Back to Home</a>
   </div>
 </div>
 </div>
@@ -174,7 +172,7 @@ if(vi&&vi.img) {
 }
 if(im.src) im.style.display = '';
 
-if(order.orderId)document.getElementById('trackBtn').href='track.html?order='+order.orderId+'&tracking='+order.trackingNumber;
+/* if(order.orderId)document.getElementById('trackBtn').href='track.html?order='+order.orderId+'&tracking='+order.trackingNumber; */
 
 // Keep the Choose Delivery Method CTA always visible
 var hasMethod = !!(order.deliveryMethod && order.deliveryMethod.name);

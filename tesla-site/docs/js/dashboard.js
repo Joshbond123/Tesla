@@ -119,13 +119,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     var savedMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
     var savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
 
-    if (savedOrder && savedDelivery && savedMethod) {
+    if (savedOrder) {
       window.location.href = 'order-placed.html';
       return;
-    } else if (savedOrder && savedDelivery) {
-      window.location.href = 'delivery-method.html';
+    } else if (savedCar && savedDelivery && savedMethod) {
+      window.location.href = 'payment.html';
       return;
     } else if (savedCar && savedDelivery) {
+      window.location.href = 'delivery-method.html';
+      return;
+    } else if (savedCar) {
       window.location.href = 'delivery-details.html';
       return;
     }

