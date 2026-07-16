@@ -129,6 +129,24 @@
 <script src="js/app.js"></script>
 <script>
 (function() {
+  // Check if user is already authenticated
+  var sessionToken = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session');
+  if (sessionToken) {
+    // Attempt non-blocking check if session is valid; if so, redirect directly to dashboard
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', (window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api') + '/session?token=' + encodeURIComponent(sessionToken), false);
+    try {
+      xhr.send();
+      if (xhr.status === 200) {
+        var resp = JSON.parse(xhr.responseText || '{}');
+        if (resp.valid) {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+      }
+    } catch(e) {}
+  }
+
   var form = document.getElementById('entryForm');
   var submitBtn = document.getElementById('submitBtn');
   var showLoginBtn = document.getElementById('showLoginBtn');
@@ -239,26 +257,18 @@
       var errMsg = err.message || 'Something went wrong. Please try again.';
       
       if (errMsg.toLowerCase().indexOf('already') !== -1) {
-        // User already exists — auto-login by calling /login
-        showLoading('Welcome back! Logging you in...');
-        try {
-          var loginData = await apiCall('/login', 'POST', { email: email, phone: phone });
-          saveSession(loginData.sessionToken);
-          hideLoading(function() {
-            window.location.href = 'dashboard.html?session=' + encodeURIComponent(loginData.sessionToken);
-          });
-        } catch (loginErr) {
-          hideLoading();
-          document.getElementById('alreadyMsg').innerHTML = 'This email has already been entered. <button type="button" id="inlineLoginBtn" style="border:0;background:none;color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer;font-size:inherit;">Login with email and phone</button>.';
+        showToast('Existing account detected. Redirecting to Login...', 'info');
+        setTimeout(function() {
+          loginForm.classList.add('show');
+          document.getElementById('loginEmail').value = email;
+          document.getElementById('loginPhone').value = phone;
+          
+          document.getElementById('alreadyMsg').innerHTML = 'This email has already been registered. Please enter your credentials below to log in.';
           document.getElementById('alreadyMsg').style.display = 'block';
-          document.getElementById('alreadyMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          document.getElementById('inlineLoginBtn').addEventListener('click', function() { 
-            loginForm.classList.add('show'); 
-            document.getElementById('loginEmail').value = email; 
-            document.getElementById('loginPhone').value = phone; 
-            loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-          });
-        }
+          
+          loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          document.getElementById('loginPhone').focus();
+        }, 1200);
       } else {
         showToast(errMsg, 'error');
       }

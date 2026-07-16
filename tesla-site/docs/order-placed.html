@@ -88,13 +88,13 @@
 
 <div class="timeline-card anim-fade-up"><h3>📍 Delivery Progress</h3><div style="margin-bottom:16px;"><div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:10%;"></div></div><div style="font-size:13px;color:#888;margin-top:8px;">Status: <strong id="statusLabel" style="color:#111;">Order Confirmed</strong></div></div><div class="timeline" id="timeline"></div></div>
 
-<div class="action-row anim-fade-up" id="actionRow">
-  <div id="chooseMethodCTA" style="display:none;width:100%;">
-    <a href="delivery-method.html" class="btn btn-primary btn-lg" style="width:100%;text-align:center;padding:18px 32px;font-size:18px;font-weight:800;background:linear-gradient(135deg,#E31937,#c41030);box-shadow:0 8px 32px rgba(227,25,55,.3);border-radius:16px;">📦 Choose Delivery Method →</a>
-    <p style="text-align:center;margin-top:12px;font-size:13px;color:#888;">You must select a delivery method before your order can be processed.</p>
+<div class="action-row anim-fade-up" id="actionRow" style="display:flex;flex-direction:column;gap:16px;width:100%;">
+  <div id="chooseMethodCTA" style="width:100%;">
+    <a href="delivery-method.html" class="btn btn-primary btn-lg" style="width:100%;text-align:center;padding:18px 32px;font-size:18px;font-weight:800;background:linear-gradient(135deg,#E31937,#c41030);box-shadow:0 8px 32px rgba(227,25,55,.3);border-radius:16px;display:block;">📦 Choose Delivery Method →</a>
+    <p id="ctaStatusNote" style="text-align:center;margin-top:12px;font-size:13px;color:#888;">You must select a delivery method before your order can be processed.</p>
   </div>
   <div id="normalActions" style="display:flex;gap:14px;flex-wrap:wrap;width:100%;">
-    <a id="trackBtn" href="track.html" class="btn btn-primary btn-lg" style="flex:1;text-align:center;">📍 Track My Order</a>
+    <a id="trackBtn" href="track.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">📍 Track My Order</a>
     <a href="index.html" class="btn btn-outline btn-lg" style="flex:1;text-align:center;">← Back to Home</a>
   </div>
 </div>
@@ -176,13 +176,22 @@ if(im.src) im.style.display = '';
 
 if(order.orderId)document.getElementById('trackBtn').href='track.html?order='+order.orderId+'&tracking='+order.trackingNumber;
 
-// Show Choose Delivery Method CTA if no method selected yet
-if(!(order.deliveryMethod&&order.deliveryMethod.name)){
-  document.getElementById('chooseMethodCTA').style.display='block';
-  document.getElementById('normalActions').style.display='none';
-}else{
-  document.getElementById('chooseMethodCTA').style.display='none';
-  document.getElementById('normalActions').style.display='flex';
+// Keep the Choose Delivery Method CTA always visible
+var hasMethod = !!(order.deliveryMethod && order.deliveryMethod.name);
+var ctaBtn = document.querySelector('#chooseMethodCTA a');
+var ctaNote = document.getElementById('ctaStatusNote');
+
+if (hasMethod) {
+  ctaBtn.textContent = '📦 Change Delivery Method';
+  ctaBtn.style.background = 'linear-gradient(135deg, #171A20, #30333a)';
+  ctaBtn.style.boxShadow = 'none';
+  ctaNote.textContent = 'Delivery method selected. You can change your selection at any time.';
+  ctaNote.style.color = '#00A550';
+} else {
+  ctaBtn.textContent = '📦 Choose Delivery Method →';
+  ctaBtn.style.background = 'linear-gradient(135deg, #E31937, #c41030)';
+  ctaNote.textContent = 'You must select a delivery method before your order can be processed.';
+  ctaNote.style.color = '#888';
 }
 
 var tl=order.timeline||[];
