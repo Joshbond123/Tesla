@@ -64,6 +64,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Server-side order check: redirect immediately if user has an existing order
     if (data.hasOrder && data.order) {
       localStorage.setItem('tesla_last_order', JSON.stringify(data.order));
+      if (data.order.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(data.order.selectedCar));
+      if (data.order.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(data.order.deliveryDetails));
+      if (data.order.deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(data.order.deliveryMethod));
       window.location.href = 'order-placed.html';
       return;
     }

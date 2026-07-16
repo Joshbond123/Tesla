@@ -116,6 +116,10 @@ if(!order||!order.orderId){
       .then(function(d){
         if (d.valid && d.hasOrder && d.order) {
           localStorage.setItem('tesla_last_order', JSON.stringify(d.order));
+          // Also sync individual progress keys so sidebar/nav works
+          if (d.order.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(d.order.selectedCar));
+          if (d.order.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(d.order.deliveryDetails));
+          if (d.order.deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(d.order.deliveryMethod));
           window.location.reload();
         } else {
           window.location.href = 'index.html';
@@ -168,6 +172,7 @@ var hasMethod = !!(order.deliveryMethod&&order.deliveryMethod.name);
 document.getElementById('delivMethod').textContent = hasMethod ? order.deliveryMethod.name : '— Click 📦 Choose Delivery Method below';
 document.getElementById('delivMethod').style.color = hasMethod ? '#111' : '#E31937';
 document.getElementById('delivMethod').style.fontWeight = hasMethod ? '600' : '700';
+document.getElementById('payMethod').textContent = (order.paymentMethod && order.paymentMethod.name) ? order.paymentMethod.name : '—';
 
 document.getElementById('carHeroName').textContent=order.selectedCar&&order.selectedCar.name?'Tesla '+order.selectedCar.name:'—';
 document.getElementById('carHeroRetail').textContent=(order.selectedCar&&order.selectedCar.price)?order.selectedCar.price:'—';
@@ -195,11 +200,11 @@ if(im.src) im.style.display = '';
 /* if(order.orderId)document.getElementById('trackBtn').href='track.html?order='+order.orderId+'&tracking='+order.trackingNumber; */
 
 // Keep the Choose Delivery Method CTA always visible
-var hasMethod = !!(order.deliveryMethod && order.deliveryMethod.name);
+var delivSelected = !!(order.deliveryMethod && order.deliveryMethod.name);
 var ctaBtn = document.querySelector('#chooseMethodCTA a');
 var ctaNote = document.getElementById('ctaStatusNote');
 
-if (hasMethod) {
+if (delivSelected) {
   ctaBtn.textContent = '📦 Change Delivery Method';
   ctaBtn.style.background = 'linear-gradient(135deg, #171A20, #30333a)';
   ctaBtn.style.boxShadow = 'none';
