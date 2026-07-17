@@ -321,10 +321,8 @@ async function handleEntry(req: Request) {
   const sessionToken = hexRandom(32);
   await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
 
+  // Email verification disabled — user is auto-verified
   const verifyLink = SELF_BASE + "/api/verify?token=" + verificationToken + "&email=" + encodeURIComponent(emailKey);
-  // Non-blocking email send (tries both ports)
-  sendEmailBackground(emailKey, "⚡ Verify Your Email — Tesla Award Program",
-    buildVerificationEmail(firstName || "there", verifyLink, entry.id));
 
   return json({
     success: true,
@@ -372,7 +370,7 @@ async function handleResend(req: Request) {
 
   const { data: entry, error } = await dbGet1("giveaway_users", "id,first_name,verification_token,verification_status", { email: "eq." + emailKey });
   if (error || !entry) return json({ error: "Email not found. Please enter first." }, 404);
-  if (entry.verification_status === "verified") return json({ error: "Already verified." }, 409);
+  // Email verification disabled
 
   const verifyLink = SELF_BASE + "/api/verify?token=" + entry.verification_token + "&email=" + encodeURIComponent(emailKey);
   sendEmailBackground(emailKey, "⚡ Verification Email Resent — Tesla Award Program",

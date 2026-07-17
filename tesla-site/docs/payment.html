@@ -132,11 +132,32 @@
     b.textContent = '🔒 Pay ' + (sm ? sm.priceDisplay : '') + ' & Place Order';
   };
 
+  var _isProcessing = false; // Prevent double-submits
+
   window.processPayment = function() {
-    if (!sp || !st) {
-      if (typeof showToast === 'function') showToast('Please select a payment method.', 'error');
+    // Prevent duplicate submissions while request is in flight
+    if (_isProcessing) {
       return;
     }
+
+    // Validate payment method selection
+    if (!sp) {
+      if (typeof showToast === 'function') showToast('Please select a payment method before continuing.', 'error');
+      return;
+    }
+
+    // Session token is optional — proceed even without it (guest orders allowed)
+    if (!st) {
+      st = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
+    }
+
+    _isProcessing = true;
+    var btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.55';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = '⏳ Processing...';
+    
     if (typeof showLoading === 'function') showLoading('Processing your order...');
 
     var payMethodName = sp === 'paypal' ? 'PayPal' : sp === 'cashapp' ? 'Cash App' : 'Cryptocurrency';
@@ -180,6 +201,11 @@
         window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg);
       }
     }).catch(function(e) {
+      _isProcessing = false;
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.textContent = '🔒 Pay ' + (sm ? sm.priceDisplay : '') + ' & Place Order';
       if (typeof hideLoading === 'function') hideLoading();
       if (typeof showToast === 'function') showToast(e.message || 'Order failed. Please try again.', 'error');
     });

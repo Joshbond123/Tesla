@@ -204,6 +204,39 @@ setTimeout(function(){
   .catch(function(){});
 },500);
 </script>
+
+<script>
+// Subtle order confirmation chime using Web Audio API
+(function() {
+  try {
+    var order = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+    if (order && order.orderId) {
+      // Check if we already played the sound for this specific order
+      var playedKey = 'tesla_order_sound_played_' + order.orderId;
+      if (!sessionStorage.getItem(playedKey)) {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Three-note ascending chime: C5, E5, G5 (subtle and professional)
+        var notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+        var startTime = ctx.currentTime;
+        notes.forEach(function(freq, i) {
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, startTime + i * 0.15);
+          gain.gain.linearRampToValueAtTime(0.15, startTime + i * 0.15 + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + i * 0.15 + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime + i * 0.15);
+          osc.stop(startTime + i * 0.15 + 0.5);
+        });
+        sessionStorage.setItem(playedKey, '1');
+      }
+    }
+  } catch(e) { /* Audio not supported, silently skip */ }
+})();
+</script>
 </body>
 <!-- v:20260716-fixed -->
 </html>

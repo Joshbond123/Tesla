@@ -69,15 +69,8 @@ router.post("/entry", async (req, res) => {
     }
 
     const verifyLink = `${getBaseUrl()}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
-    let emailSent = false;
-    try {
-      await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Verify Your Email — Tesla Award Program", html: buildVerificationEmail(firstName || "there", verifyLink, entry.id) });
-      emailSent = true;
-      logger.info({ email: emailKey }, "Verification email sent");
-    } catch (emailErr) {
-      logger.error({ err: emailErr, email: emailKey }, "Entry saved but verification email failed");
-    }
-    res.json({ success: true, message: emailSent ? "Entry submitted! Check your email to verify." : "Entry submitted. Verification email delivery is delayed; please use resend or contact support.", entryId: entry.id, emailSent });
+    // Email verification disabled
+    res.json({ success: true, message: "Entry submitted successfully!", entryId: entry.id, emailSent: false });
   } catch (err) { logger.error({ err }, "Entry error"); res.status(500).json({ error: "Server error. Please try again." }); }
 });
 
@@ -141,12 +134,7 @@ router.post("/login", async (req, res) => {
       res.status(401).json({ error: "We could not match that email and phone number." });
       return;
     }
-    if (entry.verification_status !== "verified") {
-      const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
-      await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Complete Your Tesla Award Verification", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
-      res.status(403).json({ error: "Your entry is not verified yet. We just resent your verification email." });
-      return;
-    }
+    // Email verification disabled — all users treated as verified
     const sessionToken = crypto.randomBytes(32).toString("hex");
     const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
     if (sessionError) throw sessionError;
