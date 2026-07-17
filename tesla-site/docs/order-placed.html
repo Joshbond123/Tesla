@@ -185,7 +185,31 @@ document.getElementById('progressBar').style.width=pct+'%';
 var sl={confirmed:'Order Confirmed',processing:'Processing',shipped:'Shipped',in_transit:'In Transit',out_for_delivery:'Out for Delivery',delivered:'Delivered'};
 document.getElementById('statusLabel').textContent=sl[order.status]||'Processing';
 var tlI=['📋','⚙️','📦','🚚','🏠','✅'];
-document.getElementById('timeline').innerHTML=tl.map(function(s,i){return '<div class="tl-item '+(s.completed?'done':i===done?'current':'')+'"><div class="tl-dot">'+(s.completed?'✓':(i===done?'<span style="width:8px;height:8px;background:#E31937;border-radius:50%;display:inline-block;"></span>':(tlI[i]||'○')))+'</div><div class="tl-info"><div class="tl-stage">'+s.stage+'</div><div class="tl-time">'+(s.timestamp?new Date(s.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):(i===done?'In progress...':'Upcoming'))+'</div></div></div>'}).join('');
+document.getElementById('timeline').innerHTML=tl.map(function(s,i){
+  var cls = s.completed ? 'done' : (i === done ? 'current' : '');
+  var dot = s.completed ? '✓' : (i === done ? '<span style=\\"width:8px;height:8px;background:#E31937;border-radius:50%;display:inline-block;\"></span>' : (tlI[i]||'○'));
+  
+  // Show the timestamp for completed stages, "In progress..." for current, "Upcoming" for future
+  var timeText;
+  if (s.completed && s.timestamp) {
+    try {
+      var d = new Date(s.timestamp);
+      if (!isNaN(d.getTime())) {
+        timeText = d.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+      } else {
+        timeText = s.timestamp.split('T')[0] || s.timestamp;
+      }
+    } catch(e) { timeText = s.timestamp; }
+  } else if (s.completed) {
+    timeText = 'Completed';
+  } else if (i === done) {
+    timeText = 'In progress...';
+  } else {
+    timeText = 'Upcoming';
+  }
+  
+  return '<div class=\\"tl-item ' + cls + '\"><div class=\\"tl-dot\">' + dot + '</div><div class=\\"tl-info\"><div class=\\"tl-stage\">' + s.stage + '</div><div class=\\"tl-time\">' + timeText + '</div></div></div>';
+}).join('');
 
 // Map
 setTimeout(function(){
@@ -206,35 +230,48 @@ setTimeout(function(){
 </script>
 
 <script>
-// Subtle order confirmation chime using Web Audio API
+// Subtle order confirmation chime — plays after user interaction unlocks AudioContext
 (function() {
   try {
     var order = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
     if (order && order.orderId) {
-      // Check if we already played the sound for this specific order
       var playedKey = 'tesla_order_sound_played_' + order.orderId;
       if (!sessionStorage.getItem(playedKey)) {
-        var ctx = new (window.AudioContext || window.webkitAudioContext)();
-        // Three-note ascending chime: C5, E5, G5 (subtle and professional)
-        var notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-        var startTime = ctx.currentTime;
-        notes.forEach(function(freq, i) {
-          var osc = ctx.createOscillator();
-          var gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0, startTime + i * 0.15);
-          gain.gain.linearRampToValueAtTime(0.15, startTime + i * 0.15 + 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.001, startTime + i * 0.15 + 0.4);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(startTime + i * 0.15);
-          osc.stop(startTime + i * 0.15 + 0.5);
-        });
         sessionStorage.setItem(playedKey, '1');
+        
+        function playChime() {
+          try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            // Resume context if suspended (browser autoplay policy)
+            if (ctx.state === 'suspended') ctx.resume();
+            var notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+            var startTime = ctx.currentTime;
+            notes.forEach(function(freq, i) {
+              var osc = ctx.createOscillator();
+              var gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0, startTime + i * 0.15);
+              gain.gain.linearRampToValueAtTime(0.15, startTime + i * 0.15 + 0.05);
+              gain.gain.exponentialRampToValueAtTime(0.001, startTime + i * 0.15 + 0.4);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(startTime + i * 0.15);
+              osc.stop(startTime + i * 0.15 + 0.5);
+            });
+          } catch(e2) {}
+        }
+        
+        // Try to play immediately — may fail due to autoplay policy
+        playChime();
+        // Also play on first user interaction (click/touch) in case autoplay blocked it
+        var played = false;
+        document.addEventListener('click', function handler() {
+          if (!played) { played = true; playChime(); document.removeEventListener('click', handler); }
+        }, { once: true });
       }
     }
-  } catch(e) { /* Audio not supported, silently skip */ }
+  } catch(e) {}
 })();
 </script>
 </body>
