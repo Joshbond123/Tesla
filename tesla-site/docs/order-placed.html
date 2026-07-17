@@ -184,12 +184,20 @@ var pct=Math.max(10,Math.min((done/Math.max(tl.length,1))*100,100));
 document.getElementById('progressBar').style.width=pct+'%';
 var sl={confirmed:'Order Confirmed',processing:'Processing',shipped:'Shipped',in_transit:'In Transit',out_for_delivery:'Out for Delivery',delivered:'Delivered'};
 document.getElementById('statusLabel').textContent=sl[order.status]||'Processing';
-var tlI=['1','2','3','4','5','✓'];
+// SVG icons for each stage
+var stageIcons = {
+  'Order Confirmed': '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
+  'Processing': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>',
+  'Shipped': '<svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+  'In Transit': '<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+  'Out for Delivery': '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+  'Delivered': '<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
+};
+
 document.getElementById('timeline').innerHTML=tl.map(function(s,i){
   var cls = s.completed ? 'done' : (i === done ? 'current' : '');
-  var dot = s.completed ? '✓' : (i === done ? '<span style=\\"width:8px;height:8px;background:#E31937;border-radius:50%;display:inline-block;\"></span>' : (tlI[i]||'○'));
+  var icon = stageIcons[s.stage] || '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
   
-  // Show the timestamp for completed stages, "In progress..." for current, "Upcoming" for future
   var timeText;
   if (s.completed && s.timestamp) {
     try {
@@ -208,7 +216,7 @@ document.getElementById('timeline').innerHTML=tl.map(function(s,i){
     timeText = 'Upcoming';
   }
   
-  return '<div class=\\"tl-item ' + cls + '\"><div class=\\"tl-dot\">' + dot + '</div><div class=\\"tl-info\"><div class=\\"tl-stage\">' + s.stage + '</div><div class=\\"tl-time\">' + timeText + '</div></div></div>';
+  return '<div class=\\"tl-item ' + cls + '\"><div class=\\"tl-dot\">' + icon + '</div><div class=\\"tl-info\"><div class=\\"tl-stage\">' + s.stage + '</div><div class=\\"tl-time\">' + timeText + '</div></div></div>';
 }).join('');
 
 // Map

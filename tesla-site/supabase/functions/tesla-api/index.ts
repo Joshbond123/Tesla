@@ -479,11 +479,25 @@ async function handleOrder(req: Request) {
   const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = body;
   // Allow orders without session validation — create guest context from delivery details
   let user = await getSessionUser(sessionToken || "");
+  // If user already has an existing order, return it instead of blocking
   if (user) {
-    // Check if user already has an order
-    const { data: existingOrder } = await dbGet1("orders", "id", { user_id: "eq." + user.id });
-    if (existingOrder) {
-      return json({ error: "You have already placed an order. Each user is restricted to one order only." }, 400);
+    const orderR = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)&user_id=eq." + user.id + "&order=order_date.desc&limit=1", { headers: SB_HEADERS });
+    if (orderR.ok) {
+      const rows = await orderR.json();
+      if (rows.length > 0) {
+        const o = rows[0];
+        const sc = (o.selected_cars && o.selected_cars.data) ? o.selected_cars.data : {};
+        const dd = (o.delivery_details && o.delivery_details.data) ? o.delivery_details.data : {};
+        const pm = (o.payment_method) ? o.payment_method : {};
+        const dm = (o.delivery_method) ? o.delivery_method : null;
+        const tracking = ((o.tracking_data ?? [])).sort((a,b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const existing = {
+          orderId: o.order_id, trackingNumber: o.tracking_number, status: o.status, orderDate: o.order_date,
+          estimatedDelivery: o.estimated_delivery, deliveryMethod: dm, paymentMethod: pm, selectedCar: sc,
+          deliveryDetails: dd, timeline: tracking, email: user.email || "", entryId: user.entryId || 0
+        };
+        return json({ success: true, order: existing });
+      }
     }
   }
   if (!user) {
