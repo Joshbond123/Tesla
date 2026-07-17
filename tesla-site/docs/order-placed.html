@@ -184,7 +184,7 @@ var pct=Math.max(10,Math.min((done/Math.max(tl.length,1))*100,100));
 document.getElementById('progressBar').style.width=pct+'%';
 var sl={confirmed:'Order Confirmed',processing:'Processing',shipped:'Shipped',in_transit:'In Transit',out_for_delivery:'Out for Delivery',delivered:'Delivered'};
 document.getElementById('statusLabel').textContent=sl[order.status]||'Processing';
-var tlI=['📋','⚙️','📦','🚚','🏠','✅'];
+var tlI=['1','2','3','4','5','✓'];
 document.getElementById('timeline').innerHTML=tl.map(function(s,i){
   var cls = s.completed ? 'done' : (i === done ? 'current' : '');
   var dot = s.completed ? '✓' : (i === done ? '<span style=\\"width:8px;height:8px;background:#E31937;border-radius:50%;display:inline-block;\"></span>' : (tlI[i]||'○'));
