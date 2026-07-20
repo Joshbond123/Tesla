@@ -3,7 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Tesla Award Program</title>
+  <title>Admin Panel — Tesla Award Program</title>
+    <meta name="description" content="Administrative dashboard for the Tesla Award Program.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://joshbond123.github.io/Tesla/admin.html">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://joshbond123.github.io/Tesla/admin.html">
+    <meta property="og:title" content="Admin Panel — Tesla Award Program">
+    <meta property="og:description" content="Administrative dashboard for the Tesla Award Program.">
+    <meta property="og:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:site_name" content="Tesla Award Program">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://joshbond123.github.io/Tesla/admin.html">
+    <meta name="twitter:title" content="Admin Panel — Tesla Award Program">
+    <meta name="twitter:description" content="Administrative dashboard for the Tesla Award Program.">
+    <meta name="twitter:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png">
   <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
   <style>
     :root{--red:#E31937;--red-hover:#C4122E;--red-glow:rgba(227,25,55,0.15);--bg:#050508;--bg-surface:#0A0B10;--bg-card:#0E0F16;--bg-hover:rgba(255,255,255,0.02);--border:rgba(255,255,255,0.06);--text:#F1F1F3;--text-secondary:rgba(255,255,255,0.55);--text-muted:rgba(255,255,255,0.3);--success:#00C853;--success-bg:rgba(0,200,83,0.10);--warning:#F59E0B;--warning-bg:rgba(245,158,11,0.10);--danger:#EF4444;--danger-bg:rgba(239,68,68,0.10);--info:#3B82F6;--info-bg:rgba(59,130,246,0.10);--radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:20px}
@@ -192,11 +209,55 @@
     }
 
 </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Tesla Award Program",
+      "url": "https://joshbond123.github.io/Tesla",
+      "logo": "https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png",
+      "description": "Independent promotional award program offering free Tesla vehicles to winners worldwide.",
+      "sameAs": []
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Tesla Award Program",
+      "url": "https://joshbond123.github.io/Tesla",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://joshbond123.github.io/Tesla/track.html?tracking={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://joshbond123.github.io/Tesla/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Admin",
+          "item": "https://joshbond123.github.io/Tesla/admin.html"
+        }
+      ]
+    }
+    </script>
 </head>
 <body>
 <div id="loginScreen">
   <div class="login-container"><div class="login-card">
-    <img src="assets/tesla-award-logo.png" alt="Tesla" class="login-logo" onerror="this.style.display='none'">
+    <img src="assets/tesla-award-logo.png" alt="Tesla" class="login-logo" onerror="this.style.display='none'" loading="lazy" decoding="async">
     <h1>Admin Panel</h1><p class="subtitle">Restricted access. Enter your administrator credentials to continue.</p>
     <div class="input-group"><span class="input-icon">&#x1F511;</span><input type="password" id="loginInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()" autofocus></div>
     <button class="login-btn" onclick="doLogin()">Authenticate</button>
@@ -205,7 +266,7 @@
 </div>
 <div id="app">
 <aside class="sidebar">
-  <div class="sidebar-header"><img src="assets/tesla-award-logo.png" alt="Logo" onerror="this.style.display='none'" style="height:32px"><div class="brand">Tesla<span>Admin Panel</span></div></div>
+  <div class="sidebar-header"><img src="assets/tesla-award-logo.png" alt="Logo" onerror="this.style.display='none'" style="height:32px" loading="lazy" decoding="async"><div class="brand">Tesla<span>Admin Panel</span></div></div>
   <nav class="sidebar-nav">
     <button class="nav-item active" data-tab="dashboard"><span class="nav-icon">&#x1F4CA;</span> Dashboard</button>
     <button class="nav-item" data-tab="users"><span class="nav-icon">&#x1F465;</span> Users <span class="nav-badge" id="usersNavBadge">0</span></button>
