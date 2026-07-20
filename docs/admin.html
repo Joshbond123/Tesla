@@ -316,12 +316,6 @@ tbody tr:last-child td { border-bottom: none; }
 </head>
 <body>
 
-<!-- SIDEBAR TOGGLE (mobile) -->
-<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Menu">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-</button>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
 <!-- LOGIN SCREEN -->
 <div id="loginScreen">
   <div class="login-wrapper">
@@ -344,6 +338,10 @@ tbody tr:last-child td { border-bottom: none; }
 
 <!-- APP -->
 <div id="app">
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Menu">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -599,8 +597,6 @@ function init(){
   } catch(e) { console.error('init:',e); }
 }
 function doLogin(){
-  // Show sidebar toggle on mobile after login
-  var st=document.getElementById('sidebarToggle');if(st)st.style.display='flex';
   try {
     var li=document.getElementById('loginInput');var p=li?li.value:'';
     if(p===adminPassword){
@@ -614,8 +610,7 @@ function doLogin(){
     }
   } catch(e) { console.error('doLogin:',e); }
 }
-function doLogout(){
-  var st=document.getElementById('sidebarToggle');if(st)st.style.display='none';document.getElementById('app').classList.remove('active');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginInput').value='';document.getElementById('loginInput').focus()}
+function doLogout(){document.getElementById('app').classList.remove('active');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginInput').value='';document.getElementById('loginInput').focus()}
 function switchTab(t){
   // Close mobile sidebar when navigating
   var sidebar=document.getElementById('sidebar');var overlay=document.getElementById('sidebarOverlay');
