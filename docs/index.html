@@ -181,7 +181,7 @@
     <img class="hero-img"
       src="https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png"
       alt="Tesla Model S"
-      onerror="this.src='';this.parentElement.innerHTML='<div style=\'font-size:120px;text-align:center;animation:float 7s ease-in-out infinite\' loading="lazy" decoding="async">🚗</div>'">
+      onerror="this.style.display='none'"
     <div class="hero-img-glow"></div>
   </div>
 </div>
@@ -1166,9 +1166,8 @@
     /* Floating WhatsApp Button */
     .whatsapp-float {
       position: fixed;
-      top: 50%;
+      bottom: 28px;
       right: 28px;
-      transform: translateY(-50%);
       z-index: 99999;
       display: flex;
       flex-direction: column;
@@ -1587,7 +1586,7 @@ var grd = document.getElementById('homeCarGrid');
 grd.innerHTML = cars.map(function(c){
   return '<div class="car-showcase">' +
     '<div class="car-img-bg">' +
-      '<img src="' + c.img + '" alt="' + c.name + '" onerror="this.outerHTML=\'<div style=font-size:56px; loading="lazy" decoding="async">' + c.emoji + '</div>\'">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">' +
     '</div>' +
     '<div class="car-info">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
