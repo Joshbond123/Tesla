@@ -132,7 +132,6 @@ function displayTracking(order) {
 
   document.getElementById('vehicleDetails').innerHTML =
     detRow('Vehicle', `Tesla ${car.name||''}`.trim()) +
-    detRow('Colour', car.color) +
     detRow('Order Date', orderDateStr) +
     detRow('Est. Delivery', order.estimatedDelivery, 'color:var(--success);') +
     (order.deliveryMethod?.name ? detRow('Shipping', order.deliveryMethod.name) : '');
