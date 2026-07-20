@@ -129,8 +129,9 @@ body {
   display: flex; align-items: center; gap: 12px; padding: 12px 16px;
   border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 600;
   color: var(--text-secondary); transition: all 0.15s var(--ease);
-  border: none; background: none; width: 100%; text-align: left;
+  border: 1px solid transparent; background: none; width: 100%; text-align: left;
   font-family: inherit; letter-spacing: -0.1px; position: relative;
+  user-select: none; -webkit-tap-highlight-color: transparent;
 }
 .nav-item:hover { background: var(--bg-hover); color: var(--text); }
 .nav-item.active { background: rgba(227,25,55,0.08); color: #fff; border: 1px solid rgba(227,25,55,0.2); }
@@ -581,6 +582,13 @@ tbody tr:last-child td { border-bottom: none; }
 'use strict';
 var API='https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';(function(){try{if(window.TESLA_API_BASE&&window.TESLA_API_BASE.indexOf('__')===-1)API=window.TESLA_API_BASE;var ls=localStorage.getItem('tesla_api_base');if(ls)API=ls.replace(/\/+$/,'');}catch(e){}})();
 var allUsers=[],allOrders=[],deliveryFee=299,adminPassword=localStorage.getItem('tesla_admin_pwd')||'admin123';
+
+function toggleSidebar(){
+  var sidebar=document.getElementById('sidebar');
+  var overlay=document.getElementById('sidebarOverlay');
+  if(sidebar)sidebar.classList.toggle('open');
+  if(overlay)overlay.classList.toggle('active');
+}
 
 function init(){
   try {
