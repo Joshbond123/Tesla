@@ -1,4 +1,4 @@
-// Tesla Award Program — Supabase Edge Function (v11)
+// Tesla Award Program — Supabase Edge Function (v12)
 // Email: tries SMTP on port 587 (STARTTLS), falls back to port 465 (SSL).
 // Both attempts are non-blocking. The response always includes verifyLink
 // so the congratulations page can offer instant verification.
@@ -288,7 +288,7 @@ async function trySmtpSend(port: number, useTls: boolean, to: string, subject: s
 
 // ── ROUTE HANDLERS ────────────────────────────────────────────────────────────
 async function handleHealth() {
-  return json({ status: "ok", version: "v11" });
+  return json({ status: "ok", version: "v12" });
 }
 
 async function handleEntry(req: Request) {
