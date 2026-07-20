@@ -537,7 +537,7 @@ async function handleOrder(req: Request) {
 
   const orderDate = orderRow?.order_date || new Date().toISOString();
   const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? {}, status: "confirmed", orderDate, estimatedDelivery, timeline };
-  sendEmailBackground(user.email, "Your Tesla Order Confirmation — Order #${order.orderId}", buildOrderConfirmationEmail(order));
+  sendEmailBackground(user.email, `Your Tesla Order Confirmation — Order ${orderId}`, buildOrderConfirmationEmail(order));
   return json({ success: true, order });
 }
 
@@ -615,8 +615,8 @@ function buildOrderConfirmationEmail(order: any) {
           <!-- Logo Header -->
           <tr>
             <td align="center" style="padding:32px 30px 24px;">
-              <span style="font-size:20px;font-weight:700;color:#171a20;letter-spacing:0.04em;">TESLA</span>
-              <span style="font-size:12px;font-weight:600;color:#8e9094;display:block;margin-top:2px;">AWARD PROGRAM</span>
+              <span style="font-size:22px;font-weight:800;color:#171a20;letter-spacing:0.04em;">TESLA</span>
+              <span style="font-size:13px;font-weight:700;color:#6e6e73;display:block;margin-top:2px;">AWARD PROGRAM</span>
             </td>
           </tr>
 
@@ -628,8 +628,8 @@ function buildOrderConfirmationEmail(order: any) {
           <!-- Hero: Order Confirmation -->
           <tr>
             <td style="padding:36px 30px 28px;">
-              <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#171a20;line-height:1.3;">Order confirmed</h1>
-              <p style="margin:0;font-size:15px;color:#6e6e73;line-height:1.6;">
+              <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#171a20;line-height:1.3;">Order confirmed</h1>
+              <p style="margin:0;font-size:16px;color:#424245;line-height:1.6;">
                 Thank you, ${fullName}. Your order has been received and is being processed. Here is a summary of your order.
               </p>
             </td>
@@ -642,7 +642,7 @@ function buildOrderConfirmationEmail(order: any) {
                 <tr>
                   <td align="center" style="padding:28px 20px 24px;">
                     <img src="${carImg}" alt="Tesla ${carModel}" width="280" style="width:280px;max-width:100%;height:auto;display:block;margin:0 auto 18px;border:0;outline:none;">
-                    <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:#171a20;">Tesla ${carModel}</h2>
+                    <h2 style="margin:0 0 4px;font-size:22px;font-weight:800;color:#171a20;">Tesla ${carModel}</h2>
                     ${carColor ? '<p style="margin:0;font-size:14px;color:#86868b;">' + carColor + ' &middot; ' + carYear + '</p>' : '<p style="margin:0;font-size:14px;color:#86868b;">' + carYear + '</p>'}
                   </td>
                 </tr>
@@ -653,19 +653,19 @@ function buildOrderConfirmationEmail(order: any) {
           <!-- Order Details -->
           <tr>
             <td style="padding:0 30px 24px;">
-              <h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:0.05em;">Order Details</h3>
+              <h3 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#6e6e73;text-transform:uppercase;letter-spacing:0.05em;">Order Details</h3>
               <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size:14px;">
                 <tr>
-                  <td style="padding:10px 0;color:#6e6e73;border-bottom:1px solid #f0f0f2;">Order number</td>
-                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:600;font-family:'SF Mono','Menlo','Consolas',monospace;border-bottom:1px solid #f0f0f2;">${orderId}</td>
+                  <td style="padding:10px 0;color:#424245;font-weight:500;border-bottom:1px solid #f0f0f2;">Order number</td>
+                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:700;font-family:'SF Mono','Menlo','Consolas',monospace;border-bottom:1px solid #f0f0f2;">${orderId}</td>
                 </tr>
                 <tr>
-                  <td style="padding:10px 0;color:#6e6e73;border-bottom:1px solid #f0f0f2;">Tracking number</td>
-                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:600;font-family:'SF Mono','Menlo','Consolas',monospace;border-bottom:1px solid #f0f0f2;">${trackingNumber}</td>
+                  <td style="padding:10px 0;color:#424245;font-weight:500;border-bottom:1px solid #f0f0f2;">Tracking number</td>
+                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:700;font-family:'SF Mono','Menlo','Consolas',monospace;border-bottom:1px solid #f0f0f2;">${trackingNumber}</td>
                 </tr>
                 <tr>
                   <td style="padding:10px 0;color:#6e6e73;">Estimated delivery</td>
-                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:600;">${estDelivery}</td>
+                  <td style="padding:10px 0;text-align:right;color:#171a20;font-weight:700;">${estDelivery}</td>
                 </tr>
               </table>
             </td>
@@ -674,22 +674,22 @@ function buildOrderConfirmationEmail(order: any) {
           <!-- Delivery Information -->
           <tr>
             <td style="padding:0 30px 24px;">
-              <h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:0.05em;">Delivery Address</h3>
+              <h3 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#6e6e73;text-transform:uppercase;letter-spacing:0.05em;">Delivery Address</h3>
               <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#fafafa;border-radius:10px;border:1px solid #e8e8ed;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#171a20;">${fullName}</p>
-                    <p style="margin:0 0 2px;font-size:14px;color:#424245;">${address}</p>
-                    <p style="margin:0 0 2px;font-size:14px;color:#424245;">${city}${state ? ', ' + state : ''} ${zip}</p>
-                    <p style="margin:0 0 10px;font-size:14px;color:#424245;">${country}</p>
-                    <table border="0" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                    <p style="margin:0 0 4px;font-size:16px;font-weight:700;color:#171a20;">${fullName}</p>
+                    <p style="margin:0 0 2px;font-size:16px;color:#1d1d1f;font-weight:500;">${address}</p>
+                    <p style="margin:0 0 2px;font-size:16px;color:#1d1d1f;font-weight:500;">${city}${state ? ', ' + state : ''} ${zip}</p>
+                    <p style="margin:0 0 10px;font-size:16px;color:#1d1d1f;font-weight:500;">${country}</p>
+                    <table border="0" cellpadding="0" cellspacing="0" style="font-size:14px;">
                       <tr>
-                        <td style="color:#86868b;padding-right:8px;">Email</td>
-                        <td style="color:#424245;">${emailAddr}</td>
+                        <td style="color:#6e6e73;font-weight:500;padding-right:8px;">Email</td>
+                        <td style="color:#2d2d2f;font-weight:500;">${emailAddr}</td>
                       </tr>
                       <tr>
-                        <td style="color:#86868b;padding-right:8px;">Phone</td>
-                        <td style="color:#424245;">${phone}</td>
+                        <td style="color:#6e6e73;font-weight:500;padding-right:8px;">Phone</td>
+                        <td style="color:#2d2d2f;font-weight:500;">${phone}</td>
                       </tr>
                     </table>
                   </td>
@@ -701,11 +701,11 @@ function buildOrderConfirmationEmail(order: any) {
           <!-- Next Steps -->
           <tr>
             <td style="padding:0 30px 28px;">
-              <h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:0.05em;">What's Next</h3>
-              <p style="margin:0 0 8px;font-size:14px;color:#424245;line-height:1.6;">
+              <h3 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#6e6e73;text-transform:uppercase;letter-spacing:0.05em;">What's Next</h3>
+              <p style="margin:0 0 8px;font-size:15px;color:#2d2d2f;font-weight:500;line-height:1.6;">
                 Your order is now being processed. You can track its progress at any time using the link below. We will also send you updates as your vehicle moves through each stage of preparation and delivery.
               </p>
-              <p style="margin:0;font-size:14px;color:#424245;line-height:1.6;">
+              <p style="margin:0;font-size:15px;color:#2d2d2f;font-weight:500;line-height:1.6;">
                 If you have any questions about your order, please do not hesitate to contact our support team.
               </p>
             </td>
@@ -714,18 +714,18 @@ function buildOrderConfirmationEmail(order: any) {
           <!-- Track Button -->
           <tr>
             <td align="center" style="padding:0 30px 36px;">
-              <a href="https://joshbond123.github.io/Tesla/track.html?order=${orderId}&tracking=${trackingNumber}" style="display:inline-block;background-color:#171a20;color:#ffffff;text-decoration:none;padding:14px 48px;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:0.02em;">Track your order</a>
+              <a href="https://joshbond123.github.io/Tesla/track.html?order=${orderId}&tracking=${trackingNumber}" style="display:inline-block;background-color:#171a20;color:#ffffff;text-decoration:none;padding:14px 48px;border-radius:8px;font-size:16px;font-weight:700;letter-spacing:0.02em;">Track your order</a>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
             <td style="background-color:#fafafa;border-top:1px solid #e8e8ed;padding:24px 30px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:12px;color:#86868b;line-height:1.6;">
+              <p style="margin:0 0 6px;font-size:13px;color:#6e6e73;line-height:1.6;">
                 Tesla Award Program<br>
                 This is an automated message. Please do not reply directly to this email.
               </p>
-              <p style="margin:0;font-size:11px;color:#b0b0b5;">
+              <p style="margin:0;font-size:12px;color:#86868b;">
                 &copy; 2026 Tesla Award Program. All rights reserved.
               </p>
             </td>

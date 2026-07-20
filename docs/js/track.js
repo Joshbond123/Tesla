@@ -72,19 +72,51 @@ function displayTracking(order) {
   const done = timeline.filter(t => t.completed).length;
   const pct  = Math.max(8, Math.min(Math.round((done / Math.max(timeline.length,1))*100), 100));
   document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressPct').textContent  = pct + '%';
 
-  // Timeline
-  const tlIcons = ['📋','⚙️','📦','🚚','🏠','✅'];
-  document.getElementById('timeline').innerHTML = timeline.map((s,i) => `
-    <div class="tl-item ${s.completed?'done':i===done?'current':''}">
-      <div class="tl-dot">${s.completed?'✓':(i===done?'<span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span>':tlIcons[i]||'○')}</div>
-      <div class="tl-info">
-        <div class="tl-stage">${s.stage}</div>
-        <div class="tl-time">${s.timestamp ? new Date(s.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : (i===done?'In progress...':'Upcoming')}</div>
-      </div>
-    </div>
-  `).join('');
+  // Timeline (Premium Redesign)
+  var stageIcons = {
+    'Order Confirmed': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+    'Processing': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></svg>',
+    'Shipped': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>',
+    'In Transit': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><circle cx="15" cy="17" r="2"></circle><path d="M13 17h-4"></path><path d="M13 11h-4"></path></svg>',
+    'Out for Delivery': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"/></svg>',
+    'Delivered': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
+  };
+  var sl = {confirmed:'Order Confirmed', processing:'Processing', shipped:'Shipped', in_transit:'In Transit', out_for_delivery:'Out for Delivery', delivered:'Delivered'};
+  document.getElementById('statusLabel').textContent = sl[order.status] || 'Processing';
+  document.getElementById('timeline').innerHTML = timeline.map(function(s,i) {
+    var cls = s.completed ? 'done' : (i === done ? 'current' : 'upcoming');
+    var icon = stageIcons[s.stage] || '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
+    var timeText;
+    if (s.completed && s.timestamp) {
+      try {
+        var d = new Date(s.timestamp);
+        if (!isNaN(d.getTime())) {
+          timeText = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+        } else { timeText = s.timestamp.split('T')[0] || s.timestamp; }
+      } catch(e) { timeText = s.timestamp; }
+    } else if (s.completed) {
+      timeText = 'Completed';
+    } else if (i === done) {
+      timeText = 'In progress';
+    } else {
+      timeText = 'Upcoming';
+    }
+    var statusBadge = '';
+    if (i === done && !s.completed) {
+      statusBadge = ' <span class="active-pulse-badge"><span class="active-pulse-dot"></span> Active</span>';
+    }
+    var timeHtml = '<div class="premium-tl-time">' + 
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;margin-right:4px;vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' + 
+      timeText + '</div>';
+    return '<div class="premium-tl-item ' + cls + '">' +
+      '<div class="premium-tl-dot">' + icon + '</div>' +
+      '<div class="premium-tl-content">' +
+        '<div class="premium-tl-stage">' + s.stage + statusBadge + '</div>' +
+        timeHtml +
+      '</div>' +
+    '</div>';
+  }).join('');
 
   // Vehicle details — all user-supplied values escaped to prevent XSS
   const car  = order.selectedCar || {};

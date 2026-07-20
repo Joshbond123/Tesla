@@ -51,6 +51,213 @@
     .map-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
     #trackMap{height:340px;border-radius:14px;overflow:hidden;}
     @media(max-width:560px){#trackMap{height:240px;}}
+
+    /* Premium Timeline (matching order-placed page) */
+    .timeline-card {
+      background: #ffffff;
+      border-radius: 24px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+      padding: 36px;
+      margin-bottom: 24px;
+    }
+    .timeline-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #171a20;
+      margin-bottom: 28px;
+    }
+    .premium-progress-container {
+      margin-bottom: 32px;
+      background: #f8f8fa;
+      border-radius: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.03);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    @media(max-width: 600px) {
+      .premium-progress-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px;
+      }
+    }
+    .premium-progress-bar-wrapper {
+      flex: 1;
+      width: 100%;
+    }
+    .premium-progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .premium-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #E31937, #ff6b6b);
+      border-radius: 999px;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .premium-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #5c5e62;
+    }
+    .premium-status-badge strong {
+      color: #171a20;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+    .premium-timeline {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-left: 4px;
+    }
+    .premium-tl-item {
+      display: flex;
+      gap: 24px;
+      position: relative;
+      padding-bottom: 36px;
+    }
+    .premium-tl-item:last-child {
+      padding-bottom: 0;
+    }
+    .premium-tl-item::before {
+      content: '';
+      position: absolute;
+      left: 21px;
+      top: 44px;
+      bottom: -8px;
+      width: 2px;
+      background: #e5e7eb;
+      transition: background 0.4s ease;
+    }
+    .premium-tl-item:last-child::before {
+      display: none;
+    }
+    .premium-tl-item.done::before {
+      background: #00A550;
+    }
+    .premium-tl-dot {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid #e5e7eb;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      z-index: 1;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #5c5e62;
+    }
+    .premium-tl-dot svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+    .premium-tl-item.done .premium-tl-dot {
+      background: #00A550;
+      border-color: #00A550;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 165, 80, 0.2);
+    }
+    .premium-tl-item.current .premium-tl-dot {
+      background: #ffffff;
+      border-color: #E31937;
+      color: #E31937;
+      box-shadow: 0 0 0 5px rgba(227, 25, 55, 0.12), 0 4px 15px rgba(227, 25, 55, 0.15);
+      position: relative;
+    }
+    .premium-tl-item.current .premium-tl-dot::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      border: 2px solid #E31937;
+      animation: premiumGlow 2s infinite ease-in-out;
+      pointer-events: none;
+    }
+    @keyframes premiumGlow {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    .premium-tl-item.upcoming .premium-tl-dot {
+      background: #ffffff;
+      border-color: #e5e7eb;
+      color: #b0b3b8;
+    }
+    .premium-tl-content {
+      flex: 1;
+      padding-top: 8px;
+    }
+    .premium-tl-stage {
+      font-size: 15px;
+      font-weight: 700;
+      color: #171a20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .premium-tl-item.upcoming .premium-tl-stage {
+      color: #b0b3b8;
+    }
+    .premium-tl-time {
+      font-size: 13px;
+      color: #5c5e62;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .premium-tl-item.upcoming .premium-tl-time {
+      color: #d0d3d8;
+    }
+    .active-pulse-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(227, 25, 55, 0.08);
+      border: 1px solid rgba(227, 25, 55, 0.15);
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #E31937;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .active-pulse-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #E31937;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulseDot 1.5s infinite ease-in-out;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    .map-card{background:white;border-radius:18px;border:1.5px solid rgba(0,0,0,.06);box-shadow:0 2px 12px rgba(0,0,0,.04);padding:24px;margin-bottom:20px;}
+
   </style>
   <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
 </head>
@@ -101,14 +308,25 @@
       <button class="btn btn-ghost" onclick="resetLookup()" style="font-size:13px;">Search Again</button>
     </div>
 
-    <!-- Progress -->
-    <div class="progress-card anim-fade-up delay-1">
-      <div class="prog-header">
-        <div class="track-card-title" style="margin:0;">Delivery Progress</div>
-        <div class="prog-pct" id="progressPct">0%</div>
+    <!-- Progress (Premium Redesign) -->
+    <div class="timeline-card anim-fade-up delay-1">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Delivery Progress
+      </h3>
+      
+      <div class="premium-progress-container">
+        <div class="premium-progress-bar-wrapper">
+          <div class="premium-progress-bar">
+            <div class="premium-progress-fill" id="progressFill" style="width:10%;"></div>
+          </div>
+        </div>
+        <div class="premium-status-badge">
+          Status: <strong id="statusLabel">Order Confirmed</strong>
+        </div>
       </div>
-      <div class="progress-bar" style="height:10px;margin-bottom:20px;"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
-      <div class="timeline" id="timeline"></div>
+      
+      <div class="premium-timeline" id="timeline"></div>
     </div>
 
     <!-- Details grid -->
@@ -125,12 +343,11 @@
 
     <!-- Map -->
     <div class="map-card anim-fade-up delay-4">
-      <div class="track-card-title">🗺️ Live Delivery Route</div>
+      <h3 style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" style="vertical-align:middle;margin-right:6px;margin-top:-2px;"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Live Delivery Route</h3>
       <div id="trackMap"></div>
-      <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--gray-2);">
-        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#E31937;border-radius:50%;"></span> Origin: Tesla Factory, Fremont CA</span>
-        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#00A550;border-radius:50%;"></span> Your Delivery Address</span>
-        <span style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;">🚚</span> Your Tesla in Transit</span>
+      <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#888;">
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#E31937;border-radius:50%;display:inline-block;"></span> Origin: Tesla Factory, Fremont CA</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#00A550;border-radius:50%;display:inline-block;"></span> Destination: Your address</span>
       </div>
     </div>
 
