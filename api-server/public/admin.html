@@ -4,89 +4,1118 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard — Tesla Award Program</title>
-  <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .admin-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--light);padding:88px 24px 60px}
-    .admin-card{background:white;border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);border:1.5px solid rgba(0,0,0,0.05);padding:48px;max-width:900px;width:100%}
-    .admin-card h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-0.3px}
-    .admin-card .sub{color:var(--gray-2);margin:6px 0 28px;font-size:14px}
-    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
-    .info-card{background:white;border:1.5px solid rgba(0,0,0,0.06);border-radius:var(--radius-lg);padding:24px;transition:all var(--transition)}
-    .info-card:hover{border-color:rgba(227,25,55,0.18);transform:translateY(-2px);box-shadow:var(--shadow)}
-    .info-card .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(227,25,55,0.08);color:var(--red);margin-bottom:12px}
-    .info-card h3{font-size:16px;font-weight:700;margin:0 0 6px}
-    .info-card p{font-size:13px;color:var(--gray-2);margin:0}
-    @media(max-width:768px){.grid-3{grid-template-columns:1fr}.admin-card{padding:28px 20px}}
+    /* ═══════════════════════════════════════════════════════════════
+       Tesla Admin Panel — Design System Overrides & Additions
+       Matches the main website's light theme design language
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      --admin-sidebar: #ffffff;
+      --admin-sidebar-border: rgba(0,0,0,0.06);
+      --admin-topbar: rgba(255,255,255,0.96);
+      --admin-bg: #F7F8FA;
+      --admin-card: #ffffff;
+      --admin-card-hover: rgba(0,0,0,0.02);
+      --admin-text: #171A20;
+      --admin-text-secondary: #5C5E62;
+      --admin-text-muted: #B0B3B8;
+      --admin-border: #E5E7EB;
+      --admin-border-light: rgba(0,0,0,0.04);
+      --admin-shadow: 0 4px 12px rgba(0,0,0,0.07);
+      --admin-shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
+      --admin-radius: 12px;
+      --admin-radius-lg: 18px;
+      --admin-radius-xl: 24px;
+      --admin-red-glow: rgba(227,25,55,0.10);
+      --admin-ease: cubic-bezier(0.4,0,0.2,1);
+      --admin-transition: 0.2s var(--admin-ease);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--admin-text-muted); }
+
+    /* ═══ LOGIN SCREEN ═══ */
+    #loginScreen {
+      position: fixed; inset: 0; z-index: 10000;
+      background: var(--light);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    #loginScreen.hidden { display: none; }
+    .login-container { width: 100%; max-width: 420px; padding: 24px; }
+    .login-card {
+      background: white; border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg); border: 1.5px solid rgba(0,0,0,0.05);
+      padding: 48px 40px; text-align: center; position: relative; overflow: hidden;
+    }
+    .login-card::before {
+      content: ''; position: absolute; top: 0; left: 15%; right: 15%;
+      height: 3px; background: linear-gradient(90deg, transparent, var(--red), transparent);
+      border-radius: 0 0 3px 3px;
+    }
+    .login-card .login-logo { height: 52px; width: auto; margin-bottom: 20px; }
+    .login-card h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.3px; color: var(--dark); }
+    .login-card .subtitle { color: var(--gray-2); font-size: 14px; margin: 6px 0 28px; line-height: 1.6; }
+    .login-card input {
+      width: 100%; padding: 14px 18px 14px 46px;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 15px; font-family: inherit; color: var(--dark); background: white;
+      outline: none; transition: all var(--transition);
+    }
+    .login-card input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); }
+    .login-card .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; opacity: 0.35; pointer-events: none; }
+    .login-card .input-group { position: relative; margin-bottom: 16px; }
+    .login-error { color: #EF4444; font-size: 13px; margin-top: 14px; display: none; font-weight: 600; }
+
+    /* ═══ APP LAYOUT ═══ */
+    #app { display: none; }
+    #app.active { display: flex; min-height: 100vh; background: var(--light); }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      width: 260px; min-width: 260px;
+      background: white; border-right: 1px solid var(--admin-sidebar-border);
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh; z-index: 100;
+      box-shadow: 1px 0 8px rgba(0,0,0,0.03);
+    }
+    .sidebar-header {
+      padding: 20px 18px; border-bottom: 1px solid var(--admin-sidebar-border);
+      display: flex; align-items: center; gap: 12px; min-height: 72px;
+    }
+    .sidebar-header .brand-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--red), #c41030);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 16px; font-weight: 900; flex-shrink: 0;
+    }
+    .sidebar-header .brand-text { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; color: var(--dark); }
+    .sidebar-header .brand-text span { display: block; font-size: 9px; color: var(--admin-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 1px; }
+    .sidebar-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: var(--radius);
+      cursor: pointer; font-size: 13px; font-weight: 600;
+      color: var(--admin-text-secondary);
+      transition: all 0.15s; border: none; background: none;
+      width: 100%; text-align: left; font-family: inherit; position: relative;
+    }
+    .nav-item:hover { background: var(--admin-card-hover); color: var(--dark); }
+    .nav-item.active { background: rgba(227,25,55,0.07); color: var(--red); }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
+      width: 3px; background: var(--red); border-radius: 0 3px 3px 0;
+    }
+    .nav-item .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-item .nav-badge {
+      margin-left: auto; background: var(--red); color: #fff;
+      font-size: 10px; font-weight: 700; padding: 2px 7px;
+      border-radius: 999px; min-width: 20px; text-align: center;
+    }
+    .sidebar-footer {
+      padding: 12px 10px; border-top: 1px solid var(--admin-sidebar-border);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .sidebar-footer .sidebar-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: var(--radius);
+      font-size: 12px; font-weight: 600; border: none; cursor: pointer;
+      transition: all 0.15s; background: none; color: var(--admin-text-secondary);
+      width: 100%; text-align: left; font-family: inherit;
+    }
+    .sidebar-footer .sidebar-btn:hover { background: var(--admin-card-hover); color: var(--dark); }
+    .sidebar-footer .sidebar-btn.danger { color: #EF4444; }
+    .sidebar-footer .sidebar-btn.danger:hover { background: rgba(239,68,68,0.08); }
+
+    /* ═══ MAIN CONTENT ═══ */
+    .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--light); }
+    .topbar {
+      padding: 16px 28px; background: var(--admin-topbar);
+      border-bottom: 1px solid var(--admin-sidebar-border);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+      min-height: 60px; gap: 16px;
+      backdrop-filter: blur(16px);
+    }
+    .topbar-left h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; color: var(--dark); margin: 0; }
+    .topbar-left .breadcrumb { font-size: 11px; color: var(--admin-text-muted); margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .status-dot.online { background: var(--success); box-shadow: 0 0 6px rgba(0,165,80,0.4); }
+    .status-dot.offline { background: #EF4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+    .page-content { padding: 28px; flex: 1; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.25s var(--ease); }
+
+    /* ═══ STATS GRID ═══ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+    }
+    .stat-card {
+      background: white; border: 1.5px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius-lg); padding: 24px;
+      position: relative; overflow: hidden;
+      transition: all var(--transition); box-shadow: var(--shadow);
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: rgba(227,25,55,0.15); }
+    .stat-card .stat-icon { font-size: 26px; margin-bottom: 12px; display: block; }
+    .stat-card .stat-value { font-size: 32px; font-weight: 900; line-height: 1; margin-bottom: 4px; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+    .stat-card .stat-label { font-size: 11px; color: var(--admin-text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    .stat-change { font-size: 11px; font-weight: 700; margin-top: 8px; display: inline-block; padding: 2px 8px; border-radius: 999px; }
+    .stat-change.up { color: var(--success); background: rgba(0,165,80,0.08); }
+    .stat-change.down { color: #EF4444; background: rgba(239,68,68,0.08); }
+
+    /* ═══ ACTIVITY CHART ═══ */
+    .activity-chart {
+      display: flex; align-items: flex-end; gap: 4px;
+      height: 160px; padding: 0 4px; margin-bottom: 8px;
+    }
+    .activity-bar {
+      flex: 1; border-radius: 6px 6px 0 0; min-width: 16px;
+      background: linear-gradient(180deg, var(--red-light), var(--red));
+      transition: all 0.3s ease; position: relative; cursor: pointer;
+    }
+    .activity-bar:hover { filter: brightness(1.15); transform: scaleY(1.03); }
+    .activity-bar .bar-tooltip {
+      position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      background: var(--dark); color: white; border-radius: 8px;
+      padding: 5px 10px; font-size: 11px; font-weight: 700; white-space: nowrap;
+      opacity: 0; pointer-events: none; transition: opacity 0.15s;
+    }
+    .activity-bar:hover .bar-tooltip { opacity: 1; }
+    .chart-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--admin-text-muted); padding: 0 4px; }
+
+    /* ═══ CARDS & TABLES ═══ */
+    .admin-card {
+      background: white; border: 1.5px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 24px;
+    }
+    .card-header {
+      padding: 18px 24px; border-bottom: 1px solid var(--admin-border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .card-header h3 { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; color: var(--dark); margin: 0; }
+    .controls-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .search-box { position: relative; }
+    .search-box input {
+      background: var(--light); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 10px 16px 10px 40px;
+      color: var(--dark); font-size: 13px; font-family: inherit;
+      outline: none; width: 220px; transition: all var(--transition);
+    }
+    .search-box input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); width: 280px; }
+    .search-box .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.4; }
+    .filter-select {
+      background: var(--light); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 10px 36px 10px 14px;
+      color: var(--dark); font-size: 13px; font-family: inherit;
+      outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%235C5E62' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      transition: border-color var(--transition);
+    }
+    .filter-select:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); }
+    .table-wrap { overflow-x: auto; max-height: 65vh; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left; padding: 13px 16px;
+      background: var(--light); color: var(--admin-text-muted);
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; border-bottom: 1px solid var(--border);
+      white-space: nowrap; position: sticky; top: 0; z-index: 2;
+    }
+    tbody td { padding: 13px 16px; border-bottom: 1px solid var(--admin-border-light); color: var(--admin-text-secondary); white-space: nowrap; transition: background 0.1s; }
+    tbody tr:hover td { background: var(--admin-card-hover); }
+    tbody tr:last-child td { border-bottom: none; }
+    .user-cell { display: flex; align-items: center; gap: 10px; }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--red), #c41030);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .user-name { font-weight: 600; color: var(--dark); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .badge-success { background: rgba(0,165,80,0.08); color: var(--success); }
+    .badge-warning { background: rgba(245,158,11,0.10); color: #D97706; }
+    .badge-danger { background: rgba(239,68,68,0.08); color: #EF4444; }
+    .badge-info { background: rgba(59,130,246,0.08); color: #3B82F6; }
+    .empty-state { text-align: center; padding: 56px 24px; color: var(--admin-text-muted); }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    .empty-state p { font-size: 14px; max-width: 320px; margin: 0 auto; line-height: 1.7; }
+    .loading-row { text-align: center; padding: 32px; color: var(--admin-text-muted); }
+    .loading-row .spinner { display: inline-block; }
+    .table-footer {
+      padding: 12px 24px; text-align: center;
+      font-size: 11px; color: var(--admin-text-muted);
+      border-top: 1px solid var(--admin-border);
+    }
+
+    /* ═══ SETTINGS ═══ */
+    .settings-grid { display: grid; gap: 24px; max-width: 720px; }
+    .setting-group {
+      background: white; border: 1.5px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius-lg); padding: 28px 32px;
+      box-shadow: var(--shadow); transition: all var(--transition);
+    }
+    .setting-group:hover { box-shadow: var(--shadow-lg); }
+    .setting-group h4 { font-size: 16px; font-weight: 800; margin: 0 0 4px; color: var(--dark); }
+    .setting-group .hint { font-size: 12px; color: var(--admin-text-muted); margin: 0 0 20px; line-height: 1.6; }
+    .setting-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .field-input {
+      background: var(--light); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 11px 16px;
+      color: var(--dark); font-size: 14px; font-family: inherit;
+      outline: none; transition: all var(--transition);
+    }
+    .field-input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); }
+    .field-input.w-120 { width: 140px; }
+    .field-input.w-full { width: 100%; }
+
+    /* ═══ TOAST ═══ */
+    .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 99999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--dark); color: white; padding: 14px 22px;
+      border-radius: var(--radius); font-size: 13px; font-weight: 600;
+      box-shadow: var(--shadow-lg); display: flex; align-items: center;
+      gap: 10px; animation: toastIn 0.3s var(--ease);
+      min-width: 280px; max-width: 420px;
+    }
+    .toast.error { background: #EF4444; }
+    .toast .toast-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* ═══ MODAL OVERLAY ═══ */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 99998;
+      background: rgba(23,26,32,0.6); display: flex;
+      align-items: center; justify-content: center;
+      animation: fadeIn 0.2s ease; backdrop-filter: blur(4px);
+    }
+    .modal-card {
+      background: white; border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg); padding: 36px 32px;
+      max-width: 420px; width: 90%; text-align: center;
+      animation: scaleIn 0.25s var(--ease);
+    }
+    .modal-card h3 { font-size: 18px; font-weight: 800; color: var(--dark); margin: 0 0 8px; }
+    .modal-card p { font-size: 14px; color: var(--admin-text-secondary); margin: 0 0 24px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .modal-actions .btn { min-width: 100px; }
+
+    /* ═══ RESPONSIVE ═══ */
+    .sidebar-toggle {
+      display: none; background: none; border: none; cursor: pointer;
+      padding: 6px; color: var(--dark); font-size: 20px;
+    }
+
+    @media(max-width: 1024px) {
+      .sidebar { width: 220px; min-width: 220px; }
+      .page-content { padding: 20px; }
+      .topbar { padding: 14px 20px; }
+    }
+    @media(max-width: 768px) {
+      .sidebar {
+        position: fixed; left: -280px; top: 0; bottom: 0;
+        transition: left 0.3s var(--ease); z-index: 200;
+        box-shadow: var(--admin-shadow-lg);
+      }
+      .sidebar.open { left: 0; }
+      .sidebar-overlay {
+        position: fixed; inset: 0; z-index: 199;
+        background: rgba(23,26,32,0.5); display: none;
+        backdrop-filter: blur(3px);
+      }
+      .sidebar-overlay.open { display: block; }
+      .sidebar-toggle { display: block; }
+      .topbar { padding: 14px 16px; }
+      .page-content { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .controls-row { flex-direction: column; align-items: stretch; }
+      .search-box input,
+      .search-box input:focus { width: 100%; }
+      .card-header { flex-direction: column; align-items: flex-start; }
+      .settings-grid { max-width: 100%; }
+      .topbar-right .status-label { display: none; }
+    }
+    @media(max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .topbar-right { width: 100%; justify-content: flex-start; }
+      .setting-group { padding: 20px; }
+      .toast-container { left: 16px; right: 16px; }
+      .toast { min-width: auto; }
+    }
+
+    /* ═══ KEYFRAMES ═══ */
+    @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
-<nav class="nav" id="navbar">
-  <div class="nav-inner">
-    <a href="index.html" class="nav-logo">TESLA</a>
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="entry.html">Entry</a>
-    </div>
-  </div>
-</nav>
-<main class="admin-page">
-  <div class="admin-card">
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:4px">
-      <img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:52px;width:auto" onerror="this.style.display='none'">
-      <div>
-        <h1>Admin Dashboard</h1>
-        <p class="sub">Registration operations and verification checks.</p>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="loginScreen">
+  <div class="login-container">
+    <div class="login-card">
+      <img src="assets/tesla-award-logo.svg" alt="Tesla" class="login-logo" onerror="this.style.display='none'">
+      <h1>Administrator Access</h1>
+      <p class="subtitle">Restricted area. Enter your administrator credentials to manage the Tesla Award Program.</p>
+      <div class="input-group">
+        <span class="input-icon">🔑</span>
+        <input type="password" id="loginInput" placeholder="Enter admin password"
+               onkeydown="if(event.key==='Enter')doLogin()" autofocus>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()" style="padding:15px;font-size:15px;">Authenticate</button>
+      <p class="login-error" id="loginError">Incorrect password. Please try again.</p>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:var(--admin-text-muted);">
+        Authorized personnel only
       </div>
     </div>
-    <div id="adminDenied" style="display:none">
-      <h2 style="color:var(--red)">Access denied</h2>
-      <p>Please return to the homepage and use the hidden administrator login.</p>
-      <a class="btn btn-primary" href="index.html" style="margin-top:16px">Return Home</a>
+  </div>
+</div>
+
+<!-- ═══ SIDEBAR OVERLAY (mobile) ═══ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-logo">T</div>
+      <div class="brand-text">Tesla Award<span>Admin Panel</span></div>
     </div>
-    <div id="adminContent" style="display:none">
-      <div class="grid-3">
-        <div class="info-card">
-          <div class="tag">Status</div>
-          <h3>Frontend</h3>
-          <p>Static assets loaded successfully.</p>
-        </div>
-        <div class="info-card">
-          <div class="tag">API</div>
-          <h3 id="apiStatus">Checking…</h3>
-          <p id="apiStatusCopy">Validating backend health.</p>
-        </div>
-        <div class="info-card">
-          <div class="tag">Security</div>
-          <h3>Hidden Access</h3>
-          <p>Admin panel is not linked in normal navigation.</p>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" data-tab="users">
+        <span class="nav-icon">👥</span> Users
+        <span class="nav-badge" id="usersNavBadge">0</span>
+      </button>
+      <button class="nav-item" data-tab="orders">
+        <span class="nav-icon">🚚</span> Orders
+      </button>
+      <button class="nav-item" data-tab="vehicles">
+        <span class="nav-icon">🚗</span> Vehicles
+      </button>
+      <button class="nav-item" data-tab="settings">
+        <span class="nav-icon">⚙️</span> Settings
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-btn" onclick="window.open('index.html','_blank')">
+        🌐 View Website
+      </button>
+      <button class="sidebar-btn danger" onclick="doLogout()">
+        🚪 Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <!-- ═══ TOPBAR ═══ -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+          <div>
+            <h2 id="pageTitle">Dashboard</h2>
+            <div class="breadcrumb" id="pageBreadcrumb">Admin / Dashboard</div>
+          </div>
         </div>
       </div>
-      <button class="btn btn-ghost" id="adminLogout" style="margin-top:24px">Sign out</button>
+      <div class="topbar-right">
+        <span class="status-dot online" id="apiDot"></span>
+        <span class="status-label" style="font-size:11px;color:var(--admin-text-muted);" id="apiStatusLabel">Connected</span>
+        <button class="btn btn-ghost btn-sm" onclick="refreshAll()" style="font-size:12px;">🔄 Refresh</button>
+      </div>
     </div>
-  </div>
-</main>
+
+    <div class="page-content">
+
+      <!-- ═══ TAB: DASHBOARD ═══ -->
+      <div class="tab-panel active" id="panelDashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon">👥</span>
+            <div class="stat-value" id="statTotal" style="font-size:24px;">—</div>
+            <div class="stat-label">Total Registered Users</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">✅</span>
+            <div class="stat-value" id="statVerified" style="font-size:24px;">—</div>
+            <div class="stat-label">Verified Users</div>
+            <span class="stat-change up" id="statVerifiedPct">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">⏳</span>
+            <div class="stat-value" id="statPending" style="font-size:24px;">—</div>
+            <div class="stat-label">Pending Verification</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <div class="stat-value" id="statOrders" style="font-size:24px;">—</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h3 style="font-size:15px;font-weight:800;color:var(--dark);margin:0;">📈 Registration Activity (Last 7 Days)</h3>
+        </div>
+        <div class="admin-card" style="padding:24px;margin-bottom:24px;">
+          <div class="activity-chart" id="activityChart"></div>
+          <div class="chart-labels" id="chartLabels"></div>
+        </div>
+
+        <div class="admin-card">
+          <div class="card-header">
+            <h3>🕐 Recent Registrations</h3>
+            <button class="btn btn-ghost btn-sm" onclick="switchTab('users')" style="font-size:12px;">View All →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="recentTable">
+                <tr><td colspan="5" class="loading-row"><span class="spinner-sm" style="display:inline-block;margin-right:8px;"></span> Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: USERS ═══ -->
+      <div class="tab-panel" id="panelUsers">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3>All Registered Users</h3>
+            <div class="controls-row">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="renderUsers()">
+              </div>
+              <select class="filter-select" id="statusFilter" onchange="renderUsers()">
+                <option value="all">All Status</option>
+                <option value="verified">Verified</option>
+                <option value="pending">Pending</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" onclick="refreshAll()">🔄 Refresh</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>User</th><th>Email</th><th>Phone</th><th>Status</th><th>Verified</th><th>Registered</th><th>Actions</th></tr></thead>
+              <tbody id="usersTable">
+                <tr><td colspan="8" class="loading-row"><span class="spinner-sm" style="display:inline-block;margin-right:8px;"></span> Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="usersEmpty" style="display:none;">
+            <div class="empty-icon">📭</div>
+            <p>No users match your search criteria.</p>
+          </div>
+          <div class="table-footer" id="usersCount"></div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: ORDERS ═══ -->
+      <div class="tab-panel" id="panelOrders">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3>All Orders</h3>
+            <button class="btn btn-ghost btn-sm" onclick="loadOrders()">🔄 Refresh</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Order ID</th><th>Customer</th><th>Status</th><th>Delivery Method</th><th>Est. Delivery</th><th>Order Date</th></tr></thead>
+              <tbody id="ordersTable">
+                <tr><td colspan="6" class="loading-row"><span class="spinner-sm" style="display:inline-block;margin-right:8px;"></span> Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="ordersEmpty" style="display:none;">
+            <div class="empty-icon">📦</div>
+            <p>No orders have been placed yet. Orders will appear here once winners complete the checkout process.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: VEHICLES ═══ -->
+      <div class="tab-panel" id="panelVehicles">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3>Tesla Vehicle Fleet</h3>
+            <span style="font-size:12px;color:var(--admin-text-muted);">Prize selection for verified winners</span>
+          </div>
+          <div style="padding:24px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;" id="vehiclesGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: SETTINGS ═══ -->
+      <div class="tab-panel" id="panelSettings">
+        <div class="settings-grid">
+          <div class="setting-group">
+            <h4>🚚 Delivery Fee</h4>
+            <p class="hint">Set the delivery fee displayed during checkout. This value syncs to the database and is reflected on the delivery method selection page.</p>
+            <div class="setting-row">
+              <span style="color:var(--admin-text-secondary);font-weight:700;font-size:18px;">$</span>
+              <input type="number" class="field-input w-120" id="feeInput" placeholder="299" min="0" step="1">
+              <button class="btn btn-primary" onclick="saveDeliveryFee()">💾 Save Fee</button>
+              <span style="font-size:11px;color:var(--admin-text-muted);margin-left:8px;" id="feeStatus"></span>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h4>🔑 Change Admin Password</h4>
+            <p class="hint">Update the password required to access this admin panel. The new password must be at least 3 characters.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;max-width:360px;">
+              <input type="password" class="field-input w-full" id="currentPwd" placeholder="Current password">
+              <input type="password" class="field-input w-full" id="newPwd" placeholder="New password (min 3 characters)">
+              <input type="password" class="field-input w-full" id="confirmPwd" placeholder="Confirm new password">
+              <button class="btn btn-primary" onclick="changePassword()">Change Password</button>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h4>⚠️ Danger Zone</h4>
+            <p class="hint">Permanently clear all locally cached data. This does NOT affect the Supabase database. User data in the database remains intact.</p>
+            <button class="btn btn-outline" onclick="clearLocalData()" style="border-color:#EF4444;color:#EF4444;">🗑️ Clear Local Cache</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main-content -->
+</div>
+
+<!-- ═══ TOAST CONTAINER ═══ -->
+<div class="toast-container" id="toastContainer"></div>
+
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
-(function(){
-  var allowed = sessionStorage.getItem('tesla_admin_authenticated') === 'true';
-  document.getElementById(allowed ? 'adminContent' : 'adminDenied').style.display = 'block';
-  if (!allowed) return;
-  document.getElementById('adminLogout').addEventListener('click', function(){
-    sessionStorage.removeItem('tesla_admin_authenticated');
-    window.location.href = 'index.html';
-  });
-  apiCall('/health').then(function(){
-    document.getElementById('apiStatus').textContent = 'Healthy';
-    document.getElementById('apiStatusCopy').textContent = 'Backend health check succeeded.';
-  }).catch(function(err){
-    document.getElementById('apiStatus').textContent = 'Unavailable';
-    document.getElementById('apiStatusCopy').textContent = err.message;
-  });
+(function() {
+  'use strict';
+
+  // ── CONFIG ──────────────────────────────────────────────────────────
+  var allUsers = [];
+  var allOrders = [];
+  var deliveryFee = 299;
+  var adminPassword = localStorage.getItem('tesla_admin_pwd') || 'admin123';
+
+  // API base URL (discovered from config.js / app.js)
+  var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+    ? window.TESLA_API_BASE.replace(/\/+$/, '')
+    : 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+
+  // ── HELPERS ─────────────────────────────────────────────────────────
+  function esc(str) {
+    if (str == null || str === '') return '—';
+    var d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+  }
+
+  function showToast(msg, isError) {
+    var container = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.innerHTML = '<span class="toast-icon">' + (isError ? '✕' : '✓') + '</span>' + esc(msg);
+    container.appendChild(t);
+    setTimeout(function() {
+      t.style.opacity = '0';
+      t.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (t.parentNode) t.remove(); }, 300);
+    }, 3500);
+  }
+
+  function setApiStatus(ok) {
+    var dot = document.getElementById('apiDot');
+    var label = document.getElementById('apiStatusLabel');
+    if (dot) dot.className = 'status-dot ' + (ok ? 'online' : 'offline');
+    if (label) label.textContent = ok ? 'Connected' : 'Offline';
+  }
+
+  function api(method, path, body) {
+    var url = API_BASE + path;
+    var opts = {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(url, opts).then(function(r) {
+      return r.json().then(function(d) {
+        if (!r.ok) throw new Error(d.error || 'Request failed (' + r.status + ')');
+        return d;
+      });
+    });
+  }
+
+  // ── LOGIN / LOGOUT ──────────────────────────────────────────────────
+  function doLogin() {
+    var input = document.getElementById('loginInput');
+    var pwd = input ? input.value : '';
+    if (pwd === adminPassword) {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('app').classList.add('active');
+      document.getElementById('loginError').style.display = 'none';
+      refreshAll();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+      if (input) { input.value = ''; input.focus(); }
+    }
+  }
+
+  function doLogout() {
+    document.getElementById('app').classList.remove('active');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('loginInput').value = '';
+    document.getElementById('loginInput').focus();
+  }
+
+  // ── TAB SWITCHING ──────────────────────────────────────────────────
+  function switchTab(tab) {
+    // Guard: if app is not active, don't try to switch
+    if (!document.getElementById('app').classList.contains('active')) return;
+
+    document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
+    var navBtn = document.querySelector('.nav-item[data-tab="' + tab + '"]');
+    if (navBtn) navBtn.classList.add('active');
+
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    var panelId = 'panel' + tab.charAt(0).toUpperCase() + tab.slice(1);
+    var panel = document.getElementById(panelId);
+    if (panel) panel.classList.add('active');
+
+    document.getElementById('pageTitle').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+    document.getElementById('pageBreadcrumb').textContent = 'Admin / ' + tab.charAt(0).toUpperCase() + tab.slice(1);
+
+    // Close mobile sidebar
+    if (window.innerWidth <= 768) { toggleSidebar('close'); }
+
+    // Load data on tab switch
+    if (tab === 'dashboard') loadDashboard();
+    if (tab === 'users') renderUsers();
+    if (tab === 'orders') loadOrders();
+    if (tab === 'vehicles') renderVehicles();
+    if (tab === 'settings') {
+      var fi = document.getElementById('feeInput');
+      if (fi) fi.value = deliveryFee;
+    }
+  }
+
+  // ── SIDEBAR TOGGLE (mobile) ────────────────────────────────────────
+  function toggleSidebar(force) {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    if (!sidebar || !overlay) return;
+    if (force === 'close') {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    } else {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+  }
+
+  // ── API CALLS ───────────────────────────────────────────────────────
+  function loadUsers(cb) {
+    api('GET', '/admin/users').then(function(r) {
+      allUsers = (r.users || []).sort(function(a, b) {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setApiStatus(true);
+      if (cb) cb();
+    }).catch(function(e) {
+      console.warn('Failed to load users:', e.message);
+      setApiStatus(false);
+      // try localStorage fallback
+      try {
+        var local = JSON.parse(localStorage.getItem('tesla_registered_users') || '[]');
+        if (local.length === 0) local = JSON.parse(localStorage.getItem('tesla_entry_users') || '[]');
+        allUsers = local;
+      } catch(ex) { allUsers = []; }
+      showToast('Could not load data from server. Check your connection.', true);
+      if (cb) cb();
+    });
+  }
+
+  function loadSettings() {
+    api('GET', '/admin/settings').then(function(r) {
+      deliveryFee = r.deliveryFee || 299;
+      var fi = document.getElementById('feeInput');
+      if (fi) fi.value = deliveryFee;
+      localStorage.setItem('tesla_delivery_fee', deliveryFee);
+    }).catch(function() {
+      deliveryFee = parseInt(localStorage.getItem('tesla_delivery_fee') || '299', 10);
+      var fi = document.getElementById('feeInput');
+      if (fi) fi.value = deliveryFee;
+    });
+  }
+
+  function loadOrders() {
+    var tbody = document.getElementById('ordersTable');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" class="loading-row"><span class="spinner-sm" style="display:inline-block;margin-right:8px;"></span> Loading...</td></tr>';
+    api('GET', '/admin/orders').then(function(r) {
+      allOrders = r.orders || [];
+      renderOrders();
+    }).catch(function() {
+      allOrders = [];
+      renderOrders();
+    });
+  }
+
+  function renderOrders() {
+    var tbody = document.getElementById('ordersTable');
+    var empty = document.getElementById('ordersEmpty');
+    if (allOrders.length === 0) {
+      if (tbody) tbody.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+    } else {
+      if (empty) empty.style.display = 'none';
+      if (tbody) {
+        tbody.innerHTML = allOrders.map(function(o) {
+          var method = o.deliveryMethod || {};
+          return '<tr>' +
+            '<td style="color:var(--dark);font-family:monospace;font-weight:700;font-size:12px;">' + esc(o.orderId) + '</td>' +
+            '<td>' + esc(o.email) + '</td>' +
+            '<td><span class="badge badge-info">' + esc(o.status) + '</span></td>' +
+            '<td>' + esc(method.name || 'Standard') + '</td>' +
+            '<td>' + esc(o.estimatedDelivery || '—') + '</td>' +
+            '<td>' + esc(o.orderDate ? new Date(o.orderDate).toLocaleDateString() : '—') + '</td>' +
+            '</tr>';
+        }).join('');
+      }
+    }
+  }
+
+  // ── DASHBOARD ───────────────────────────────────────────────────────
+  function loadDashboard() {
+    loadActivityChart();
+    updateStats();
+    renderRecentUsers();
+  }
+
+  function updateStats() {
+    var verified = allUsers.filter(function(u) { return u.verification_status === 'verified'; }).length;
+    var pending = allUsers.length - verified;
+    var st = document.getElementById('statTotal');
+    var sv = document.getElementById('statVerified');
+    var sp = document.getElementById('statPending');
+    var so = document.getElementById('statOrders');
+    if (st) st.textContent = allUsers.length;
+    if (sv) sv.textContent = verified;
+    if (sp) sp.textContent = pending;
+    if (so) so.textContent = allOrders.length;
+
+    var pctEl = document.getElementById('statVerifiedPct');
+    if (pctEl) {
+      if (allUsers.length > 0) {
+        var pct = Math.round((verified / allUsers.length) * 100);
+        pctEl.textContent = pct + '% verified';
+      } else {
+        pctEl.textContent = '—';
+      }
+    }
+
+    var badge = document.getElementById('usersNavBadge');
+    if (badge) badge.textContent = allUsers.length;
+  }
+
+  function renderRecentUsers() {
+    var tbody = document.getElementById('recentTable');
+    if (!tbody) return;
+    var recent = allUsers.slice(0, 8);
+    if (recent.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--admin-text-muted);">No users registered yet.</td></tr>';
+    } else {
+      tbody.innerHTML = recent.map(function(u) {
+        var name = [u.first_name, u.last_name].filter(Boolean).join(' ') || '—';
+        var isVerified = u.verification_status === 'verified';
+        return '<tr>' +
+          '<td><div class="user-cell"><div class="user-avatar">' + esc((name.charAt(0) || '?').toUpperCase()) + '</div><span class="user-name">' + esc(name) + '</span></div></td>' +
+          '<td>' + esc(u.email) + '</td>' +
+          '<td>' + esc(u.phone) + '</td>' +
+          '<td><span class="badge ' + (isVerified ? 'badge-success' : 'badge-warning') + '">' + (isVerified ? 'Verified' : 'Pending') + '</span></td>' +
+          '<td>' + esc(u.created_at ? new Date(u.created_at).toLocaleDateString() : '—') + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+  }
+
+  // ── USERS TABLE ─────────────────────────────────────────────────────
+  function renderUsers() {
+    try {
+      var query = (document.getElementById('userSearch').value || '').toLowerCase();
+      var statusFilter = document.getElementById('statusFilter').value;
+      var filtered = allUsers.filter(function(u) {
+        if (statusFilter === 'verified' && u.verification_status !== 'verified') return false;
+        if (statusFilter === 'pending' && u.verification_status === 'verified') return false;
+        if (query) {
+          var haystack = [u.first_name, u.last_name, u.email, u.phone].join(' ').toLowerCase();
+          return haystack.indexOf(query) !== -1;
+        }
+        return true;
+      });
+
+      var tbody = document.getElementById('usersTable');
+      var empty = document.getElementById('usersEmpty');
+      var countEl = document.getElementById('usersCount');
+
+      if (countEl) countEl.textContent = 'Showing ' + filtered.length + ' of ' + allUsers.length + ' users';
+
+      if (filtered.length === 0) {
+        if (tbody) tbody.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+      } else {
+        if (empty) empty.style.display = 'none';
+        if (tbody) {
+          tbody.innerHTML = filtered.map(function(u, i) {
+            var name = [u.first_name, u.last_name].filter(Boolean).join(' ') || '—';
+            var isVerified = u.verification_status === 'verified';
+            var verifiedAt = u.verified_at ? new Date(u.verified_at).toLocaleDateString() : '—';
+            return '<tr>' +
+              '<td style="color:var(--admin-text-muted)">' + (i + 1) + '</td>' +
+              '<td><div class="user-cell"><div class="user-avatar">' + esc((name.charAt(0) || '?').toUpperCase()) + '</div><span class="user-name">' + esc(name) + '</span></div></td>' +
+              '<td>' + esc(u.email) + '</td>' +
+              '<td>' + esc(u.phone) + '</td>' +
+              '<td><span class="badge ' + (isVerified ? 'badge-success' : 'badge-warning') + '">' + (isVerified ? 'Verified' : 'Pending') + '</span></td>' +
+              '<td>' + esc(verifiedAt) + '</td>' +
+              '<td>' + esc(u.created_at ? new Date(u.created_at).toLocaleDateString() : '—') + '</td>' +
+              '<td><button class="btn btn-sm" onclick="deleteUser(\'' + u.id + '\',\'' + esc(u.email).replace(/'/g, "\\'") + '\')" style="background:rgba(239,68,68,0.08);color:#EF4444;font-size:11px;padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:600;">Delete</button></td>' +
+              '</tr>';
+          }).join('');
+        }
+      }
+    } catch(e) { console.error('renderUsers error:', e); }
+  }
+
+  function deleteUser(id, email) {
+    var name = email || id;
+    if (!confirm('Permanently delete user "' + name + '" and all their data? This cannot be undone.')) return;
+    api('POST', '/admin/users/delete', { id: id, email: email }).then(function() {
+      allUsers = allUsers.filter(function(u) { return u.id !== id; });
+      showToast('User deleted successfully');
+      renderUsers();
+      loadDashboard();
+      updateBadges();
+    }).catch(function(e) {
+      showToast('Failed to delete user: ' + e.message, true);
+    });
+  }
+
+  function updateBadges() {
+    var badge = document.getElementById('usersNavBadge');
+    if (badge) badge.textContent = allUsers.length;
+  }
+
+  // ── ACTIVITY CHART ──────────────────────────────────────────────────
+  function loadActivityChart() {
+    var chart = document.getElementById('activityChart');
+    var labels = document.getElementById('chartLabels');
+    if (!chart || !labels) return;
+
+    var days = [];
+    var now = new Date();
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days.push({ date: d, label: d.toLocaleDateString('en-US', { weekday: 'short' }), count: 0 });
+    }
+
+    allUsers.forEach(function(u) {
+      var d = new Date(u.created_at);
+      days.forEach(function(day) {
+        if (d.toDateString() === day.date.toDateString()) day.count++;
+      });
+    });
+
+    var max = Math.max.apply(null, days.map(function(d) { return d.count; }));
+    chart.innerHTML = days.map(function(d) {
+      var h = max > 0 ? Math.max((d.count / max) * 160, 4) : 4;
+      return '<div class="activity-bar" style="height:' + h + 'px"><div class="bar-tooltip">' + d.count + ' user' + (d.count !== 1 ? 's' : '') + '</div></div>';
+    }).join('');
+    labels.innerHTML = days.map(function(d) { return '<span>' + d.label + '</span>'; }).join('');
+  }
+
+  // ── VEHICLES ────────────────────────────────────────────────────────
+  var vehicleData = [
+    { id: 'model3', name: 'Model 3', color: 'Pearl White', price: '$38,990', badge: '⚡ Most Popular',
+      img: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',
+      specs: ['3.1s 0–60', '333mi Range', 'AWD Dual Motor'] },
+    { id: 'modely', name: 'Model Y', color: 'Midnight Silver', price: '$44,990', badge: '🔥 Best Seller',
+      img: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',
+      specs: ['3.5s 0–60', '330mi Range', '76 cu ft Cargo'] },
+    { id: 'models', name: 'Model S', color: 'Ultra Red', price: '$74,990', badge: '🚀 Plaid',
+      img: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',
+      specs: ['1.99s 0–60', '396mi Range', '1,020 hp'] },
+    { id: 'modelx', name: 'Model X', color: 'Deep Blue', price: '$79,990', badge: '🦅 Iconic',
+      img: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',
+      specs: ['2.5s 0–60', '333mi Range', 'Falcon Doors'] },
+    { id: 'cybertruck', name: 'Cybertruck', color: 'Stainless Steel', price: '$60,990', badge: '💪 Tough',
+      img: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png',
+      specs: ['2.6s 0–60', '340mi Range', '11,000lb Tow'] },
+    { id: 'roadster', name: 'Roadster', color: 'Signature Red', price: '$200,000', badge: '👑 Ultimate',
+      img: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png',
+      specs: ['1.1s 0–60', '620mi Range', '250+ mph'] }
+  ];
+
+  function renderVehicles() {
+    var grid = document.getElementById('vehiclesGrid');
+    if (!grid) return;
+    grid.innerHTML = vehicleData.map(function(car) {
+      return '<div style="background:white;border:1.5px solid rgba(0,0,0,0.06);border-radius:var(--radius-lg);overflow:hidden;transition:all var(--transition);box-shadow:var(--shadow);">' +
+        '<div style="height:140px;background:linear-gradient(135deg,#f7f8fa,#eef0f3);display:flex;align-items:center;justify-content:center;padding:16px;">' +
+          '<img src="' + car.img + '" alt="Tesla ' + car.name + '" style="height:100%;object-fit:contain;" loading="lazy">' +
+        '</div>' +
+        '<div style="padding:18px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+            '<h4 style="font-size:16px;font-weight:700;color:var(--dark);margin:0;">Tesla ' + car.name + '</h4>' +
+            '<span style="font-size:11px;font-weight:700;color:var(--red);background:rgba(227,25,55,0.08);padding:3px 10px;border-radius:999px;">' + car.badge + '</span>' +
+          '</div>' +
+          '<p style="font-size:13px;color:var(--admin-text-secondary);margin:0 0 10px;">' + car.color + ' · <strong>' + car.price + '</strong></p>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+            car.specs.map(function(s) {
+              return '<span style="font-size:11px;background:var(--light);color:var(--admin-text-secondary);padding:4px 10px;border-radius:999px;font-weight:500;">' + s + '</span>';
+            }).join('') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── SETTINGS ────────────────────────────────────────────────────────
+  function saveDeliveryFee() {
+    var fee = parseInt(document.getElementById('feeInput').value, 10) || 0;
+    if (fee < 0) fee = 0;
+    api('POST', '/admin/settings', { deliveryFee: fee }).then(function() {
+      deliveryFee = fee;
+      localStorage.setItem('tesla_delivery_fee', fee);
+      document.getElementById('feeStatus').textContent = '✓ Saved!';
+      showToast('Delivery fee updated to $' + fee);
+      setTimeout(function() { document.getElementById('feeStatus').textContent = ''; }, 3000);
+    }).catch(function() {
+      deliveryFee = fee;
+      localStorage.setItem('tesla_delivery_fee', fee);
+      document.getElementById('feeStatus').textContent = '✓ Saved locally';
+      showToast('Fee saved locally only. API unavailable.', true);
+    });
+  }
+
+  function changePassword() {
+    var cur = document.getElementById('currentPwd').value;
+    var neu = document.getElementById('newPwd').value;
+    var conf = document.getElementById('confirmPwd').value;
+    if (cur !== adminPassword) { showToast('Current password is incorrect', true); return; }
+    if (!neu || neu.length < 3) { showToast('New password must be at least 3 characters', true); return; }
+    if (neu !== conf) { showToast('Passwords do not match', true); return; }
+    adminPassword = neu;
+    localStorage.setItem('tesla_admin_pwd', neu);
+    document.getElementById('currentPwd').value = '';
+    document.getElementById('newPwd').value = '';
+    document.getElementById('confirmPwd').value = '';
+    showToast('Password changed successfully!');
+  }
+
+  function clearLocalData() {
+    if (!confirm('Clear all locally cached data? The database will NOT be affected.')) return;
+    allUsers = [];
+    localStorage.removeItem('tesla_registered_users');
+    localStorage.removeItem('tesla_entry_users');
+    localStorage.removeItem('tesla_delivery_fee');
+    renderUsers();
+    loadDashboard();
+    updateBadges();
+    showToast('Local cache cleared');
+  }
+
+  // ── REFRESH ALL ─────────────────────────────────────────────────────
+  function refreshAll() {
+    loadOrders();
+    loadSettings();
+    loadUsers(function() {
+      try { loadDashboard(); } catch(e) { console.error('loadDashboard error:', e); }
+      try { renderUsers(); } catch(e) { console.error('renderUsers error:', e); }
+      try { updateBadges(); } catch(e) { console.error('updateBadges error:', e); }
+    });
+  }
+
+  // ── HEALTH CHECK ───────────────────────────────────────────────────
+  function healthCheck() {
+    fetch(API_BASE + '/health').then(function(r) { return r.json(); })
+      .then(function() { setApiStatus(true); })
+      .catch(function(e) {
+        console.warn('API health check failed:', e.message);
+        setApiStatus(false);
+      });
+  }
+
+  // ── INIT ────────────────────────────────────────────────────────────
+  function init() {
+    try {
+      // Load saved password
+      var saved = localStorage.getItem('tesla_admin_pwd');
+      if (saved) adminPassword = saved;
+
+      // Focus login input
+      var li = document.getElementById('loginInput');
+      if (li) li.focus();
+
+      // Set up nav item click handlers
+      document.querySelectorAll('.nav-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          switchTab(this.dataset.tab);
+        });
+      });
+
+      // Set initial fee value
+      var fi = document.getElementById('feeInput');
+      if (fi) fi.value = deliveryFee;
+
+      // Health check
+      healthCheck();
+    } catch(e) { console.error('init error:', e); }
+  }
+
+  // ── EXPOSE GLOBALS ─────────────────────────────────────────────────
+  window.doLogin = doLogin;
+  window.doLogout = doLogout;
+  window.switchTab = switchTab;
+  window.toggleSidebar = toggleSidebar;
+  window.refreshAll = refreshAll;
+  window.renderUsers = renderUsers;
+  window.loadOrders = loadOrders;
+  window.saveDeliveryFee = saveDeliveryFee;
+  window.changePassword = changePassword;
+  window.clearLocalData = clearLocalData;
+  window.deleteUser = deleteUser;
+  window.renderVehicles = renderVehicles;
+
+  // ── DOM READY ──────────────────────────────────────────────────────
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
 })();
 </script>
 </body>
