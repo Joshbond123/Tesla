@@ -41,10 +41,18 @@
       <path d="M6.5 11.4L12 14.5V9.7l-5.5 1.7z" fill="white" opacity=".6"/>
     </symbol>
 
-    <!-- USDT Logo -->
+    <!-- USDT ERC-20 Logo -->
     <symbol id="pay-usdt" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="11" fill="#26A17B"/>
       <path d="M13.2 12.5v-2.5h4.5v-2H6.3v2h4.5v2.5C7.5 12.7 4.5 13.6 4.5 14.7s3 2 6.3 2c3.4 0 6.3-.9 6.3-2s-2.9-2-6.3-2.2z" fill="white"/>
+      <text x="12" y="10" text-anchor="middle" font-size="3" font-weight="700" fill="white">ERC</text>
+    </symbol>
+
+    <!-- USDT TRC-20 Logo -->
+    <symbol id="pay-usdt-trc20" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="11" fill="#26A17B"/>
+      <path d="M13.2 12.5v-2.5h4.5v-2H6.3v2h4.5v2.5C7.5 12.7 4.5 13.6 4.5 14.7s3 2 6.3 2c3.4 0 6.3-.9 6.3-2s-2.9-2-6.3-2.2z" fill="white"/>
+      <text x="12" y="10" text-anchor="middle" font-size="2.5" font-weight="700" fill="white">TRC</text>
     </symbol>
 
     <!-- Credit Card Logo -->
@@ -62,6 +70,7 @@
       <line x1="12" y1="20" x2="12" y2="10" stroke="#A2AAAD" stroke-width="1.5"/>
       <path d="M12 10H7.5a2.5 2.5 0 0 1 0-5C11 5 12 10 12 10z" fill="#A2AAAD" opacity=".5"/>
       <path d="M12 10h4.5a2.5 2.5 0 0 0 0-5C13 5 12 10 12 10z" fill="#A2AAAD" opacity=".5"/>
+      <text x="12" y="17" text-anchor="middle" font-size="3" fill="#555" font-weight="600">GIFT</text>
     </symbol>
   </defs>
 </svg>
