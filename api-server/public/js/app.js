@@ -247,6 +247,8 @@ function enhanceBranding() {
 }
 
 function initHiddenAdminAccess() {
+  // Do NOT show admin hotspot on the admin panel page itself
+  if (window.location.pathname.indexOf('admin') !== -1 || window.location.pathname.endsWith('admin.html')) return;
   if (!document.body || document.getElementById('hiddenAdminHotspot')) return;
   var hotspot = document.createElement('button');
   hotspot.type = 'button';
