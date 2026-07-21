@@ -3,160 +3,189 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — Tesla Award Program</title>
-  <meta name="description" content="Administrative dashboard for the Tesla Award Program. Manage users, orders, and program settings with a premium interface.">
+  <title>Admin Panel — Tesla Award Program</title>
+  <meta name="description" content="Administrative dashboard for the Tesla Award Program. Manage users, orders, vehicles, payment methods, and program settings.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://joshbond123.github.io/Tesla/admin.html">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://joshbond123.github.io/Tesla/admin.html">
-  <meta property="og:title" content="Admin Dashboard — Tesla Award Program">
-  <meta property="og:description" content="Administrative dashboard for the Tesla Award Program. Manage users, orders, and program settings with a premium interface.">
-  <meta property="og:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png">
-  <meta property="og:image:width" content="512">
-  <meta property="og:image:height" content="512">
-  <meta property="og:site_name" content="Tesla Award Program">
-  <meta property="og:locale" content="en_US">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://joshbond123.github.io/Tesla/admin.html">
-  <meta name="twitter:title" content="Admin Dashboard — Tesla Award Program">
-  <meta name="twitter:description" content="Administrative dashboard for the Tesla Award Program. Manage users, orders, and program settings with a premium interface.">
-  <meta name="twitter:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png">
+  <meta property="og:type" content="website"><meta property="og:url" content="https://joshbond123.github.io/Tesla/admin.html"><meta property="og:title" content="Admin Panel — Tesla Award Program"><meta property="og:description" content="Administrative dashboard for the Tesla Award Program."><meta property="og:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png"><meta property="og:image:width" content="512"><meta property="og:image:height" content="512"><meta property="og:site_name" content="Tesla Award Program"><meta property="og:locale" content="en_US"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:url" content="https://joshbond123.github.io/Tesla/admin.html"><meta name="twitter:title" content="Admin Panel — Tesla Award Program"><meta name="twitter:description" content="Administrative dashboard for the Tesla Award Program."><meta name="twitter:image" content="https://joshbond123.github.io/Tesla/assets/tesla-award-logo.png">
   <link rel="icon" type="image/png" href="assets/tesla-award-logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    :root {
-      --admin-sidebar: #ffffff;
-      --admin-sidebar-border: rgba(0,0,0,0.06);
-      --admin-topbar: rgba(255,255,255,0.96);
-      --admin-bg: #F7F8FA;
-      --admin-card: #ffffff;
-      --admin-card-hover: rgba(0,0,0,0.02);
-      --admin-text: #171A20;
-      --admin-text-secondary: #5C5E62;
-      --admin-text-muted: #B0B3B8;
-      --admin-border: #E5E7EB;
-      --admin-border-light: rgba(0,0,0,0.04);
-      --admin-shadow: 0 4px 12px rgba(0,0,0,0.07);
-      --admin-shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
-      --admin-radius: 12px;
-      --admin-radius-lg: 18px;
-      --admin-radius-xl: 24px;
-      --admin-red-glow: rgba(227,25,55,0.10);
-      --admin-ease: cubic-bezier(0.4,0,0.2,1);
-      --admin-transition: 0.2s var(--admin-ease);
-    }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: 999px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--admin-text-muted); }
-    #loginScreen { position: fixed; inset: 0; z-index: 10000; background: var(--light); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    #loginScreen.hidden { display: none; }
-    .login-container { width: 100%; max-width: 420px; padding: 24px; }
-    .login-card { background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); border: 1.5px solid rgba(0,0,0,0.05); padding: 48px 40px; text-align: center; position: relative; overflow: hidden; }
-    .login-card::before { content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 3px; background: linear-gradient(90deg, transparent, var(--red), transparent); border-radius: 0 0 3px 3px; }
-    .login-card .login-logo { height: 52px; width: auto; margin-bottom: 20px; }
-    .login-card h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.3px; color: var(--dark); }
-    .login-card .subtitle { color: var(--gray-2); font-size: 14px; margin: 6px 0 28px; line-height: 1.6; }
-    .login-card input { width: 100%; padding: 14px 18px 14px 46px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 15px; font-family: inherit; color: var(--dark); background: white; outline: none; transition: all var(--transition); }
-    .login-card input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); }
-    .login-card .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; opacity: 0.35; pointer-events: none; }
-    .login-card .input-group { position: relative; margin-bottom: 16px; }
-    .login-error { color: #EF4444; font-size: 13px; margin-top: 14px; display: none; font-weight: 600; }
-    #app { display: none; }
-    #app.active { display: flex; min-height: 100vh; background: var(--light); }
-    .sidebar { width: 260px; min-width: 260px; background: white; border-right: 1px solid var(--admin-sidebar-border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 100; box-shadow: 1px 0 8px rgba(0,0,0,0.03); }
-    .sidebar-header { padding: 20px 18px; border-bottom: 1px solid var(--admin-sidebar-border); display: flex; align-items: center; gap: 12px; min-height: 72px; }
-    .sidebar-header .brand-logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--red), #c41030); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: 900; flex-shrink: 0; }
-    .sidebar-header .brand-text { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; color: var(--dark); }
-    .sidebar-header .brand-text span { display: block; font-size: 9px; color: var(--admin-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 1px; }
-    .sidebar-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--admin-text-secondary); transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; font-family: inherit; position: relative; }
-    .nav-item:hover { background: var(--admin-card-hover); color: var(--dark); }
-    .nav-item.active { background: rgba(227,25,55,0.07); color: var(--red); }
-    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--red); border-radius: 0 3px 3px 0; }
-    .nav-item .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
-    .nav-item .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; min-width: 20px; text-align: center; }
-    .sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--admin-sidebar-border); display: flex; flex-direction: column; gap: 4px; }
-    .sidebar-footer .sidebar-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; background: none; color: var(--admin-text-secondary); width: 100%; text-align: left; font-family: inherit; }
-    .sidebar-footer .sidebar-btn:hover { background: var(--admin-card-hover); color: var(--dark); }
-    .sidebar-footer .sidebar-btn.danger { color: #EF4444; }
-    .sidebar-footer .sidebar-btn.danger:hover { background: rgba(239,68,68,0.08); }
-    .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--light); }
-    .topbar { padding: 16px 28px; background: var(--admin-topbar); border-bottom: 1px solid var(--admin-sidebar-border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; min-height: 60px; gap: 16px; backdrop-filter: blur(16px); }
-    .topbar-left h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; color: var(--dark); margin: 0; }
-    .topbar-left .breadcrumb { font-size: 11px; color: var(--admin-text-muted); margin-top: 1px; }
-    .topbar-right { display: flex; align-items: center; gap: 14px; }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-    .status-dot.online { background: var(--success); box-shadow: 0 0 6px rgba(0,165,80,0.4); }
-    .status-dot.offline { background: #EF4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
-    .page-content { padding: 28px; flex: 1; }
-    .tab-panel { display: none; animation: fadeIn 0.25s var(--ease); }
-    .tab-panel.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
-    .stat-card { background: white; border: 1.5px solid rgba(0,0,0,0.06); border-radius: var(--radius-lg); padding: 24px; position: relative; overflow: hidden; transition: all var(--transition); box-shadow: var(--shadow); }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: rgba(227,25,55,0.15); }
-    .stat-card .stat-icon { font-size: 26px; margin-bottom: 12px; display: block; }
-    .stat-card .stat-value { font-size: 32px; font-weight: 900; line-height: 1; margin-bottom: 4px; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
-    .stat-card .stat-label { font-size: 11px; color: var(--admin-text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
-    .stat-change { font-size: 11px; font-weight: 700; margin-top: 8px; display: inline-block; padding: 2px 8px; border-radius: 999px; }
-    .stat-change.up { color: var(--success); background: rgba(0,165,80,0.08); }
-    .admin-card { background: white; border: 1.5px solid rgba(0,0,0,0.06); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 24px; }
-    .card-header { padding: 18px 24px; border-bottom: 1px solid var(--admin-border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-    .card-header h3 { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; color: var(--dark); margin: 0; }
-    .controls-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .search-box { position: relative; }
-    .search-box input { background: var(--light); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 16px 10px 40px; color: var(--dark); font-size: 13px; font-family: inherit; outline: none; width: 220px; transition: all var(--transition); }
-    .search-box input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); width: 280px; }
-    .search-box .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.4; }
-    .filter-select { background: var(--light); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 36px 10px 14px; color: var(--dark); font-size: 13px; font-family: inherit; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%235C5E62' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-    .filter-select:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); }
-    .table-wrap { overflow-x: auto; max-height: 65vh; overflow-y: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th { text-align: left; padding: 13px 16px; background: var(--light); color: var(--admin-text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; z-index: 2; }
-    tbody td { padding: 13px 16px; border-bottom: 1px solid var(--admin-border-light); color: var(--admin-text-secondary); white-space: nowrap; }
-    tbody tr:hover td { background: var(--admin-card-hover); }
-    .user-cell { display: flex; align-items: center; gap: 10px; }
-    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--red), #c41030); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
-    .user-name { font-weight: 600; color: var(--dark); }
-    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-    .badge-success { background: rgba(0,165,80,0.08); color: var(--success); }
-    .badge-warning { background: rgba(245,158,11,0.10); color: #D97706; }
-    .badge-info { background: rgba(59,130,246,0.08); color: #3B82F6; }
-    .empty-state { text-align: center; padding: 56px 24px; color: var(--admin-text-muted); }
-    .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
-    .empty-state p { font-size: 14px; max-width: 320px; margin: 0 auto; line-height: 1.7; }
-    .loading-row { text-align: center; padding: 32px; color: var(--admin-text-muted); }
-    .table-footer { padding: 12px 24px; text-align: center; font-size: 11px; color: var(--admin-text-muted); border-top: 1px solid var(--admin-border); }
-    .settings-grid { display: grid; gap: 24px; max-width: 720px; }
-    .setting-group { background: white; border: 1.5px solid rgba(0,0,0,0.06); border-radius: var(--radius-lg); padding: 28px 32px; box-shadow: var(--shadow); transition: all var(--transition); }
-    .setting-group:hover { box-shadow: var(--shadow-lg); }
-    .setting-group h4 { font-size: 16px; font-weight: 800; margin: 0 0 4px; color: var(--dark); }
-    .setting-group .hint { font-size: 12px; color: var(--admin-text-muted); margin: 0 0 20px; line-height: 1.6; }
-    .setting-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .field-input { background: var(--light); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 11px 16px; color: var(--dark); font-size: 14px; font-family: inherit; outline: none; transition: all var(--transition); }
-    .field-input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); }
-    .field-input.w-120 { width: 140px; }
-    .field-input.w-full { width: 100%; }
-    .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 99999; display: flex; flex-direction: column; gap: 8px; }
-    .toast { background: var(--dark); color: white; padding: 14px 22px; border-radius: var(--radius); font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px; animation: toastIn 0.3s var(--ease); min-width: 280px; max-width: 420px; }
-    .toast.error { background: #EF4444; }
-    @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-    .whatsapp-float { position: fixed; bottom: 28px; right: 28px; z-index: 99999; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .whatsapp-float .whatsapp-label { background: white; color: var(--dark); font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); white-space: nowrap; text-align: center; line-height: 1.3; }
-    .whatsapp-float-btn { width: 54px; height: 54px; background: #25D366; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(37,211,102,0.3); transition: transform 0.25s ease, box-shadow 0.25s ease; text-decoration: none; cursor: pointer; }
-    .whatsapp-float-btn:hover { transform: scale(1.06); box-shadow: 0 6px 24px rgba(37,211,102,0.45); }
-    .whatsapp-float-btn svg { width: 28px; height: 28px; }
-    .sidebar-toggle { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--dark); font-size: 20px; }
-    @media(max-width: 1024px) { .sidebar { width: 220px; min-width: 220px; } .page-content { padding: 20px; } .topbar { padding: 14px 20px; } }
-    @media(max-width: 768px) { .sidebar { position: fixed; left: -280px; top: 0; bottom: 0; transition: left 0.3s var(--ease); z-index: 200; box-shadow: var(--admin-shadow-lg); } .sidebar.open { left: 0; } .sidebar-overlay { position: fixed; inset: 0; z-index: 199; background: rgba(23,26,32,0.5); display: none; backdrop-filter: blur(3px); } .sidebar-overlay.open { display: block; } .sidebar-toggle { display: block; } .topbar { padding: 14px 16px; } .page-content { padding: 16px; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .controls-row { flex-direction: column; align-items: stretch; } .search-box input, .search-box input:focus { width: 100%; } .card-header { flex-direction: column; align-items: flex-start; } .whatsapp-float { right: 16px; bottom: 16px; } .whatsapp-float-btn { width: 48px; height: 48px; border-radius: 14px; } }
-    @media(max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } .topbar { flex-direction: column; align-items: flex-start; gap: 8px; } .topbar-right { width: 100%; } .setting-group { padding: 20px; } }
-  </style>
+    :root { --red: #E31937; --red-dark: #b5102a; --success: #00A550; --warning: #F59E0B; --info: #3B82F6; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:#e6edf3;background:#0a0e13;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#21262d;border-radius:999px}
+    ::-webkit-scrollbar-thumb:hover{background:#484f58}
+    #loginScreen{position:fixed;inset:0;z-index:10000;background:radial-gradient(ellipse at 50% 30%,rgba(227,25,55,.08),#0a0e13 70%);display:flex;align-items:center;justify-content:center}
+    #loginScreen.hidden{display:none}
+    .login-container{width:100%;max-width:420px;padding:24px}
+    .login-card{background:#11161d;border-radius:18px;box-shadow:0 8px 32px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.05);padding:48px 40px;text-align:center;position:relative;overflow:hidden}
+    .login-card::before{content:'';position:absolute;top:0;left:15%;right:15%;height:3px;background:linear-gradient(90deg,transparent,var(--red),transparent);border-radius:0 0 3px 3px}
+    .login-card .login-logo{height:52px;width:auto;margin-bottom:20px}
+    .login-card h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.3px;color:#e6edf3}
+    .login-card .subtitle{color:#8b949e;font-size:14px;margin:6px 0 28px;line-height:1.6}
+    .login-card .input-group{position:relative;margin-bottom:16px}
+    .login-card input{width:100%;padding:14px 18px 14px 46px;border:1.5px solid #21262d;border-radius:10px;font-size:15px;font-family:inherit;color:#e6edf3;background:#0a0e13;outline:none;transition:all .18s cubic-bezier(.4,0,.2,1)}
+    .login-card input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.15)}
+    .login-card .input-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:20px;opacity:.5;pointer-events:none}
+    .login-error{color:#EF4444;font-size:13px;margin-top:14px;display:none;font-weight:600}
+    #app{display:none;height:100vh}
+    #app.active{display:flex}
+    .sidebar-overlay{display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+    .sidebar-overlay.open{display:block}
+    .sidebar{width:260px;min-width:260px;background:#0d1117;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;height:100vh;z-index:200;box-shadow:1px 0 12px rgba(0,0,0,.4);transition:left .3s cubic-bezier(.4,0,.2,1)}
+    .sidebar-header{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px;min-height:72px}
+    .sidebar-header .brand-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--red),#c41030);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:900;flex-shrink:0}
+    .sidebar-header .brand-text{font-size:15px;font-weight:800;letter-spacing:-.2px;color:#e6edf3}
+    .sidebar-header .brand-text span{display:block;font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-top:1px}
+    .sidebar-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden}
+    .nav-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#484f58;padding:16px 14px 6px}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#8b949e;transition:all .15s;border:none;background:0 0;width:100%;text-align:left;font-family:inherit;position:relative}
+    .nav-item:hover{background:#161b22;color:#e6edf3}
+    .nav-item.active{background:rgba(227,25,55,.12);color:var(--red)}
+    .nav-item.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--red);border-radius:0 3px 3px 0}
+    .nav-item .nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+    .nav-item .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;min-width:20px;text-align:center}
+    .sidebar-footer{padding:12px 10px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:4px}
+    .sidebar-footer .sidebar-btn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:all .15s;background:0 0;color:#8b949e;width:100%;text-align:left;font-family:inherit}
+    .sidebar-footer .sidebar-btn:hover{background:#161b22;color:#e6edf3}
+    .sidebar-footer .sidebar-btn.danger{color:#EF4444}
+    .sidebar-footer .sidebar-btn.danger:hover{background:rgba(239,68,68,.08)}
+    .main-content{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+    .topbar{padding:14px 28px;background:rgba(13,17,23,.96);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;min-height:56px;gap:16px;backdrop-filter:blur(16px)}
+    .topbar-left{display:flex;align-items:center;gap:12px}
+    .topbar-left h2{font-size:17px;font-weight:800;letter-spacing:-.3px;color:#e6edf3;margin:0}
+    .topbar-left .breadcrumb{font-size:11px;color:#484f58}
+    .topbar-right{display:flex;align-items:center;gap:14px}
+    .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+    .status-dot.online{background:var(--success);box-shadow:0 0 8px rgba(0,165,80,.5)}
+    .status-dot.offline{background:#EF4444;box-shadow:0 0 8px rgba(239,68,68,.5)}
+    .sidebar-toggle{display:none;background:0 0;border:none;cursor:pointer;padding:6px;color:#e6edf3;font-size:20px}
+    .page-content{flex:1;padding:24px 28px;overflow-y:auto;overflow-x:hidden;background:#0a0e13}
+    .tab-panel{display:none;animation:fadeIn .25s cubic-bezier(.4,0,.2,1)}
+    .tab-panel.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+    .stat-card{background:#11161d;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:24px;position:relative;overflow:hidden;transition:all .18s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.5);border-color:rgba(227,25,55,.2)}
+    .stat-card .stat-icon{font-size:24px;margin-bottom:12px;display:block}
+    .stat-card .stat-value{font-size:32px;font-weight:900;line-height:1;margin-bottom:4px;letter-spacing:-.5px;font-variant-numeric:tabular-nums;color:#e6edf3}
+    .stat-card .stat-label{font-size:11px;color:#484f58;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+    .stat-change{font-size:11px;font-weight:700;margin-top:8px;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px}
+    .stat-change.up{color:var(--success);background:rgba(0,165,80,.1)}
+    .admin-card{background:#11161d;border:1px solid rgba(255,255,255,.05);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:hidden;margin-bottom:24px}
+    .card-header{padding:16px 24px;border-bottom:1px solid #21262d;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .card-header h3{font-size:15px;font-weight:800;letter-spacing:-.2px;color:#e6edf3;margin:0}
+    .card-body{padding:24px}
+    .controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .search-box{position:relative}
+    .search-box input{background:#0a0e13;border:1.5px solid #21262d;border-radius:10px;padding:9px 14px 9px 36px;color:#e6edf3;font-size:13px;font-family:inherit;outline:none;width:220px;transition:all .18s cubic-bezier(.4,0,.2,1)}
+    .search-box input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.15);width:280px}
+    .search-box .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.4}
+    .filter-select{background:#0a0e13;border:1.5px solid #21262d;border-radius:10px;padding:9px 34px 9px 14px;color:#e6edf3;font-size:13px;font-family:inherit;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%238b949e' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+    .filter-select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.15)}
+    .btn-admin{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s cubic-bezier(.4,0,.2,1);border:none;outline:none;font-family:inherit;white-space:nowrap;text-decoration:none}
+    .btn-admin-primary{background:var(--red);color:#fff;box-shadow:0 2px 12px rgba(227,25,55,.3)}
+    .btn-admin-primary:hover{background:var(--red-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(227,25,55,.45)}
+    .btn-admin-primary:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .btn-admin-outline{background:0 0;color:#8b949e;border:1.5px solid #21262d}
+    .btn-admin-outline:hover{border-color:#484f58;color:#e6edf3;background:#161b22}
+    .btn-admin-ghost{background:0 0;color:#8b949e;padding:8px 14px}
+    .btn-admin-ghost:hover{color:#e6edf3;background:#161b22}
+    .btn-admin-danger{background:0 0;color:#EF4444;border:1.5px solid rgba(239,68,68,.3)}
+    .btn-admin-danger:hover{background:rgba(239,68,68,.08);border-color:#EF4444}
+    .btn-admin-sm{padding:5px 10px;font-size:11px;border-radius:7px}
+    .btn-admin-lg{padding:12px 24px;font-size:15px}
+    .btn-admin-full{width:100%}
+    .btn-admin-icon{width:34px;height:34px;padding:0;border-radius:10px;font-size:16px}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{text-align:left;padding:11px 16px;background:#0d1117;color:#484f58;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #21262d;white-space:nowrap;position:sticky;top:0;z-index:2}
+    tbody td{padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);color:#8b949e;white-space:nowrap}
+    tbody tr:hover td{background:#161b22}
+    .user-cell{display:flex;align-items:center;gap:10px}
+    .user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--red),#c41030);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+    .user-name{font-weight:600;color:#e6edf3}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+    .badge-success{background:rgba(0,165,80,.1);color:var(--success)}
+    .badge-warning{background:rgba(245,158,11,.1);color:#D97706}
+    .badge-info{background:rgba(59,130,246,.1);color:var(--info)}
+    .badge-danger{background:rgba(239,68,68,.1);color:#EF4444}
+    .badge-neutral{background:rgba(139,148,158,.1);color:#8b949e}
+    .empty-state{text-align:center;padding:48px 24px;color:#484f58}
+    .empty-state .empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+    .empty-state p{font-size:14px;max-width:320px;margin:0 auto;line-height:1.7}
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#e6edf3;color:#0a0e13;padding:13px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;animation:toastIn .3s cubic-bezier(.4,0,.2,1);min-width:280px;max-width:420px}
+    .toast.error{background:#EF4444;color:#fff}
+    @keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+    .settings-grid{display:grid;gap:20px;max-width:800px}
+    .setting-group{background:#11161d;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:24px 28px;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:all .18s cubic-bezier(.4,0,.2,1)}
+    .setting-group:hover{box-shadow:0 8px 32px rgba(0,0,0,.5)}
+    .setting-group h4{font-size:15px;font-weight:800;margin:0 0 4px;color:#e6edf3}
+    .setting-group .hint{font-size:12px;color:#8b949e;margin:0 0 18px;line-height:1.6}
+    .setting-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .setting-row-col{display:flex;flex-direction:column;gap:12px}
+    .field-input{background:#0a0e13;border:1.5px solid #21262d;border-radius:10px;padding:10px 14px;color:#e6edf3;font-size:14px;font-family:inherit;outline:none;transition:all .18s cubic-bezier(.4,0,.2,1)}
+    .field-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,25,55,.15)}
+    .field-input.w-120{width:140px}
+    .field-input.w-full{width:100%}
+    textarea.field-input{resize:vertical;min-height:80px}
+    .field-label{display:block;font-size:12px;font-weight:600;color:#8b949e;margin-bottom:6px}
+    .field-group{margin-bottom:16px}
+    .toggle-switch{position:relative;display:inline-block;width:44px;height:24px}
+    .toggle-switch input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;cursor:pointer;inset:0;background:#21262d;border-radius:24px;transition:.3s}
+    .toggle-slider::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle-switch input:checked+.toggle-slider{background:var(--red)}
+    .toggle-switch input:checked+.toggle-slider::before{transform:translateX(20px)}
+    .pm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+    .pm-card{background:#11161d;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:20px 24px;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:all .18s cubic-bezier(.4,0,.2,1)}
+    .pm-card:hover{border-color:rgba(227,25,55,.2);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+    .pm-card.disabled{opacity:.45}
+    .pm-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .pm-card-title{display:flex;align-items:center;gap:12px}
+    .pm-logo{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .pm-logo-pp{background:#003087}
+    .pm-logo-ca{background:#00D632}
+    .pm-logo-cr{background:linear-gradient(135deg,#F7931A,#FFBA00)}
+    .pm-logo-cc{background:linear-gradient(135deg,#1a1f71,#2563eb)}
+    .pm-logo-ag{background:linear-gradient(135deg,#555,#999)}
+    .pm-name{font-size:15px;font-weight:700;color:#e6edf3}
+    .pm-detail{font-size:12px;color:#8b949e;margin-bottom:6px}
+    .pm-actions{display:flex;gap:8px;margin-top:14px}
+    .modal-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s}
+    .modal{background:#11161d;border:1px solid rgba(255,255,255,.05);border-radius:18px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:32px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto}
+    .modal h3{font-size:18px;font-weight:800;color:#e6edf3;margin:0 0 6px}
+    .modal .modal-sub{font-size:13px;color:#8b949e;margin-bottom:20px}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid #21262d}
+    .img-preview{max-width:200px;max-height:200px;border-radius:10px;background:#0a0e13;border:1px solid #21262d;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:12px}
+    .img-preview img{max-width:100%;max-height:200px;object-fit:contain}
+    .activity-chart{display:flex;align-items:flex-end;gap:12px;height:180px;padding:0 4px}
+    .activity-bar{flex:1;background:linear-gradient(180deg,var(--red),rgba(227,25,55,.3));border-radius:4px 4px 0 0;position:relative;transition:height .5s ease;min-height:4px}
+    .activity-bar:hover{filter:brightness(1.3)}
+    .bar-tooltip{position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:#e6edf3;color:#0a0e13;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
+    .activity-bar:hover .bar-tooltip{opacity:1}
+    .chart-labels{display:flex;gap:12px;margin-top:10px;padding:0 4px}
+    .chart-labels span{flex:1;text-align:center;font-size:11px;color:#484f58;font-weight:600}
+    .notif-banner{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+    .notif-banner p{font-size:13px;color:#e6edf3;margin:0;flex:1}
+    .notif-banner .notif-status{font-size:11px;color:var(--success);font-weight:600}
+    .proof-preview{border:1px solid #21262d;border-radius:10px;padding:12px;background:#0a0e13;text-align:center;cursor:pointer;transition:all .18s}
+    .proof-preview:hover{border-color:var(--red)}
+    .proof-preview img{max-width:100%;max-height:200px;border-radius:6px;object-fit:contain}
+    @media(max-width:1024px){.sidebar{width:220px;min-width:220px}.page-content{padding:18px 20px}.topbar{padding:12px 20px}}
+    @media(max-width:768px){.sidebar{position:fixed;left:-280px;top:0;bottom:0;transition:left .3s cubic-bezier(.4,0,.2,1);width:280px;min-width:280px}.sidebar.open{left:0}.sidebar-toggle{display:block}.topbar{padding:12px 16px}.page-content{padding:14px 16px}.stats-grid{grid-template-columns:repeat(2,1fr);gap:12px}.controls-row{flex-direction:column;align-items:stretch}.search-box input,.search-box input:focus{width:100%}.card-header{flex-direction:column;align-items:flex-start}.pm-grid{grid-template-columns:1fr}.modal{padding:24px 20px}}
+    @media(max-width:480px){.stats-grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start;gap:8px}.topbar-right{width:100%}}
+</style>
 </head>
 <body>
+<!-- LOGIN SCREEN -->
 <div id="loginScreen">
   <div class="login-container">
     <div class="login-card">
@@ -169,11 +198,15 @@
       </div>
       <button class="btn btn-primary btn-full" onclick="doLogin()" style="padding:15px;font-size:15px;">Authenticate</button>
       <p class="login-error" id="loginError">Incorrect password. Please try again.</p>
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:var(--admin-text-muted);">Authorized personnel only</div>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:#484f58;">Authorized personnel only</div>
     </div>
   </div>
 </div>
+
+<!-- SIDEBAR OVERLAY -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- APP -->
 <div id="app">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -181,10 +214,16 @@
       <div class="brand-text">Tesla Award<span>Admin Panel</span></div>
     </div>
     <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
       <button class="nav-item active" data-tab="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
       <button class="nav-item" data-tab="users"><span class="nav-icon">👥</span> Users <span class="nav-badge" id="usersNavBadge">0</span></button>
-      <button class="nav-item" data-tab="orders"><span class="nav-icon">🚚</span> Orders</button>
+      <button class="nav-item" data-tab="orders"><span class="nav-icon">📦</span> Orders</button>
       <button class="nav-item" data-tab="vehicles"><span class="nav-icon">🚗</span> Vehicles</button>
+      <div class="nav-section">Management</div>
+      <button class="nav-item" data-tab="payment-methods"><span class="nav-icon">💳</span> Payment Methods</button>
+      <button class="nav-item" data-tab="payment-proofs"><span class="nav-icon">📸</span> Payment Proofs <span class="nav-badge" id="proofsNavBadge">0</span></button>
+      <div class="nav-section">Configuration</div>
+      <button class="nav-item" data-tab="social-links"><span class="nav-icon">💬</span> Support &amp; Social</button>
       <button class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span> Settings</button>
     </nav>
     <div class="sidebar-footer">
@@ -192,110 +231,326 @@
       <button class="sidebar-btn danger" onclick="doLogout()">🚪 Sign Out</button>
     </div>
   </aside>
+
   <div class="main-content">
     <div class="topbar">
       <div class="topbar-left">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
-          <div>
-            <h2 id="pageTitle">Dashboard</h2>
-            <div class="breadcrumb" id="pageBreadcrumb">Admin / Dashboard</div>
-          </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <div class="breadcrumb" id="pageBreadcrumb">Admin / Dashboard</div>
         </div>
       </div>
       <div class="topbar-right">
         <span class="status-dot online" id="apiDot"></span>
-        <span style="font-size:11px;color:var(--admin-text-muted);" id="apiStatusLabel">Connected</span>
-        <button class="btn btn-ghost btn-sm" onclick="refreshAll()" style="font-size:12px;">🔄 Refresh</button>
+        <span style="font-size:11px;color:#8b949e;" id="apiStatusLabel">Connected</span>
+        <button class="btn-admin btn-admin-ghost btn-admin-sm" onclick="refreshAll()">🔄 Refresh</button>
       </div>
     </div>
+
     <div class="page-content">
+
+      <!-- DASHBOARD PANEL -->
       <div class="tab-panel active" id="panelDashboard">
         <div class="stats-grid">
-          <div class="stat-card"><span class="stat-icon">👥</span><div class="stat-value" id="statTotal" style="font-size:24px;">—</div><div class="stat-label">Total Registered Users</div></div>
-          <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-value" id="statVerified" style="font-size:24px;">—</div><div class="stat-label">Verified Users</div><span class="stat-change up" id="statVerifiedPct">—</span></div>
-          <div class="stat-card"><span class="stat-icon">⏳</span><div class="stat-value" id="statPending" style="font-size:24px;">—</div><div class="stat-label">Pending Verification</div></div>
-          <div class="stat-card"><span class="stat-icon">📦</span><div class="stat-value" id="statOrders" style="font-size:24px;">—</div><div class="stat-label">Total Orders</div></div>
+          <div class="stat-card"><span class="stat-icon">👥</span><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Registered Users</div></div>
+          <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-value" id="statVerified">—</div><div class="stat-label">Verified Users</div><span class="stat-change up" id="statVerifiedPct">—</span></div>
+          <div class="stat-card"><span class="stat-icon">⏳</span><div class="stat-value" id="statPending">—</div><div class="stat-label">Pending Verification</div></div>
+          <div class="stat-card"><span class="stat-icon">📦</span><div class="stat-value" id="statOrders">—</div><div class="stat-label">Total Orders</div></div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><h3 style="font-size:15px;font-weight:800;color:var(--dark);margin:0;">📈 Registration Activity (Last 7 Days)</h3></div>
-        <div class="admin-card" style="padding:24px;margin-bottom:24px;"><div class="activity-chart" id="activityChart"></div><div class="chart-labels" id="chartLabels"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><h3 style="font-size:15px;font-weight:800;color:#e6edf3;margin:0;">📈 Registration Activity (Last 7 Days)</h3></div>
+        <div class="admin-card" style="padding:24px;margin-bottom:24px;">
+          <div class="activity-chart" id="activityChart"></div>
+          <div class="chart-labels" id="chartLabels"></div>
+        </div>
         <div class="admin-card">
-          <div class="card-header"><h3>🕐 Recent Registrations</h3><button class="btn btn-ghost btn-sm" onclick="switchTab('users')" style="font-size:12px;">View All →</button></div>
+          <div class="card-header"><h3>🕐 Recent Registrations</h3><button class="btn-admin btn-admin-ghost btn-admin-sm" onclick="switchTab('users')">View All →</button></div>
           <div class="table-wrap"><table><thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Status</th><th>Date</th></tr></thead><tbody id="recentTable"><tr><td colspan="5" class="loading-row">Loading...</td></tr></tbody></table></div>
         </div>
       </div>
+
+      <!-- USERS PANEL -->
       <div class="tab-panel" id="panelUsers">
         <div class="admin-card">
-          <div class="card-header"><h3>All Registered Users</h3><div class="controls-row"><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="renderUsers()"></div><select class="filter-select" id="statusFilter" onchange="renderUsers()"><option value="all">All Status</option><option value="verified">Verified</option><option value="pending">Pending</option></select><button class="btn btn-ghost btn-sm" onclick="refreshAll()">🔄 Refresh</button></div></div>
+          <div class="card-header"><h3>All Registered Users</h3><div class="controls-row"><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="renderUsers()"></div><select class="filter-select" id="statusFilter" onchange="renderUsers()"><option value="all">All Status</option><option value="verified">Verified</option><option value="pending">Pending</option></select><button class="btn-admin btn-admin-ghost btn-admin-sm" onclick="refreshAll()">🔄 Refresh</button></div></div>
           <div class="table-wrap"><table><thead><tr><th>#</th><th>User</th><th>Email</th><th>Phone</th><th>Status</th><th>Verified</th><th>Registered</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="8" class="loading-row">Loading...</td></tr></tbody></table></div>
           <div class="empty-state" id="usersEmpty" style="display:none;"><div class="empty-icon">📭</div><p>No users match your search criteria.</p></div>
-          <div class="table-footer" id="usersCount"></div>
+          <div class="table-footer" id="usersCount" style="padding:12px 24px;text-align:center;font-size:11px;color:#484f58;border-top:1px solid #21262d;"></div>
         </div>
       </div>
+
+      <!-- ORDERS PANEL -->
       <div class="tab-panel" id="panelOrders">
         <div class="admin-card">
-          <div class="card-header"><h3>All Orders</h3><button class="btn btn-ghost btn-sm" onclick="loadOrders()">🔄 Refresh</button></div>
-          <div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Status</th><th>Delivery Method</th><th>Est. Delivery</th><th>Order Date</th></tr></thead><tbody id="ordersTable"><tr><td colspan="6" class="loading-row">Loading...</td></tr></tbody></table></div>
+          <div class="card-header"><h3>All Orders</h3><button class="btn-admin btn-admin-ghost btn-admin-sm" onclick="loadOrders()">🔄 Refresh</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Vehicle</th><th>Payment</th><th>Delivery</th><th>Status</th><th>Est. Date</th><th>Date</th></tr></thead><tbody id="ordersTable"><tr><td colspan="8" class="loading-row">Loading...</td></tr></tbody></table></div>
           <div class="empty-state" id="ordersEmpty" style="display:none;"><div class="empty-icon">📦</div><p>No orders have been placed yet.</p></div>
         </div>
       </div>
+
+      <!-- VEHICLES PANEL -->
       <div class="tab-panel" id="panelVehicles">
         <div class="admin-card">
-          <div class="card-header"><h3>Tesla Vehicle Fleet</h3><span style="font-size:12px;color:var(--admin-text-muted);">Prize selection for verified winners</span></div>
-          <div style="padding:24px;"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;" id="vehiclesGrid"></div></div>
+          <div class="card-header"><h3>Tesla Vehicle Fleet</h3><span style="font-size:12px;color:#8b949e;">Prize selection for verified winners</span></div>
+          <div style="padding:24px;"><div class="pm-grid" id="vehiclesGrid"></div></div>
         </div>
       </div>
+
+      <!-- PAYMENT METHODS PANEL -->
+      <div class="tab-panel" id="panelPaymentMethods">
+        <div class="admin-card">
+          <div class="card-header"><h3>Payment Methods</h3><button class="btn-admin btn-admin-primary" onclick="openPaymentMethodModal()">+ Add Method</button></div>
+          <div style="padding:24px;"><div class="pm-grid" id="paymentMethodsGrid"></div></div>
+        </div>
+      </div>
+
+      <!-- PAYMENT PROOFS PANEL -->
+      <div class="tab-panel" id="panelPaymentProofs">
+        <div class="notif-banner" id="notifBanner" style="display:none;">
+          <span>🔔</span>
+          <p>Get notified when new payment proofs are uploaded.</p>
+          <button class="btn-admin btn-admin-primary btn-admin-sm" onclick="subscribeNotifications()">Subscribe</button>
+          <span class="notif-status" id="notifStatus"></span>
+        </div>
+        <div class="admin-card">
+          <div class="card-header"><h3>Payment Proofs</h3><div class="controls-row"><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="proofSearch" placeholder="Search by order ID or customer..." oninput="renderPaymentProofs()"></div><select class="filter-select" id="proofStatusFilter" onchange="renderPaymentProofs()"><option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div></div>
+          <div class="table-wrap"><table><thead><tr><th>#</th><th>Order ID</th><th>Customer</th><th>Payment Method</th><th>Amount</th><th>Proof</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="proofsTable"><tr><td colspan="9" class="loading-row">No payment proofs yet.</td></tr></tbody></table></div>
+          <div class="empty-state" id="proofsEmpty" style="display:none;"><div class="empty-icon">📸</div><p>No payment proofs have been submitted yet.</p></div>
+        </div>
+      </div>
+
+      <!-- SOCIAL LINKS PANEL -->
+      <div class="tab-panel" id="panelSocialLinks">
+        <div class="settings-grid">
+          <div class="setting-group">
+            <h4>💬 WhatsApp Support</h4>
+            <p class="hint">Configure the WhatsApp contact button displayed on the public website. Updates are reflected immediately.</p>
+            <div class="setting-row-col">
+              <div class="setting-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="whatsappEnabled" onchange="saveSocialSettings()" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <span style="font-size:13px;color:#8b949e;">Enable WhatsApp button</span>
+              </div>
+              <div class="field-group"><label class="field-label">Phone Number (with country code)</label><input type="text" class="field-input w-full" id="whatsappPhone" value="+1 (581) 478-3495" onchange="saveSocialSettings()"></div>
+              <div class="field-group"><label class="field-label">Button Label</label><input type="text" class="field-input w-full" id="whatsappLabel" value="Need help?\nChat with us" onchange="saveSocialSettings()"></div>
+            </div>
+          </div>
+          <div class="setting-group">
+            <h4>✈️ Telegram Support</h4>
+            <p class="hint">Configure the Telegram contact displayed on the public website.</p>
+            <div class="setting-row-col">
+              <div class="setting-row">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="telegramEnabled" onchange="saveSocialSettings()">
+                  <span class="toggle-slider"></span>
+                </label>
+                <span style="font-size:13px;color:#8b949e;">Enable Telegram button</span>
+              </div>
+              <div class="field-group"><label class="field-label">Telegram Username or URL</label><input type="text" class="field-input w-full" id="telegramUrl" placeholder="@username or https://t.me/..." onchange="saveSocialSettings()"></div>
+              <div class="field-group"><label class="field-label">Button Label</label><input type="text" class="field-input w-full" id="telegramLabel" value="Join us on Telegram" onchange="saveSocialSettings()"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS PANEL -->
       <div class="tab-panel" id="panelSettings">
         <div class="settings-grid">
-          <div class="setting-group"><h4>🚚 Delivery Fee</h4><p class="hint">Set the delivery fee displayed during checkout. This value syncs to the database.</p><div class="setting-row"><span style="color:var(--admin-text-secondary);font-weight:700;font-size:18px;">$</span><input type="number" class="field-input w-120" id="feeInput" placeholder="299" min="0" step="1"><button class="btn btn-primary" onclick="saveDeliveryFee()">💾 Save Fee</button><span style="font-size:11px;color:var(--admin-text-muted);margin-left:8px;" id="feeStatus"></span></div></div>
-          <div class="setting-group"><h4>🔑 Change Admin Password</h4><p class="hint">Update the password required to access this admin panel.</p><div style="display:flex;flex-direction:column;gap:12px;max-width:360px;"><input type="password" class="field-input w-full" id="currentPwd" placeholder="Current password"><input type="password" class="field-input w-full" id="newPwd" placeholder="New password"><input type="password" class="field-input w-full" id="confirmPwd" placeholder="Confirm new password"><button class="btn btn-primary" onclick="changePassword()">Change Password</button></div></div>
-          <div class="setting-group"><h4>⚠️ Danger Zone</h4><p class="hint">Clear all locally cached data. Does NOT affect the Supabase database.</p><button class="btn btn-outline" onclick="clearLocalData()" style="border-color:#EF4444;color:#EF4444;">🗑️ Clear Local Cache</button></div>
+          <div class="setting-group">
+            <h4>🚚 Delivery Fee</h4>
+            <p class="hint">Set the delivery fee displayed during checkout. This value syncs to the database and website in real-time.</p>
+            <div class="setting-row"><span style="color:#8b949e;font-weight:700;font-size:18px;">$</span><input type="number" class="field-input w-120" id="feeInput" placeholder="299" min="0" step="1"><button class="btn-admin btn-admin-primary" onclick="saveDeliveryFee()">💾 Save Fee</button><span style="font-size:11px;color:#8b949e;margin-left:8px;" id="feeStatus"></span></div>
+          </div>
+          <div class="setting-group">
+            <h4>🔑 Change Admin Password</h4>
+            <p class="hint">Update the password required to access this admin panel.</p>
+            <div class="setting-row-col" style="max-width:360px;">
+              <input type="password" class="field-input w-full" id="currentPwd" placeholder="Current password">
+              <input type="password" class="field-input w-full" id="newPwd" placeholder="New password">
+              <input type="password" class="field-input w-full" id="confirmPwd" placeholder="Confirm new password">
+              <button class="btn-admin btn-admin-primary" onclick="changePassword()">Change Password</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <h4>⚠️ Danger Zone</h4>
+            <p class="hint">Clear all locally cached data. Does NOT affect the Supabase database.</p>
+            <button class="btn-admin btn-admin-danger" onclick="clearLocalData()">🗑️ Clear Local Cache</button>
+          </div>
         </div>
       </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main-content -->
+</div><!-- /#app -->
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- PAYMENT METHOD MODAL -->
+<div class="modal-backdrop" id="pmModal" style="display:none;">
+  <div class="modal">
+    <h3 id="pmModalTitle">Add Payment Method</h3>
+    <p class="modal-sub" id="pmModalSub">Configure a new payment method for the checkout page.</p>
+    <input type="hidden" id="pmEditId">
+    <div class="field-group"><label class="field-label">Display Name</label><input type="text" class="field-input w-full" id="pmName" placeholder="e.g. PayPal"></div>
+    <div class="field-group"><label class="field-label">Account / Wallet Info</label><input type="text" class="field-input w-full" id="pmAccount" placeholder="e.g. email@paypal.com or wallet address"></div>
+    <div class="field-group"><label class="field-label">Payment Instructions</label><textarea class="field-input w-full" id="pmInstructions" placeholder="Instructions shown to the user on the payment details page..." rows="3"></textarea></div>
+    <div class="field-group"><label class="field-label">Logo / Icon (emoji or URL)</label><input type="text" class="field-input w-full" id="pmIcon" placeholder="e.g. 💳 or image URL"></div>
+    <div class="setting-row">
+      <label class="toggle-switch"><input type="checkbox" id="pmEnabled" checked><span class="toggle-slider"></span></label>
+      <span style="font-size:13px;color:#8b949e;">Enabled (visible on website)</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-admin btn-admin-outline" onclick="closePaymentMethodModal()">Cancel</button>
+      <button class="btn-admin btn-admin-primary" onclick="savePaymentMethod()">Save Method</button>
     </div>
   </div>
 </div>
-<div class="toast-container" id="toastContainer"></div>
-<div class="whatsapp-float">
-  <span class="whatsapp-label">Need help?<br>Chat with us</span>
-  <a href="https://wa.me/15814783495?text=Hi%2C%20I%20need%20support%20with%20my%20Tesla%20Award%20Program%20order." class="whatsapp-float-btn" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
-    <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-  </a>
+
+<!-- PROOF PREVIEW MODAL -->
+<div class="modal-backdrop" id="proofPreviewModal" style="display:none;">
+  <div class="modal">
+    <h3>Payment Proof</h3>
+    <div style="text-align:center;margin:16px 0;" id="proofPreviewContent"></div>
+    <div class="modal-actions"><button class="btn-admin btn-admin-outline" onclick="document.getElementById('proofPreviewModal').style.display='none'">Close</button></div>
+  </div>
 </div>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
 (function(){'use strict';
+// ── STATE ──
 var allUsers=[],allOrders=[],deliveryFee=299,adminPassword=localStorage.getItem('tesla_admin_pwd')||'admin123';
-var API_BASE=(typeof window.TESLA_API_BASE!=='undefined'&&window.TESLA_API_BASE)?window.TESLA_API_BASE.replace(/\/+$/, ''):'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+var paymentMethods=[],paymentProofs=[],socialSettings={};
+
+var API_BASE=(typeof window.TESLA_API_BASE!=='undefined'&&window.TESLA_API_BASE)?window.TESLA_API_BASE.replace(/\/+$/,''):'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+
 function esc(s){if(s==null||s==='')return'—';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
-function showToast(m,e){var c=document.getElementById('toastContainer'),t=document.createElement('div');t.className='toast'+(e?' error':'');t.innerHTML='<span class="toast-icon">'+(e?'✕':'✓')+'</span>'+esc(m);c.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(function(){if(t.parentNode)t.remove()},300)},3500);}
+
+// ── TOAST ──
+function showToast(m,e){var c=document.getElementById('toastContainer'),t=document.createElement('div');t.className='toast'+(e?' error':'');t.innerHTML='<span>'+(e?'✕':'✓')+'</span>'+esc(m);c.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){if(t.parentNode)t.remove()},300)},3500);}
+
+// ── API STATUS ──
 function setApiStatus(o){var d=document.getElementById('apiDot'),l=document.getElementById('apiStatusLabel');if(d)d.className='status-dot '+(o?'online':'offline');if(l)l.textContent=o?'Connected':'Offline';}
+
+// ── API CALL ──
 function api(m,p,b){return fetch(API_BASE+p,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):null}).then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Request failed ('+r.status+')');return d})});}
+
+// ── AUTH ──
 function doLogin(){var i=document.getElementById('loginInput'),p=i?i.value:'';if(p===adminPassword){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.add('active');document.getElementById('loginError').style.display='none';refreshAll();}else{document.getElementById('loginError').style.display='block';if(i){i.value='';i.focus();}}}
 function doLogout(){document.getElementById('app').classList.remove('active');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginInput').value='';document.getElementById('loginInput').focus();}
+
+// ── SIDEBAR ──
 function toggleSidebar(){var s=document.getElementById('sidebar'),o=document.getElementById('sidebarOverlay');if(!s||!o)return;s.classList.toggle('open');o.classList.toggle('open');}
-function switchTab(t){if(!document.getElementById('app').classList.contains('active'))return;if(window.innerWidth<=768)toggleSidebar();document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active')});var nb=document.querySelector('.nav-item[data-tab="'+t+'"]');if(nb)nb.classList.add('active');document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});var pn=document.getElementById('panel'+t.charAt(0).toUpperCase()+t.slice(1));if(pn)pn.classList.add('active');document.getElementById('pageTitle').textContent=t.charAt(0).toUpperCase()+t.slice(1);document.getElementById('pageBreadcrumb').textContent='Admin / '+t.charAt(0).toUpperCase()+t.slice(1);if(t==='dashboard')loadDashboard();if(t==='users')renderUsers();if(t==='orders')loadOrders();if(t==='vehicles')renderVehicles();if(t==='settings'){var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;}}
+
+// ── TAB SWITCHING ──
+function switchTab(t){if(!document.getElementById('app').classList.contains('active'))return;if(window.innerWidth<=768)toggleSidebar();document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active')});var nb=document.querySelector('.nav-item[data-tab="'+t+'"]');if(nb)nb.classList.add('active');document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});var pn=document.getElementById('panel'+t.split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1)}).join(''));if(pn)pn.classList.add('active');var titles={dashboard:'Dashboard',users:'Users',orders:'Orders',vehicles:'Vehicles','payment-methods':'Payment Methods','payment-proofs':'Payment Proofs','social-links':'Support & Social',settings:'Settings'};document.getElementById('pageTitle').textContent=titles[t]||t;document.getElementById('pageBreadcrumb').textContent='Admin / '+(titles[t]||t);var actions={dashboard:loadDashboard,users:renderUsers,orders:loadOrders,vehicles:renderVehicles,'payment-methods':renderPaymentMethods,'payment-proofs':renderPaymentProofs,'social-links':loadSocialSettings,settings:function(){var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee}};if(actions[t])actions[t]();}
+
+// ── DATA LOADING ──
 function loadUsers(cb){api('GET','/admin/users').then(function(r){allUsers=(r.users||[]).sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at)});setApiStatus(true);if(cb)cb();}).catch(function(e){console.warn('Failed to load users:',e.message);setApiStatus(false);try{var l=JSON.parse(localStorage.getItem('tesla_registered_users')||'[]');if(l.length===0)l=JSON.parse(localStorage.getItem('tesla_entry_users')||'[]');allUsers=l;}catch(ex){allUsers=[];}showToast('Could not load data from server.',true);if(cb)cb();});}
+
 function loadSettings(){api('GET','/admin/settings').then(function(r){deliveryFee=r.deliveryFee||299;var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;localStorage.setItem('tesla_delivery_fee',deliveryFee);}).catch(function(){deliveryFee=parseInt(localStorage.getItem('tesla_delivery_fee')||'299',10);var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;});}
-function loadOrders(){var t=document.getElementById('ordersTable');if(!t)return;t.innerHTML='<tr><td colspan="6" class="loading-row">Loading...</td></tr>';api('GET','/admin/orders').then(function(r){allOrders=r.orders||[];renderOrders();}).catch(function(){allOrders=[];renderOrders();});}
-function renderOrders(){var t=document.getElementById('ordersTable'),e=document.getElementById('ordersEmpty');if(allOrders.length===0){if(t)t.innerHTML='';if(e)e.style.display='block';}else{if(e)e.style.display='none';if(t)t.innerHTML=allOrders.map(function(o){var m=o.deliveryMethod||{};return'<tr><td style="color:var(--dark);font-family:monospace;font-weight:700;font-size:12px;">'+esc(o.orderId)+'</td><td>'+esc(o.email)+'</td><td><span class="badge badge-info">'+esc(o.status)+'</span></td><td>'+esc(m.name||'Standard')+'</td><td>'+esc(o.estimatedDelivery||'—')+'</td><td>'+esc(o.orderDate?new Date(o.orderDate).toLocaleDateString():'—')+'</td></tr>';}).join('');}}
+
+function loadOrders(){var t=document.getElementById('ordersTable');if(!t)return;t.innerHTML='<tr><td colspan="8" class="loading-row">Loading...</td></tr>';api('GET','/admin/orders').then(function(r){allOrders=r.orders||[];renderOrders();}).catch(function(){allOrders=[];renderOrders();});}
+
+function renderOrders(){var t=document.getElementById('ordersTable'),e=document.getElementById('ordersEmpty');if(allOrders.length===0){if(t)t.innerHTML='';if(e)e.style.display='block';}else{if(e)e.style.display='none';if(t)t.innerHTML=allOrders.map(function(o){var m=o.deliveryMethod||{};var pm=o.paymentMethod||{};return'<tr><td style="color:#e6edf3;font-family:monospace;font-weight:700;font-size:12px;">'+esc(o.orderId)+'</td><td>'+esc(o.email)+'</td><td>'+esc(o.selectedCar?o.selectedCar.name:'—')+'</td><td>'+esc(pm.name||'—')+'</td><td>'+esc(m.name||'Standard')+'</td><td><span class="badge badge-info">'+esc(o.status)+'</span></td><td>'+esc(o.estimatedDelivery||'—')+'</td><td>'+esc(o.orderDate?new Date(o.orderDate).toLocaleDateString():'—')+'</td></tr>';}).join('');}}
+
 function loadDashboard(){loadActivityChart();updateStats();renderRecentUsers();}
+
 function updateStats(){var v=allUsers.filter(function(u){return u.verification_status==='verified'}).length,p=allUsers.length-v;['statTotal','statVerified','statPending','statOrders'].forEach(function(id){var el=document.getElementById(id);if(el&&id==='statTotal')el.textContent=allUsers.length;if(el&&id==='statVerified')el.textContent=v;if(el&&id==='statPending')el.textContent=p;if(el&&id==='statOrders')el.textContent=allOrders.length;});var pct=document.getElementById('statVerifiedPct');if(pct)pct.textContent=allUsers.length>0?Math.round((v/allUsers.length)*100)+'% verified':'—';var b=document.getElementById('usersNavBadge');if(b)b.textContent=allUsers.length;}
-function renderRecentUsers(){var t=document.getElementById('recentTable');if(!t)return;var r=allUsers.slice(0,8);if(r.length===0){t.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--admin-text-muted);">No users registered yet.</td></tr>';}else{t.innerHTML=r.map(function(u){var n=[u.first_name,u.last_name].filter(Boolean).join(' ')||'—',iv=u.verification_status==='verified';return'<tr><td><div class="user-cell"><div class="user-avatar">'+esc((n.charAt(0)||'?').toUpperCase())+'</div><span class="user-name">'+esc(n)+'</span></div></td><td>'+esc(u.email)+'</td><td>'+esc(u.phone)+'</td><td><span class="badge '+(iv?'badge-success':'badge-warning')+'">'+(iv?'Verified':'Pending')+'</span></td><td>'+esc(u.created_at?new Date(u.created_at).toLocaleDateString():'—')+'</td></tr>';}).join('');}}
-function renderUsers(){try{var q=(document.getElementById('userSearch').value||'').toLowerCase(),st=document.getElementById('statusFilter').value;var filtered=allUsers.filter(function(u){if(st==='verified'&&u.verification_status!=='verified')return false;if(st==='pending'&&u.verification_status==='verified')return false;if(q){var h=[u.first_name,u.last_name,u.email,u.phone].join(' ').toLowerCase();return h.indexOf(q)!==-1;}return true;});var t=document.getElementById('usersTable'),e=document.getElementById('usersEmpty'),c=document.getElementById('usersCount');if(c)c.textContent='Showing '+filtered.length+' of '+allUsers.length+' users';if(filtered.length===0){if(t)t.innerHTML='';if(e)e.style.display='block';}else{if(e)e.style.display='none';if(t)t.innerHTML=filtered.map(function(u,i){var n=[u.first_name,u.last_name].filter(Boolean).join(' ')||'—',iv=u.verification_status==='verified',va=u.verified_at?new Date(u.verified_at).toLocaleDateString():'—';return'<tr><td style="color:var(--admin-text-muted)">'+(i+1)+'</td><td><div class="user-cell"><div class="user-avatar">'+esc((n.charAt(0)||'?').toUpperCase())+'</div><span class="user-name">'+esc(n)+'</span></div></td><td>'+esc(u.email)+'</td><td>'+esc(u.phone)+'</td><td><span class="badge '+(iv?'badge-success':'badge-warning')+'">'+(iv?'Verified':'Pending')+'</span></td><td>'+esc(va)+'</td><td>'+esc(u.created_at?new Date(u.created_at).toLocaleDateString():'—')+'</td><td><button class="btn btn-sm" onclick="deleteUser(\''+u.id+'\',\''+esc(u.email).replace(/'/g,"\\'")+'\')" style="background:rgba(239,68,68,0.08);color:#EF4444;font-size:11px;padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:600;">Delete</button></td></tr>';}).join('');}}catch(e){console.error(e);}}
-function deleteUser(id,email){if(!confirm('Permanently delete user "'+(email||id)+'" and all their data? This cannot be undone.'))return;api('POST','/admin/users/delete',{id:id,email:email}).then(function(){allUsers=allUsers.filter(function(u){return u.id!==id});showToast('User deleted successfully');renderUsers();loadDashboard();var b=document.getElementById('usersNavBadge');if(b)b.textContent=allUsers.length;}).catch(function(e){showToast('Failed '+e.message,true);});}
+
+function renderRecentUsers(){var t=document.getElementById('recentTable');if(!t)return;var r=allUsers.slice(0,8);if(r.length===0){t.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:#484f58;">No users registered yet.</td></tr>';}else{t.innerHTML=r.map(function(u){var n=[u.first_name,u.last_name].filter(Boolean).join(' ')||'—',iv=u.verification_status==='verified';return'<tr><td><div class="user-cell"><div class="user-avatar">'+esc((n.charAt(0)||'?').toUpperCase())+'</div><span class="user-name">'+esc(n)+'</span></div></td><td>'+esc(u.email)+'</td><td>'+esc(u.phone)+'</td><td><span class="badge '+(iv?'badge-success':'badge-warning')+'">'+(iv?'Verified':'Pending')+'</span></td><td>'+esc(u.created_at?new Date(u.created_at).toLocaleDateString():'—')+'</td></tr>';}).join('');}}
+
+function renderUsers(){try{var q=(document.getElementById('userSearch').value||'').toLowerCase(),st=document.getElementById('statusFilter').value;var filtered=allUsers.filter(function(u){if(st==='verified'&&u.verification_status!=='verified')return false;if(st==='pending'&&u.verification_status==='verified')return false;if(q){var h=[u.first_name,u.last_name,u.email,u.phone].join(' ').toLowerCase();return h.indexOf(q)!==-1;}return true;});var t=document.getElementById('usersTable'),e=document.getElementById('usersEmpty'),c=document.getElementById('usersCount');if(c)c.textContent='Showing '+filtered.length+' of '+allUsers.length+' users';if(filtered.length===0){if(t)t.innerHTML='';if(e)e.style.display='block';}else{if(e)e.style.display='none';if(t)t.innerHTML=filtered.map(function(u,i){var n=[u.first_name,u.last_name].filter(Boolean).join(' ')||'—',iv=u.verification_status==='verified',va=u.verified_at?new Date(u.verified_at).toLocaleDateString():'—';return'<tr><td style="color:#484f58">'+(i+1)+'</td><td><div class="user-cell"><div class="user-avatar">'+esc((n.charAt(0)||'?').toUpperCase())+'</div><span class="user-name">'+esc(n)+'</span></div></td><td>'+esc(u.email)+'</td><td>'+esc(u.phone)+'</td><td><span class="badge '+(iv?'badge-success':'badge-warning')+'">'+(iv?'Verified':'Pending')+'</span></td><td>'+esc(va)+'</td><td>'+esc(u.created_at?new Date(u.created_at).toLocaleDateString():'—')+'</td><td><button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deleteUser(\''+u.id+'\',\''+esc(u.email).replace(/'/g,"\\'")+'\')">Delete</button></td></tr>';}).join('');}}catch(e){console.error(e);}}
+
+function deleteUser(id,email){if(!confirm('Permanently delete user "'+(email||id)+'" and all their data? This cannot be undone.'))return;api('POST','/admin/users/delete',{id:id,email:email}).then(function(){allUsers=allUsers.filter(function(u){return u.id!==id});showToast('User deleted successfully');renderUsers();loadDashboard();}).catch(function(e){showToast('Failed: '+e.message,true);});}
+
+// ── ACTIVITY CHART ──
 function loadActivityChart(){var c=document.getElementById('activityChart'),l=document.getElementById('chartLabels');if(!c||!l)return;var days=[],now=new Date();for(var i=6;i>=0;i--){var d=new Date(now);d.setDate(d.getDate()-i);days.push({date:d,label:d.toLocaleDateString('en-US',{weekday:'short'}),count:0});}allUsers.forEach(function(u){var d=new Date(u.created_at);days.forEach(function(day){if(d.toDateString()===day.date.toDateString())day.count++;});});var max=Math.max.apply(null,days.map(function(d){return d.count}));c.innerHTML=days.map(function(d){var h=max>0?Math.max((d.count/max)*160,4):4;return'<div class="activity-bar" style="height:'+h+'px"><div class="bar-tooltip">'+d.count+' user'+(d.count!==1?'s':'')+'</div></div>';}).join('');l.innerHTML=days.map(function(d){return'<span>'+d.label+'</span>'}).join('');}
-var vd=[{id:'model3',name:'Model 3',color:'Pearl White',price:'$38,990',badge:'⚡ Most Popular',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',specs:['3.1s 0-60','333mi Range','AWD']},{id:'modely',name:'Model Y',color:'Midnight Silver',price:'$44,990',badge:'🔥 Best Seller',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',specs:['3.5s 0-60','330mi Range','76cuft']},{id:'models',name:'Model S',color:'Ultra Red',price:'$74,990',badge:'🚀 Plaid',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',specs:['1.99s 0-60','396mi Range','1020hp']},{id:'modelx',name:'Model X',color:'Deep Blue',price:'$79,990',badge:'🦅 Iconic',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',specs:['2.5s 0-60','333mi Range','Falcon']},{id:'cybertruck',name:'Cybertruck',color:'SS',price:'$60,990',badge:'💪 Tough',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png',specs:['2.6s 0-60','340mi Range','11kTow']},{id:'roadster',name:'Roadster',color:'Red',price:'$200,000',badge:'👑 Ultimate',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png',specs:['1.1s 0-60','620mi Range','250mph']}];
-function renderVehicles(){var g=document.getElementById('vehiclesGrid');if(!g)return;g.innerHTML=vd.map(function(c){return'<div style="background:white;border:1.5px solid rgba(0,0,0,0.06);border-radius:var(--radius-lg);overflow:hidden;transition:all var(--transition);box-shadow:var(--shadow);"><div style="height:140px;background:linear-gradient(135deg,#f7f8fa,#eef0f3);display:flex;align-items:center;justify-content:center;padding:16px;"><img src="'+c.img+'" alt="'+c.name+'" style="height:100%;object-fit:contain;" loading="lazy"></div><div style="padding:18px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><h4 style="font-size:16px;font-weight:700;color:var(--dark);margin:0;">Tesla '+c.name+'</h4><span style="font-size:11px;font-weight:700;color:var(--red);background:rgba(227,25,55,0.08);padding:3px 10px;border-radius:999px;">'+c.badge+'</span></div><p style="font-size:13px;color:var(--admin-text-secondary);margin:0 0 10px;">'+c.color+' · <strong>'+c.price+'</strong></p><div style="display:flex;gap:6px;flex-wrap:wrap;">'+c.specs.map(function(s){return'<span style="font-size:11px;background:var(--light);color:var(--admin-text-secondary);padding:4px 10px;border-radius:999px;font-weight:500;">'+s+'</span>';}).join('')+'</div></div></div>';}).join('');}
-function saveDeliveryFee(){var fee=parseInt(document.getElementById('feeInput').value,10)||0;if(fee<0)fee=0;api('POST','/admin/settings',{deliveryFee:fee}).then(function(){deliveryFee=fee;localStorage.setItem('tesla_delivery_fee',fee);document.getElementById('feeStatus').textContent='✓ Saved!';showToast('Delivery fee updated to $'+fee);setTimeout(function(){document.getElementById('feeStatus').textContent='';},3000);}).catch(function(){deliveryFee=fee;localStorage.setItem('tesla_delivery_fee',fee);document.getElementById('feeStatus').textContent='✓ Local';showToast('Saved locally only.',true);});}
-function changePassword(){var cur=document.getElementById('currentPwd').value,neu=document.getElementById('newPwd').value,conf=document.getElementById('confirmPwd').value;if(cur!==adminPassword){showToast('Current password is incorrect',true);return;}if(!neu||neu.length<3){showToast('Password must be at least 3 characters',true);return;}if(neu!==conf){showToast('Passwords do not match',true);return;}adminPassword=neu;localStorage.setItem('tesla_admin_pwd',neu);['currentPwd','newPwd','confirmPwd'].forEach(function(id){document.getElementById(id).value='';});showToast('Password changed successfully!');}
-function clearLocalData(){if(!confirm('Clear all locally cached data? The database will NOT be affected.'))return;allUsers=[];localStorage.removeItem('tesla_registered_users');localStorage.removeItem('tesla_entry_users');localStorage.removeItem('tesla_delivery_fee');renderUsers();loadDashboard();var b=document.getElementById('usersNavBadge');if(b)b.textContent=allUsers.length;showToast('Local cache cleared');}
-function refreshAll(){loadOrders();loadSettings();loadUsers(function(){try{loadDashboard();}catch(e){console.error(e);}try{renderUsers();}catch(e){console.error(e);}var b=document.getElementById('usersNavBadge');if(b)b.textContent=allUsers.length;});}
-function healthCheck(){fetch(API_BASE+'/health').then(function(r){return r.json()}).then(function(){setApiStatus(true);}).catch(function(e){console.warn('Health check failed:',e.message);setApiStatus(false);});}
-function init(){try{var s=localStorage.getItem('tesla_admin_pwd');if(s)adminPassword=s;var li=document.getElementById('loginInput');if(li)li.focus();document.querySelectorAll('.nav-item').forEach(function(b){b.addEventListener('click',function(){switchTab(this.dataset.tab)})});var fi=document.getElementById('feeInput');if(fi)fi.value=deliveryFee;healthCheck();}catch(e){console.error('init:',e);}}
-window.doLogin=doLogin;window.doLogout=doLogout;window.switchTab=switchTab;window.toggleSidebar=toggleSidebar;window.refreshAll=refreshAll;window.renderUsers=renderUsers;window.loadOrders=loadOrders;window.saveDeliveryFee=saveDeliveryFee;window.changePassword=changePassword;window.clearLocalData=clearLocalData;window.deleteUser=deleteUser;window.renderVehicles=renderVehicles;
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+
+// ── VEHICLES ──
+var vd=[{id:'model3',name:'Model 3',color:'Pearl White',price:'$38,990',badge:'Most Popular',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',specs:['3.1s 0-60','333mi Range','AWD']},{id:'modely',name:'Model Y',color:'Midnight Silver',price:'$44,990',badge:'Best Seller',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',specs:['3.5s 0-60','330mi Range','76cuft']},{id:'models',name:'Model S',color:'Ultra Red',price:'$74,990',badge:'Plaid',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',specs:['1.99s 0-60','396mi Range','1020hp']},{id:'modelx',name:'Model X',color:'Deep Blue',price:'$79,990',badge:'Iconic',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',specs:['2.5s 0-60','333mi Range','Falcon']},{id:'cybertruck',name:'Cybertruck',color:'SS',price:'$60,990',badge:'Tough',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png',specs:['2.6s 0-60','340mi Range','11kTow']},{id:'roadster',name:'Roadster',color:'Red',price:'$200,000',badge:'Ultimate',img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png',specs:['1.1s 0-60','620mi Range','250mph']}];
+
+function renderVehicles(){var g=document.getElementById('vehiclesGrid');if(!g)return;g.innerHTML=vd.map(function(c){return'<div style="background:#11161d;border:1px solid rgba(255,255,255,.05);border-radius:14px;overflow:hidden;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.3);"><div style="height:140px;background:linear-gradient(135deg,#0d1117,#161b22);display:flex;align-items:center;justify-content:center;padding:16px;"><img src="'+c.img+'" alt="'+c.name+'" style="height:100%;object-fit:contain;" loading="lazy" onerror="this.style.display=\'none\'"></div><div style="padding:18px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><h4 style="font-size:16px;font-weight:700;color:#e6edf3;margin:0;">Tesla '+c.name+'</h4><span style="font-size:11px;font-weight:700;color:var(--red);background:rgba(227,25,55,.08);padding:3px 10px;border-radius:999px;">'+c.badge+'</span></div><p style="font-size:13px;color:#8b949e;margin:0 0 10px;">'+c.color+' · <strong>'+c.price+'</strong></p><div style="display:flex;gap:6px;flex-wrap:wrap;">'+c.specs.map(function(s){return'<span style="font-size:11px;background:#0a0e13;color:#8b949e;padding:4px 10px;border-radius:999px;font-weight:600;">'+s+'</span>'}).join('')+'</div></div></div>';}).join('');}
+
+// ── PAYMENT METHODS ──
+function loadPaymentMethods(){try{var d=JSON.parse(localStorage.getItem('tesla_payment_methods')||'null');if(!d||!Array.isArray(d)||d.length===0){paymentMethods=[{id:'paypal',name:'PayPal',account:'PayPal account',instructions:'Send payment via PayPal to the account below.',icon:'',enabled:true},{id:'cashapp',name:'Cash App',account:'$yourcashtag',instructions:'Send payment via Cash App to the tag below.',icon:'',enabled:true},{id:'crypto',name:'Cryptocurrency',account:'BTC/ETH/USDT wallet address',instructions:'Send cryptocurrency to the wallet address below.',icon:'',enabled:true},{id:'creditcard',name:'Credit Card',account:'Card payment via link',instructions:'Click the payment link below to pay with your credit card.',icon:'',enabled:true},{id:'applegift',name:'Apple Gift Card',account:'Apple Gift Card code',instructions:'Send your Apple Gift Card code for verification.',icon:'',enabled:true}];savePaymentMethods();}else{paymentMethods=d;}}catch(e){paymentMethods=[];}renderPaymentMethods();}
+
+function savePaymentMethods(){try{localStorage.setItem('tesla_payment_methods',JSON.stringify(paymentMethods));}catch(e){console.warn('Failed to save payment methods:',e);}}
+
+function renderPaymentMethods(){var g=document.getElementById('paymentMethodsGrid');if(!g)return;if(paymentMethods.length===0){g.innerHTML='<div class="empty-state"><div class="empty-icon">💳</div><p>No payment methods configured. Click "Add Method" to create one.</p></div>';return;}g.innerHTML=paymentMethods.map(function(p,i){var lc='';if(p.id==='paypal')lc='pm-logo-pp';else if(p.id==='cashapp')lc='pm-logo-ca';else if(p.id==='crypto')lc='pm-logo-cr';else if(p.id==='creditcard')lc='pm-logo-cc';else lc='pm-logo-ag';return'<div class="pm-card'+(p.enabled?'':' disabled')+'"><div class="pm-card-header"><div class="pm-card-title"><div class="pm-logo '+lc+'">'+(p.icon||'💳')+'</div><div><div class="pm-name">'+esc(p.name)+'</div><div class="pm-detail">'+(p.enabled?'<span style="color:var(--success);">● Active</span>':'<span style="color:#484f58;">● Disabled</span>')+'</div></div></div><label class="toggle-switch"><input type="checkbox" '+(p.enabled?'checked':'')+' onchange="togglePaymentMethod('+i+',this.checked)"><span class="toggle-slider"></span></label></div><div class="pm-detail">Account: '+esc(p.account)+'</div><div class="pm-detail" style="color:#484f58;">'+esc(p.instructions)+'</div><div class="pm-actions"><button class="btn-admin btn-admin-outline btn-admin-sm" onclick="openPaymentMethodModal('+i+')">Edit</button><button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deletePaymentMethod('+i+')">Delete</button></div></div>';}).join('');}
+
+function togglePaymentMethod(i,v){paymentMethods[i].enabled=v;savePaymentMethods();renderPaymentMethods();showToast('Payment method '+(v?'enabled':'disabled')+'.');}
+
+function openPaymentMethodModal(idx){var m=document.getElementById('pmModal'),t=document.getElementById('pmModalTitle'),s=document.getElementById('pmModalSub'),ei=document.getElementById('pmEditId');if(idx!==undefined&&idx!==null){var p=paymentMethods[idx];ei.value=idx;t.textContent='Edit Payment Method';s.textContent='Update the payment method configuration.';document.getElementById('pmName').value=p.name||'';document.getElementById('pmAccount').value=p.account||'';document.getElementById('pmInstructions').value=p.instructions||'';document.getElementById('pmIcon').value=p.icon||'';document.getElementById('pmEnabled').checked=p.enabled!==false;}else{ei.value='';t.textContent='Add Payment Method';s.textContent='Configure a new payment method for the checkout page.';document.getElementById('pmName').value='';document.getElementById('pmAccount').value='';document.getElementById('pmInstructions').value='';document.getElementById('pmIcon').value='';document.getElementById('pmEnabled').checked=true;}m.style.display='flex';}
+
+function closePaymentMethodModal(){document.getElementById('pmModal').style.display='none';}
+
+function savePaymentMethod(){var ei=document.getElementById('pmEditId'),n=document.getElementById('pmName').value.trim(),a=document.getElementById('pmAccount').value.trim(),inst=document.getElementById('pmInstructions').value.trim(),ico=document.getElementById('pmIcon').value.trim(),en=document.getElementById('pmEnabled').checked;if(!n)return showToast('Please enter a name.',true);var o={name:n,account:a,instructions:inst,icon:ico,enabled:en};if(ei.value!==''){var i=parseInt(ei.value);o.id=paymentMethods[i].id;paymentMethods[i]=o;}else{o.id='pm_'+Date.now();paymentMethods.push(o);}savePaymentMethods();renderPaymentMethods();closePaymentMethodModal();showToast('Payment method saved.');}
+
+function deletePaymentMethod(i){if(!confirm('Delete "'+paymentMethods[i].name+'"? This cannot be undone.'))return;paymentMethods.splice(i,1);savePaymentMethods();renderPaymentMethods();showToast('Payment method deleted.');}
+
+// ── PAYMENT PROOFS ──
+function loadPaymentProofs(){try{var d=JSON.parse(localStorage.getItem('tesla_payment_proofs')||'[]');paymentProofs=d;}catch(e){paymentProofs=[];}renderPaymentProofs();}
+
+function savePaymentProofs(){try{localStorage.setItem('tesla_payment_proofs',JSON.stringify(paymentProofs));}catch(e){}var b=document.getElementById('proofsNavBadge');if(b){var pcount=paymentProofs.filter(function(p){return p.status==='pending'}).length;b.textContent=pcount;b.style.display=pcount>0?'':'none';}}
+
+function renderPaymentProofs(){var t=document.getElementById('proofsTable'),e=document.getElementById('proofsEmpty'),q=(document.getElementById('proofSearch').value||'').toLowerCase(),st=document.getElementById('proofStatusFilter').value;var filtered=paymentProofs.filter(function(p){if(st!=='all'&&p.status!==st)return false;if(q){var h=[p.orderId,p.customerName,p.paymentMethod].join(' ').toLowerCase();return h.indexOf(q)!==-1;}return true;}).reverse();if(filtered.length===0){if(t)t.innerHTML='';if(e)e.style.display='block';}else{if(e)e.style.display='none';if(t)t.innerHTML=filtered.map(function(p,i){var sb='';if(p.status==='pending')sb='badge-warning';else if(p.status==='approved')sb='badge-success';else sb='badge-danger';var actions='';if(p.status==='pending'){actions='<button class="btn-admin btn-admin-primary btn-admin-sm" onclick="approveProof(\''+p.id+'\')" style="margin-right:4px;">Approve</button><button class="btn-admin btn-admin-danger btn-admin-sm" onclick="rejectProof(\''+p.id+'\')">Reject</button>';}else{actions='<span style="font-size:11px;color:#484f58;">'+(p.status==='approved'?'Approved':'Rejected')+' on '+esc(p.reviewedAt?new Date(p.reviewedAt).toLocaleDateString():'—')+'</span>';}var previewHtml='<span style="font-size:11px;color:#8b949e;">No proof</span>';if(p.proofUrl){previewHtml='<div class="proof-preview" onclick="previewProof(\''+p.id+'\')"><img src="'+p.proofUrl+'" alt="Proof" onerror="this.parentElement.innerHTML=\'<span style=font-size:11px;color:#8b949e>File uploaded</span>\'" style="max-width:60px;max-height:40px;border-radius:4px;"></div>';}return'<tr><td style="color:#484f58">'+(filtered.length-i)+'</td><td style="color:#e6edf3;font-family:monospace;font-size:12px;">'+esc(p.orderId)+'</td><td>'+esc(p.customerName)+'</td><td>'+esc(p.paymentMethod)+'</td><td>'+esc(p.amount)+'</td><td>'+previewHtml+'</td><td><span class="badge '+sb+'">'+esc(p.status)+'</span></td><td>'+esc(p.createdAt?new Date(p.createdAt).toLocaleDateString():'—')+'</td><td>'+actions+'</td></tr>';}).join('');}}
+var b=document.getElementById('proofsNavBadge');if(b){var pc=paymentProofs.filter(function(p){return p.status==='pending'}).length;b.textContent=pc;b.style.display=pc>0?'':'none';}}
+
+function approveProof(id){var p=paymentProofs.find(function(pr){return pr.id===id});if(!p)return;p.status='approved';p.reviewedAt=new Date().toISOString();savePaymentProofs();renderPaymentProofs();showToast('Payment proof approved.');}
+
+function rejectProof(id){var p=paymentProofs.find(function(pr){return pr.id===id});if(!p)return;p.status='rejected';p.reviewedAt=new Date().toISOString();savePaymentProofs();renderPaymentProofs();showToast('Payment proof rejected.');}
+
+function previewProof(id){var p=paymentProofs.find(function(pr){return pr.id===id});if(!p||!p.proofUrl)return;var c=document.getElementById('proofPreviewContent'),m=document.getElementById('proofPreviewModal');c.innerHTML='<img src="'+p.proofUrl+'" style="max-width:100%;max-height:70vh;border-radius:10px;" onerror="this.style.display=\'none\'"><div style="margin-top:12px;font-size:12px;color:#8b949e;"><div>Order: '+esc(p.orderId)+'</div><div>Customer: '+esc(p.customerName)+'</div><div>Amount: '+esc(p.amount)+'</div></div>';m.style.display='flex';}
+
+// ── MODAL CLOSE ON BACKDROP CLICK ──
+document.addEventListener('click',function(e){if(e.target.classList.contains('modal-backdrop'))e.target.style.display='none';});
+
+// ── NOTIFICATIONS ──
+function subscribeNotifications(){if(!('Notification' in window)){showToast('Browser notifications are not supported.',true);return;}if(Notification.permission==='granted'){showToast('Notifications are already enabled.');document.getElementById('notifStatus').textContent='✓ Enabled';return;}Notification.requestPermission().then(function(p){if(p==='granted'){showToast('Notifications enabled! You will be notified of new payment proofs.');document.getElementById('notifStatus').textContent='✓ Enabled';new Notification('Tesla Admin Panel',{body:'You will now be notified when new payment proofs are uploaded.',icon:'assets/tesla-award-logo.png'});}else{showToast('Notification permission denied.',true);}});}
+
+function checkNotificationStatus(){if('Notification' in window&&Notification.permission==='granted'){document.getElementById('notifStatus').textContent='✓ Enabled';}document.getElementById('notifBanner').style.display='flex';}
+
+function notifyNewProof(proof){if('Notification' in window&&Notification.permission==='granted'){new Notification('New Payment Proof',{body:proof.customerName+' submitted proof for order '+proof.orderId,icon:'assets/tesla-award-logo.png'});}}
+
+// ── SOCIAL SETTINGS ──
+function loadSocialSettings(){try{var d=JSON.parse(localStorage.getItem('tesla_social_settings')||'null');socialSettings=d||{whatsapp:{enabled:true,phone:'+1 (581) 478-3495',label:'Need help?\nChat with us'},telegram:{enabled:false,url:'',label:'Join us on Telegram'}};}catch(e){socialSettings={whatsapp:{enabled:true,phone:'+1 (581) 478-3495',label:'Need help?\nChat with us'},telegram:{enabled:false,url:'',label:'Join us on Telegram'}};}var we=document.getElementById('whatsappEnabled'),wp=document.getElementById('whatsappPhone'),wl=document.getElementById('whatsappLabel');if(we)we.checked=socialSettings.whatsapp.enabled!==false;if(wp)wp.value=socialSettings.whatsapp.phone||'';if(wl)wl.value=socialSettings.whatsapp.label||'';var te=document.getElementById('telegramEnabled'),tu=document.getElementById('telegramUrl'),tl=document.getElementById('telegramLabel');if(te)te.checked=socialSettings.telegram.enabled===true;if(tu)tu.value=socialSettings.telegram.url||'';if(tl)tl.value=socialSettings.telegram.label||'';}
+
+function saveSocialSettings(){socialSettings={whatsapp:{enabled:document.getElementById('whatsappEnabled').checked,phone:document.getElementById('whatsappPhone').value,label:document.getElementById('whatsappLabel').value},telegram:{enabled:document.getElementById('telegramEnabled').checked,url:document.getElementById('telegramUrl').value,label:document.getElementById('telegramLabel').value}};try{localStorage.setItem('tesla_social_settings',JSON.stringify(socialSettings));}catch(e){}showToast('Social settings saved. Changes are live on the website.');}
+
+// ── SETTINGS ──
+function saveDeliveryFee(){var v=parseInt(document.getElementById('feeInput').value,10);if(isNaN(v)||v<0){showToast('Please enter a valid amount.',true);return;}deliveryFee=v;api('POST','/admin/settings',{deliveryFee:v}).then(function(){localStorage.setItem('tesla_delivery_fee',v);document.getElementById('feeStatus').textContent='✓ Saved';document.getElementById('feeStatus').style.color='var(--success)';showToast('Delivery fee saved — $'+v);setTimeout(function(){document.getElementById('feeStatus').textContent=''},3000);}).catch(function(){localStorage.setItem('tesla_delivery_fee',v);showToast('Saved locally. Server sync failed.',true);});}
+
+function changePassword(){var c=document.getElementById('currentPwd').value,n=document.getElementById('newPwd').value,cn=document.getElementById('confirmPwd').value;if(c!==adminPassword){showToast('Current password is incorrect.',true);return;}if(!n||n.length<4){showToast('New password must be at least 4 characters.',true);return;}if(n!==cn){showToast('Passwords do not match.',true);return;}adminPassword=n;localStorage.setItem('tesla_admin_pwd',n);document.getElementById('currentPwd').value='';document.getElementById('newPwd').value='';document.getElementById('confirmPwd').value='';showToast('Password changed successfully!');}
+
+function clearLocalData(){if(!confirm('Clear all cached data? This does NOT affect the database.'))return;localStorage.removeItem('tesla_registered_users');localStorage.removeItem('tesla_entry_users');localStorage.removeItem('tesla_payment_methods');localStorage.removeItem('tesla_payment_proofs');localStorage.removeItem('tesla_social_settings');showToast('Local cache cleared.');}
+
+// ── REFRESH ALL ──
+function refreshAll(){loadUsers(function(){loadDashboard();renderUsers();});loadOrders();loadSettings();}
+
+// ── INIT ──
+function init(){
+  // Load persisted data
+  loadPaymentMethods();
+  loadPaymentProofs();
+  checkNotificationStatus();
+
+  // Nav item click handlers
+  document.querySelectorAll('.nav-item').forEach(function(b){
+    b.addEventListener('click',function(){switchTab(this.dataset.tab)});
+  });
+
+  // Initialize
+  refreshAll();
+}
+
+// Run on load
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+else init();
+
 })();
 </script>
 </body>
