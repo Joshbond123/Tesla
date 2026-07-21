@@ -194,9 +194,9 @@
       <p class="subtitle">Restricted area. Enter your administrator credentials to manage the Tesla Award Program.</p>
       <div class="input-group">
         <span class="input-icon">🔑</span>
-        <input type="password" id="loginInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
+        <input type="password" id="loginInput" placeholder="Enter admin password" id="loginInput" autofocus>
       </div>
-      <button class="btn btn-primary btn-full" onclick="doLogin()" style="padding:15px;font-size:15px;">Authenticate</button>
+      <button class="btn btn-primary btn-full" id="authBtn" style="padding:15px;font-size:15px;">Authenticate</button>
       <p class="login-error" id="loginError">Incorrect password. Please try again.</p>
       <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:#484f58;">Authorized personnel only</div>
     </div>
@@ -204,7 +204,7 @@
 </div>
 
 <!-- SIDEBAR OVERLAY -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <!-- APP -->
 <div id="app">
@@ -227,15 +227,15 @@
       <button class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span> Settings</button>
     </nav>
     <div class="sidebar-footer">
-      <button class="sidebar-btn" onclick="window.open('index.html','_blank')">🌐 View Website</button>
-      <button class="sidebar-btn danger" onclick="doLogout()">🚪 Sign Out</button>
+      <button class="sidebar-btn" id="viewWebsiteBtn">🌐 View Website</button>
+      <button class="sidebar-btn danger" id="logoutBtn">🚪 Sign Out</button>
     </div>
   </aside>
 
   <div class="main-content">
     <div class="topbar">
       <div class="topbar-left">
-        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+        <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Toggle menu">☰</button>
         <div>
           <h2 id="pageTitle">Dashboard</h2>
           <div class="breadcrumb" id="pageBreadcrumb">Admin / Dashboard</div>
@@ -244,7 +244,7 @@
       <div class="topbar-right">
         <span class="status-dot online" id="apiDot"></span>
         <span style="font-size:11px;color:#8b949e;" id="apiStatusLabel">Connected</span>
-        <button class="btn-admin btn-admin-ghost btn-admin-sm" onclick="refreshAll()">🔄 Refresh</button>
+        <button class="btn-admin btn-admin-ghost btn-admin-sm" id="refreshBtn">🔄 Refresh</button>
       </div>
     </div>
 
@@ -272,7 +272,7 @@
       <!-- USERS PANEL -->
       <div class="tab-panel" id="panelUsers">
         <div class="admin-card">
-          <div class="card-header"><h3>All Registered Users</h3><div class="controls-row"><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="renderUsers()"></div><select class="filter-select" id="statusFilter" onchange="renderUsers()"><option value="all">All Status</option><option value="verified">Verified</option><option value="pending">Pending</option></select><button class="btn-admin btn-admin-ghost btn-admin-sm" onclick="refreshAll()">🔄 Refresh</button></div></div>
+          <div class="card-header"><h3>All Registered Users</h3><div class="controls-row"><div class="search-box"><span class="search-icon">🔍</span><input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="renderUsers()"></div><select class="filter-select" id="statusFilter" onchange="renderUsers()"><option value="all">All Status</option><option value="verified">Verified</option><option value="pending">Pending</option></select><button class="btn-admin btn-admin-ghost btn-admin-sm" id="refreshBtn">🔄 Refresh</button></div></div>
           <div class="table-wrap"><table><thead><tr><th>#</th><th>User</th><th>Email</th><th>Phone</th><th>Status</th><th>Verified</th><th>Registered</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="8" class="loading-row">Loading...</td></tr></tbody></table></div>
           <div class="empty-state" id="usersEmpty" style="display:none;"><div class="empty-icon">📭</div><p>No users match your search criteria.</p></div>
           <div class="table-footer" id="usersCount" style="padding:12px 24px;text-align:center;font-size:11px;color:#484f58;border-top:1px solid #21262d;"></div>
@@ -543,9 +543,45 @@ function init(){
     b.addEventListener('click',function(){switchTab(this.dataset.tab)});
   });
 
+  // Logout button
+  var logoutBtn=document.getElementById('logoutBtn');
+  if(logoutBtn)logoutBtn.addEventListener('click',doLogout);
+
+  // Sidebar toggle
+  var toggleBtn=document.getElementById('sidebarToggleBtn');
+  if(toggleBtn)toggleBtn.addEventListener('click',toggleSidebar);
+
+  // Sidebar overlay
+  var overlay=document.getElementById('sidebarOverlay');
+  if(overlay)overlay.addEventListener('click',toggleSidebar);
+
+  // View website button
+  var webBtn=document.getElementById('viewWebsiteBtn');
+  if(webBtn)webBtn.addEventListener('click',function(){window.open('index.html','_blank')});
+
+  // Refresh button
+  var refreshBtn=document.getElementById('refreshBtn');
+  if(refreshBtn)refreshBtn.addEventListener('click',refreshAll);
+
   // Initialize
   refreshAll();
 }
+
+// Attach login event listeners (outside IIFE for inline handler access)
+document.addEventListener('DOMContentLoaded',function(){
+  var authBtn=document.getElementById('authBtn');
+  var loginInput=document.getElementById('loginInput');
+  if(authBtn)authBtn.addEventListener('click',doLogin);
+  if(loginInput)loginInput.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+});
+
+// Expose key functions to global scope for inline handlers
+window.doLogin=doLogin;
+window.doLogout=doLogout;
+window.toggleSidebar=toggleSidebar;
+window.switchTab=switchTab;
+window.refreshAll=refreshAll;
+window.deleteUser=deleteUser;
 
 // Run on load
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
