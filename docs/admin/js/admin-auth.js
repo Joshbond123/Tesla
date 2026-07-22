@@ -3,9 +3,21 @@
 // ╚══════════════════════════════════════════════════════════╝
 
 // ---- LOGIN ----
+// The valid password is the admin-set one (>= 3 chars) if present, else the
+// default "admin123". Computing it fresh here guarantees the default always
+// works until the admin explicitly changes it in Settings.
+function currentAdminPassword() {
+  var stored = "";
+  try { stored = localStorage.getItem("tesla_admin_pwd") || ""; } catch (e) {}
+  if (stored && stored.length >= 3) { adminPassword = stored; return stored; }
+  try { localStorage.removeItem("tesla_admin_pwd"); } catch (e) {}
+  adminPassword = "admin123";
+  return "admin123";
+}
+
 function doLogin() {
   var input = document.getElementById("loginInput"); var pwd = input ? input.value : "";
-  if (pwd === adminPassword) {
+  if (pwd === currentAdminPassword()) {
     sessionStorage.setItem("tesla_admin_authenticated", "true");
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("app").classList.add("active");
