@@ -5,8 +5,8 @@
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SMTP_USER = Deno.env.get("SMTP_USER") ?? "techledger10@gmail.com";
-const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "kkpy bzvy xyhk vljr";
+const SMTP_USER = Deno.env.get("SMTP_USER") ?? "";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "";
 const FRONTEND_URL = (Deno.env.get("FRONTEND_URL") ?? "https://joshbond123.github.io/Tesla").replace(/\/$/, "");
 const SELF_BASE = SUPABASE_URL + "/functions/v1/tesla-api";
 
@@ -175,6 +175,10 @@ class SmtpConn {
 }
 
 function sendEmailBackground(to: string, subject: string, html: string) {
+  if (!SMTP_USER || !SMTP_PASS) {
+    console.error("SMTP_USER/SMTP_PASS not configured — skipping email to " + to);
+    return;
+  }
   const promise = (async () => {
     // Try port 587 first (STARTTLS)
     let sent = await trySmtpSend(587, false, to, subject, html);
@@ -760,6 +764,15 @@ async function handleAdminAuth(req: Request) {
   return json({ success: true, token });
 }
 
+async function isValidAdminToken(req: Request): Promise<boolean> {
+  const auth = req.headers.get("authorization") ?? "";
+  const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
+  const token = bearer || (req.headers.get("x-admin-token") ?? "").trim();
+  if (!token) return false;
+  const { data } = await dbGet1("admin_settings", "key", { key: "eq.session_" + token });
+  return !!data;
+}
+
 async function handleAdminUsers(_req: Request) {
   const r = await fetch(REST + "/giveaway_users?select=id,auth_user_id,email,phone,first_name,last_name,verification_status,entry_count,created_at,verified_at&order=created_at.desc&limit=500", { headers: SB_HEADERS });
   if (!r.ok) return json({ error: "Failed to fetch users" }, 500);
@@ -889,8 +902,24 @@ async function handleAdminGetStats() {
 }
 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
+const ALLOWED_ORIGINS: string[] = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+  .split(",").map((o) => o.trim()).filter(Boolean);
+if (ALLOWED_ORIGINS.length === 0) {
+  try { ALLOWED_ORIGINS.push(new URL(FRONTEND_URL).origin); } catch { /* ignore */ }
+}
+
+function resolveAllowedOrigin(origin: string): string {
+  if (ALLOWED_ORIGINS.includes("*")) return "*";
+  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
+  return ALLOWED_ORIGINS[0] ?? "";
+}
+
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+  const reqOrigin = req.headers.get("Origin") ?? "";
+  const allowOrigin = resolveAllowedOrigin(reqOrigin);
+  const corsHeaders = { ...CORS, "Access-Control-Allow-Origin": allowOrigin, Vary: "Origin" };
+
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
 
   const url = new URL(req.url);
   const route = url.pathname.replace(/^\/(functions\/v1\/)?tesla-api/, "").replace(/\/$/, "") || "/";
@@ -898,28 +927,49 @@ Deno.serve(async (req) => {
   console.log("Route:", route, "| Method:", req.method);
 
   try {
-    if (route === "/api/health" || route === "/health" || route === "") return await handleHealth();
-    if (route === "/api/entry" && req.method === "POST") return await handleEntry(req);
-    if (route === "/api/verify" && req.method === "GET") return await handleVerify(req);
-    if (route === "/api/resend" && req.method === "POST") return await handleResend(req);
-    if (route === "/api/login" && req.method === "POST") return await handleLogin(req);
-    if (route === "/api/session" && req.method === "GET") return await handleSession(req);
-    if (route === "/api/order" && req.method === "POST") return await handleOrder(req);
-    const trackM = route.match(/^\/api\/order\/tracking\/([^/]+)$/);
-    if (trackM && req.method === "GET") return await handleTracking(trackM[1]);
-    const orderM = route.match(/^\/api\/order\/([^/]+)$/);
-    if (orderM && req.method === "GET") return await handleOrderLookup(orderM[1]);
-    // Admin routes
-    if (route === "/api/admin/auth" && req.method === "POST") return await handleAdminAuth(req);
-    if (route === "/api/admin/users" && req.method === "GET") return await handleAdminUsers(req);
-    if (route === "/api/admin/users/delete" && req.method === "POST") return await handleAdminDeleteUser(req);
-    if (route === "/api/admin/settings" && req.method === "GET") return await handleAdminGetSettings();
-    if (route === "/api/admin/settings" && req.method === "POST") return await handleAdminSaveSettings(req);
-    if (route === "/api/admin/orders" && req.method === "GET") return await handleAdminOrders(req);
-    if (route === "/api/admin/stats" && req.method === "GET") return await handleAdminGetStats();
-    return json({ error: "Not found." }, 404);
+    // Require a valid admin session token for every admin route except login.
+    if (route.startsWith("/api/admin/") && route !== "/api/admin/auth") {
+      if (!(await isValidAdminToken(req))) {
+        return withCors(json({ error: "Unauthorized" }, 401), allowOrigin);
+      }
+    }
+    return withCors(await dispatch(req, route), allowOrigin);
   } catch (err) {
     console.error("Unhandled error:", err);
-    return json({ error: "Internal server error." }, 500);
+    return withCors(json({ error: "Internal server error." }, 500), allowOrigin);
   }
 });
+
+// Overwrite the wildcard CORS origin baked into json() with the resolved,
+// allow-listed origin. Redirect responses have immutable headers — skip them.
+function withCors(res: Response, allowOrigin: string): Response {
+  if (res.status >= 300 && res.status < 400) return res;
+  try {
+    res.headers.set("Access-Control-Allow-Origin", allowOrigin);
+    res.headers.set("Vary", "Origin");
+  } catch { /* immutable headers — leave as-is */ }
+  return res;
+}
+
+async function dispatch(req: Request, route: string): Promise<Response> {
+  if (route === "/api/health" || route === "/health" || route === "") return await handleHealth();
+  if (route === "/api/entry" && req.method === "POST") return await handleEntry(req);
+  if (route === "/api/verify" && req.method === "GET") return await handleVerify(req);
+  if (route === "/api/resend" && req.method === "POST") return await handleResend(req);
+  if (route === "/api/login" && req.method === "POST") return await handleLogin(req);
+  if (route === "/api/session" && req.method === "GET") return await handleSession(req);
+  if (route === "/api/order" && req.method === "POST") return await handleOrder(req);
+  const trackM = route.match(/^\/api\/order\/tracking\/([^/]+)$/);
+  if (trackM && req.method === "GET") return await handleTracking(trackM[1]);
+  const orderM = route.match(/^\/api\/order\/([^/]+)$/);
+  if (orderM && req.method === "GET") return await handleOrderLookup(orderM[1]);
+  // Admin routes
+  if (route === "/api/admin/auth" && req.method === "POST") return await handleAdminAuth(req);
+  if (route === "/api/admin/users" && req.method === "GET") return await handleAdminUsers(req);
+  if (route === "/api/admin/users/delete" && req.method === "POST") return await handleAdminDeleteUser(req);
+  if (route === "/api/admin/settings" && req.method === "GET") return await handleAdminGetSettings();
+  if (route === "/api/admin/settings" && req.method === "POST") return await handleAdminSaveSettings(req);
+  if (route === "/api/admin/orders" && req.method === "GET") return await handleAdminOrders(req);
+  if (route === "/api/admin/stats" && req.method === "GET") return await handleAdminGetStats();
+  return json({ error: "Not found." }, 404);
+}
