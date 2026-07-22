@@ -129,7 +129,7 @@ router.post("/login", async (req, res) => {
     const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
     if (sessionError) throw sessionError;
     // Check if user already has an order — load FULL order data
-    const orderData = await loadUserOrder(supabase, entry.id);
+    const orderData = await loadUserOrder(supabase, entry.id, "Login");
     res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder: orderData !== null, order: orderData });
   } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
 });
@@ -149,7 +149,7 @@ router.get("/session", async (req, res) => {
     if (!user) { res.status(401).json({ valid: false }); return; }
     const supabase = await getSupabaseAdmin();
     // Check if user already has an order — load FULL order data
-    const orderData = await loadUserOrder(supabase, user.id);
+    const orderData = await loadUserOrder(supabase, user.id, "Session");
     res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder: orderData !== null, order: orderData });
   } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
 });

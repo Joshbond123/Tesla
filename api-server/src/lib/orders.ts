@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { logger } from "./logger.js";
 
 export type TimelineItem = { stage: string; timestamp: string | null; completed: boolean };
 
@@ -31,7 +32,7 @@ const ORDER_WITH_RELATIONS =
 
 // Load the most recent order for a user, normalized to the dashboard shape.
 // Returns null when the user has no order (or on any lookup failure).
-export async function loadUserOrder(supabase: SupabaseClient, userId: string): Promise<UserOrder | null> {
+export async function loadUserOrder(supabase: SupabaseClient, userId: string, context = "loadUserOrder"): Promise<UserOrder | null> {
   try {
     const { data: fullOrder } = await supabase
       .from("orders")
@@ -49,7 +50,8 @@ export async function loadUserOrder(supabase: SupabaseClient, userId: string): P
       deliveryMethod: fullOrder.delivery_method || {}, paymentMethod: fullOrder.payment_method || {},
       selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: mapTimeline(fullOrder.tracking_data),
     };
-  } catch {
+  } catch (err) {
+    logger.warn({ err }, `${context}: failed to load existing order`);
     return null;
   }
 }
