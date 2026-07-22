@@ -17,11 +17,16 @@
   var deployedApiBase = '__TESLA_API_BASE__';
   var hasInjectedApiBase = deployedApiBase.indexOf('__') !== 0;
 
+  // Built-in production fallback — used when CI injection did not run
+  // (e.g. the repo variable was not set at deploy time). Keeps the site
+  // functional even without a fresh re-deploy.
+  var supabaseApiBase = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+
   function normalizeApiBase(value) {
     return String(value || '').trim().replace(/\/+$/, '');
   }
 
   global.TESLA_API_BASE = normalizeApiBase(
-    global.TESLA_API_BASE || (hasInjectedApiBase ? deployedApiBase : '')
+    global.TESLA_API_BASE || (hasInjectedApiBase ? deployedApiBase : supabaseApiBase)
   );
 })(window);

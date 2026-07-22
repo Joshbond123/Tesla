@@ -39,7 +39,7 @@ if (configuredApiBase && !isValidApiBase(configuredApiBase)) {
 
 const API_BASE = isValidApiBase(configuredApiBase)
   ? configuredApiBase
-  : (isLocalhost ? '/api' : (isGitHubPages ? '' : '/api'));
+  : (isLocalhost ? '/api' : (isGitHubPages ? 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api' : '/api'));
 
 window.TESLA_API_BASE = API_BASE;
 
