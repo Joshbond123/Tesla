@@ -934,6 +934,124 @@ async function handleAdminGetStats() {
   return json({ total, verified, pending, deliveryFee });
 }
 
+// ── PAYMENT METHODS ───────────────────────────────────────────────────────────
+// The rich per-method configuration is stored as a single JSON document in
+// admin_settings (key = "payment_methods") so nested config survives intact.
+async function loadStoredPaymentMethods(): Promise<Record<string, unknown>[] | null> {
+  const r = await fetch(
+    REST + "/admin_settings?select=value&key=eq.payment_methods&limit=1",
+    { headers: SB_HEADERS },
+  );
+  if (!r.ok) {
+    console.error("Payment methods: load failed:", await r.text());
+    return null;
+  }
+  const rows = await r.json();
+  const val = rows[0]?.value as { methods?: unknown } | undefined;
+  return val && Array.isArray(val.methods)
+    ? (val.methods as Record<string, unknown>[])
+    : null;
+}
+
+async function handlePublicPaymentMethods() {
+  const list = await loadStoredPaymentMethods();
+  if (!list) return json({ methods: [] });
+  const enabled = list.filter(
+    (m) => (m as { enabled?: boolean }).enabled !== false,
+  );
+  return json({ methods: enabled });
+}
+
+async function handleAdminGetPaymentMethods() {
+  const list = await loadStoredPaymentMethods();
+  return json({ methods: list ?? [] });
+}
+
+async function handleAdminSavePaymentMethods(req: Request) {
+  let body: { methods?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "Invalid request" }, 400);
+  }
+  if (!Array.isArray(body.methods)) {
+    return json({ error: "methods must be an array." }, 400);
+  }
+  const value = { methods: body.methods };
+  const existingR = await fetch(
+    REST + "/admin_settings?select=key&key=eq.payment_methods&limit=1",
+    { headers: SB_HEADERS },
+  );
+  const existing = existingR.ok ? await existingR.json() : [];
+  if (existing.length > 0) {
+    const r = await fetch(REST + "/admin_settings?key=eq.payment_methods", {
+      method: "PATCH",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      body: JSON.stringify({ value, updated_at: new Date().toISOString() }),
+    });
+    if (!r.ok) {
+      console.error("Payment methods: update failed:", await r.text());
+      return json({ error: "Failed to save payment methods." }, 500);
+    }
+  } else {
+    const r = await fetch(REST + "/admin_settings", {
+      method: "POST",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      body: JSON.stringify({ key: "payment_methods", value }),
+    });
+    if (!r.ok) {
+      console.error("Payment methods: insert failed:", await r.text());
+      return json({ error: "Failed to save payment methods." }, 500);
+    }
+  }
+  return json({ success: true, count: body.methods.length });
+}
+
+async function handleSubmitPaymentProof(req: Request) {
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "Invalid request" }, 400);
+  }
+  const orderId = String(body.order_id ?? "");
+  const proofUrl = String(body.proof_url ?? "");
+  if (!orderId || !proofUrl) {
+    return json({ error: "Missing order_id or proof_url." }, 400);
+  }
+  const proof: Record<string, unknown> = {
+    order_id: orderId,
+    payment_method: String(body.payment_method ?? "Unknown"),
+    proof_url: proofUrl,
+    proof_type: String(body.proof_type ?? "image"),
+    amount: body.amount != null ? String(body.amount) : null,
+    status: "pending",
+  };
+  if (body.proof_back_url) proof.proof_back_url = String(body.proof_back_url);
+  const { data, error } = await dbInsert(
+    "payment_proofs",
+    proof,
+    "id,created_at",
+  );
+  if (error || !data) {
+    console.error("Payment proof: insert failed:", error);
+    return json({ error: "Failed to submit payment proof." }, 500);
+  }
+  return json({ success: true, proof: data });
+}
+
+async function handleAdminGetPaymentProofs() {
+  const r = await fetch(
+    REST + "/payment_proofs?select=*&order=created_at.desc&limit=200",
+    { headers: SB_HEADERS },
+  );
+  if (!r.ok) {
+    console.error("Payment proofs: load failed:", await r.text());
+    return json({ proofs: [] });
+  }
+  return json({ proofs: await r.json() });
+}
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -963,6 +1081,12 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/settings" && req.method === "POST") return await handleAdminSaveSettings(req);
     if (route === "/api/admin/orders" && req.method === "GET") return await handleAdminOrders(req);
     if (route === "/api/admin/stats" && req.method === "GET") return await handleAdminGetStats();
+    // Payment methods (public read + admin manage) and payment proofs
+    if (route === "/api/payment-methods" && req.method === "GET") return await handlePublicPaymentMethods();
+    if (route === "/api/admin/payment-methods" && req.method === "GET") return await handleAdminGetPaymentMethods();
+    if (route === "/api/admin/payment-methods" && req.method === "POST") return await handleAdminSavePaymentMethods(req);
+    if (route === "/api/admin/payment-proofs" && req.method === "GET") return await handleAdminGetPaymentProofs();
+    if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await handleSubmitPaymentProof(req);
     return json({ error: "Not found." }, 404);
   } catch (err) {
     console.error("Unhandled error:", err);

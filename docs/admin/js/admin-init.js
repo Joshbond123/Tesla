@@ -52,6 +52,8 @@ window.refreshAll = refreshAll; window.renderUsers = renderUsers; window.deleteU
 window.renderVehicles = renderVehicles; window.saveDeliveryFee = saveDeliveryFee; window.changePassword = changePassword; window.clearLocalData = clearLocalData;
 window.loadPaymentMethods = loadPaymentMethods; window.togglePaymentMethod = togglePaymentMethod; window.editPaymentMethod = editPaymentMethod; window.deletePaymentMethod = deletePaymentMethod;
 window.showAddPaymentMethod = showAddPaymentMethod; window.savePaymentMethod = savePaymentMethod;
+window.renderPaymentMethods = renderPaymentMethods; window.pmRerenderTypeFields = pmRerenderTypeFields;
+window.pmUpdateLogoPreview = pmUpdateLogoPreview; window.pmHandleLogoUpload = pmHandleLogoUpload; window.pmHandleQrUpload = pmHandleQrUpload;
 window.loadProofs = loadProofs; window.approveProof = approveProof; window.rejectProof = rejectProof; window.renderProofs = renderProofs;
 window.loadSocialSettings = loadSocialSettings; window.saveSocialSettings = saveSocialSettings;
 window.saveCreditCardConfig = saveCreditCardConfig; window.resetCCSelection = resetCCSelection;

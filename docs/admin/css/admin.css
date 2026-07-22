@@ -273,4 +273,60 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .btn-danger { background: var(--danger); color: white; }
 .btn-danger:hover { background: #DC2626; }
 .btn-lg { padding: 12px 24px; font-size: 15px; }
+
+/* ── PAYMENT METHODS (ENTERPRISE) ─────────────────────────── */
+.pm-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.pm-stat { background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-lg); padding: 14px 16px; }
+.pm-stat-value { font-size: 22px; font-weight: 800; color: var(--dark); line-height: 1; }
+.pm-stat-label { font-size: 11px; font-weight: 600; color: var(--admin-text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: .04em; }
+.pm-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.pm-toolbar .search-box { flex: 1; min-width: 180px; }
+.pm-toolbar .search-box input { width: 100%; }
+.pm-toolbar .search-box input:focus { width: 100%; }
+
+.pm-card { display: flex; flex-direction: column; }
+.pm-card-off { opacity: .72; }
+.pm-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.pm-card .pm-logo-wrap { margin-bottom: 0; background: transparent; }
+.pm-card .pm-logo-wrap img { width: 44px; height: 44px; }
+.pm-desc { font-size: 12px; color: var(--admin-text-secondary); line-height: 1.5; margin-bottom: 12px; min-height: 34px; }
+.pm-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.pm-badge { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: .02em; }
+.pm-badge-type { background: var(--admin-sidebar-hover); color: var(--admin-text-secondary); }
+.pm-badge-active { background: rgba(0,165,80,.12); color: var(--success); }
+.pm-badge-inactive { background: rgba(120,120,130,.14); color: var(--admin-text-muted); }
+.pm-meta { font-size: 11px; color: var(--admin-text-muted); margin-bottom: 14px; }
+.pm-actions { margin-top: auto; }
+.pm-actions .btn { flex: 1; }
+.pm-del { flex: 0 0 auto !important; color: var(--danger) !important; }
+.pm-del:hover { background: rgba(227,25,55,.08) !important; border-color: rgba(227,25,55,.3) !important; }
+
+/* Config modal */
+.pm-modal { background: white; border-radius: var(--admin-radius-xl); box-shadow: 0 24px 80px rgba(0,0,0,.25); width: 100%; max-width: 640px; max-height: 92vh; display: flex; flex-direction: column; animation: modalIn .2s var(--admin-ease); overflow: hidden; }
+.pm-modal-head { display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-bottom: 1px solid var(--admin-border); position: relative; }
+.pm-modal-logo { width: 56px; height: 56px; flex-shrink: 0; border-radius: 14px; background: var(--admin-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.pm-modal-logo img, .pm-modal-logo svg { width: 56px; height: 56px; object-fit: contain; }
+.pm-modal-head h3 { font-size: 17px; font-weight: 800; color: var(--dark); margin: 0; }
+.pm-modal-head p { font-size: 12.5px; color: var(--admin-text-muted); margin: 3px 0 0; line-height: 1.5; }
+.pm-modal-x { position: absolute; top: 16px; right: 18px; background: none; border: none; font-size: 26px; line-height: 1; color: var(--admin-text-muted); cursor: pointer; }
+.pm-modal-x:hover { color: var(--dark); }
+.pm-modal-body { padding: 8px 24px 20px; overflow-y: auto; }
+.pm-modal-foot { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--admin-border); background: var(--admin-bg); }
+.pmf-section { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--admin-text-muted); margin: 20px 0 10px; }
+.pmf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.pmf label { font-size: 12px; font-weight: 600; color: var(--admin-text-secondary); margin-bottom: 5px; display: block; }
+.pmf-opt { color: var(--admin-text-muted); font-weight: 500; }
+.pmf input, .pmf select, .pmf textarea { width: 100%; padding: 9px 12px; border: 1.5px solid var(--admin-border); border-radius: var(--admin-radius); font-size: 13.5px; font-family: inherit; color: var(--dark); background: white; outline: none; transition: all var(--admin-transition); }
+.pmf input:focus, .pmf select:focus, .pmf textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--admin-red-glow); }
+.pmf textarea { resize: vertical; min-height: 84px; }
+.pmf-hint { font-size: 11px; color: var(--admin-text-muted); margin-top: 5px; line-height: 1.4; }
+.pmf-toggle { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 12px 14px; }
+.pm-logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pm-logo-thumb { width: 56px; height: 56px; border-radius: 14px; background: var(--admin-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.pm-logo-thumb img, .pm-logo-thumb svg { width: 56px; height: 56px; object-fit: contain; }
+.pm-qr-thumb { width: 72px; height: 72px; border-radius: 10px; border: 1px dashed var(--admin-border); background: var(--admin-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-size: 11px; color: var(--admin-text-muted); }
+.pm-qr-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.pm-upload-btn { display: inline-block; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--red); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 8px 14px; cursor: pointer; transition: all var(--admin-transition); }
+.pm-upload-btn:hover { border-color: var(--red); background: var(--admin-red-glow); }
+@media(max-width: 560px) { .pmf-grid { grid-template-columns: 1fr; } .pm-stat-row { grid-template-columns: repeat(2, 1fr); } }
 .btn-full { width: 100%; }
