@@ -147,7 +147,7 @@ router.post("/login", async (req, res) => {
         hasOrder = true;
         const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
         const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
           orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
@@ -173,6 +173,7 @@ router.get("/session", async (req, res) => {
   try {
     const user = await getSessionUser((req.query as { token?: string }).token);
     if (!user) { res.status(401).json({ valid: false }); return; }
+    const supabase = await getSupabaseAdmin();
     // Check if user already has an order — load FULL order data
     let hasOrder = false;
     let orderData = null;
@@ -182,7 +183,7 @@ router.get("/session", async (req, res) => {
         hasOrder = true;
         const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
         const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
           orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
@@ -200,12 +201,12 @@ router.post("/order", async (req, res) => {
     const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = req.body as { sessionToken: string; selectedCar: Record<string, string>; deliveryDetails: Record<string, string>; deliveryMethod?: Record<string, string | number>; paymentMethod?: Record<string, string> };
         const user = await getSessionUser(sessionToken);
     if (!user) { res.status(401).json({ error: "Invalid session. Please verify your email first." }); return; }
+    const supabase = await getSupabaseAdmin();
     
     // Check if user already has an order
     const { data: existingOrder, error: orderCheckError } = await supabase.from("orders").select("id").eq("user_id", user.id).maybeSingle();
     if (orderCheckError) throw orderCheckError;
     if (existingOrder) { res.status(400).json({ error: "You have already placed an order. Each user is restricted to one order only." }); return; }
-    const supabase = await getSupabaseAdmin();
     const orderId = "TSLA-" + uuidv4().substring(0, 8).toUpperCase();
     const trackingNumber = "TRK-" + crypto.randomBytes(4).toString("hex").toUpperCase();
     const method = deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 };

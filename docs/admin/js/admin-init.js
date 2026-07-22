@@ -19,7 +19,13 @@ function init() {
       adminPassword = "admin123";
       localStorage.removeItem("tesla_admin_pwd"); // clear any invalid value
     }
-    var li = document.getElementById("loginInput"); if (li) li.focus();
+    if (sessionStorage.getItem("tesla_admin_authenticated") === "true") {
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("app").classList.add("active");
+      refreshAll();
+    } else {
+      var li = document.getElementById("loginInput"); if (li) li.focus();
+    }
     document.querySelectorAll(".nav-item").forEach(function(btn) { btn.addEventListener("click", function() { switchTab(this.dataset.tab); }); });
     var fi = document.getElementById("feeInput"); if (fi) fi.value = deliveryFee;
     initCCConfig();
