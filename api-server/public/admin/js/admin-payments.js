@@ -1,389 +1,611 @@
-// ╔══════════════════════════════════════════════════════════╗
-// ║  Tesla Award — Admin Panel: Payment Methods (Enterprise)   ║
-// ║  Backed by the unified TeslaPaymentMethods store so every  ║
-// ║  change is instantly reflected on the customer page.       ║
-// ╚══════════════════════════════════════════════════════════╝
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  Tesla Award — Admin Panel: Payment Methods (Redesigned)     ║
+// ║  Drawer-based config with per-method-type field sets.        ║
+// ║  No hard-coded payment methods required.                     ║
+// ╚══════════════════════════════════════════════════════════════╝
+(function () {
+  'use strict';
 
-var PM = window.TeslaPaymentMethods;
-var pmEsc = (PM && PM.escapeHtml) ? PM.escapeHtml : function (s) { return s == null ? "" : String(s); };
+  var PM = window.TeslaPaymentMethods;
+  var esc = (PM && PM.escapeHtml) ? PM.escapeHtml : function (s) {
+    return s == null ? '' : String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
 
-// Transient upload buffers for the open modal.
-var _pmLogoUpload = null; // data URL
-var _pmQrUpload = null;   // data URL
+  // Upload buffers for open drawer
+  var _logoUpload = null; // data URL or null
+  var _qrUpload   = null; // data URL, '' (cleared), or null (untouched)
 
-function loadPaymentMethods() {
-  renderPaymentMethods();
-  if (PM && PM.syncFromApi) {
-    PM.syncFromApi("admin", function () { renderPaymentMethods(); });
+  // ── Utilities ──────────────────────────────────────────────────
+  function $id(id)        { return document.getElementById(id); }
+  function val(id)        { var e = $id(id); return e ? e.value : ''; }
+  function setText(id, v) { var e = $id(id); if (e) e.textContent = v; }
+
+  function typeLabel(t) {
+    return ({ wallet: 'Wallet / App', bank: 'Bank Transfer', crypto: 'Cryptocurrency', card: 'Card', gift: 'Gift Card' }[t]) || 'Wallet / App';
   }
-}
 
-// ── Rendering ──────────────────────────────────────────────────
-function pmTypeLabel(t) {
-  return ({ wallet: "Wallet / App", bank: "Bank Transfer", crypto: "Cryptocurrency", card: "Card", gift: "Gift Card" }[t]) || "Wallet / App";
-}
+  function typeColor(t) {
+    return ({ wallet: '#3B82F6', bank: '#8B5CF6', crypto: '#F59E0B', card: '#10B981', gift: '#EC4899' }[t]) || '#6B7280';
+  }
 
-function pmFormatDate(iso) {
-  if (!iso) return "—";
-  var d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
 
-function renderPaymentMethods() {
-  var grid = document.getElementById("paymentMethodsGrid");
-  if (!grid || !PM) return;
-  var all = PM.getAll();
-
-  // Stat tiles
-  var enabled = all.filter(function (p) { return p.enabled; });
-  var crypto = all.filter(function (p) { return p.type === "crypto"; });
-  setText("pmTotalCount", all.length);
-  setText("pmEnabledCount", enabled.length);
-  setText("pmDisabledCount", all.length - enabled.length);
-  setText("pmCryptoCount", crypto.length);
-
-  // Filters
-  var q = (val("pmSearch") || "").toLowerCase();
-  var typeF = val("pmTypeFilter") || "all";
-  var statusF = val("pmStatusFilter") || "all";
-  var sort = val("pmSort") || "order";
-
-  var list = all.filter(function (p) {
-    if (typeF !== "all" && p.type !== typeF) return false;
-    if (statusF === "active" && !p.enabled) return false;
-    if (statusF === "inactive" && p.enabled) return false;
-    if (q) {
-      var hay = [p.name, p.description, p.type, (p.config && p.config.walletAddress),
-        (p.config && p.config.email)].join(" ").toLowerCase();
-      if (hay.indexOf(q) === -1) return false;
+  // ── Load & render ───────────────────────────────────────────────
+  window.loadPaymentMethods = function () {
+    renderPaymentMethods();
+    if (PM && PM.syncFromApi) {
+      PM.syncFromApi('admin', function () { renderPaymentMethods(); });
     }
-    return true;
-  });
+  };
 
-  list.sort(function (a, b) {
-    if (sort === "name") return String(a.name).localeCompare(String(b.name));
-    if (sort === "updated") return new Date(b.lastUpdated || 0) - new Date(a.lastUpdated || 0);
-    if (sort === "status") return (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0);
-    return (a.displayOrder || 999) - (b.displayOrder || 999);
-  });
+  function renderPaymentMethods() {
+    var grid = $id('paymentMethodsGrid');
+    if (!grid || !PM) return;
+    var all = PM.getAll();
 
-  var empty = document.getElementById("pmEmpty");
-  if (list.length === 0) {
-    grid.innerHTML = "";
-    if (empty) empty.style.display = "block";
-    return;
+    var enabled = all.filter(function (p) { return p.enabled; });
+    var crypto  = all.filter(function (p) { return p.type === 'crypto'; });
+    setText('pmTotalCount',    all.length);
+    setText('pmEnabledCount',  enabled.length);
+    setText('pmDisabledCount', all.length - enabled.length);
+    setText('pmCryptoCount',   crypto.length);
+
+    var q       = (val('pmSearch') || '').toLowerCase();
+    var typeF   = val('pmTypeFilter') || 'all';
+    var statusF = val('pmStatusFilter') || 'all';
+    var sort    = val('pmSort') || 'order';
+
+    var list = all.filter(function (p) {
+      if (typeF !== 'all' && p.type !== typeF) return false;
+      if (statusF === 'active' && !p.enabled) return false;
+      if (statusF === 'inactive' && p.enabled) return false;
+      if (q) {
+        var hay = [p.name, p.description, p.type,
+          p.config && p.config.walletAddress,
+          p.config && p.config.email].join(' ').toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    list.sort(function (a, b) {
+      if (sort === 'name')    return String(a.name).localeCompare(String(b.name));
+      if (sort === 'updated') return new Date(b.lastUpdated || 0) - new Date(a.lastUpdated || 0);
+      if (sort === 'status')  return (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0);
+      return (a.displayOrder || 999) - (b.displayOrder || 999);
+    });
+
+    var empty = $id('pmEmpty');
+    if (list.length === 0) {
+      grid.innerHTML = '';
+      if (empty) empty.style.display = 'flex';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    grid.innerHTML = list.map(function (pm) {
+      var on = pm.enabled;
+      var c  = pm.config || {};
+      var detail = '';
+      if      (pm.type === 'wallet') detail = c.cashtag || c.username || c.email || c.paypalMeLink || '';
+      else if (pm.type === 'bank')   detail = c.email || c.phone || '';
+      else if (pm.type === 'crypto') detail = c.walletAddress ? c.walletAddress.slice(0, 16) + '…' : '';
+      else if (pm.type === 'card')   detail = 'Visa · Mastercard · Amex · Discover';
+      else if (pm.type === 'gift')   detail = 'Front + Back card upload';
+
+      var col = typeColor(pm.type);
+
+      return [
+        '<div class="pm2-card' + (on ? '' : ' pm2-card-off') + '">',
+          '<div class="pm2-header">',
+            '<div class="pm2-logo-box">' + PM.logoImg(pm, 42) + '</div>',
+            '<label class="toggle-switch" title="' + (on ? 'Disable' : 'Enable') + '">',
+              '<input type="checkbox"' + (on ? ' checked' : '') + ' onchange="window.togglePaymentMethod(\'' + esc(pm.id) + '\')">',
+              '<span class="toggle-slider"></span>',
+            '</label>',
+          '</div>',
+          '<div class="pm2-name">' + esc(pm.name) + '</div>',
+          detail ? '<div class="pm2-detail">' + esc(detail) + '</div>' : '<div class="pm2-detail" style="opacity:0;height:18px;"></div>',
+          '<div class="pm2-badges">',
+            '<span class="pm2-badge" style="background:' + col + '18;color:' + col + ';">' + esc(typeLabel(pm.type)) + '</span>',
+            '<span class="pm2-badge ' + (on ? 'pm2-badge-on' : 'pm2-badge-off') + '">' + (on ? '● Active' : '○ Inactive') + '</span>',
+          '</div>',
+          '<div class="pm2-meta">',
+            '<span>#' + (pm.displayOrder || '—') + '</span>',
+            '<span>Updated ' + fmtDate(pm.lastUpdated) + '</span>',
+          '</div>',
+          '<div class="pm2-actions">',
+            '<button class="btn btn-ghost btn-sm pm2-cfg-btn" onclick="window.editPaymentMethod(\'' + esc(pm.id) + '\')">',
+              ICON_SETTINGS + ' Configure',
+            '</button>',
+            '<button class="btn btn-ghost btn-sm pm2-del-btn" onclick="window.deletePaymentMethod(\'' + esc(pm.id) + '\')" title="Delete">',
+              ICON_TRASH,
+            '</button>',
+          '</div>',
+        '</div>'
+      ].join('');
+    }).join('');
   }
-  if (empty) empty.style.display = "none";
+  window.renderPaymentMethods = renderPaymentMethods;
 
-  grid.innerHTML = list.map(function (pm) {
-    var isOn = pm.enabled;
-    return '' +
-      '<div class="pm-card' + (isOn ? "" : " pm-card-off") + '">' +
-        '<div class="pm-card-top">' +
-          '<div class="pm-logo-wrap">' + PM.logoImg(pm, 44) + '</div>' +
-          '<label class="toggle-switch" title="' + (isOn ? "Disable" : "Enable") + '">' +
-            '<input type="checkbox" ' + (isOn ? "checked" : "") + ' onchange="window.togglePaymentMethod(\'' + pm.id + '\')">' +
-            '<span class="toggle-slider"></span>' +
-          '</label>' +
-        '</div>' +
-        '<div class="pm-name">' + pmEsc(pm.name) + '</div>' +
-        '<div class="pm-desc">' + pmEsc(pm.description || pmTypeLabel(pm.type)) + '</div>' +
-        '<div class="pm-badges">' +
-          '<span class="pm-badge pm-badge-type">' + pmEsc(pmTypeLabel(pm.type)) + '</span>' +
-          '<span class="pm-badge ' + (isOn ? "pm-badge-active" : "pm-badge-inactive") + '">' +
-            (isOn ? "Active" : "Inactive") + '</span>' +
-        '</div>' +
-        '<div class="pm-meta">Updated ' + pmFormatDate(pm.lastUpdated) + '</div>' +
-        '<div class="pm-actions">' +
-          '<button class="btn btn-ghost btn-sm" onclick="window.editPaymentMethod(\'' + pm.id + '\')">' +
-            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Configure</button>' +
-          '<button class="btn btn-ghost btn-sm pm-del" onclick="window.deletePaymentMethod(\'' + pm.id + '\')" title="Delete">' +
-            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>' +
-        '</div>' +
-      '</div>';
-  }).join("");
-}
+  // ── Inline SVG icons ────────────────────────────────────────────
+  var ICON_SETTINGS = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+  var ICON_TRASH    = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+  var ICON_UPLOAD   = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
 
-function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-function val(id) { var el = document.getElementById(id); return el ? el.value : ""; }
+  // ── Toggle / delete ─────────────────────────────────────────────
+  window.togglePaymentMethod = function (id) {
+    if (!PM) return;
+    var pm = PM.toggle(id);
+    renderPaymentMethods();
+    if (pm) showToast(pm.name + ' ' + (pm.enabled ? 'enabled' : 'disabled'));
+  };
 
-// ── Toggle / delete ────────────────────────────────────────────
-function togglePaymentMethod(id) {
-  if (!PM) return;
-  var pm = PM.toggle(id);
-  renderPaymentMethods();
-  if (pm) showToast(pm.name + " " + (pm.enabled ? "enabled" : "disabled"));
-}
+  window.deletePaymentMethod = function (id) {
+    if (!PM) return;
+    var pm = PM.get(id);
+    if (!pm) return;
+    if (!confirm('Delete "' + pm.name + '"?\nThis removes it from the customer payment page immediately.')) return;
+    PM.delete(id);
+    renderPaymentMethods();
+    showToast('Payment method deleted');
+  };
 
-function deletePaymentMethod(id) {
-  if (!PM) return;
-  var pm = PM.get(id);
-  if (!pm) return;
-  if (!confirm('Delete "' + pm.name + '"? This removes it from the customer payment page.')) return;
-  PM.delete(id);
-  renderPaymentMethods();
-  showToast("Payment method deleted");
-}
+  window.showAddPaymentMethod = function () { openDrawer(null); };
+  window.editPaymentMethod    = function (id) { openDrawer(PM && PM.get(id) || null); };
 
-function showAddPaymentMethod() { showPaymentMethodModal(null); }
-function editPaymentMethod(id) { var pm = PM && PM.get(id); showPaymentMethodModal(pm || null); }
+  // ── Per-type field definitions ──────────────────────────────────
+  // Keys must match config property names used in payment-methods.js
+  var TYPE_FIELDS = {
+    paypal: [
+      { id: 'businessName', label: 'Business Name',   optional: true,  ph: 'Tesla Global Awards LLC' },
+      { id: 'email',        label: 'Business Email',  optional: false, ph: 'payments@teslaglobalawards.com' },
+      { id: 'merchantId',   label: 'Merchant ID',     optional: true,  ph: 'TM8XK2R9Q4ZPA' },
+      { id: 'paypalMeLink', label: 'PayPal.Me Link',  optional: true,  ph: 'https://paypal.me/teslaglobalawards' }
+    ],
+    cashapp: [
+      { id: 'cashtag',     label: 'Cash Tag',     optional: false, ph: '$TeslaGlobalAwards' },
+      { id: 'accountName', label: 'Account Name', optional: true,  ph: 'Tesla Global Awards' }
+    ],
+    venmo: [
+      { id: 'username',    label: 'Username',     optional: false, ph: '@TeslaGlobalAwards' },
+      { id: 'accountName', label: 'Account Name', optional: true,  ph: 'Tesla Global Awards LLC' }
+    ],
+    zelle: [
+      { id: 'recipientName', label: 'Recipient Name', optional: false, ph: 'Tesla Global Awards LLC' },
+      { id: 'email',         label: 'Email',          optional: false, ph: 'zelle@teslaglobalawards.com' },
+      { id: 'phone',         label: 'Phone Number',   optional: true,  ph: '+1 (415) 892-3401' }
+    ],
+    bitcoin: [
+      { id: 'walletAddress', label: 'Wallet Address', optional: false, ph: 'bc1q…', full: true },
+      { id: 'network',       label: 'Network',        optional: false, ph: 'Bitcoin Mainnet' }
+    ],
+    ethereum: [
+      { id: 'walletAddress', label: 'Wallet Address', optional: false, ph: '0x742d35Cc…', full: true },
+      { id: 'network',       label: 'Network',        optional: false, ph: 'Ethereum Mainnet (ERC-20)' }
+    ],
+    'usdt-erc20': [
+      { id: 'walletAddress', label: 'Wallet Address', optional: false, ph: '0x742d35Cc…', full: true },
+      { id: 'network',       label: 'Network',        optional: false, ph: 'Ethereum Mainnet (ERC-20)' }
+    ],
+    'usdt-trc20': [
+      { id: 'walletAddress', label: 'Wallet Address', optional: false, ph: 'TXfKzRsv…', full: true },
+      { id: 'network',       label: 'Network',        optional: false, ph: 'TRON Mainnet (TRC-20)' }
+    ]
+  };
 
-// ── Config modal (dedicated per-method configuration) ──────────
-function pmField(label, id, value, opts) {
-  opts = opts || {};
-  var ph = opts.placeholder || "";
-  var span = opts.full ? "grid-column:1/-1;" : "";
-  var hint = opts.hint ? '<div class="pmf-hint">' + pmEsc(opts.hint) + '</div>' : '';
-  return '<div class="pmf" style="' + span + '">' +
-    '<label>' + pmEsc(label) + (opts.optional ? ' <span class="pmf-opt">(optional)</span>' : '') + '</label>' +
-    '<input id="' + id + '" value="' + pmEsc(value || "") + '" placeholder="' + pmEsc(ph) + '">' + hint +
-  '</div>';
-}
+  var GENERIC_WALLET_FIELDS = [
+    { id: 'accountName',   label: 'Account / Business Name', optional: true, ph: 'Your business name' },
+    { id: 'email',         label: 'Payment Email',           optional: true, ph: 'payments@company.com' },
+    { id: 'cashtag',       label: 'Cash Tag / Handle',       optional: true, ph: '$YourHandle' },
+    { id: 'username',      label: 'Username',                optional: true, ph: '@YourUsername' },
+    { id: 'walletAddress', label: 'Wallet Address',          optional: true, ph: 'Address or payment link', full: true }
+  ];
 
-function pmToggleField(label, id, checked, hint) {
-  return '<div class="pmf pmf-toggle" style="grid-column:1/-1;">' +
-    '<div><label style="margin:0;">' + pmEsc(label) + '</label>' +
-    (hint ? '<div class="pmf-hint">' + pmEsc(hint) + '</div>' : '') + '</div>' +
-    '<label class="toggle-switch"><input type="checkbox" id="' + id + '" ' + (checked ? "checked" : "") + '><span class="toggle-slider"></span></label>' +
-  '</div>';
-}
+  var BANK_FIELDS = [
+    { id: 'recipientName', label: 'Recipient Name',  optional: false, ph: 'Full recipient name' },
+    { id: 'email',         label: 'Email',           optional: true,  ph: 'bank@company.com' },
+    { id: 'phone',         label: 'Phone Number',    optional: true,  ph: '+1 (555) 000-0000' },
+    { id: 'accountNumber', label: 'Account Number',  optional: true,  ph: '—' }
+  ];
 
-// Which config fields to show per type.
-function pmTypeFields(type, c) {
-  c = c || {};
-  var f = "";
-  if (type === "wallet") {
-    f += pmField("Business / Account Name", "cfg_businessName", c.businessName || c.accountName, { optional: true, placeholder: "Tesla Global Awards LLC" });
-    f += pmField("Payment Email", "cfg_email", c.email, { optional: true, placeholder: "payments@company.com" });
-    f += pmField("Cash Tag", "cfg_cashtag", c.cashtag, { optional: true, placeholder: "$YourCashtag" });
-    f += pmField("Username / Handle", "cfg_username", c.username, { optional: true, placeholder: "@YourHandle" });
-    f += pmField("Merchant ID", "cfg_merchantId", c.merchantId, { optional: true });
-    f += pmField("PayPal.Me Link", "cfg_paypalMeLink", c.paypalMeLink, { optional: true, placeholder: "https://paypal.me/…" });
-  } else if (type === "bank") {
-    f += pmField("Recipient Name", "cfg_recipientName", c.recipientName || c.accountName, { placeholder: "Full recipient name" });
-    f += pmField("Email", "cfg_email", c.email, { optional: true, placeholder: "zelle@company.com" });
-    f += pmField("Phone Number", "cfg_phone", c.phone, { optional: true, placeholder: "+1 (555) 123-4567" });
-    f += pmField("Account Number", "cfg_accountNumber", c.accountNumber, { optional: true });
-  } else if (type === "crypto") {
-    f += pmField("Wallet Address", "cfg_walletAddress", c.walletAddress, { full: true, placeholder: "Public wallet address" });
-    f += pmField("Network", "cfg_network", c.network, { placeholder: "e.g. Bitcoin Mainnet / ERC-20 / TRC-20" });
-  } else if (type === "gift") {
-    f += pmToggleField("Require Front Image", "cfg_requireFrontImage", c.requireFrontImage !== false, "Customer must upload the front of the card");
-    f += pmToggleField("Require Back Image", "cfg_requireBackImage", c.requireBackImage !== false, "Customer must upload the back of the card");
-    f += pmToggleField("Allow Camera Capture", "cfg_allowCameraCapture", c.allowCameraCapture !== false, "Let customers photograph the card with their device camera");
+  var CRYPTO_FIELDS = [
+    { id: 'walletAddress', label: 'Wallet Address', optional: false, ph: 'Public wallet address', full: true },
+    { id: 'network',       label: 'Network',        optional: false, ph: 'e.g. Bitcoin Mainnet / ERC-20 / TRC-20' }
+  ];
+
+  function getTypeFields(type, pmId) {
+    if (pmId && TYPE_FIELDS[pmId]) return TYPE_FIELDS[pmId];
+    if (type === 'wallet') return GENERIC_WALLET_FIELDS;
+    if (type === 'bank')   return BANK_FIELDS;
+    if (type === 'crypto') return CRYPTO_FIELDS;
+    return [];
   }
-  // card: no destination fields (instructions + status only)
-  return f;
-}
 
-function showPaymentMethodModal(pm) {
-  var isEdit = !!pm;
-  _pmLogoUpload = null;
-  _pmQrUpload = null;
-  var c = (pm && pm.config) || {};
-  var type = (pm && pm.type) || "wallet";
-  var existing = document.querySelector(".modal-overlay");
-  if (existing) existing.remove();
+  // ── Drawer ──────────────────────────────────────────────────────
+  function closeDrawer() {
+    ['pmDrwOverlay', 'pmDrwPanel'].forEach(function (id) {
+      var el = $id(id);
+      if (!el) return;
+      el.classList.remove('drw-open');
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 340);
+    });
+    _logoUpload = null;
+    _qrUpload   = null;
+  }
+  window._pmClose = closeDrawer;
 
-  var overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+  function openDrawer(pm) {
+    _logoUpload = null;
+    _qrUpload   = null;
 
-  var logoPreview = pm ? PM.logoImg(pm, 56) : PM.logoImg({ name: "New" }, 56);
-  var showQr = (type === "wallet" || type === "crypto" || type === "bank");
+    var isEdit = !!pm;
+    var c      = (pm && pm.config) || {};
+    var type   = (pm && pm.type) || 'wallet';
+    var pmId   = pm ? pm.id : 'new';
 
-  overlay.innerHTML =
-  '<div class="pm-modal">' +
-    '<div class="pm-modal-head">' +
-      '<div class="pm-modal-logo" id="pmModalLogo">' + logoPreview + '</div>' +
-      '<div><h3>' + (isEdit ? "Configure Payment Method" : "Add Payment Method") + '</h3>' +
-      '<p>' + (isEdit ? pmEsc(pm.name) + " · " + pmTypeLabel(type) : "Create a new payment method — it appears on the customer page when enabled.") + '</p></div>' +
-      '<button class="pm-modal-x" onclick="this.closest(\'.modal-overlay\').remove()" aria-label="Close">&times;</button>' +
-    '</div>' +
-    '<div class="pm-modal-body">' +
-      '<div class="pmf-section">Basics</div>' +
-      '<div class="pmf-grid">' +
-        pmField("Payment Method Name", "cfg_name", pm ? pm.name : "", { placeholder: "e.g. PayPal", full: true }) +
-        pmField("Short Description", "cfg_description", pm ? pm.description : "", { placeholder: "Shown under the name", full: true }) +
-        '<div class="pmf"><label>Type</label><select id="cfg_type" onchange="window.pmRerenderTypeFields()">' +
-          ["wallet", "bank", "crypto", "card", "gift"].map(function (t) {
-            return '<option value="' + t + '"' + (t === type ? " selected" : "") + '>' + pmTypeLabel(t) + '</option>';
-          }).join("") +
-        '</select></div>' +
-        pmField("Display Order", "cfg_displayOrder", pm ? pm.displayOrder : "", { placeholder: "1" }) +
-        pmToggleField("Enabled (visible to customers)", "cfg_enabled", pm ? pm.enabled : true) +
-      '</div>' +
+    // Remove stale instances
+    ['pmDrwOverlay', 'pmDrwPanel'].forEach(function (id) {
+      var el = $id(id); if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
 
-      '<div class="pmf-section">Branding</div>' +
-      '<div class="pmf-grid">' +
-        '<div class="pmf" style="grid-column:1/-1;">' +
-          '<label>Logo</label>' +
-          '<div class="pm-logo-row">' +
-            '<div class="pm-logo-thumb" id="pmLogoThumb">' + logoPreview + '</div>' +
-            '<div style="flex:1;min-width:160px;">' +
-              '<select id="cfg_logoKey" onchange="window.pmUpdateLogoPreview()">' +
-                '<option value="">— Use uploaded / brand logo —</option>' +
-                Object.keys(PM.LOGO_KEYS).map(function (k) {
-                  var sel = (pm && pm.logo && pm.logo.indexOf(k + ".svg") !== -1) ? " selected" : "";
-                  return '<option value="' + k + '"' + sel + '>' + k + '</option>';
-                }).join("") +
-              '</select>' +
-              '<div class="pmf-hint">Pick a built-in brand logo, or upload your own below.</div>' +
-              '<label class="pm-upload-btn">Upload logo<input type="file" accept="image/*" style="display:none" onchange="window.pmHandleLogoUpload(this)"></label>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
+    // Overlay
+    var ov = document.createElement('div');
+    ov.id = 'pmDrwOverlay';
+    ov.className = 'pm-drw-overlay';
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeDrawer(); });
+    document.body.appendChild(ov);
 
-      '<div class="pmf-section" id="pmDestSection">Account &amp; Destination</div>' +
-      '<div class="pmf-grid" id="pmTypeFields">' + pmTypeFields(type, c) + '</div>' +
+    // Panel
+    var panel = document.createElement('div');
+    panel.id = 'pmDrwPanel';
+    panel.className = 'pm-drw-panel';
 
-      (showQr ?
-      '<div class="pmf-grid" id="pmQrGrid">' +
-        '<div class="pmf" style="grid-column:1/-1;"><label>QR Code <span class="pmf-opt">(optional)</span></label>' +
-          '<div class="pm-logo-row">' +
-            '<div class="pm-qr-thumb" id="pmQrThumb">' + (c.qrCode ? '<img src="' + pmEsc(c.qrCode) + '" alt="QR">' : '<span>No QR</span>') + '</div>' +
-            '<label class="pm-upload-btn">Upload QR image<input type="file" accept="image/*" style="display:none" onchange="window.pmHandleQrUpload(this)"></label>' +
-          '</div>' +
-        '</div>' +
-      '</div>' : '') +
+    var logoHtml  = pm ? PM.logoImg(pm, 52) : PM.logoImg({ name: 'New' }, 52);
+    var qrHtml    = c.qrCode ? '<img src="' + esc(c.qrCode) + '" alt="QR Code">' : '<span>No QR</span>';
+    var hasQr     = !!c.qrCode;
 
-      '<div class="pmf-section">Payment Instructions</div>' +
-      '<div class="pmf-grid">' +
-        '<div class="pmf" style="grid-column:1/-1;"><label>Instructions shown to the customer</label>' +
-          '<textarea id="cfg_instructions" rows="4" placeholder="Explain exactly how to pay…">' + pmEsc(c.instructions || "") + '</textarea></div>' +
-      '</div>' +
-    '</div>' +
-    '<div class="pm-modal-foot">' +
-      '<button class="btn btn-ghost" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
-      '<button class="btn btn-primary" onclick="window.savePaymentMethod(\'' + (isEdit ? pm.id : "new") + '\')">' +
-        (isEdit ? "Save Changes" : "Add Method") + '</button>' +
-    '</div>' +
-  '</div>';
+    var logoOpts = Object.keys(PM.LOGO_KEYS).map(function (k) {
+      var selected = pm && pm.logo && pm.logo.indexOf(k + '.svg') !== -1 ? ' selected' : '';
+      return '<option value="' + k + '"' + selected + '>' + k + '</option>';
+    }).join('');
 
-  overlay.addEventListener("click", function (e) { if (e.target === overlay) overlay.remove(); });
-  document.body.appendChild(overlay);
-  pmUpdateDestVisibility(type);
-  setTimeout(function () { var i = document.getElementById("cfg_name"); if (i) i.focus(); }, 80);
-}
+    var typeOpts = ['wallet', 'bank', 'crypto', 'card', 'gift'].map(function (t) {
+      return '<option value="' + t + '"' + (t === type ? ' selected' : '') + '>' + typeLabel(t) + '</option>';
+    }).join('');
 
-function pmRerenderTypeFields() {
-  var type = val("cfg_type");
-  var container = document.getElementById("pmTypeFields");
-  if (container) container.innerHTML = pmTypeFields(type, pmCollectConfigSafe());
-  pmUpdateDestVisibility(type);
-}
+    panel.innerHTML = [
+      '<!-- DRAWER HEADER -->',
+      '<div class="drw-head">',
+        '<div class="drw-head-logo" id="drwHeadLogo">' + logoHtml + '</div>',
+        '<div class="drw-head-text">',
+          '<h3>' + (isEdit ? 'Configure Payment Method' : 'Add Payment Method') + '</h3>',
+          '<p>' + (isEdit ? esc(pm.name) + ' &middot; ' + typeLabel(type) : 'Create a new method — appears on customer page when enabled.') + '</p>',
+        '</div>',
+        '<button class="drw-close-btn" onclick="window._pmClose()" aria-label="Close">',
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+        '</button>',
+      '</div>',
 
-function pmUpdateDestVisibility(type) {
-  var sec = document.getElementById("pmDestSection");
-  var fields = document.getElementById("pmTypeFields");
-  var qr = document.getElementById("pmQrGrid");
-  var hasDest = (type !== "card");
-  if (sec) sec.style.display = hasDest ? "" : "none";
-  if (fields) fields.style.display = hasDest ? "" : "none";
-  if (qr) qr.style.display = (type === "wallet" || type === "crypto" || type === "bank") ? "" : "none";
-}
+      '<!-- DRAWER BODY -->',
+      '<div class="drw-body">',
 
-// Collect current config inputs without throwing if some are absent.
-function pmCollectConfigSafe() {
-  var c = {};
-  ["businessName", "accountName", "email", "cashtag", "username", "merchantId",
-   "paypalMeLink", "recipientName", "phone", "accountNumber", "walletAddress", "network"].forEach(function (k) {
-    var el = document.getElementById("cfg_" + k);
-    if (el) c[k] = el.value;
-  });
-  return c;
-}
+        '<div class="drw-sec-label">Basics</div>',
+        '<div class="drw-grid">',
+          '<div class="drw-field drw-full">',
+            '<label>Payment Method Name <span class="drw-req">*</span></label>',
+            '<input id="drw_name" type="text" value="' + esc(pm ? pm.name : '') + '" placeholder="e.g. PayPal, Cash App, Bitcoin" autocomplete="off">',
+          '</div>',
+          '<div class="drw-field">',
+            '<label>Type</label>',
+            '<select id="drw_type" onchange="window._pmTypeChange()">' + typeOpts + '</select>',
+          '</div>',
+          '<div class="drw-field">',
+            '<label>Display Order</label>',
+            '<input id="drw_order" type="number" min="1" value="' + esc(pm ? String(pm.displayOrder || '') : '') + '" placeholder="1">',
+          '</div>',
+          '<div class="drw-field drw-full">',
+            '<label>Short Description <span class="drw-opt">(optional)</span></label>',
+            '<input id="drw_description" type="text" value="' + esc(pm ? pm.description || '' : '') + '" placeholder="Brief description shown under the name">',
+          '</div>',
+          '<div class="drw-field drw-full drw-toggle-field">',
+            '<div class="drw-toggle-text">',
+              '<span class="drw-toggle-label">Enabled</span>',
+              '<span class="drw-toggle-hint">Visible to customers on the payment page</span>',
+            '</div>',
+            '<label class="toggle-switch">',
+              '<input type="checkbox" id="drw_enabled"' + (pm ? (pm.enabled ? ' checked' : '') : ' checked') + '>',
+              '<span class="toggle-slider"></span>',
+            '</label>',
+          '</div>',
+        '</div>',
 
-function pmUpdateLogoPreview() {
-  var key = val("cfg_logoKey");
-  var thumb = document.getElementById("pmLogoThumb");
-  var head = document.getElementById("pmModalLogo");
-  var html;
-  if (_pmLogoUpload) html = '<img src="' + _pmLogoUpload + '" alt="logo" style="width:56px;height:56px;object-fit:contain;border-radius:11px;">';
-  else if (key) html = PM.logoImg({ id: key, logo: "assets/payment-logos/" + PM.LOGO_KEYS[key] + ".svg", name: key }, 56);
-  else html = PM.logoImg({ name: val("cfg_name") || "New" }, 56);
-  if (thumb) thumb.innerHTML = html;
-  if (head) head.innerHTML = html;
-}
+        '<div class="drw-sec-label">Branding</div>',
+        '<div class="drw-grid">',
+          '<div class="drw-field drw-full">',
+            '<label>Logo / Icon</label>',
+            '<div class="drw-logo-row">',
+              '<div class="drw-logo-preview" id="drwLogoThumb">' + logoHtml + '</div>',
+              '<div class="drw-logo-opts">',
+                '<select id="drw_logoKey" onchange="window._pmLogoKeyChange()">',
+                  '<option value="">— Upload your own —</option>',
+                  logoOpts,
+                '</select>',
+                '<div class="drw-hint">Choose a built-in brand logo, or upload a custom image.</div>',
+                '<label class="drw-upload-label">',
+                  ICON_UPLOAD + ' Upload logo',
+                  '<input type="file" accept="image/*" style="display:none" onchange="window._pmLogoFile(this)">',
+                '</label>',
+              '</div>',
+            '</div>',
+          '</div>',
+        '</div>',
 
-function pmHandleLogoUpload(input) {
-  var file = input.files && input.files[0];
-  if (!file) return;
-  if (file.size > 400 * 1024) { showToast("Logo too large (max 400KB)", "error"); return; }
-  var reader = new FileReader();
-  reader.onload = function (e) {
-    _pmLogoUpload = e.target.result;
-    var sel = document.getElementById("cfg_logoKey"); if (sel) sel.value = "";
-    pmUpdateLogoPreview();
+        '<!-- TYPE-SPECIFIC SECTION -->',
+        '<div id="drwAccSection">',
+          '<div class="drw-sec-label" id="drwAccLabel">Account &amp; Destination</div>',
+          '<div class="drw-grid" id="drwTypeFields"></div>',
+          '<div class="drw-grid" id="drwQrGrid" style="display:none;">',
+            '<div class="drw-field drw-full">',
+              '<label>QR Code <span class="drw-opt">(optional)</span></label>',
+              '<div class="drw-logo-row">',
+                '<div class="drw-qr-preview" id="drwQrPreview">' + qrHtml + '</div>',
+                '<div class="drw-logo-opts">',
+                  '<label class="drw-upload-label">',
+                    ICON_UPLOAD + ' Upload QR image',
+                    '<input type="file" accept="image/*" style="display:none" onchange="window._pmQrFile(this)">',
+                  '</label>',
+                  '<div class="drw-hint">PNG, JPG or SVG &middot; max 1 MB</div>',
+                  '<button type="button" class="drw-clear-btn" id="drwQrClear" onclick="window._pmClearQr()" style="display:' + (hasQr ? 'inline-flex' : 'none') + ';">',
+                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Remove QR',
+                  '</button>',
+                '</div>',
+              '</div>',
+            '</div>',
+          '</div>',
+        '</div>',
+
+        '<div class="drw-sec-label">Payment Instructions</div>',
+        '<div class="drw-grid">',
+          '<div class="drw-field drw-full">',
+            '<label>Instructions shown to the customer</label>',
+            '<textarea id="drw_instructions" rows="4" placeholder="Explain exactly how to pay, what to include in the reference, and anything specific to this payment method.">' + esc(c.instructions || '') + '</textarea>',
+          '</div>',
+        '</div>',
+
+      '</div>',
+      '<!-- DRAWER FOOTER -->',
+      '<div class="drw-foot">',
+        '<button class="btn btn-ghost" onclick="window._pmClose()">Cancel</button>',
+        '<button class="btn btn-primary" onclick="window._pmSave(\'' + esc(pmId) + '\')">',
+          isEdit ? 'Save Changes' : 'Add Payment Method',
+        '</button>',
+      '</div>'
+    ].join('');
+
+    document.body.appendChild(panel);
+
+    requestAnimationFrame(function () {
+      ov.classList.add('drw-open');
+      panel.classList.add('drw-open');
+    });
+
+    // Render per-type fields with existing config values
+    _renderTypeFields(type, c, pmId);
+    setTimeout(function () { var i = $id('drw_name'); if (i) i.focus(); }, 240);
+  }
+
+  // Render type-specific fields into #drwTypeFields
+  function _renderTypeFields(type, c, pmId) {
+    c = c || {};
+    var section  = $id('drwAccSection');
+    var fields   = $id('drwTypeFields');
+    var qrGrid   = $id('drwQrGrid');
+    var accLabel = $id('drwAccLabel');
+    if (!fields) return;
+
+    // Card: no account destination fields
+    if (type === 'card') {
+      if (section) section.style.display = 'none';
+      return;
+    }
+    if (section) section.style.display = '';
+
+    // Gift card: upload toggle fields
+    if (type === 'gift') {
+      if (accLabel) accLabel.textContent = 'Upload Requirements';
+      if (qrGrid)   qrGrid.style.display = 'none';
+      fields.innerHTML = _buildGiftToggles(c);
+      return;
+    }
+
+    if (accLabel) accLabel.textContent = 'Account & Destination';
+
+    var defs = getTypeFields(type, pmId);
+    fields.innerHTML = defs.map(function (f) {
+      return [
+        '<div class="drw-field' + (f.full ? ' drw-full' : '') + '">',
+          '<label>' + esc(f.label) + (f.optional ? ' <span class="drw-opt">(optional)</span>' : '') + '</label>',
+          '<input id="drw_' + f.id + '" type="text" value="' + esc(c[f.id] || '') + '" placeholder="' + esc(f.ph || '') + '" autocomplete="off">',
+        '</div>'
+      ].join('');
+    }).join('');
+
+    if (qrGrid) qrGrid.style.display = (type === 'wallet' || type === 'bank' || type === 'crypto') ? '' : 'none';
+  }
+  window._renderTypeFields = _renderTypeFields;
+
+  function _buildGiftToggles(c) {
+    function row(id, label, checked, hint) {
+      return [
+        '<div class="drw-field drw-full drw-toggle-field">',
+          '<div class="drw-toggle-text">',
+            '<span class="drw-toggle-label">' + label + '</span>',
+            '<span class="drw-toggle-hint">' + hint + '</span>',
+          '</div>',
+          '<label class="toggle-switch">',
+            '<input type="checkbox" id="drw_' + id + '"' + (checked ? ' checked' : '') + '>',
+            '<span class="toggle-slider"></span>',
+          '</label>',
+        '</div>'
+      ].join('');
+    }
+    return [
+      row('requireFrontImage',  'Require Front Image',  c.requireFrontImage  !== false, 'Customer must upload the front of the card'),
+      row('requireBackImage',   'Require Back Image',   c.requireBackImage   !== false, 'Customer must upload the back of the card'),
+      row('allowCameraCapture', 'Allow Camera Capture', c.allowCameraCapture !== false, 'Let customers photograph the card with their device camera')
+    ].join('');
+  }
+
+  // ── Drawer event handlers ───────────────────────────────────────
+  window._pmTypeChange = function () {
+    var type = val('drw_type');
+    // Try to infer a specific method id from the name for smart field selection
+    var name = (val('drw_name') || '').toLowerCase().trim().replace(/\s+/g, '');
+    var nameMap = { paypal: 'paypal', cashapp: 'cashapp', 'cashapp': 'cashapp', venmo: 'venmo', zelle: 'zelle', bitcoin: 'bitcoin', btc: 'bitcoin', ethereum: 'ethereum', eth: 'ethereum' };
+    var mappedId = nameMap[name] || '';
+    // Preserve existing config values already typed
+    var c = _collectConfig();
+    _renderTypeFields(type, c, mappedId);
   };
-  reader.readAsDataURL(file);
-  input.value = "";
-}
 
-function pmHandleQrUpload(input) {
-  var file = input.files && input.files[0];
-  if (!file) return;
-  if (file.size > 800 * 1024) { showToast("QR image too large (max 800KB)", "error"); return; }
-  var reader = new FileReader();
-  reader.onload = function (e) {
-    _pmQrUpload = e.target.result;
-    var thumb = document.getElementById("pmQrThumb");
-    if (thumb) thumb.innerHTML = '<img src="' + _pmQrUpload + '" alt="QR">';
-  };
-  reader.readAsDataURL(file);
-  input.value = "";
-}
-
-function savePaymentMethod(id) {
-  if (!PM) return;
-  var name = (val("cfg_name") || "").trim();
-  if (!name) { showToast("Payment method name is required", "error"); return; }
-  var type = val("cfg_type") || "wallet";
-
-  // Build config from the visible fields.
-  var config = {};
-  var map = {
-    businessName: "cfg_businessName", accountName: "cfg_accountName", email: "cfg_email",
-    cashtag: "cfg_cashtag", username: "cfg_username", merchantId: "cfg_merchantId",
-    paypalMeLink: "cfg_paypalMeLink", recipientName: "cfg_recipientName", phone: "cfg_phone",
-    accountNumber: "cfg_accountNumber", walletAddress: "cfg_walletAddress", network: "cfg_network"
-  };
-  Object.keys(map).forEach(function (k) {
-    var el = document.getElementById(map[k]);
-    if (el && el.value.trim() !== "") config[k] = el.value.trim();
-  });
-  ["requireFrontImage", "requireBackImage", "allowCameraCapture"].forEach(function (k) {
-    var el = document.getElementById("cfg_" + k);
-    if (el) config[k] = el.checked;
-  });
-  var instr = document.getElementById("cfg_instructions");
-  config.instructions = instr ? instr.value.trim() : "";
-  var existingQr = id !== "new" ? ((PM.get(id) || {}).config || {}).qrCode : "";
-  config.qrCode = _pmQrUpload || existingQr || "";
-
-  // Logo: uploaded data URL > selected brand key > keep existing
-  var logo;
-  var logoKey = val("cfg_logoKey");
-  if (_pmLogoUpload) logo = _pmLogoUpload;
-  else if (logoKey && PM.LOGO_KEYS[logoKey]) logo = "assets/payment-logos/" + PM.LOGO_KEYS[logoKey] + ".svg";
-  else logo = id !== "new" ? (PM.get(id) || {}).logo : "";
-
-  var payload = {
-    name: name,
-    description: (val("cfg_description") || "").trim(),
-    type: type,
-    displayOrder: parseInt(val("cfg_displayOrder"), 10) || undefined,
-    enabled: (document.getElementById("cfg_enabled") || {}).checked !== false,
-    logo: logo,
-    config: config
+  window._pmLogoKeyChange = function () {
+    _logoUpload = null; // user picked a built-in, clear any upload
+    _updateLogoPreview();
   };
 
-  if (id === "new") PM.add(payload);
-  else PM.update(id, payload);
+  window._pmLogoFile = function (input) {
+    var file = input && input.files && input.files[0];
+    if (!file) return;
+    if (file.size > 700 * 1024) { showToast('Logo too large (max 700 KB)', 'error'); return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      _logoUpload = e.target.result;
+      var sel = $id('drw_logoKey'); if (sel) sel.value = '';
+      _updateLogoPreview();
+    };
+    reader.readAsDataURL(file);
+    if (input) input.value = '';
+  };
 
-  var modal = document.querySelector(".modal-overlay");
-  if (modal) modal.remove();
-  renderPaymentMethods();
-  showToast("Payment method " + (id === "new" ? "added" : "saved"));
-}
+  window._pmQrFile = function (input) {
+    var file = input && input.files && input.files[0];
+    if (!file) return;
+    if (file.size > 1200 * 1024) { showToast('QR image too large (max 1.2 MB)', 'error'); return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      _qrUpload = e.target.result;
+      var thumb = $id('drwQrPreview');
+      if (thumb) thumb.innerHTML = '<img src="' + _qrUpload + '" alt="QR code">';
+      var clr = $id('drwQrClear'); if (clr) clr.style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(file);
+    if (input) input.value = '';
+  };
+
+  window._pmClearQr = function () {
+    _qrUpload = ''; // empty string = "clear on save"
+    var thumb = $id('drwQrPreview'); if (thumb) thumb.innerHTML = '<span>No QR</span>';
+    var clr   = $id('drwQrClear');   if (clr)   clr.style.display = 'none';
+  };
+
+  function _updateLogoPreview() {
+    var key   = val('drw_logoKey');
+    var thumb = $id('drwLogoThumb');
+    var head  = $id('drwHeadLogo');
+    var html;
+    if (_logoUpload) {
+      html = '<img src="' + _logoUpload + '" alt="logo" style="width:52px;height:52px;object-fit:contain;border-radius:12px;">';
+    } else if (key && PM.LOGO_KEYS[key]) {
+      html = PM.logoImg({ id: key, logo: 'assets/payment-logos/' + PM.LOGO_KEYS[key] + '.svg', name: key }, 52);
+    } else {
+      html = PM.logoImg({ name: val('drw_name') || 'New' }, 52);
+    }
+    if (thumb) thumb.innerHTML = html;
+    if (head)  head.innerHTML  = html;
+  }
+
+  function _collectConfig() {
+    var c = {};
+    var ALL_IDS = ['businessName', 'email', 'cashtag', 'username', 'merchantId',
+      'paypalMeLink', 'recipientName', 'phone', 'accountNumber', 'walletAddress',
+      'network', 'accountName'];
+    ALL_IDS.forEach(function (k) {
+      var el = $id('drw_' + k);
+      if (el && el.value.trim()) c[k] = el.value.trim();
+    });
+    return c;
+  }
+
+  // ── Save ────────────────────────────────────────────────────────
+  window._pmSave = function (id) {
+    if (!PM) return;
+    var name = (val('drw_name') || '').trim();
+    if (!name) { showToast('Payment method name is required', 'error'); return; }
+    var type  = val('drw_type') || 'wallet';
+    var isNew = (id === 'new');
+
+    var config = _collectConfig();
+
+    // Gift card toggles
+    ['requireFrontImage', 'requireBackImage', 'allowCameraCapture'].forEach(function (k) {
+      var el = $id('drw_' + k);
+      if (el) config[k] = el.checked;
+    });
+
+    // Instructions
+    var instrEl = $id('drw_instructions');
+    config.instructions = instrEl ? instrEl.value.trim() : '';
+
+    // QR: new upload OR cleared OR keep existing
+    if (_qrUpload !== null) {
+      config.qrCode = _qrUpload;
+    } else if (!isNew) {
+      var existing = PM.get(id);
+      config.qrCode = (existing && existing.config && existing.config.qrCode) || '';
+    }
+
+    // Logo
+    var logo;
+    var logoKey = val('drw_logoKey');
+    if (_logoUpload) {
+      logo = _logoUpload;
+    } else if (logoKey && PM.LOGO_KEYS[logoKey]) {
+      logo = 'assets/payment-logos/' + PM.LOGO_KEYS[logoKey] + '.svg';
+    } else if (!isNew) {
+      logo = (PM.get(id) || {}).logo || '';
+    } else {
+      logo = '';
+    }
+
+    var order     = parseInt(val('drw_order'), 10);
+    var enabledEl = $id('drw_enabled');
+
+    var payload = {
+      name:        name,
+      description: (val('drw_description') || '').trim(),
+      type:        type,
+      enabled:     enabledEl ? enabledEl.checked : true,
+      logo:        logo,
+      config:      config
+    };
+    if (!isNaN(order) && order > 0) payload.displayOrder = order;
+
+    if (isNew) PM.add(payload);
+    else       PM.update(id, payload);
+
+    closeDrawer();
+    renderPaymentMethods();
+    showToast('Payment method ' + (isNew ? 'added successfully' : 'saved'));
+  };
+
+  // ── Backward-compat aliases (used by other modules / HTML) ──────
+  window.savePaymentMethod = window._pmSave;
+
+}());
