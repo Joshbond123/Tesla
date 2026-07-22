@@ -420,20 +420,21 @@
   var selectedPaymentId = null;
   var uploadedProofData = null;
 
-  function renderPaymentMethods() {
+  function renderPaymentMethods(methods) {
     var list = document.getElementById('paymentMethodsList');
     if (!list) return;
-    var enabled = PM.getEnabled();
-    if (enabled.length === 0) {
+    var enabled = methods || PM.getEnabled();
+    if (!enabled || enabled.length === 0) {
       list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">No payment methods available.</div>';
       return;
     }
     list.innerHTML = enabled.map(function(pm) {
       var isSelected = selectedPaymentId === pm.id;
       var safeId = escAttr(pm.id);
+      var displayName = pm.display_name || pm.name || 'Payment';
       return '<button type="button" class="pay-card' + (isSelected ? ' selected' : '') + '" data-payment-id="' + safeId + '" id="pay-' + safeId + '">'
-        + '<div class="pay-logo" style="background:transparent;width:auto;height:32px;">' + (pm.logo || ('<span style="font-size:26px;">Card</span>')) + '</div>'
-        + '<div class="pay-info"><div class="pay-name">' + esc(pm.name) + '</div><div class="pay-desc">' + esc(pm.description || '') + '</div></div>'
+        + '<div class="pay-logo" style="background:transparent;width:auto;height:36px;display:flex;align-items:center;">' + _renderPayLogo(pm) + '</div>'
+        + '<div class="pay-info"><div class="pay-name">' + esc(displayName) + '</div><div class="pay-desc">' + esc(pm.account_details || pm.description || '') + '</div></div>'
         + '<div class="pay-check" id="pcheck-' + safeId + '">✓</div>'
         + '</button>';
     }).join('');
@@ -441,13 +442,19 @@
       card.addEventListener('click', function() { selectPayment(this.getAttribute('data-payment-id')); });
     });
   }
-
+  function _renderPayLogo(pm) {
+    var logo = pm.logo || pm.logo_url || '';
+    if (!logo && PM && PM.logos) { logo = PM.logos[pm.name || pm.id || ''] || ''; }
+    if (!logo) return '<span style="font-size:26px;line-height:1;">' + (pm.icon_emoji || '💳') + '</span>';
+    if (logo.startsWith('data:image')) return '<img src="' + escAttr(logo) + '" style="max-height:34px;max-width:120px;object-fit:contain;" alt="' + escAttr(pm.display_name || pm.name || '') + '">';
+    if (logo.indexOf('<svg') !== -1) return logo;
+    return '<span style="font-size:26px;line-height:1;">' + (pm.icon_emoji || '💳') + '</span>';
+  }
   function selectPayment(id) {
     selectedPaymentId = id;
     renderPaymentMethods();
     showPaymentDetail(id);
   }
-
   function showPaymentDetail(id) {
     var pm = PM.get(id);
     if (!pm) return;
@@ -455,44 +462,23 @@
     if (!section) return;
     section.style.display = 'block';
     var cfg = pm.config || {};
-
-    document.getElementById('pmDetailTitle').textContent = pm.name;
-    document.getElementById('pmDetailType').textContent = pm.category || 'payment';
-
-    // Icon
+    document.getElementById('pmDetailTitle').textContent = pm.display_name || pm.name || 'Payment';
+    document.getElementById('pmDetailType').textContent = pm.category || pm.type || 'payment';
     var iconEl = document.getElementById('pmBigIcon');
-    iconEl.innerHTML = pm.logo || '💳';
+    iconEl.innerHTML = _renderPayLogo(pm);
     iconEl.className = 'pay-big-icon';
-
-    // Wallet address / payment destination
     var addrBox = document.getElementById('walletAddressBox');
     var addrEl = document.getElementById('walletAddress');
-    var address = cfg.walletAddress || cfg.email || cfg.cashtag || cfg.username || cfg.phone || '';
-    if (address) {
-      addrBox.style.display = 'block';
-      addrEl.textContent = address;
-    } else {
-      addrBox.style.display = 'none';
-    }
-
-    // QR
+    var address = pm.wallet_address || cfg.walletAddress || cfg.email || cfg.cashtag || cfg.username || cfg.phone || '';
+    if (address) { addrBox.style.display = 'block'; addrEl.textContent = address; }
+    else { addrBox.style.display = 'none'; }
     var qrC = document.getElementById('qrContainer');
-    if (cfg.qrCode && cfg.qrCode.trim()) {
-      qrC.style.display = 'block';
-      var qrP = document.getElementById('qrPlaceholder');
-      qrP.innerHTML = '<img src="' + escAttr(cfg.qrCode) + '" alt="QR Code" style="max-width:200px;border-radius:10px;">';
-    } else {
-      qrC.style.display = 'none';
-    }
-
-    // Instructions
-    document.getElementById('paymentInstructions').textContent = cfg.instructions || 'Send the exact delivery fee amount. Include your Order ID in the payment reference.';
-
-    // Apple Gift Card specific
+    var qrSrc = pm.qr_code_url || cfg.qrCode || '';
+    if (qrSrc) { qrC.style.display = 'block'; document.getElementById('qrPlaceholder').innerHTML = '<img src="' + escAttr(qrSrc) + '" alt="QR Code" style="max-width:200px;border-radius:10px;">'; }
+    else { qrC.style.display = 'none'; }
+    document.getElementById('paymentInstructions').textContent = pm.payment_instructions || cfg.instructions || 'Send the exact delivery fee amount. Include your Order ID in the payment reference.';
     var agUpload = document.getElementById('appleGiftUpload');
-    if (agUpload) {
-      agUpload.style.display = (pm.id === 'applegift') ? 'block' : 'none';
-    }
+    if (agUpload) agUpload.style.display = (pm.id === 'applegift' || pm.name === 'applegift') ? 'block' : 'none';
   }
 
   // Pay button
@@ -561,23 +547,40 @@
   };
 
   function esc(s) { if (!s) return '—'; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+  function esc(s) { if (!s) return '—'; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
   function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
-  // Init — render payment methods with resilient fallback
+  // Init: render immediately from localStorage/defaults, then refresh from Supabase
   (function initPaymentMethods() {
-    try {
-      renderPaymentMethods();
-    } catch(e) {
-      console.error('[Payment] renderPaymentMethods error:', e);
-      // Try resetting to defaults and re-rendering
-      try {
-        if (PM && PM.reset) PM.reset();
-        renderPaymentMethods();
-      } catch(e2) {
+    var SURL = 'https://puebwzumwqizgbmksrpq.supabase.co';
+    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNzk1MDAsImV4cCI6MjA5ODc1NTUwMH0.SRRbUf5LL90p9pFZJRA6u62PXp4pTdU38LHALBeRiec';
+    try { renderPaymentMethods(); } catch(e) {
+      try { if (PM && PM.reset) PM.reset(); renderPaymentMethods(); } catch(e2) {
         var list = document.getElementById('paymentMethodsList');
-        if (list) list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">Unable to load payment methods. Please refresh the page.</div>';
+        if (list) list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">Unable to load payment methods. Please refresh.</div>';
       }
     }
+    fetch(SURL + '/rest/v1/payment_methods?enabled=eq.true&order=sort_order.asc', {
+      headers: { 'apikey': SKEY, 'Authorization': 'Bearer ' + SKEY }
+    }).then(function(r) {
+      if (!r.ok) throw new Error('failed');
+      return r.json();
+    }).then(function(dbMethods) {
+      if (!Array.isArray(dbMethods) || dbMethods.length === 0) return;
+      var mapped = dbMethods.map(function(m) {
+        return { id:m.name, name:m.name, display_name:m.display_name, type:m.type, category:m.type,
+          enabled:m.enabled, displayOrder:m.sort_order, sort_order:m.sort_order,
+          logo:m.logo_url||'', logo_url:m.logo_url||'', icon_emoji:m.icon_emoji||'💳',
+          wallet_address:m.wallet_address||'', account_details:m.account_details||'',
+          payment_instructions:m.payment_instructions||'', qr_code_url:m.qr_code_url||'',
+          description:m.account_details||'',
+          config:{ walletAddress:m.wallet_address||'', instructions:m.payment_instructions||'',
+            qrCode:m.qr_code_url||'', email:m.wallet_address||'', accountName:m.account_details||'' } };
+      });
+      try { if (PM && PM.save) PM.save(mapped); } catch(err) {}
+      renderPaymentMethods(mapped);
+    }).catch(function() {});
   })();
+
 })();
 </script>
