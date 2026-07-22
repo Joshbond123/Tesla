@@ -155,7 +155,7 @@ router.post("/login", async (req, res) => {
           selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
         };
       }
-    } catch (_) {}
+    } catch (orderErr) { logger.warn({ err: orderErr }, "Login: failed to load existing order"); }
     res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
   } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
 });
@@ -191,7 +191,7 @@ router.get("/session", async (req, res) => {
           selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
         };
       }
-    } catch (_) {}
+    } catch (orderErr) { logger.warn({ err: orderErr }, "Session: failed to load existing order"); }
     res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
   } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
 });
