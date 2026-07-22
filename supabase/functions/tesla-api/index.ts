@@ -101,23 +101,30 @@ async function authCreateUser(email: string, phone: string, metadata: Record<str
     if (!msg.toLowerCase().includes("already")) {
       return { data: null, error: { message: msg || "create user failed" } };
     }
-    // Try to look up existing user
+    // User already exists — try to look up the existing record.
     const lookR = await fetch(AUTH + "/admin/users?filter=" + encodeURIComponent(email), { headers: SB_HEADERS });
-    const existingUsers = await lookR.json();
-    if (Array.isArray(existingUsers) && existingUsers.length > 0) {
-      return { data: { user: existingUsers[0] }, error: null };
+    if (lookR.ok) {
+      const existingUsers = await lookR.json();
+      if (Array.isArray(existingUsers) && existingUsers.length > 0) {
+        return { data: { user: existingUsers[0] }, error: null };
+      }
     }
+    // Do not return the failed response body as if it were a user record.
+    return { data: null, error: { message: msg || "user exists but could not be looked up" } };
   }
   return { data, error: null };
 }
 
 async function authConfirmUser(uid: string) {
   if (!uid) return;
-  await fetch(AUTH + "/admin/users/" + uid, {
+  const r = await fetch(AUTH + "/admin/users/" + uid, {
     method: "PUT",
     headers: SB_HEADERS,
     body: JSON.stringify({ email_confirm: true }),
   });
+  if (!r.ok) {
+    console.error("authConfirmUser failed for " + uid + ": " + (await r.text()));
+  }
 }
 
 // ── EMAIL: Try SMTP on port 587 (STARTTLS), fall back to 465 (SSL) ───────────
@@ -319,7 +326,11 @@ async function handleEntry(req: Request) {
   }
 
   const sessionToken = hexRandom(32);
-  await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+  const { error: sessionError } = await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+  if (sessionError) {
+    console.error("Entry: session insert failed:", sessionError);
+    return json({ error: "Server error. Please try again." }, 500);
+  }
 
   // Email verification disabled — user is auto-verified
   const verifyLink = SELF_BASE + "/api/verify?token=" + verificationToken + "&email=" + encodeURIComponent(emailKey);
@@ -345,14 +356,22 @@ async function handleVerify(req: Request) {
   if (error || !entry) return Response.redirect(FRONTEND_URL + "/verify-error.html?reason=notfound", 302);
   if (entry.verification_token !== token) return Response.redirect(FRONTEND_URL + "/verify-error.html?reason=invalid_token", 302);
 
-  await dbUpdate("giveaway_users", { verification_status: "verified", verified_at: new Date().toISOString() }, { id: "eq." + entry.id });
+  const { error: updateError } = await dbUpdate("giveaway_users", { verification_status: "verified", verified_at: new Date().toISOString() }, { id: "eq." + entry.id });
+  if (updateError) {
+    console.error("Verify: status update failed:", updateError);
+    return Response.redirect(FRONTEND_URL + "/verify-error.html?reason=server", 302);
+  }
   await authConfirmUser(entry.auth_user_id);
 
   // Check if user already has an order
   const { data: verifyExistingOrder } = await dbGet1("orders", "order_id", { user_id: "eq." + entry.id });
   
   const sessionToken = hexRandom(32);
-  await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+  const { error: sessionError } = await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+  if (sessionError) {
+    console.error("Verify: session insert failed:", sessionError);
+    return Response.redirect(FRONTEND_URL + "/verify-error.html?reason=server", 302);
+  }
   
   if (verifyExistingOrder) {
     return Response.redirect(FRONTEND_URL + "/order-placed.html?session=" + sessionToken, 302);
@@ -419,10 +438,16 @@ async function handleLogin(req: Request) {
         };
       }
     }
-  } catch (_) {}
+  } catch (err) {
+    console.error("Login: failed to load existing order:", err);
+  }
   
   const sessionToken = hexRandom(32);
-  await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+  const { error: sessionError } = await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
+  if (sessionError) {
+    console.error("Login: session insert failed:", sessionError);
+    return json({ error: "Login failed. Please try again." }, 500);
+  }
   return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
 }
 
@@ -468,7 +493,9 @@ async function handleSession(req: Request) {
         };
       }
     }
-  } catch (_) {}
+  } catch (err) {
+    console.error("Session: failed to load existing order:", err);
+  }
   
   return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
 }
@@ -514,14 +541,26 @@ async function handleOrder(req: Request) {
   const method = deliveryMethod || null;  // Keep null if not selected — order-placed page shows CTA
   const estimatedDelivery = method ? new Date(Date.now() + (method.id === "express" ? 2 : 10) * 86400000).toISOString().split("T")[0] : new Date(Date.now() + 10 * 86400000).toISOString().split("T")[0];
 
-  const { data: carRow } = await dbInsert("selected_cars", { user_id: user.id, data: selectedCar ?? {} }, "id");
-  const { data: deliveryRow } = await dbInsert("delivery_details", { user_id: user.id, data: deliveryDetails ?? {} }, "id");
-  const { data: orderRow } = await dbInsert("orders", {
+  const { data: carRow, error: carError } = await dbInsert("selected_cars", { user_id: user.id, data: selectedCar ?? {} }, "id");
+  if (carError) {
+    console.error("Order: selected_cars insert failed:", carError);
+    return json({ error: "Server error. Please try again." }, 500);
+  }
+  const { data: deliveryRow, error: deliveryError } = await dbInsert("delivery_details", { user_id: user.id, data: deliveryDetails ?? {} }, "id");
+  if (deliveryError) {
+    console.error("Order: delivery_details insert failed:", deliveryError);
+    return json({ error: "Server error. Please try again." }, 500);
+  }
+  const { data: orderRow, error: orderError } = await dbInsert("orders", {
     order_id: orderId, tracking_number: trackingNumber, user_id: user.id,
     selected_car_id: carRow?.id, delivery_details_id: deliveryRow?.id,
     delivery_method: method, payment_method: paymentMethod ?? { id: "unknown", name: "Not specified" },
     status: "confirmed", estimated_delivery: estimatedDelivery,
   }, "id,order_date");
+  if (orderError || !orderRow) {
+    console.error("Order: orders insert failed:", orderError);
+    return json({ error: "Server error. Please try again." }, 500);
+  }
 
   const timeline = [
     { stage: "Order Confirmed", timestamp: orderRow?.order_date, completed: true },
@@ -532,7 +571,10 @@ async function handleOrder(req: Request) {
     { stage: "Delivered", timestamp: null, completed: false },
   ];
   for (let i = 0; i < timeline.length; i++) {
-    await dbInsert("tracking_data", { order_id: orderRow?.id, stage: timeline[i].stage, stage_order: i, timestamp: timeline[i].timestamp, completed: timeline[i].completed });
+    const { error: trackingError } = await dbInsert("tracking_data", { order_id: orderRow?.id, stage: timeline[i].stage, stage_order: i, timestamp: timeline[i].timestamp, completed: timeline[i].completed });
+    if (trackingError) {
+      console.error("Order: tracking_data insert failed for stage " + timeline[i].stage + ":", trackingError);
+    }
   }
 
   const orderDate = orderRow?.order_date || new Date().toISOString();
@@ -756,7 +798,11 @@ async function handleAdminAuth(req: Request) {
   const hash = await sha256(body.password);
   if (hash !== ADMIN_PASSWORD_HASH) return json({ error: "Invalid password" }, 401);
   const token = hexRandom(32);
-  await dbInsert("admin_settings", { key: "session_" + token, value: { created: new Date().toISOString() } });
+  const { error: sessionError } = await dbInsert("admin_settings", { key: "session_" + token, value: { created: new Date().toISOString() } });
+  if (sessionError) {
+    console.error("Admin auth: session insert failed:", sessionError);
+    return json({ error: "Server error. Please try again." }, 500);
+  }
   return json({ success: true, token });
 }
 
