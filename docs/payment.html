@@ -370,6 +370,7 @@
 
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
+<script src="js/config.js"></script>
 <script src="js/payment-methods.js"></script>
 <script>
 (function() {
@@ -430,16 +431,12 @@
     }
     list.innerHTML = enabled.map(function(pm) {
       var isSelected = selectedPaymentId === pm.id;
-      var safeId = escAttr(pm.id);
-      return '<button type="button" class="pay-card' + (isSelected ? ' selected' : '') + '" data-payment-id="' + safeId + '" id="pay-' + safeId + '">'
-        + '<div class="pay-logo" style="background:transparent;width:auto;height:32px;">' + (pm.logo || ('<span style="font-size:26px;">Card</span>')) + '</div>'
+      return '<div class="pay-card' + (isSelected ? ' selected' : '') + '" onclick="selectPayment('' + pm.id + '')" id="pay-' + pm.id + '">'
+        + '<div class="pay-logo" style="background:transparent;width:auto;height:32px;">' + (pm.logo || ('<span style="font-size:26px;">💳</span>')) + '</div>'
         + '<div class="pay-info"><div class="pay-name">' + esc(pm.name) + '</div><div class="pay-desc">' + esc(pm.description || '') + '</div></div>'
-        + '<div class="pay-check" id="pcheck-' + safeId + '">✓</div>'
-        + '</button>';
+        + '<div class="pay-check" id="pcheck-' + pm.id + '">✓</div>'
+        + '</div>';
     }).join('');
-    list.querySelectorAll('[data-payment-id]').forEach(function(card) {
-      card.addEventListener('click', function() { selectPayment(this.getAttribute('data-payment-id')); });
-    });
   }
 
   function selectPayment(id) {
