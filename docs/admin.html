@@ -235,7 +235,32 @@
 
       <!-- TAB: PAYMENT METHODS (ENTERPRISE) -->
       <div class="tab-panel" id="panelPayments">
-        <div class="admin-card">
+                <div class="admin-card" style="margin-bottom:16px;">
+            <div class="card-header">
+              <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Credit Card Image Upload</h3>
+              <span style="font-size:12px;color:var(--admin-text-muted);">Controls whether customers must upload card images on the payment page</span>
+            </div>
+            <div style="padding:20px;">
+              <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:260px;">
+                  <div style="font-size:13px;font-weight:700;color:var(--admin-text);margin-bottom:4px;">Require Credit Card Image Upload</div>
+                  <div style="font-size:12px;color:var(--admin-text-muted);line-height:1.6;margin-bottom:10px;">When enabled, customers selecting Credit Card must upload front and back photos of their card before submitting. When disabled, the upload section is hidden and only the card details form is shown.</div>
+                  <div id="ccImageUploadLabel" style="font-size:12px;font-weight:600;color:var(--gray,#5C5E62);">Disabled — card image upload section is hidden from customers</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:4px;flex-shrink:0;">
+                  <label class="toggle-switch"><input type="checkbox" id="ccImageUploadToggle" onchange="var s=document.getElementById('ccImageUploadToggleState');if(s)s.textContent=this.checked?'On':'Off';"><span class="toggle-slider"></span></label>
+                  <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--admin-text-muted);" id="ccImageUploadToggleState">Off</span>
+                </div>
+              </div>
+              <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--admin-border,#E5E7EB);">
+                <button class="btn btn-primary btn-sm" onclick="saveCreditCardConfig()" style="display:inline-flex;align-items:center;gap:6px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+                  Save Setting
+                </button>
+              </div>
+            </div>
+          </div>
+<div class="admin-card">
           <div class="card-header">
             <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><path d="M7 15h4"/><path d="M15 15h2"/></svg> Payment Methods</h3>
             <div class="card-actions">
