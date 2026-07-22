@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Settings — Admin</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root {
+      --red: #E31937;
+      --red-glow: rgba(227,25,55,0.10);
+      --dark: #171A20;
+      --gray: #5C5E62;
+      --gray2: #B0B3B8;
+      --light: #F7F8FA;
+      --border: #E5E7EB;
+      --success: #00A550;
+      --warning: #F59E0B;
+      --shadow: 0 4px 12px rgba(0,0,0,0.07);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.10);
+      --radius: 12px;
+      --radius-lg: 18px;
+      --ease: cubic-bezier(0.4,0,0.2,1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .topbar {
+      background: white;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 16px;
+    }
+    .topbar h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 28px 24px; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card {
+      background: white; border-radius: var(--radius-lg); padding: 20px 24px;
+      border: 1.5px solid rgba(0,0,0,0.06); box-shadow: var(--shadow);
+    }
+    .stat-card .val { font-size: 28px; font-weight: 900; }
+    .stat-card .lbl { font-size: 11px; color: var(--gray2); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-top: 2px; }
+    .controls-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .search-box input {
+      background: white; border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 10px 16px 10px 40px; color: var(--dark); font-size: 13px; outline: none;
+      width: 260px; transition: all 0.2s;
+    }
+    .search-box input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-glow); width: 300px; }
+    .search-box { position: relative; }
+    .search-box .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.4; font-size: 14px; }
+    select.filter {
+      background: white; border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 10px 36px 10px 14px; font-size: 13px; font-family: inherit; outline: none;
+      appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%235C5E62' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px;
+      border-radius: var(--radius); font-size: 13px; font-weight: 700; cursor: pointer;
+      border: none; font-family: inherit; transition: all 0.2s;
+    }
+    .btn-primary { background: var(--red); color: white; box-shadow: 0 2px 10px rgba(227,25,55,0.3); }
+    .btn-primary:hover { background: #c41030; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(227,25,55,0.4); }
+    .btn-outline { background: white; border: 1.5px solid var(--border); color: var(--dark); }
+    .btn-outline:hover { border-color: var(--red); background: var(--red-glow); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; border-radius: 8px; }
+    .btn-ghost { background: transparent; color: var(--gray); }
+    .btn-ghost:hover { background: rgba(0,0,0,0.04); color: var(--dark); }
+    .btn-danger { color: #EF4444; }
+    .btn-danger:hover { background: rgba(239,68,68,0.08); }
+    .methods-grid { display: flex; flex-direction: column; gap: 12px; }
+    .method-card {
+      background: white; border: 1.5px solid rgba(0,0,0,0.06); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow); overflow: hidden; transition: all 0.25s;
+    }
+    .method-card:hover { box-shadow: var(--shadow-lg); border-color: rgba(227,25,55,0.12); }
+    .method-card.disabled { opacity: 0.55; }
+    .method-row {
+      display: flex; align-items: center; gap: 16px; padding: 18px 24px; cursor: pointer;
+    }
+    .method-logo { width: 120px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .method-logo svg { max-width: 100%; height: auto; }
+    .method-info { flex: 1; min-width: 0; }
+    .method-name { font-size: 15px; font-weight: 700; }
+    .method-desc { font-size: 12px; color: var(--gray); }
+    .method-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+      border-radius: 999px; font-size: 10px; font-weight: 700;
+    }
+    .status-badge.active { background: rgba(0,165,80,0.08); color: var(--success); }
+    .status-badge.inactive { background: rgba(239,68,68,0.08); color: #EF4444; }
+    .method-updated { font-size: 10px; color: var(--gray2); }
+    .drag-handle { cursor: grab; color: var(--gray2); font-size: 16px; padding: 4px; user-select: none; }
+    .drag-handle:active { cursor: grabbing; }
+    .method-expand { display: none; padding: 0 24px 24px; border-top: 1px solid rgba(0,0,0,0.04); }
+    .method-card.expanded .method-expand { display: block; }
+    .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+    @media (max-width: 640px) { .config-grid { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 11px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em; }
+    .field input, .field textarea {
+      background: var(--light); border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 10px 14px; font-size: 13px; font-family: inherit; color: var(--dark); outline: none;
+      transition: all 0.2s; resize: vertical;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-glow); }
+    .field textarea { min-height: 70px; }
+    .field-full { grid-column: 1 / -1; }
+    .save-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.04); }
+    .empty-state { text-align: center; padding: 56px 24px; color: var(--gray2); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+
+    /* Toggle switch */
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    .toggle {
+      width: 44px; height: 24px; background: #ccc; border-radius: 12px;
+      position: relative; cursor: pointer; transition: background 0.2s; border: none;
+    }
+    .toggle.on { background: var(--success); }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+      background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle.on::after { transform: translateX(20px); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000; background: rgba(23,26,32,0.5);
+      display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);
+      animation: fadeIn 0.2s;
+    }
+    .modal {
+      background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+      padding: 36px 40px; max-width: 640px; width: 95%; max-height: 85vh; overflow-y: auto;
+    }
+    .modal h2 { font-size: 20px; font-weight: 800; margin-bottom: 24px; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Toast */
+    .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 99999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--dark); color: white; padding: 14px 22px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg);
+      display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s var(--ease);
+    }
+    .toast.error { background: #EF4444; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .method-row { flex-wrap: wrap; padding: 14px 16px; }
+      .method-logo { width: 100px; }
+      .topbar { padding: 14px 16px; }
+      .controls-row { flex-direction: column; align-items: stretch; }
+      .search-box input, .search-box input:focus { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>💳 Payment Method Settings</h1>
+    <div class="topbar-right">
+      <a href="admin.html" class="btn btn-outline btn-sm">← Admin Panel</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="stats-row">
+      <div class="stat-card"><div class="val" id="statTotal">0</div><div class="lbl">Total Methods</div></div>
+      <div class="stat-card"><div class="val" style="color:var(--success);" id="statActive">0</div><div class="lbl">Active</div></div>
+      <div class="stat-card"><div class="val" style="color:#EF4444;" id="statInactive">0</div><div class="lbl">Inactive</div></div>
+    </div>
+
+    <div class="controls-row">
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search payment methods..." oninput="render()">
+      </div>
+      <select class="filter" id="categoryFilter" onchange="render()">
+        <option value="all">All Categories</option>
+        <option value="digital">Digital Wallets</option>
+        <option value="crypto">Cryptocurrency</option>
+        <option value="bank">Bank Transfer</option>
+        <option value="card">Credit/Debit Card</option>
+        <option value="giftcard">Gift Cards</option>
+      </select>
+      <select class="filter" id="statusFilter" onchange="render()">
+        <option value="all">All Status</option>
+        <option value="enabled">Enabled</option>
+        <option value="disabled">Disabled</option>
+      </select>
+      <button class="btn btn-primary" onclick="showAddModal()">+ Add Method</button>
+      <button class="btn btn-outline btn-sm" onclick="resetAll()" style="margin-left:auto;">↺ Reset Defaults</button>
+    </div>
+
+    <div class="methods-grid" id="methodsGrid"></div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/payment-methods.js"></script>
+  <script>
+    (function() {
+      'use strict';
+      var PM = window.TeslaPaymentMethods;
+      if (!PM) { document.body.innerHTML = '<h1 style="text-align:center;padding:60px;">Error: Payment Methods module not loaded.</h1>'; return; }
+
+      var methods = [], expandedId = null, dragItem = null;
+
+      function toast(msg, isErr) {
+        var c = document.getElementById('toastContainer'), t = document.createElement('div');
+        t.className = 'toast' + (isErr ? ' error' : '');
+        t.textContent = (isErr ? '✕ ' : '✓ ') + msg;
+        c.appendChild(t);
+        setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function() { t.remove(); }, 300); }, 3000);
+      }
+
+      function refresh() {
+        methods = PM.load();
+        updateStats();
+        render();
+      }
+
+      function updateStats() {
+        document.getElementById('statTotal').textContent = methods.length;
+        document.getElementById('statActive').textContent = methods.filter(function(m) { return m.enabled; }).length;
+        document.getElementById('statInactive').textContent = methods.filter(function(m) { return !m.enabled; }).length;
+      }
+
+      function filterMethods() {
+        var q = (document.getElementById('searchInput').value || '').toLowerCase();
+        var cf = document.getElementById('categoryFilter').value;
+        var sf = document.getElementById('statusFilter').value;
+        return methods.filter(function(m) {
+          if (cf !== 'all' && m.category !== cf) return false;
+          if (sf === 'enabled' && !m.enabled) return false;
+          if (sf === 'disabled' && m.enabled) return false;
+          if (q) {
+            var h = (m.name + ' ' + m.description).toLowerCase();
+            if (h.indexOf(q) === -1) return false;
+          }
+          return true;
+        });
+      }
+
+      function render() {
+        var grid = document.getElementById('methodsGrid'), filtered = filterMethods();
+        if (filtered.length === 0) {
+          grid.innerHTML = '<div class="empty-state"><div class="icon">💳</div><p>No payment methods found.</p></div>';
+          return;
+        }
+        grid.innerHTML = filtered.map(function(m) {
+          var isExp = expandedId === m.id;
+          var cfg = m.config || {};
+          return '<div class="method-card ' + (m.enabled ? '' : 'disabled') + ' ' + (isExp ? 'expanded' : '') + '" data-id="' + m.id + '">'
+            + '<div class="method-row" onclick="toggleExpand(\'' + m.id + '\')">'
+            + '<span class="drag-handle" draggable="true" ondragstart="dragStart(event,\'' + m.id + '\')" ondragover="dragOver(event)" ondrop="drop(event,\'' + m.id + '\')" onclick="event.stopPropagation()" title="Drag to reorder">⋮⋮</span>'
+            + '<div class="method-logo">' + (m.logo || '💳') + '</div>'
+            + '<div class="method-info"><div class="method-name">' + esc(m.name) + '</div><div class="method-desc">' + esc(m.description) + '</div></div>'
+            + '<div class="method-meta">'
+            + '<span class="status-badge ' + (m.enabled ? 'active' : 'inactive') + '">' + (m.enabled ? '● Active' : '○ Inactive') + '</span>'
+            + '<div class="toggle-wrap" onclick="event.stopPropagation()"><button class="toggle ' + (m.enabled ? 'on' : '') + '" onclick="toggleMethod(\'' + m.id + '\')" title="Toggle enable/disable"></button></div>'
+            + '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();showEditModal(\'' + m.id + '\')" title="Edit">✎</button>'
+            + '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMethod(\'' + m.id + '\')" title="Delete">✕</button>'
+            + '</div></div>'
+            + '<div class="method-expand"><div class="config-grid">'
+            + renderConfigFields(m)
+            + '</div>'
+            + '<div class="save-row">'
+            + '<button class="btn btn-primary btn-sm" onclick="saveConfig(\'' + m.id + '\')">💾 Save Changes</button>'
+            + '<span class="method-updated">Last updated: ' + formatDate(m.lastUpdated) + '</span>'
+            + '</div></div>'
+            + '</div>';
+        }).join('');
+      }
+
+      function renderConfigFields(m) {
+        var cfg = m.config || {}, html = '';
+        var fields = getFieldsForCategory(m.category, m.id);
+        fields.forEach(function(f) {
+          var val = cfg[f.key] !== undefined ? cfg[f.key] : f.default || '';
+          var cls = f.full ? 'field field-full' : 'field';
+          html += '<div class="' + cls + '">'
+            + '<label>' + f.label + '</label>'
+            + (f.type === 'textarea'
+              ? '<textarea data-field="' + f.key + '" rows="3">' + esc(val) + '</textarea>'
+              : '<input type="' + (f.type || 'text') + '" data-field="' + f.key + '" value="' + escAttr(val) + '">')
+            + '</div>';
+        });
+        // Common fields
+        html += '<div class="field"><label>Name</label><input type="text" data-field="_name" value="' + escAttr(m.name) + '"></div>';
+        html += '<div class="field"><label>Description</label><textarea data-field="_description" rows="2">' + esc(m.description) + '</textarea></div>';
+        html += '<div class="field"><label>Display Order</label><input type="number" data-field="_displayOrder" value="' + (m.displayOrder || '') + '" min="1"></div>';
+        html += '<div class="field"><label>Logo (SVG or URL)</label><textarea data-field="_logo" rows="2">' + esc(m.logo || '') + '</textarea></div>';
+        return html;
+      }
+
+      function getFieldsForCategory(cat, id) {
+        if (id === 'paypal') return [
+          { key: 'accountName', label: 'Business Name' },
+          { key: 'email', label: 'Business Email', type: 'email' },
+          { key: 'merchantId', label: 'Merchant ID' },
+          { key: 'paypalMeLink', label: 'PayPal.Me Link', type: 'url' },
+          { key: 'instructions', label: 'Payment Instructions', type: 'textarea', full: true }
+        ];
+        if (id === 'cashapp') return [
+          { key: 'cashtag', label: '$Cashtag' },
+          { key: 'accountName', label: 'Account Name' },
+          { key: 'qrCode', label: 'QR Code URL', type: 'url' },
+          { key: 'instructions', label: 'Payment Instructions', type: 'textarea', full: true }
+        ];
+        if (id === 'venmo') return [
+          { key: 'username', label: 'Username' },
+          { key: 'accountName', label: 'Account Name' },
+          { key: 'qrCode', label: 'QR Code URL', type: 'url' },
+          { key: 'instructions', label: 'Payment Instructions', type: 'textarea', full: true }
+        ];
+        if (id === 'zelle') return [
+          { key: 'recipientName', label: 'Recipient Name' },
+          { key: 'email', label: 'Email', type: 'email' },
+          { key: 'phone', label: 'Phone Number', type: 'tel' },
+          { key: 'instructions', label: 'Payment Instructions', type: 'textarea', full: true }
+        ];
+        if (cat === 'crypto') return [
+          { key: 'walletAddress', label: 'Wallet Address' },
+          { key: 'network', label: 'Network' },
+          { key: 'qrCode', label: 'QR Code URL', type: 'url' },
+          { key: 'instructions', label: 'Payment Instructions', type: 'textarea', full: true }
+        ];
+        if (id === 'creditcard') return [
+          { key: 'instructions', label: 'Payment Instructions', type: 'textarea', full: true }
+        ];
+        if (id === 'applegift') return [
+          { key: 'instructions', label: 'Upload Instructions', type: 'textarea', full: true },
+          { key: 'requireFrontImage', label: 'Require Front Image', type: 'checkbox' },
+          { key: 'requireBackImage', label: 'Require Back Image', type: 'checkbox' },
+          { key: 'allowCameraCapture', label: 'Allow Camera Capture', type: 'checkbox' }
+        ];
+        return [
+          { key: 'accountName', label: 'Account Name' },
+          { key: 'email', label: 'Email', type: 'email' },
+          { key: 'instructions', label: 'Payment Instructions', type: 'textarea', full: true }
+        ];
+      }
+
+      function toggleExpand(id) {
+        expandedId = expandedId === id ? null : id;
+        render();
+      }
+
+      function toggleMethod(id) {
+        PM.toggle(id);
+        refresh();
+        toast('Method toggled successfully');
+      }
+
+      function saveConfig(id) {
+        var card = document.querySelector('.method-card[data-id="' + id + '"]');
+        if (!card) return;
+        var config = PM.get(id).config || {};
+        var name = PM.get(id).name, desc = PM.get(id).description, logo = PM.get(id).logo, dispOrder = PM.get(id).displayOrder;
+        card.querySelectorAll('[data-field]').forEach(function(el) {
+          var key = el.getAttribute('data-field');
+          var val = el.type === 'checkbox' ? el.checked : el.value;
+          if (key === '_name') name = val;
+          else if (key === '_description') desc = val;
+          else if (key === '_logo') logo = val;
+          else if (key === '_displayOrder') dispOrder = parseInt(val, 10) || 0;
+          else config[key] = val;
+        });
+        PM.update(id, { name: name, description: desc, logo: logo, displayOrder: dispOrder, config: config });
+        refresh();
+        toast('Payment method updated ✓');
+      }
+
+      function deleteMethod(id) {
+        var m = PM.get(id);
+        if (!confirm('Delete "' + (m ? m.name : id) + '" permanently?')) return;
+        PM.delete(id);
+        expandedId = null;
+        refresh();
+        toast('Method deleted');
+      }
+
+      function resetAll() {
+        if (!confirm('Reset ALL payment methods to defaults? This cannot be undone.')) return;
+        PM.reset();
+        expandedId = null;
+        refresh();
+        toast('Reset to defaults ✓');
+      }
+
+      function showAddModal() {
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = '<div class="modal"><h2>+ Add Payment Method</h2>'
+          + '<div style="display:flex;flex-direction:column;gap:12px;">'
+          + '<div class="field"><label>ID (slug)</label><input id="addId" type="text" placeholder="e.g. googlepay"></div>'
+          + '<div class="field"><label>Name</label><input id="addName" type="text" placeholder="e.g. Google Pay"></div>'
+          + '<div class="field"><label>Description</label><textarea id="addDesc" rows="2" placeholder="Brief description for customers"></textarea></div>'
+          + '<div class="field"><label>Category</label><select id="addCat"><option value="digital">Digital Wallet</option><option value="crypto">Cryptocurrency</option><option value="bank">Bank Transfer</option><option value="card">Credit/Debit Card</option><option value="giftcard">Gift Card</option></select></div>'
+          + '<div class="field"><label>Logo (SVG HTML)</label><textarea id="addLogo" rows="3" placeholder="SVG or HTML for logo"></textarea></div>'
+          + '<div class="field"><label>Display Order</label><input id="addOrder" type="number" min="1"></div>'
+          + '<div style="display:flex;gap:10px;margin-top:8px;">'
+          + '<button class="btn btn-primary" onclick="confirmAdd()">Add Method</button>'
+          + '<button class="btn btn-outline" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>'
+          + '</div></div></div>';
+        document.body.appendChild(overlay);
+      }
+
+      window.confirmAdd = function() {
+        var id = document.getElementById('addId').value.trim();
+        var name = document.getElementById('addName').value.trim();
+        var desc = document.getElementById('addDesc').value.trim();
+        var cat = document.getElementById('addCat').value;
+        var logo = document.getElementById('addLogo').value.trim();
+        var order = parseInt(document.getElementById('addOrder').value, 10) || null;
+        if (!id || !name) { toast('ID and Name are required', true); return; }
+        if (PM.get(id)) { toast('A method with ID "' + id + '" already exists', true); return; }
+        PM.add({
+          id: id, name: name, description: desc, category: cat,
+          logo: logo || null, enabled: true, displayOrder: order, config: {}
+        });
+        document.querySelector('.modal-overlay').remove();
+        refresh();
+        toast('"' + name + '" added ✓');
+      };
+
+      function showEditModal(id) {
+        toggleExpand(id);
+        // The expand already shows the edit form
+      }
+
+      // Drag & drop reorder
+      window.dragStart = function(e, id) {
+        dragItem = id;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', id);
+      };
+      window.dragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+      window.drop = function(e, targetId) {
+        e.preventDefault();
+        if (!dragItem || dragItem === targetId) return;
+        var ordered = methods.map(function(m) { return m.id; });
+        var fromIdx = ordered.indexOf(dragItem), toIdx = ordered.indexOf(targetId);
+        ordered.splice(fromIdx, 1);
+        ordered.splice(toIdx, 0, dragItem);
+        PM.reorder(ordered);
+        dragItem = null;
+        refresh();
+        toast('Reordered ✓');
+      };
+
+      function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+      function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+      function formatDate(iso) {
+        if (!iso) return '—';
+        try { return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+        catch (e) { return iso; }
+      }
+
+      // Init
+      refresh();
+    })();
+  </script>
+</body>
+</html>
