@@ -4,19 +4,9 @@ import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
 import { logger } from "../lib/logger.js";
 import { getSupabaseAdmin } from "../lib/supabase.js";
+import { firstRelated, loadUserOrder, mapTimeline, type OrderResponse, type TimelineItem } from "../lib/orders.js";
 
 const router = Router();
-
-type TimelineItem = { stage: string; timestamp: string | null; completed: boolean };
-type OrderResponse = {
-  orderId: string; trackingNumber: string; email: string; entryId: string;
-  selectedCar: Record<string, string>;
-  deliveryDetails: Record<string, string>;
-  deliveryMethod: Record<string, string | number>;
-  paymentMethod: Record<string, string>;
-  status: string; orderDate: string; estimatedDelivery: string;
-  timeline: TimelineItem[];
-};
 
 const resendTimestamps: Record<string, number> = {};
 
@@ -139,24 +129,8 @@ router.post("/login", async (req, res) => {
     const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
     if (sessionError) throw sessionError;
     // Check if user already has an order — load FULL order data
-    let hasOrder = false;
-    let orderData = null;
-    try {
-      const { data: fullOrder } = await supabase.from("orders").select("order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq("user_id", entry.id).order("order_date", { ascending: false }).limit(1).maybeSingle();
-      if (fullOrder) {
-        hasOrder = true;
-        const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
-        const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
-        orderData = {
-          orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
-          orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
-          deliveryMethod: fullOrder.delivery_method || {}, paymentMethod: fullOrder.payment_method || {},
-          selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
-        };
-      }
-    } catch (orderErr) { logger.warn({ err: orderErr }, "Login: failed to load existing order"); }
-    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
+    const orderData = await loadUserOrder(supabase, entry.id, "Login");
+    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder: orderData !== null, order: orderData });
   } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
 });
 
@@ -165,7 +139,7 @@ async function getSessionUser(sessionToken?: string) {
   const supabase = await getSupabaseAdmin();
   const { data, error } = await supabase.from("user_sessions").select("token,user_id,giveaway_users(id,email,phone,first_name,last_name)").eq("token", sessionToken).gt("expires_at", new Date().toISOString()).maybeSingle();
   if (error) throw error;
-  const user = Array.isArray(data?.giveaway_users) ? data?.giveaway_users[0] : data?.giveaway_users;
+  const user = firstRelated(data?.giveaway_users);
   return user ? { ...user, entryId: data!.user_id } as any : null;
 }
 
@@ -175,24 +149,8 @@ router.get("/session", async (req, res) => {
     if (!user) { res.status(401).json({ valid: false }); return; }
     const supabase = await getSupabaseAdmin();
     // Check if user already has an order — load FULL order data
-    let hasOrder = false;
-    let orderData = null;
-    try {
-      const { data: fullOrder } = await supabase.from("orders").select("order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq("user_id", user.id).order("order_date", { ascending: false }).limit(1).maybeSingle();
-      if (fullOrder) {
-        hasOrder = true;
-        const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
-        const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
-        orderData = {
-          orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
-          orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
-          deliveryMethod: fullOrder.delivery_method || {}, paymentMethod: fullOrder.payment_method || {},
-          selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
-        };
-      }
-    } catch (orderErr) { logger.warn({ err: orderErr }, "Session: failed to load existing order"); }
-    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
+    const orderData = await loadUserOrder(supabase, user.id, "Session");
+    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder: orderData !== null, order: orderData });
   } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
 });
 
@@ -251,10 +209,10 @@ async function loadOrderBy(column: "order_id" | "tracking_number", value: string
   const { data, error } = await supabase.from("orders").select("id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(id,email),selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq(column, value).maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const user = Array.isArray(data.giveaway_users) ? data.giveaway_users[0] : data.giveaway_users;
-  const car = Array.isArray(data.selected_cars) ? data.selected_cars[0] : data.selected_cars;
-  const delivery = Array.isArray(data.delivery_details) ? data.delivery_details[0] : data.delivery_details;
-  const tracking = ((data.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+  const user = firstRelated<{ id?: string; email?: string }>(data.giveaway_users);
+  const car = firstRelated<{ data?: Record<string, string> }>(data.selected_cars);
+  const delivery = firstRelated<{ data?: Record<string, string> }>(data.delivery_details);
+  const tracking = mapTimeline(data.tracking_data);
   return { orderId: data.order_id, trackingNumber: data.tracking_number, email: user?.email ?? "", entryId: user?.id ?? "", selectedCar: car?.data ?? {}, deliveryDetails: delivery?.data ?? {}, deliveryMethod: data.delivery_method ?? {}, paymentMethod: data.payment_method ?? {}, status: data.status, orderDate: new Date(data.order_date).toISOString(), estimatedDelivery: data.estimated_delivery, timeline: tracking };
 }
 
