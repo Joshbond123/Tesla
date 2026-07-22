@@ -563,7 +563,21 @@
   function esc(s) { if (!s) return '—'; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
   function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
-  // Init
-  renderPaymentMethods();
+  // Init — render payment methods with resilient fallback
+  (function initPaymentMethods() {
+    try {
+      renderPaymentMethods();
+    } catch(e) {
+      console.error('[Payment] renderPaymentMethods error:', e);
+      // Try resetting to defaults and re-rendering
+      try {
+        if (PM && PM.reset) PM.reset();
+        renderPaymentMethods();
+      } catch(e2) {
+        var list = document.getElementById('paymentMethodsList');
+        if (list) list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">Unable to load payment methods. Please refresh the page.</div>';
+      }
+    }
+  })();
 })();
 </script>
