@@ -2,8 +2,8 @@ import { Router } from "express";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
-import { logger } from "../lib/logger";
-import { getSupabaseAdmin } from "../lib/supabase";
+import { logger } from "../lib/logger.js";
+import { getSupabaseAdmin } from "../lib/supabase.js";
 
 const router = Router();
 
@@ -20,9 +20,19 @@ type OrderResponse = {
 
 const resendTimestamps: Record<string, number> = {};
 
-const smtpUser = process.env["SMTP_USER"] ?? "techledger10@gmail.com";
-const smtpPass = process.env["SMTP_PASS"] ?? "kkpy bzvy xyhk vljr";
-const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
+const smtpUser = process.env["SMTP_USER"]?.trim();
+const smtpPass = process.env["SMTP_PASS"]?.trim();
+
+function getMailTransporter() {
+  if (!smtpUser || !smtpPass) {
+    throw new Error("Missing SMTP_USER or SMTP_PASS environment variables.");
+  }
+  return nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
+}
+
+async function sendMail(message: nodemailer.SendMailOptions) {
+  return getMailTransporter().sendMail(message);
+}
 
 function getBaseUrl(): string {
   const configured = process.env["PUBLIC_BASE_URL"]?.trim();
@@ -59,9 +69,8 @@ router.post("/entry", async (req, res) => {
     }
 
     const verifyLink = `${getBaseUrl()}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
-    await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Verify Your Email — Tesla Award Program", html: buildVerificationEmail(firstName || "there", verifyLink, entry.id) });
-    logger.info({ email: emailKey }, "Verification email sent");
-    res.json({ success: true, message: "Entry submitted! Check your email to verify.", entryId: entry.id });
+    // Email verification disabled
+    res.json({ success: true, message: "Entry submitted successfully!", entryId: entry.id, emailSent: false });
   } catch (err) { logger.error({ err }, "Entry error"); res.status(500).json({ error: "Server error. Please try again." }); }
 });
 
@@ -107,7 +116,7 @@ router.post("/resend", async (req, res) => {
     if (lastResend && Date.now() - lastResend < 60_000) { res.status(429).json({ error: "Please wait 60 seconds before requesting another email." }); return; }
     resendTimestamps[emailKey] = Date.now();
     const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
-    await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Verification Email Resent — Tesla Award Program", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
+    await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Verification Email Resent — Tesla Award Program", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
     res.json({ success: true, message: "Verification email resent." });
   } catch (err) { logger.error({ err }, "Resend error"); res.status(500).json({ error: "Failed to resend email. Please try again." }); }
 });
@@ -125,12 +134,7 @@ router.post("/login", async (req, res) => {
       res.status(401).json({ error: "We could not match that email and phone number." });
       return;
     }
-    if (entry.verification_status !== "verified") {
-      const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
-      await transporter.sendMail({ from: `"Tesla Award Program" <${smtpUser}>`, to: emailKey, subject: "⚡ Complete Your Tesla Award Verification", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
-      res.status(403).json({ error: "Your entry is not verified yet. We just resent your verification email." });
-      return;
-    }
+    // Email verification disabled — all users treated as verified
     const sessionToken = crypto.randomBytes(32).toString("hex");
     const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
     if (sessionError) throw sessionError;
@@ -143,7 +147,7 @@ router.post("/login", async (req, res) => {
         hasOrder = true;
         const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
         const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
           orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
@@ -169,6 +173,7 @@ router.get("/session", async (req, res) => {
   try {
     const user = await getSessionUser((req.query as { token?: string }).token);
     if (!user) { res.status(401).json({ valid: false }); return; }
+    const supabase = await getSupabaseAdmin();
     // Check if user already has an order — load FULL order data
     let hasOrder = false;
     let orderData = null;
@@ -178,7 +183,7 @@ router.get("/session", async (req, res) => {
         hasOrder = true;
         const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
         const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
           orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
@@ -196,12 +201,12 @@ router.post("/order", async (req, res) => {
     const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = req.body as { sessionToken: string; selectedCar: Record<string, string>; deliveryDetails: Record<string, string>; deliveryMethod?: Record<string, string | number>; paymentMethod?: Record<string, string> };
         const user = await getSessionUser(sessionToken);
     if (!user) { res.status(401).json({ error: "Invalid session. Please verify your email first." }); return; }
+    const supabase = await getSupabaseAdmin();
     
     // Check if user already has an order
     const { data: existingOrder, error: orderCheckError } = await supabase.from("orders").select("id").eq("user_id", user.id).maybeSingle();
     if (orderCheckError) throw orderCheckError;
     if (existingOrder) { res.status(400).json({ error: "You have already placed an order. Each user is restricted to one order only." }); return; }
-    const supabase = await getSupabaseAdmin();
     const orderId = "TSLA-" + uuidv4().substring(0, 8).toUpperCase();
     const trackingNumber = "TRK-" + crypto.randomBytes(4).toString("hex").toUpperCase();
     const method = deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 };
@@ -218,7 +223,7 @@ router.post("/order", async (req, res) => {
     const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? { id: "unknown", name: "Not specified" }, status: "confirmed", orderDate: new Date(orderRow.order_date).toISOString(), estimatedDelivery, timeline };
     // Send confirmation email (best effort)
     try {
-      await transporter.sendMail({ from: `"Tesla Giveaway" <${smtpUser}>`, to: user.email, subject: "🎉 Order Confirmed — Your Tesla is on the way!", html: buildOrderConfirmationEmail(order) });
+      await sendMail({ from: `"Tesla Giveaway" <${smtpUser!}>`, to: user.email, subject: "🎉 Order Confirmed — Your Tesla is on the way!", html: buildOrderConfirmationEmail(order) });
       logger.info({ email: user.email, orderId }, "Order confirmation email sent");
     } catch (emailErr) { logger.warn({ err: emailErr }, "Failed to send order confirmation email"); }
     res.json({ success: true, order });
@@ -305,7 +310,11 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:20px;overflow:hidden;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.08);">
   <tr><td style="background:#171A20;padding:32px 40px;text-align:center;">
-    <span style="color:#E31937;font-size:26px;font-weight:900;letter-spacing:.12em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</span>
+    <svg width="84" height="84" viewBox="0 0 1280 1280" role="img" aria-label="Tesla T" style="display:block;margin:0 auto 10px;max-width:84px;height:auto;">
+      <path fill="#E31937" d="M0 128C189 44 406 0 640 0s451 44 640 128l-38 74C1054 123 851 80 640 80S226 123 38 202L0 128Z"/>
+      <path fill="#E31937" d="M57 235c156-68 353-109 583-109s427 41 583 109c-44 58-102 101-174 130-9-38-25-68-48-90-55-51-159-76-312-76h-51L640 1280 459 199h-51c-153 0-257 25-312 76-23 22-39 52-48 90-72-29-130-72-174-130Z"/>
+    </svg>
+    <div style="color:#E31937;font-size:18px;font-weight:900;letter-spacing:.16em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</div>
   </td></tr>
   <tr><td style="padding:0;"><div style="height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);"></div></td></tr>
   <tr><td style="padding:44px 40px;">
