@@ -9,7 +9,16 @@ function healthCheck() { if (!API_BASE) { setApiStatus(false); return; } fetch(A
 // ---- INIT ----
 function init() {
   try {
-    var saved = localStorage.getItem("tesla_admin_pwd"); if (saved) adminPassword = saved;
+    // Restore admin password from localStorage if previously set by the admin
+    // Only override if the stored value is a non-empty, valid password (>= 3 chars)
+    var saved = localStorage.getItem("tesla_admin_pwd");
+    if (saved && saved.length >= 3) {
+      adminPassword = saved;
+    } else {
+      // Ensure default password is set
+      adminPassword = "admin123";
+      localStorage.removeItem("tesla_admin_pwd"); // clear any invalid value
+    }
     var li = document.getElementById("loginInput"); if (li) li.focus();
     document.querySelectorAll(".nav-item").forEach(function(btn) { btn.addEventListener("click", function() { switchTab(this.dataset.tab); }); });
     var fi = document.getElementById("feeInput"); if (fi) fi.value = deliveryFee;
