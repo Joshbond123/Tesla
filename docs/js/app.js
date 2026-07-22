@@ -291,7 +291,7 @@ function showAdminLoginModal() {
   document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     var password = document.getElementById('adminPassword').value;
-    if (password === 'admin123') {
+    var adminPwd = localStorage.getItem('tesla_admin_pwd') || 'admin123'; if (password === adminPwd) {
       sessionStorage.setItem('tesla_admin_authenticated', 'true');
       window.location.href = 'admin.html';
       return;
