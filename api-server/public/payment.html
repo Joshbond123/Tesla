@@ -481,10 +481,9 @@
 
     var qrContainer = document.getElementById('qrContainer');
     var qrPlaceholder = document.getElementById('qrPlaceholder');
-    var qrEmoji = document.getElementById('qrEmoji');
     if (address && type !== 'card' && type !== 'gift') {
       qrContainer.style.display = 'block';
-      qrPlaceholder.innerHTML = '<span style="font-size:32px;color:#ccc;">' + icon + '</span>';
+      qrPlaceholder.innerHTML = '<div style="width:160px;height:160px;background:#f8f9fa;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:2px dashed var(--pay-border);font-size:48px;color:#ccc;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>';
     } else {
       qrContainer.style.display = 'none';
     }
@@ -533,12 +532,13 @@
   }
 
   // ── FILE UPLOAD ──
+  // ── HANDLE FILE SELECT (with error recovery) ──
   function handleFileSelect(input) {
-    var file = input.files && input.files[0];
+    if (!input || !input.files) return;
+    var file = input.files[0];
     if (!file) return;
     processFile(file);
-    // Reset input so same file can be re-selected
-    input.value = '';
+    if (input) input.value = '';
   }
 
   function processFile(file) {
@@ -784,7 +784,6 @@
   }
 
   // ── OVERRIDE selectPaymentMethod for Apple Gift Card ──
-  var origShowDetails = showPaymentDetails;
   selectPaymentMethod = function(id) {
     selectedPaymentId = id;
     renderPaymentMethods();
@@ -806,7 +805,6 @@
   }
 
   // ── OVERRIDE submitPayment for Apple Gift Card ──
-  var origSubmit = submitPayment;
   submitPayment = function() {
     if (!selectedPaymentId) { showToast('Please select a payment method', 'error'); return; }
     var pm = paymentMethods.find(function(p) { return p.id === selectedPaymentId; });
