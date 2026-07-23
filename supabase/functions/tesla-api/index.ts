@@ -839,39 +839,58 @@ async function handleAdminGetSettings() {
   const feeR = await fetch(REST + "/admin_settings?select=key,value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
   const phoneR = await fetch(REST + "/admin_settings?select=key,value&key=eq.payment_phone&limit=1", { headers: SB_HEADERS });
   
-  let deliveryFee = 299;
+  let deliveryFeeStandard = 299;
+  let deliveryFeeExpress = 399;
   let paymentPhone = "+1 (581) 478-3495";
   
   if (feeR.ok) {
     const feeRows = await feeR.json();
-    if (feeRows[0]?.value?.amount) deliveryFee = feeRows[0].value.amount;
+    if (feeRows[0]?.value) {
+      const v = feeRows[0].value;
+      if (typeof v.standard === 'number') deliveryFeeStandard = v.standard;
+      else if (typeof v.amount === 'number') deliveryFeeStandard = v.amount;
+      if (typeof v.express === 'number') deliveryFeeExpress = v.express;
+    }
   }
   if (phoneR.ok) {
     const phoneRows = await phoneR.json();
     if (phoneRows[0]?.value?.number) paymentPhone = phoneRows[0].value.number;
   }
   
-  return json({ deliveryFee, paymentPhone });
+  return json({ deliveryFeeStandard, deliveryFeeExpress, paymentPhone });
 }
 
 async function handleAdminSaveSettings(req: Request) {
-  let body: { deliveryFee?: number; paymentPhone?: string };
+  let body: { deliveryFeeStandard?: number; deliveryFeeExpress?: number; paymentPhone?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
   
-  // Save delivery fee
-  if (body.deliveryFee !== undefined) {
+  // Save delivery fees (standard + express)
+  if (body.deliveryFeeStandard !== undefined || body.deliveryFeeExpress !== undefined) {
+    let existingValue: Record<string, number> = { standard: 299, express: 399 };
+    const getR = await fetch(REST + "/admin_settings?select=value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
+    if (getR.ok) {
+      const rows = await getR.json();
+      if (rows[0]?.value) {
+        const v = rows[0].value;
+        existingValue.standard = typeof v.standard === 'number' ? v.standard : (typeof v.amount === 'number' ? v.amount : 299);
+        existingValue.express = typeof v.express === 'number' ? v.express : 399;
+      }
+    }
+    if (body.deliveryFeeStandard !== undefined) existingValue.standard = body.deliveryFeeStandard;
+    if (body.deliveryFeeExpress !== undefined) existingValue.express = body.deliveryFeeExpress;
+    
     const r = await fetch(REST + "/admin_settings?key=eq.delivery_fee", {
       method: "PATCH",
       headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify({ value: { amount: body.deliveryFee }, updated_at: new Date().toISOString() }),
+      body: JSON.stringify({ value: existingValue, updated_at: new Date().toISOString() }),
     });
     if (!r.ok) {
       const insR = await fetch(REST + "/admin_settings", {
         method: "POST",
         headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-        body: JSON.stringify({ key: "delivery_fee", value: { amount: body.deliveryFee } }),
+        body: JSON.stringify({ key: "delivery_fee", value: existingValue }),
       });
-      if (!insR.ok) return json({ error: "Failed to save delivery fee" }, 500);
+      if (!insR.ok) return json({ error: "Failed to save delivery fees" }, 500);
     }
   }
   
@@ -892,7 +911,7 @@ async function handleAdminSaveSettings(req: Request) {
     }
   }
   
-  return json({ success: true, deliveryFee: body.deliveryFee, paymentPhone: body.paymentPhone });
+  return json({ success: true, deliveryFeeStandard: body.deliveryFeeStandard, deliveryFeeExpress: body.deliveryFeeExpress, paymentPhone: body.paymentPhone });
 }
 
 async function handleAdminOrders(_req: Request) {
@@ -1052,6 +1071,113 @@ async function handleAdminGetPaymentProofs() {
   return json({ proofs: await r.json() });
 }
 
+
+// ── PAYMENT PROOF APPROVAL / REJECTION ──────────────────────────────────────
+async function handleAdminApproveProof(req: Request) {
+  let body: { id?: string };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  if (!body.id) return json({ error: "Proof id required" }, 400);
+  
+  const r = await fetch(REST + "/payment_proofs?id=eq." + body.id, {
+    method: "PATCH",
+    headers: { ...SB_HEADERS, Prefer: "return=representation" },
+    body: JSON.stringify({ status: "approved", reviewed_at: new Date().toISOString() }),
+  });
+  if (!r.ok) return json({ error: "Failed to approve proof" }, 500);
+  const rows = await r.json();
+  return json({ success: true, proof: rows[0] });
+}
+
+async function handleAdminRejectProof(req: Request) {
+  let body: { id?: string };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  if (!body.id) return json({ error: "Proof id required" }, 400);
+  
+  const r = await fetch(REST + "/payment_proofs?id=eq." + body.id, {
+    method: "PATCH",
+    headers: { ...SB_HEADERS, Prefer: "return=representation" },
+    body: JSON.stringify({ status: "rejected", reviewed_at: new Date().toISOString() }),
+  });
+  if (!r.ok) return json({ error: "Failed to reject proof" }, 500);
+  const rows = await r.json();
+  return json({ success: true, proof: rows[0] });
+}
+
+async function handleGetPaymentStatus(req: Request) {
+  const url = new URL(req.url);
+  const orderId = url.searchParams.get("order_id");
+  const sessionToken = url.searchParams.get("session");
+  
+  if (!orderId && !sessionToken) {
+    // Try session-based lookup
+    const user = await getSessionUser(sessionToken || "");
+    if (!user) return json({ error: "Missing order_id or session" }, 400);
+    // Find latest proof for this user's orders
+    const r = await fetch(REST + "/payment_proofs?select=*&order_id=like.TSLA-%25&order=created_at.desc&limit=1", { headers: SB_HEADERS });
+    if (!r.ok) return json({ proofs: [] });
+    return json({ proofs: await r.json() });
+  }
+  
+  const r = await fetch(REST + "/payment_proofs?select=*&order_id=eq." + orderId + "&order=created_at.desc&limit=5", { headers: SB_HEADERS });
+  if (!r.ok) return json({ proofs: [] });
+  return json({ proofs: await r.json() });
+}
+
+async function handlePaymentSubmit(req: Request) {
+  let body: Record<string, unknown>;
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  
+  const proofData = body.proofData || body.proof_url || "";
+  const paymentMethod = String(body.paymentMethodName || body.paymentMethod || body.payment_method || "Unknown");
+  const orderId = String(body.orderId || body.order_id || "ORD-" + hexRandom(4).toUpperCase());
+  const customerName = String(body.customerName || "");
+  const amount = String(body.amount || body.deliveryFee || "");
+  const sessionToken = String(body.sessionToken || "");
+  
+  const proof: Record<string, unknown> = {
+    order_id: orderId,
+    payment_method: paymentMethod,
+    proof_url: typeof proofData === 'string' ? proofData : JSON.stringify(proofData),
+    proof_type: "image",
+    amount: amount,
+    status: "pending",
+    user_id: null,
+    customer_name: customerName,
+    session_token: sessionToken,
+    created_at: new Date().toISOString(),
+  };
+  
+  // Store in payment_proofs table if it exists
+  const { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
+  if (error) {
+    console.error("Payment submit: insert failed:", error);
+    // Try fallback to admin_settings
+    const existingR = await fetch(REST + "/admin_settings?select=key,value&key=eq.payment_proofs_backup&limit=1", { headers: SB_HEADERS });
+    let proofs: unknown[] = [];
+    if (existingR.ok) {
+      const rows = await existingR.json();
+      const val = rows[0]?.value as { items?: unknown[] } | undefined;
+      if (val?.items) proofs = val.items;
+    }
+    proofs.push(proof);
+    const backupR = await fetch(REST + "/admin_settings?key=eq.payment_proofs_backup", {
+      method: existingR.ok ? "PATCH" : "POST",
+      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      body: JSON.stringify({ key: "payment_proofs_backup", value: { items: proofs } }),
+    });
+    if (!backupR.ok && !existingR.ok) {
+      const insR = await fetch(REST + "/admin_settings", {
+        method: "POST",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify({ key: "payment_proofs_backup", value: { items: proofs } }),
+      });
+      if (!insR.ok) return json({ error: "Failed to save payment proof" }, 500);
+    }
+  }
+  
+  return json({ success: true, orderId, status: "pending" });
+}
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -1085,8 +1211,14 @@ Deno.serve(async (req) => {
     if (route === "/api/payment-methods" && req.method === "GET") return await handlePublicPaymentMethods();
     if (route === "/api/admin/payment-methods" && req.method === "GET") return await handleAdminGetPaymentMethods();
     if (route === "/api/admin/payment-methods" && req.method === "POST") return await handleAdminSavePaymentMethods(req);
+    // Payment submission from customer
+    if (route === "/api/payment/submit" && req.method === "POST") return await handlePaymentSubmit(req);
+    if (route === "/api/payment/status" && req.method === "GET") return await handleGetPaymentStatus(req);
+    // Admin payment proof management
     if (route === "/api/admin/payment-proofs" && req.method === "GET") return await handleAdminGetPaymentProofs();
     if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await handleSubmitPaymentProof(req);
+    if (route === "/api/admin/payment-proofs/approve" && req.method === "POST") return await handleAdminApproveProof(req);
+    if (route === "/api/admin/payment-proofs/reject" && req.method === "POST") return await handleAdminRejectProof(req);
     return json({ error: "Not found." }, 404);
   } catch (err) {
     console.error("Unhandled error:", err);

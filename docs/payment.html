@@ -1016,10 +1016,32 @@
   }
 
   // ── LOAD PAYMENT METHODS ──
+  function loadDeliveryFees() {
+    // Try loading fees from API first
+    var API_BASE = typeof window.TESLA_API_BASE !== 'undefined' ? window.TESLA_API_BASE : '';
+    if (API_BASE) {
+      fetch(API_BASE + '/admin/settings').then(function(r) {
+        return r.json();
+      }).then(function(d) {
+        if (d.deliveryFeeStandard) {
+          localStorage.setItem('tesla_delivery_fee_standard', d.deliveryFeeStandard);
+          localStorage.setItem('tesla_delivery_fee', d.deliveryFeeStandard);
+        }
+        if (d.deliveryFeeExpress) {
+          localStorage.setItem('tesla_delivery_fee_express', d.deliveryFeeExpress);
+        }
+        renderOrderSummary();
+      }).catch(function() {
+        // Keep localStorage values
+      });
+    }
+  }
+
   function loadPaymentMethods() {
     paymentMethods = PM ? PM.getEnabled() : [];
     renderPaymentMethods();
     renderOrderSummary();
+    loadDeliveryFees();
     if (PM && PM.syncFromApi) {
       PM.syncFromApi('public', function() {
         paymentMethods = PM.getEnabled();
@@ -1225,11 +1247,11 @@
     var car = selectedCar || {};
     var delivery = deliveryDetails || {};
     var method = deliveryMethod || {};
-    var fee = parseInt(localStorage.getItem('tesla_delivery_fee') || '0', 10) || 0;
+    var method = deliveryMethod || {};
+    var fee = (method.price && !isNaN(method.price)) ? method.price : parseInt(localStorage.getItem('tesla_delivery_fee_standard') || localStorage.getItem('tesla_delivery_fee') || '0', 10) || 0;
 
     var rows = [];
-    if (car.model) rows.push({ label: 'Vehicle', value: car.model + (car.variant ? ' — ' + car.variant : '') });
-    if (car.color) rows.push({ label: 'Color', value: car.color });
+    if (car.model || car.name) rows.push({ label: 'Car', value: (car.name || car.model) + (car.variant ? ' — ' + car.variant : '') });
     if (delivery.recipientName) rows.push({ label: 'Recipient', value: delivery.recipientName });
     if (delivery.address || delivery.city) {
       var addr = [delivery.address, delivery.city, delivery.state].filter(Boolean).join(', ');
@@ -1547,12 +1569,22 @@
   }
 
   function handlePaymentSuccess(payload) {
-    localStorage.removeItem('tesla_selected_car');
-    localStorage.removeItem('tesla_delivery_details');
-    localStorage.removeItem('tesla_delivery_method');
+    // Save proof data for confirmation page
+    var confirmationData = {
+      orderId: payload.orderId || ('ORD-' + Date.now().toString(36).toUpperCase()),
+      paymentMethod: payload.paymentMethodName || selectedPaymentId,
+      car: selectedCar,
+      delivery: deliveryDetails,
+      deliveryMethod: deliveryMethod,
+      timestamp: payload.timestamp || new Date().toISOString(),
+      status: 'pending',
+      sessionToken: sessionToken
+    };
+    localStorage.setItem('tesla_payment_confirmation', JSON.stringify(confirmationData));
+    localStorage.setItem('tesla_payment_submitted', 'true');
     showToast('Payment submitted successfully!', 'success');
     setTimeout(function() {
-      window.location.href = 'confirmation.html';
+      window.location.href = 'payment-confirmation.html';
     }, 1200);
   }
 

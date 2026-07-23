@@ -67,7 +67,20 @@ document.addEventListener('DOMContentLoaded', async function() {
       if (data.order.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(data.order.selectedCar));
       if (data.order.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(data.order.deliveryDetails));
       if (data.order.deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(data.order.deliveryMethod));
+      // Check if payment was already submitted
+      var paySubmitted = localStorage.getItem('tesla_payment_submitted');
+      if (paySubmitted === 'true') {
+        window.location.href = 'payment-confirmation.html';
+        return;
+      }
       window.location.href = 'order-placed.html';
+      return;
+    }
+    
+    // Check if payment was submitted (even without full order)
+    var paySubmitted = localStorage.getItem('tesla_payment_submitted');
+    if (paySubmitted === 'true') {
+      window.location.href = 'payment-confirmation.html';
       return;
     }
 

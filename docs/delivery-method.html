@@ -233,7 +233,7 @@
 <script src="js/vehicle-data.js"></script>
 <script>
 var sm=null,sf=299,ef=399;
-(function(){var A=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';fetch(A+'/admin/settings').then(function(r){return r.json()}).then(function(d){if(d.deliveryFee){sf=d.deliveryFee;ef=399;document.getElementById('standardFeePrice').innerHTML='$'+sf+' <span>delivery fee</span>';document.getElementById('expressFeePrice').innerHTML='$'+ef+' <span>delivery fee</span>'}}).catch(function(){})})();
+(function(){var A=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';fetch(A+'/admin/settings').then(function(r){return r.json()}).then(function(d){if(d.deliveryFeeStandard){sf=d.deliveryFeeStandard;ef=d.deliveryFeeExpress||399;localStorage.setItem('tesla_delivery_fee_standard',sf);localStorage.setItem('tesla_delivery_fee_express',ef);document.getElementById('standardFeePrice').innerHTML='$'+sf+' <span>delivery fee</span>';document.getElementById('expressFeePrice').innerHTML='$'+ef+' <span>delivery fee</span>'}}).catch(function(){sf=parseInt(localStorage.getItem('tesla_delivery_fee_standard')||localStorage.getItem('tesla_delivery_fee')||'299',10);ef=parseInt(localStorage.getItem('tesla_delivery_fee_express')||'399',10);document.getElementById('standardFeePrice').innerHTML='$'+sf+' <span>delivery fee</span>';document.getElementById('expressFeePrice').innerHTML='$'+ef+' <span>delivery fee</span>'})})();
 var sc=JSON.parse(localStorage.getItem('tesla_selected_car')||'null');
 var sd=JSON.parse(localStorage.getItem('tesla_delivery_details')||'null');
 if(!sc||!sd)window.location.href='dashboard.html';
