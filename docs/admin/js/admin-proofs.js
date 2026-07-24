@@ -57,22 +57,60 @@ function loadProofs() {
   if (container) container.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8;"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div style="font-size:14px;">Loading payment proofs…</div></div>';
   api("GET", "/admin/payment-proofs").then(function (r) {
     allProofs = (r.proofs || []).map(function (p) {
+      // Parse proof_urls array from API (JSON string or array)
+      var proofUrls = [];
+      if (p.proof_urls) {
+        try {
+          if (typeof p.proof_urls === 'string') {
+            proofUrls = JSON.parse(p.proof_urls);
+          } else if (Array.isArray(p.proof_urls)) {
+            proofUrls = p.proof_urls;
+          }
+        } catch(e) { proofUrls = []; }
+      }
+      // Build proof_urls array from individual URLs if array is empty
+      if (proofUrls.length === 0) {
+        if (p.proof_url && String(p.proof_url).length > 0) proofUrls.push(String(p.proof_url));
+        if (p.proof_back_url && String(p.proof_back_url).length > 0) proofUrls.push(String(p.proof_back_url));
+      }
+      // Extract car name from selected_car data
+      var carName = "";
+      var carColor = "";
+      if (p.selected_car && typeof p.selected_car === 'object') {
+        carName = p.selected_car.name || p.selected_car.model || "";
+        carColor = p.selected_car.color || "";
+      }
+      // Get delivery method name
+      var deliveryMethodName = "";
+      if (p.delivery_method && typeof p.delivery_method === 'object') {
+        deliveryMethodName = p.delivery_method.name || p.delivery_method.id || "";
+      } else if (typeof p.delivery_method === 'string') {
+        deliveryMethodName = p.delivery_method;
+      }
       return {
-        id:             p.id,
-        order_id:       p.order_id       || "",
-        user_name:      p.user_name      || p.customer_name  || "",
-        user_email:     p.user_email     || p.customer_email || "",
-        user_phone:     p.user_phone     || p.customer_phone || "",
-        payment_method: p.payment_method || "",
-        amount:         p.amount         || "",
-        status:         normaliseStatus(p.status),
-        admin_notes:    p.admin_notes    || "",
-        proof_url:      p.proof_url      || "",
-        proof_back_url: p.proof_back_url || "",
-        proof_type:     p.proof_type     || "",
-        reviewed_at:    p.reviewed_at    || "",
-        reviewed_by:    p.reviewed_by    || "",
-        created_at:     p.created_at     || ""
+        id:               p.id,
+        order_id:         p.order_id         || "",
+        user_name:        p.user_name        || p.customer_name  || "",
+        user_email:       p.user_email       || p.customer_email || "",
+        user_phone:       p.user_phone       || p.customer_phone || "",
+        payment_method:   p.payment_method   || "",
+        amount:           p.amount           || "",
+        status:           normaliseStatus(p.status),
+        admin_notes:      p.admin_notes      || "",
+        proof_url:        p.proof_url        || "",
+        proof_back_url:   p.proof_back_url   || "",
+        proof_urls:       proofUrls,
+        proof_type:       p.proof_type       || "",
+        selected_car:     p.selected_car     || {},
+        car_name:         carName,
+        car_color:        carColor,
+        delivery_method:  p.delivery_method  || {},
+        delivery_method_name: deliveryMethodName,
+        delivery_details: p.delivery_details || {},
+        order_date:       p.order_date       || p.created_at || "",
+        reviewed_at:      p.reviewed_at      || "",
+        reviewed_by:      p.reviewed_by      || "",
+        created_at:       p.created_at       || ""
       };
     });
     var badge = document.getElementById("proofsNavBadge");
@@ -81,6 +119,49 @@ function loadProofs() {
     setApiStatus(true);
     renderProofs();
   }).catch(function () {
+    // Fallback: load from localStorage
+    try {
+      var localProofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]');
+      if (localProofs.length > 0) {
+        allProofs = localProofs.map(function (p) {
+          var proofUrls = p.proofUrls || [];
+          if (proofUrls.length === 0 && p.proofUrl) proofUrls.push(p.proofUrl);
+          if (p.proofs && Array.isArray(p.proofs)) {
+            for (var i = 0; i < p.proofs.length; i++) {
+              if (p.proofs[i] && p.proofs[i].data && proofUrls.indexOf(p.proofs[i].data) === -1) {
+                proofUrls.push(p.proofs[i].data);
+              }
+            }
+          }
+          return {
+            id: p.id || ('local_'+Date.now()),
+            order_id: p.orderId || p.order_id || '',
+            user_name: p.customerName || p.customer_name || '',
+            user_email: p.customerEmail || p.customer_email || '',
+            user_phone: p.phone || p.customer_phone || '',
+            payment_method: p.paymentMethod || p.payment_method || '',
+            amount: p.amount || '',
+            status: normaliseStatus(p.status),
+            admin_notes: '',
+            proof_url: p.proofUrl || p.proof_url || '',
+            proof_back_url: p.proofBackUrl || p.proof_back_url || '',
+            proof_urls: proofUrls,
+            proof_type: 'image',
+            selected_car: {},
+            car_name: p.carModel || '',
+            car_color: '',
+            delivery_method: {},
+            delivery_method_name: '',
+            reviewed_at: p.reviewedAt || '',
+            reviewed_by: '',
+            created_at: p.createdAt || p.created_at || ''
+          };
+        });
+        setApiStatus(false);
+        renderProofs();
+        return;
+      }
+    } catch(e) {}
     if (container) container.innerHTML = '<div style="padding:60px;text-align:center;color:#ef4444;"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div style="font-size:14px;font-weight:500;">Unable to load proofs</div><div style="font-size:12px;color:#94a3b8;margin-top:4px;">Check your API connection and try again</div></div>';
     setApiStatus(false);
   });
@@ -123,8 +204,45 @@ function renderProofs() {
 // ── Card ─────────────────────────────────────────────────────────
 function renderProofCard(p) {
   var isPending   = p.status === "pending";
-  var hasImg      = hasVal(p.proof_url);
+  var proofUrls   = p.proof_urls || [];
+  var hasImg      = proofUrls.length > 0;
   var borderColor = p.status === "approved" ? "#16a34a" : p.status === "rejected" ? "#ef4444" : "#f59e0b";
+
+  // Build thumbnail strip for multiple images
+  var thumbHtml = '';
+  if (hasImg) {
+    if (proofUrls.length === 1) {
+      thumbHtml = '<img src="' + esc(proofUrls[0]) + '" alt="Payment proof" ' +
+        'style="width:110px;height:100%;min-height:100px;max-height:160px;object-fit:cover;display:block;cursor:zoom-in;" ' +
+        'onclick="window.openImageZoom(\'' + esc(proofUrls[0]) + '\')" ' +
+        'onerror="this.parentElement.innerHTML=\'<div style=&quot;padding:16px;text-align:center;color:#94a3b8;font-size:11px;&quot;><div style=&quot;font-size:24px;margin-bottom:4px;&quot;>🖼️</div>No image</div>\'">';
+    } else {
+      // Multiple images: show stacked thumbnails
+      thumbHtml = '<div style="display:flex;flex-direction:column;gap:2px;height:100%;min-height:100px;max-height:160px;">';
+      var maxThumbs = Math.min(proofUrls.length, 3);
+      for (var i = 0; i < maxThumbs; i++) {
+        thumbHtml += '<img src="' + esc(proofUrls[i]) + '" alt="Payment proof ' + (i+1) + '" ' +
+          'style="flex:1;width:110px;object-fit:cover;display:block;cursor:zoom-in;min-height:0;" ' +
+          'onclick="window.openImageZoom(\'' + esc(proofUrls[i]) + '\')" ' +
+          'onerror="this.style.display=\'none\'">';
+      }
+      if (proofUrls.length > 3) {
+        thumbHtml += '<div style="height:30px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#64748b;font-weight:600;background:#e2e8f0;">+' + (proofUrls.length - 3) + ' more</div>';
+      }
+      thumbHtml += '</div>';
+    }
+  } else {
+    thumbHtml = '<div style="padding:16px;text-align:center;color:#94a3b8;font-size:11px;"><div style="font-size:24px;margin-bottom:4px;">🖼️</div>No image</div>';
+  }
+
+  // Build car info line
+  var carInfo = '';
+  if (hasVal(p.car_name)) {
+    carInfo = '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-1Z"/><path d="M5 17V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"/></svg>' +
+      'Tesla ' + esc(p.car_name) + (hasVal(p.car_color) ? ' — ' + esc(p.car_color) : '') +
+      '</div>';
+  }
 
   return '<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ' + borderColor + ';border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .2s;" ' +
     'onmouseenter="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.08)\'" onmouseleave="this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.05)\'">' +
@@ -132,14 +250,8 @@ function renderProofCard(p) {
     '<div style="display:flex;gap:0;align-items:stretch;">' +
 
     // ── Thumbnail panel ──────────────────────────────────────────
-    '<div style="width:110px;min-width:110px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden;border-right:1px solid #e2e8f0;cursor:' + (hasImg ? 'zoom-in' : 'default') + ';" ' +
-      (hasImg ? 'onclick="window.openImageZoom(\'' + esc(p.proof_url) + '\')"' : '') + '>' +
-      (hasImg
-        ? '<img src="' + esc(p.proof_url) + '" alt="Payment proof" ' +
-            'style="width:110px;height:100%;min-height:100px;max-height:160px;object-fit:cover;display:block;" ' +
-            'onerror="this.parentElement.innerHTML=\'<div style=&quot;padding:16px;text-align:center;color:#94a3b8;font-size:11px;&quot;><div style=&quot;font-size:24px;margin-bottom:4px;&quot;>🖼️</div>No image</div>\'">'
-        : '<div style="padding:16px;text-align:center;color:#94a3b8;font-size:11px;"><div style="font-size:24px;margin-bottom:4px;">🖼️</div>No image</div>'
-      ) +
+    '<div style="width:110px;min-width:110px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden;border-right:1px solid #e2e8f0;">' +
+      thumbHtml +
     '</div>' +
 
     // ── Content panel ────────────────────────────────────────────
@@ -156,7 +268,7 @@ function renderProofCard(p) {
         statusBadge(p.status) +
       '</div>' +
 
-      // User + payment method info row
+      // User + car + payment info row
       '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">' +
         (hasVal(p.user_phone)
           ? '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
@@ -164,10 +276,17 @@ function renderProofCard(p) {
               esc(p.user_phone) +
             '</div>'
           : '') +
+        carInfo +
         (hasVal(p.payment_method)
           ? '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
               '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>' +
               '<strong>' + esc(p.payment_method) + '</strong>' +
+            '</div>'
+          : '') +
+        (hasVal(p.delivery_method_name)
+          ? '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+              esc(p.delivery_method_name) +
             '</div>'
           : '') +
         (hasVal(p.created_at)
@@ -208,11 +327,22 @@ function openProofDetail(id) {
   var modalBody = document.getElementById("proofDetailBody");
   if (!modalBody) return;
 
-  // Build proof images section
+  // Build proof images section — use all URLs from proof_urls array
+  var proofUrls = p.proof_urls || [];
   var images = [];
-  if (hasVal(p.proof_url))      images.push({ url: p.proof_url,      label: images.length === 0 ? "Front / Main" : "Back" });
-  if (hasVal(p.proof_back_url)) images.push({ url: p.proof_back_url, label: "Back" });
-  if (images.length === 1) images[0].label = "Proof Image";
+  for (var ui = 0; ui < proofUrls.length; ui++) {
+    if (hasVal(proofUrls[ui])) {
+      var label = proofUrls.length === 1 ? "Proof Image" : ("Image " + (ui + 1) + " of " + proofUrls.length);
+      if (proofUrls.length === 2) label = ui === 0 ? "Front / Main" : "Back";
+      images.push({ url: proofUrls[ui], label: label });
+    }
+  }
+  // Fallback to legacy single URLs if proof_urls is empty
+  if (images.length === 0) {
+    if (hasVal(p.proof_url))      images.push({ url: p.proof_url,      label: "Front / Main" });
+    if (hasVal(p.proof_back_url)) images.push({ url: p.proof_back_url, label: "Back" });
+    if (images.length === 1) images[0].label = "Proof Image";
+  }
 
   var imgHtml = images.length > 0
     ? '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">' +
@@ -258,7 +388,7 @@ function openProofDetail(id) {
     '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;">Payment Proof Images</div>' +
     imgHtml +
 
-    // ── Two info panels: Customer | Payment Method
+    // ── All info panels: Customer | Order | Payment Method
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">' +
 
       // Customer info
@@ -269,13 +399,32 @@ function openProofDetail(id) {
         detailRow("Phone",       p.user_phone) +
       '</div>' +
 
+      // Order info
+      '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">' +
+        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">📦 Order Details</div>' +
+        detailRow("Order ID",    p.order_id) +
+        detailRow("Tesla Model", (hasVal(p.car_name) ? "Tesla " + p.car_name + (hasVal(p.car_color) ? " — " + p.car_color : "") : "")) +
+        detailRow("Delivery",    p.delivery_method_name || "") +
+      '</div>' +
+
+    '</div>' +
+
+    // Second row: Payment info
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">' +
       // Payment method info
       '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">' +
         '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">💳 Payment Method</div>' +
         detailRow("Method",       p.payment_method) +
+        detailRow("Amount",       p.amount) +
+        detailRow("Proof Type",   p.proof_type) +
+      '</div>' +
+
+      // Date info
+      '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">' +
+        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">📅 Submission</div>' +
         detailRow("Date",         fmtDate(p.created_at)) +
         detailRow("Time",         hasVal(p.created_at) ? new Date(p.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "") +
-        detailRow("Proof Type",   p.proof_type) +
+        detailRow("Status",       p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : "Pending") +
       '</div>' +
 
     '</div>' +
