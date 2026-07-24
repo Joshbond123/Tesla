@@ -575,7 +575,7 @@ async function handleOrder(req: Request) {
   const { data: orderRow, error: orderError } = await dbInsert("orders", {
     order_id: orderId, tracking_number: trackingNumber, user_id: user.id,
     selected_car_id: carRow?.id, delivery_details_id: deliveryRow?.id,
-    delivery_method: method, payment_method: paymentMethod ?? { id: "unknown", name: "Not specified" },
+    delivery_method: method ?? {}, payment_method: paymentMethod ?? { id: "unknown", name: "Not specified" },
     status: "confirmed", estimated_delivery: estimatedDelivery,
   }, "id,order_date");
   if (orderError || !orderRow) {
