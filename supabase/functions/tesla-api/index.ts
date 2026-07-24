@@ -1135,19 +1135,37 @@ async function handleSubmitPaymentProof(req: Request) {
     return json({ error: "Invalid request" }, 400);
   }
   const orderId = String(body.order_id ?? "");
-  const proofUrl = String(body.proof_url ?? "");
-  if (!orderId || !proofUrl) {
-    return json({ error: "Missing order_id or proof_url." }, 400);
+
+  // Support both single proof_url and multiple proof_urls
+  let proofUrls: string[] = [];
+  if (body.proof_urls && Array.isArray(body.proof_urls)) {
+    proofUrls = (body.proof_urls as string[]).filter((u: string) => u && u.length > 0);
   }
+  const singleUrl = String(body.proof_url ?? "");
+  if (singleUrl && !proofUrls.includes(singleUrl)) {
+    proofUrls.unshift(singleUrl);
+  }
+  const backUrl = String(body.proof_back_url ?? "");
+  if (backUrl && !proofUrls.includes(backUrl)) {
+    proofUrls.push(backUrl);
+  }
+
+  if (!orderId || proofUrls.length === 0) {
+    return json({ error: "Missing order_id or proof image(s)." }, 400);
+  }
+
   const proof: Record<string, unknown> = {
     order_id: orderId,
     payment_method: String(body.payment_method ?? "Unknown"),
-    proof_url: proofUrl,
+    proof_url: proofUrls[0],  // primary image for backward compat
+    proof_urls: JSON.stringify(proofUrls),  // store all URLs as JSON
     proof_type: String(body.proof_type ?? "image"),
     amount: body.amount != null ? String(body.amount) : null,
     status: "pending",
   };
-  if (body.proof_back_url) proof.proof_back_url = String(body.proof_back_url);
+  // Store proof_back_url for backward compatibility
+  if (proofUrls.length > 1) proof.proof_back_url = proofUrls[proofUrls.length - 1];
+
   const { data, error } = await dbInsert(
     "payment_proofs",
     proof,
@@ -1161,15 +1179,116 @@ async function handleSubmitPaymentProof(req: Request) {
 }
 
 async function handleAdminGetPaymentProofs() {
-  const r = await fetch(
+  // Load payment proofs WITH joined user, order, car, and delivery data
+  // Step 1: Get all proofs
+  const proofsR = await fetch(
     REST + "/payment_proofs?select=*&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
-  if (!r.ok) {
-    console.error("Payment proofs: load failed:", await r.text());
+  if (!proofsR.ok) {
+    console.error("Payment proofs: load failed:", await proofsR.text());
     return json({ proofs: [] });
   }
-  return json({ proofs: await r.json() });
+  const proofs = await proofsR.json() as Record<string, unknown>[];
+
+  // Step 2: For each proof, look up the order and associated user/car/delivery data
+  const enrichedProofs = [];
+  for (const proof of proofs) {
+    const orderId = String(proof.order_id || "");
+    const enriched = { ...proof };
+
+    if (orderId) {
+      try {
+        // Look up the order to get user_id
+        const orderR = await fetch(
+          REST + "/orders?select=id,user_id,delivery_method,payment_method,order_date,estimated_delivery&order_id=eq." + encodeURIComponent(orderId) + "&limit=1",
+          { headers: SB_HEADERS },
+        );
+        if (orderR.ok) {
+          const orderRows = await orderR.json();
+          if (orderRows.length > 0) {
+            const order = orderRows[0];
+            enriched.delivery_method = order.delivery_method || {};
+            enriched.order_date = order.order_date || proof.created_at;
+
+            // Look up user data
+            if (order.user_id) {
+              const userR = await fetch(
+                REST + "/giveaway_users?select=id,email,phone,first_name,last_name&id=eq." + order.user_id + "&limit=1",
+                { headers: SB_HEADERS },
+              );
+              if (userR.ok) {
+                const userRows = await userR.json();
+                if (userRows.length > 0) {
+                  const user = userRows[0];
+                  enriched.user_name = (user.first_name || "") + " " + (user.last_name || "");
+                  enriched.user_name = enriched.user_name.trim();
+                  enriched.user_email = user.email || "";
+                  enriched.user_phone = user.phone || "";
+                  enriched.user_id = user.id;
+                }
+              }
+
+              // Look up selected car
+              const carR = await fetch(
+                REST + "/selected_cars?select=data&user_id=eq." + order.user_id + "&order=created_at.desc&limit=1",
+                { headers: SB_HEADERS },
+              );
+              if (carR.ok) {
+                const carRows = await carR.json();
+                if (carRows.length > 0 && carRows[0].data) {
+                  enriched.selected_car = carRows[0].data;
+                }
+              }
+
+              // Look up delivery details
+              const deliveryR = await fetch(
+                REST + "/delivery_details?select=data&user_id=eq." + order.user_id + "&order=created_at.desc&limit=1",
+                { headers: SB_HEADERS },
+              );
+              if (deliveryR.ok) {
+                const deliveryRows = await deliveryR.json();
+                if (deliveryRows.length > 0 && deliveryRows[0].data) {
+                  enriched.delivery_details = deliveryRows[0].data;
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Payment proofs: failed to enrich proof " + orderId + ":", err);
+      }
+    }
+
+    // Handle proof_urls array for multiple images
+    // If proof_urls exists as a JSON string, parse it; otherwise create array from proof_url + proof_back_url
+    let proofUrls: string[] = [];
+    if (proof.proof_urls) {
+      try {
+        if (typeof proof.proof_urls === 'string') {
+          proofUrls = JSON.parse(proof.proof_urls);
+        } else if (Array.isArray(proof.proof_urls)) {
+          proofUrls = proof.proof_urls as string[];
+        }
+      } catch { /* ignore */ }
+    }
+    // Also include proof_url and proof_back_url if they're not in the array
+    if (proof.proof_url && typeof proof.proof_url === 'string' && proof.proof_url.length > 0) {
+      if (!proofUrls.includes(proof.proof_url)) {
+        proofUrls.unshift(proof.proof_url);
+      }
+    }
+    if (proof.proof_back_url && typeof proof.proof_back_url === 'string' && proof.proof_back_url.length > 0) {
+      if (!proofUrls.includes(proof.proof_back_url)) {
+        proofUrls.push(proof.proof_back_url);
+      }
+    }
+    enriched.proof_urls = proofUrls;
+
+    enrichedProofs.push(enriched);
+  }
+
+  return json({ proofs: enrichedProofs });
 }
 
 
@@ -1228,24 +1347,48 @@ async function handlePaymentSubmit(req: Request) {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
   
-  const proofData = body.proofData || body.proof_url || "";
   const paymentMethod = String(body.paymentMethodName || body.paymentMethod || body.payment_method || "Unknown");
   const orderId = String(body.orderId || body.order_id || "ORD-" + hexRandom(4).toUpperCase());
   const customerName = String(body.customerName || "");
   const amount = String(body.amount || body.deliveryFee || "");
   const sessionToken = String(body.sessionToken || "");
-  
+
+  // Build proof_urls array from all available sources
+  let proofUrls: string[] = [];
+  if (body.proof_urls && Array.isArray(body.proof_urls)) {
+    proofUrls = (body.proof_urls as string[]).filter((u: string) => u && u.length > 0);
+  }
+  const proofData = body.proofData || body.proof_url || "";
+  const singleUrl = typeof proofData === 'string' ? proofData : (typeof proofData === 'object' ? JSON.stringify(proofData) : "");
+  if (singleUrl && !proofUrls.includes(singleUrl)) {
+    proofUrls.unshift(singleUrl);
+  }
+  const backUrl = String(body.proof_back_url || "");
+  if (backUrl && !proofUrls.includes(backUrl)) {
+    proofUrls.push(backUrl);
+  }
+
+  // Store customer info as denormalized columns for admin display
+  const customerNameStr = String(body.customer_name || body.customerName || "");
+  const customerPhoneStr = String(body.customer_phone || body.phone || "");
+  const customerEmailStr = String(body.customer_email || body.email || "");
+
   // Only include columns that exist in the payment_proofs schema
   const proof: Record<string, unknown> = {
     order_id: orderId,
     payment_method: paymentMethod,
-    proof_url: typeof proofData === 'string' ? proofData : JSON.stringify(proofData),
+    proof_url: proofUrls.length > 0 ? proofUrls[0] : (typeof proofData === 'string' ? proofData : JSON.stringify(proofData || "")),
+    proof_urls: JSON.stringify(proofUrls),
     proof_type: "image",
     amount: amount,
     status: "pending",
     user_id: null,
+    customer_name: customerNameStr || null,
+    customer_phone: customerPhoneStr || null,
+    customer_email: customerEmailStr || null,
     created_at: new Date().toISOString(),
   };
+  if (proofUrls.length > 1) proof.proof_back_url = proofUrls[proofUrls.length - 1];
   
   // Store in payment_proofs table if it exists
   const { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
@@ -1315,6 +1458,7 @@ Deno.serve(async (req) => {
     if (pmDelMatch && req.method === "DELETE") return await handleAdminDeletePaymentMethod(decodeURIComponent(pmDelMatch[1]));
     // Payment submission from customer
     if (route === "/api/payment/submit" && req.method === "POST") return await handlePaymentSubmit(req);
+    if (route === "/api/payment-proof" && req.method === "POST") return await handlePaymentSubmit(req);
     if (route === "/api/payment/status" && req.method === "GET") return await handleGetPaymentStatus(req);
     // Admin payment proof management
     if (route === "/api/admin/payment-proofs" && req.method === "GET") return await handleAdminGetPaymentProofs();
