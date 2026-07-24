@@ -1037,7 +1037,7 @@
           var data = JSON.parse(xhr.responseText);
           if (data && data.length > 0) {
             paymentMethods = data.map(function(m) {
-              return { id: m.id, name: m.name, display_name: m.display_name, type: m.type, logo_id: m.logo_id || 'pay-creditcard', enabled: m.enabled !== false, sort_order: m.sort_order || 0, wallet_address: m.wallet_address || '', account_details: m.account_details || '', account_email: m.account_email || '', cash_tag: m.cash_tag || '', username: m.username || '', email: m.email || '', payment_instructions: m.payment_instructions || '' };
+              return { id: m.id, name: m.name, display_name: m.display_name, type: m.type, logo: m.logo_url || '', logo_id: m.logo_id || 'pay-creditcard', enabled: m.enabled !== false, sort_order: m.sort_order || 0, wallet_address: m.wallet_address || '', account_details: m.account_details || '', account_email: m.account_email || '', cash_tag: m.cash_tag || '', username: m.username || '', email: m.email || '', payment_instructions: m.payment_instructions || '' };
             });
             localStorage.setItem('tesla_payment_methods', JSON.stringify(paymentMethods));
             renderPaymentMethods();
