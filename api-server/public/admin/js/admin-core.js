@@ -8,9 +8,12 @@ var allUsers = [];
 var allOrders = [];
 var allProofs = [];
 var socialSettings = { whatsapp: { number: "", enabled: true, label: "Chat with us on WhatsApp" }, telegram: { username: "", enabled: false, label: "Chat with us on Telegram" } };
+var standardFee = 299;
+var expressFee = 399;
 var deliveryFee = 299;
 var adminPassword = localStorage.getItem("tesla_admin_pwd") || "admin123";
 var selectedCCNetworks = ["visa", "mastercard", "amex", "discover"];
+var feeMode = "standard";
 
 var API_BASE = (typeof window.TESLA_API_BASE !== "undefined" && window.TESLA_API_BASE) ? window.TESLA_API_BASE.replace(/\/+$/, "") : "";
 

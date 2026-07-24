@@ -343,6 +343,123 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 </html>`;
 }
 
+// ── ADMIN: SETTINGS ──
+router.post("/admin/settings", async (req, res) => {
+  try {
+    const { standard_fee, express_fee } = req.body as { standard_fee?: number; express_fee?: number };
+    const supabase = await getSupabaseAdmin();
+    const value: Record<string, number> = {};
+    if (standard_fee !== undefined) value.standard_fee = standard_fee;
+    if (express_fee !== undefined) value.express_fee = express_fee;
+    if (Object.keys(value).length === 0) { res.status(400).json({ error: "No values to update" }); return; }
+    const { data: existing } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
+    const merged = existing?.value ? { ...existing.value as any, ...value } : value;
+    const { error } = await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) throw error;
+    res.json({ success: true, standard_fee: merged.standard_fee, express_fee: merged.express_fee });
+  } catch (err) { logger.error({ err }, "Admin settings error"); res.status(500).json({ error: "Server error" }); }
+});
+router.get("/admin/settings", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("admin_settings").select("key,value").eq("key", "delivery_fee").maybeSingle();
+    if (error) throw error;
+    const v = (data?.value ?? {}) as any;
+    res.json({ standard_fee: v.standard_fee ?? 299, express_fee: v.express_fee ?? 399 });
+  } catch (err) { logger.error({ err }, "Admin settings get error"); res.status(500).json({ error: "Server error" }); }
+});
+// ── ADMIN: PAYMENT METHODS ──
+router.get("/admin/payment-methods", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_methods").select("*").order("sort_order");
+    if (error) throw error;
+    res.json({ methods: data || [] });
+  } catch (err) { logger.error({ err }, "Admin payment methods error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-methods", async (req, res) => {
+  try {
+    const method = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_methods").insert({
+      name: method.name, display_name: method.display_name, type: method.type || "wallet",
+      wallet_address: method.wallet_address, account_details: method.account_details,
+      payment_instructions: method.payment_instructions, logo_url: method.logo_url, logo_id: method.logo_id,
+      icon_emoji: method.icon_emoji || "💳", sort_order: method.sort_order || 0, enabled: method.enabled !== false
+    }).select().single();
+    if (error) throw error;
+    res.json({ success: true, method: data });
+  } catch (err) { logger.error({ err }, "Admin payment method create error"); res.status(500).json({ error: "Server error" }); }
+});
+router.put("/admin/payment-methods/:id", async (req, res) => {
+  try {
+    const { id } = req.params; const updates = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const updateData: Record<string, any> = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.display_name !== undefined) updateData.display_name = updates.display_name;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.wallet_address !== undefined) updateData.wallet_address = updates.wallet_address;
+    if (updates.account_details !== undefined) updateData.account_details = updates.account_details;
+    if (updates.payment_instructions !== undefined) updateData.payment_instructions = updates.payment_instructions;
+    if (updates.logo_id !== undefined) updateData.logo_id = updates.logo_id;
+    if (updates.sort_order !== undefined) updateData.sort_order = updates.sort_order;
+    if (updates.enabled !== undefined) updateData.enabled = updates.enabled;
+    updateData.updated_at = new Date().toISOString();
+    const { error } = await supabase.from("payment_methods").update(updateData).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin payment method update error"); res.status(500).json({ error: "Server error" }); }
+});
+router.delete("/admin/payment-methods/:id", async (req, res) => {
+  try {
+    const { id } = req.params; const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_methods").delete().eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin payment method delete error"); res.status(500).json({ error: "Server error" }); }
+});
+// ── ADMIN: PAYMENT PROOFS ──
+router.get("/admin/payment-proofs", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_proofs").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ proofs: data || [] });
+  } catch (err) { logger.error({ err }, "Admin payment proofs error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/submit", async (req, res) => {
+  try {
+    const proof = req.body as any; const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_proofs").insert({
+      order_id: proof.order_id, user_id: proof.user_id, payment_method: proof.payment_method,
+      proof_url: proof.proof_url, proof_type: proof.proof_type || "file", amount: proof.amount, status: "pending"
+    }).select().single();
+    if (error) throw error;
+    res.json({ success: true, proof: data });
+  } catch (err) { logger.error({ err }, "Admin proof submit error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/approve", async (req, res) => {
+  try {
+    const { id } = req.body as { id: string };
+    if (!id) { res.status(400).json({ error: "Proof ID required" }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_proofs").update({ status: "approved", reviewed_at: new Date().toISOString(), reviewed_by: "admin" }).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin proof approve error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/reject", async (req, res) => {
+  try {
+    const { id, reason } = req.body as { id: string; reason?: string };
+    if (!id) { res.status(400).json({ error: "Proof ID required" }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_proofs").update({ status: "rejected", admin_notes: reason || "", reviewed_at: new Date().toISOString(), reviewed_by: "admin" }).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin proof reject error"); res.status(500).json({ error: "Server error" }); }
+});
+
 function buildOrderConfirmationEmail(order: any) {
   const car = order.selectedCar || {};
   const addr = order.deliveryDetails || {};
