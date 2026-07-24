@@ -449,6 +449,70 @@ router.get("/admin/settings", async (_req, res) => {
     res.json({ standard_fee: v.standard_fee ?? 299, express_fee: v.express_fee ?? 399 });
   } catch (err) { logger.error({ err }, "Admin settings get error"); res.status(500).json({ error: "Server error" }); }
 });
+
+// ── PUBLIC: PAYMENT METHODS (for customer payment page) ──
+router.get("/payment-methods", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("payment_methods")
+      .select("*")
+      .eq("enabled", true)
+      .order("sort_order");
+    if (error) throw error;
+    const methods = (data || []).map((m: any) => {
+      let config: Record<string, any> = {};
+      if (m.account_details) { try { config = JSON.parse(m.account_details); } catch (_) {} }
+      if (m.wallet_address && !config.walletAddress) config.walletAddress = m.wallet_address;
+      if (m.payment_instructions && !config.instructions) config.instructions = m.payment_instructions;
+      if (m.qr_code_url && !config.qrCode) config.qrCode = m.qr_code_url;
+      return {
+        id: m.slug || String(m.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        _dbId: m.id, name: m.display_name || m.name, type: m.type || "wallet",
+        description: m.description || "", logo: m.logo_url || "", logo_url: m.logo_url || "",
+        enabled: m.enabled, displayOrder: m.sort_order || 0, sort_order: m.sort_order || 0,
+        config, wallet_address: m.wallet_address || "", payment_instructions: m.payment_instructions || "",
+        lastUpdated: m.updated_at || m.created_at || ""
+      };
+    });
+    res.json({ methods });
+  } catch (err) { logger.error({ err }, "Public payment methods error"); res.status(500).json({ error: "Server error" }); }
+});
+
+// ── ADMIN: UPSERT PAYMENT METHOD (by name slug — create or update) ──
+router.post("/admin/payment-methods/upsert", async (req, res) => {
+  try {
+    const m = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const slug = m.slug || String(m.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const { data: existing } = await supabase.from("payment_methods")
+      .select("id").eq("name", slug).maybeSingle();
+    const accountDetails = typeof m.account_details === "object"
+      ? JSON.stringify(m.account_details)
+      : (m.account_details || "{}");
+    const row: Record<string, any> = {
+      name: slug, display_name: m.display_name || m.name || slug,
+      type: m.type || "wallet", enabled: m.enabled !== false,
+      logo_url: m.logo_url || "", wallet_address: m.wallet_address || "",
+      account_details: accountDetails,
+      payment_instructions: m.payment_instructions || "",
+      sort_order: m.sort_order || 0, updated_at: new Date().toISOString()
+    };
+    let dbId: string;
+    if (existing?.id) {
+      const { error } = await supabase.from("payment_methods").update(row).eq("id", existing.id);
+      if (error) throw error;
+      dbId = existing.id;
+    } else {
+      row.created_at = new Date().toISOString();
+      const { data: inserted, error } = await supabase.from("payment_methods").insert(row).select("id").single();
+      if (error) throw error;
+      dbId = inserted.id;
+    }
+    res.json({ success: true, _db_id: dbId });
+  } catch (err) { logger.error({ err }, "Upsert payment method error"); res.status(500).json({ error: "Server error" }); }
+});
+
 // ── ADMIN: PAYMENT METHODS ──
 router.get("/admin/payment-methods", async (_req, res) => {
   try {
@@ -509,16 +573,32 @@ router.get("/admin/payment-proofs", async (_req, res) => {
       .select("*, giveaway_users(id,email,phone,first_name,last_name)")
       .order("created_at", { ascending: false });
     if (error) throw error;
+    // Also try to enrich with order data for car model & delivery method
+    const orderIds = (data || []).map((p: any) => p.order_id).filter(Boolean);
+    let ordersMap: Record<string, any> = {};
+    if (orderIds.length > 0) {
+      const { data: ordData } = await supabase
+        .from("orders")
+        .select("order_id,delivery_method,payment_method,selected_cars(data)")
+        .in("order_id", orderIds)
+        .catch(() => ({ data: null }));
+      (ordData || []).forEach((o: any) => { ordersMap[o.order_id] = o; });
+    }
     const proofs = (data || []).map((p: any) => {
       const u = Array.isArray(p.giveaway_users) ? p.giveaway_users[0] : p.giveaway_users;
+      const ord = ordersMap[p.order_id];
       const joinedName = [u?.first_name, u?.last_name].filter(Boolean).join(" ");
+      const dmRaw = ord?.delivery_method || {};
+      const dmLabel = typeof dmRaw === "string" ? dmRaw : (dmRaw as any).name || (dmRaw as any).type || "";
+      const carData = ord?.selected_cars?.data || {};
+      const carModel = p.car_model || (carData as any).name || (carData as any).model || "";
       return {
         ...p,
-        user_name: p.customer_name || joinedName || u?.email || "-",
-        user_email: p.customer_email || u?.email || "-",
-        user_phone: p.customer_phone || u?.phone || "-",
-        car_model: p.car_model || "-",
-        delivery_method: p.delivery_method || "-",
+        user_name: p.customer_name || joinedName || u?.email || "",
+        user_email: p.customer_email || u?.email || "",
+        user_phone: p.customer_phone || u?.phone || "",
+        car_model: carModel,
+        delivery_method: dmLabel,
         giveaway_users: undefined,
       };
     });

@@ -335,11 +335,22 @@
         </div>
       </div>
 
-      <!-- Payment Proof Full-View Modal -->
-      <div id="proofModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;padding:24px;" onclick="window.closeProofModal()">
-        <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;padding:24px;max-width:90vw;max-height:90vh;overflow:auto;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.4);">
-          <button onclick="window.closeProofModal()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.06);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#555;">&#x2715;</button>
-          <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:16px;">Payment Proof</div>
+            <!-- Payment Proof Detail Modal -->
+      <div id="proofDetailModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,0.75);align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;backdrop-filter:blur(4px);" onclick="if(event.target===this)window.closeProofDetail()">
+        <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;width:100%;max-width:780px;margin:auto;position:relative;box-shadow:0 40px 80px rgba(0,0,0,.35);">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1;">
+            <div style="font-size:15px;font-weight:700;color:#0f172a;">Payment Proof Details</div>
+            <button onclick="window.closeProofDetail()" style="width:32px;height:32px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:18px;font-weight:700;">&times;</button>
+          </div>
+          <div id="proofDetailBody" style="padding:24px;"></div>
+        </div>
+      </div>
+
+      <!-- Full-size image zoom overlay -->
+      <div id="imageZoomOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;padding:24px;cursor:zoom-out;" onclick="window.closeImageZoom()">
+        <button onclick="window.closeImageZoom()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;">&times;</button>
+        <img id="imageZoomImg" src="" alt="Payment proof" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5);">
+      </div>
           <img id="proofModalImg" src="" alt="Payment proof" style="max-width:min(800px,80vw);max-height:70vh;display:block;border-radius:8px;object-fit:contain;">
         </div>
       </div>
