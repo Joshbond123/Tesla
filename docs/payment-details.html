@@ -259,13 +259,37 @@ window.submitProof=function(){
 
   // Save to localStorage
   var existingProofs=JSON.parse(localStorage.getItem('tesla_payment_proofs')||'[]');
-  var proofRecord={id:'proof_'+Date.now(),orderId:orderId,customerName:sd?sd.fullName:'',paymentMethod:pm.name,amount:sm?sm.priceDisplay:'',proofUrl:proofs[0]?proofs[0].data:'',proofs:proofs,status:'pending',createdAt:new Date().toISOString(),phone:document.getElementById('contactPhone').value};
+  // Build proof_urls array for multi-image support
+  var proofUrlsForStorage = [];
+  for (var pi = 0; pi < proofs.length; pi++) {
+    if (proofs[pi] && proofs[pi].data) proofUrlsForStorage.push(proofs[pi].data);
+  }
+  var proofRecord={id:'proof_'+Date.now(),orderId:orderId,customerName:sd?sd.fullName:'',paymentMethod:pm.name,amount:sm?sm.priceDisplay:'',proofUrl:proofUrlsForStorage[0]||'',proofUrls:proofUrlsForStorage,proofs:proofs,status:'pending',createdAt:new Date().toISOString(),phone:document.getElementById('contactPhone').value};
   existingProofs.push(proofRecord);
   localStorage.setItem('tesla_payment_proofs',JSON.stringify(existingProofs));
 
   // Try sending via API
   var B=(typeof window!=='undefined'&&window.TESLA_API_BASE)||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-  fetch(B+'/payment-proof',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:orderId,paymentMethod:pm.name,amount:sm?sm.priceDisplay:'',customerName:sd?sd.fullName:'',phone:document.getElementById('contactPhone').value,proofCount:proofs.length,status:'pending'})}).catch(function(){});
+  // Collect all proof URLs into an array for multi-image support
+  var proofUrls = [];
+  for (var pi = 0; pi < proofs.length; pi++) {
+    if (proofs[pi] && proofs[pi].data) proofUrls.push(proofs[pi].data);
+  }
+  var proofUrl = proofUrls.length > 0 ? proofUrls[0] : '';
+  var proofBackUrl = proofUrls.length > 1 ? proofUrls[proofUrls.length - 1] : '';
+  var payload = {
+    order_id: orderId,
+    payment_method: pm.name,
+    amount: sm ? sm.priceDisplay : '',
+    customer_name: sd ? sd.fullName : '',
+    customer_phone: document.getElementById('contactPhone').value,
+    proof_count: proofs.length,
+    status: 'pending',
+    proof_url: proofUrl,
+    proof_urls: proofUrls
+  };
+  if (proofBackUrl) payload.proof_back_url = proofBackUrl;
+  fetch(B+'/payment-proof',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){});
 
   fill.style.width='100%';
   document.getElementById('progressText').textContent='Complete!';
