@@ -977,76 +977,156 @@ async function handleAdminGetStats() {
 // ── PAYMENT METHODS ───────────────────────────────────────────────────────────
 // The rich per-method configuration is stored as a single JSON document in
 // admin_settings (key = "payment_methods") so nested config survives intact.
-async function loadStoredPaymentMethods(): Promise<Record<string, unknown>[] | null> {
-  const r = await fetch(
-    REST + "/admin_settings?select=value&key=eq.payment_methods&limit=1",
-    { headers: SB_HEADERS },
-  );
-  if (!r.ok) {
-    console.error("Payment methods: load failed:", await r.text());
-    return null;
-  }
-  const rows = await r.json();
-  const val = rows[0]?.value as { methods?: unknown } | undefined;
-  return val && Array.isArray(val.methods)
-    ? (val.methods as Record<string, unknown>[])
-    : null;
-}
 
-async function handlePublicPaymentMethods() {
-  const list = await loadStoredPaymentMethods();
-  if (!list) return json({ methods: [] });
-  const enabled = list.filter(
-    (m) => (m as { enabled?: boolean }).enabled !== false,
-  );
-  return json({ methods: enabled });
-}
-
-async function handleAdminGetPaymentMethods() {
-  const list = await loadStoredPaymentMethods();
-  return json({ methods: list ?? [] });
-}
-
-async function handleAdminSavePaymentMethods(req: Request) {
-  let body: { methods?: unknown };
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: "Invalid request" }, 400);
-  }
-  if (!Array.isArray(body.methods)) {
-    return json({ error: "methods must be an array." }, 400);
-  }
-  const value = { methods: body.methods };
-  const existingR = await fetch(
-    REST + "/admin_settings?select=key&key=eq.payment_methods&limit=1",
-    { headers: SB_HEADERS },
-  );
-  const existing = existingR.ok ? await existingR.json() : [];
-  if (existing.length > 0) {
-    const r = await fetch(REST + "/admin_settings?key=eq.payment_methods", {
-      method: "PATCH",
-      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify({ value, updated_at: new Date().toISOString() }),
-    });
-    if (!r.ok) {
-      console.error("Payment methods: update failed:", await r.text());
-      return json({ error: "Failed to save payment methods." }, 500);
+    // ── ROW <-> METHOD CONVERSION HELPERS ────────────────────────────────────────
+    function methodToRow(m: Record<string, unknown>): Record<string, unknown> {
+    const config = (typeof m.config === 'object' && m.config !== null
+      ? m.config
+      : {}) as Record<string, unknown>;
+    const slug = String(m.id || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 64) || ('method-' + Date.now());
+    return {
+      slug,
+      name: String(m.name || ''),
+      display_name: String(m.name || ''),
+      type: String(m.type || 'wallet'),
+      description: String(m.description || ''),
+      enabled: m.enabled !== false,
+      sort_order: Number(m.displayOrder) || 999,
+      logo_url: String(m.logo || ''),
+      logo_id: slug,
+      wallet_address: String(
+        config.walletAddress ?? config.cashtag ?? config.username ?? config.email ?? config.phone ?? ''
+      ),
+      account_details: JSON.stringify(config),
+      qr_code_url: String(config.qrCode ?? ''),
+      payment_instructions: String(config.instructions ?? ''),
+      config: config,
+      updated_at: new Date().toISOString(),
+    };
     }
-  } else {
-    const r = await fetch(REST + "/admin_settings", {
-      method: "POST",
-      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify({ key: "payment_methods", value }),
-    });
-    if (!r.ok) {
-      console.error("Payment methods: insert failed:", await r.text());
-      return json({ error: "Failed to save payment methods." }, 500);
-    }
-  }
-  return json({ success: true, count: body.methods.length });
-}
 
+    function rowToMethod(row: Record<string, unknown>): Record<string, unknown> {
+    let config: Record<string, unknown> = {};
+    try {
+      if (row.config && typeof row.config === 'object' && !Array.isArray(row.config)) {
+        config = row.config as Record<string, unknown>;
+      } else if (row.account_details) {
+        config = JSON.parse(String(row.account_details));
+      }
+    } catch { /* ignore */ }
+    return {
+      id: String(row.slug || row.id || ''),
+      name: String(row.name || ''),
+      description: String(row.description || row.display_name || ''),
+      type: String(row.type || 'wallet'),
+      logo: String(row.logo_url || ''),
+      enabled: row.enabled !== false,
+      displayOrder: Number(row.sort_order) || 999,
+      config,
+      lastUpdated: String(row.updated_at || row.created_at || new Date().toISOString()),
+    };
+    }
+
+    // ── PAYMENT METHODS: PUBLIC READ ──────────────────────────────────────────────
+    async function handlePublicPaymentMethods() {
+    const r = await fetch(
+      REST + "/payment_methods?select=*&enabled=eq.true&order=sort_order.asc",
+      { headers: SB_HEADERS },
+    );
+    if (!r.ok) {
+      console.error("handlePublicPaymentMethods failed:", await r.text());
+      return json({ methods: [] });
+    }
+    const rows = (await r.json()) as Record<string, unknown>[];
+    return json({ methods: rows.map(rowToMethod) });
+    }
+
+    // ── PAYMENT METHODS: ADMIN READ ───────────────────────────────────────────────
+    async function handleAdminGetPaymentMethods() {
+    const r = await fetch(
+      REST + "/payment_methods?select=*&order=sort_order.asc",
+      { headers: SB_HEADERS },
+    );
+    if (!r.ok) {
+      console.error("handleAdminGetPaymentMethods failed:", await r.text());
+      return json({ methods: [] });
+    }
+    const rows = (await r.json()) as Record<string, unknown>[];
+    return json({ methods: rows.map(rowToMethod) });
+    }
+
+    // ── PAYMENT METHODS: ADMIN BULK UPSERT ───────────────────────────────────────
+    async function handleAdminSavePaymentMethods(req: Request) {
+    let body: { methods?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return json({ error: "Invalid request" }, 400);
+    }
+    if (!Array.isArray(body.methods)) {
+      return json({ error: "methods must be an array." }, 400);
+    }
+
+    const methods = body.methods as Record<string, unknown>[];
+    const rows = methods.map(methodToRow);
+
+    // 1. Find slugs currently in DB
+    const existingRes = await fetch(
+      REST + "/payment_methods?select=slug",
+      { headers: SB_HEADERS },
+    );
+    const existingRows = existingRes.ok
+      ? ((await existingRes.json()) as { slug: string }[])
+      : [];
+    const existingSlugs = new Set(existingRows.map((r) => r.slug).filter(Boolean));
+    const newSlugs = new Set(rows.map((r) => String(r.slug)).filter(Boolean));
+
+    // 2. Delete rows no longer in the new set
+    const toDelete = [...existingSlugs].filter((s) => !newSlugs.has(s));
+    if (toDelete.length > 0) {
+      const delFilter = toDelete.map((s) => encodeURIComponent(s)).join(",");
+      await fetch(REST + "/payment_methods?slug=in.(" + delFilter + ")", {
+        method: "DELETE",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+      });
+    }
+
+    // 3. Upsert the full set (insert new, update existing matched by slug unique index)
+    const upsertRes = await fetch(
+      REST + "/payment_methods?on_conflict=slug",
+      {
+        method: "POST",
+        headers: { ...SB_HEADERS, Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify(rows),
+      },
+    );
+
+    if (!upsertRes.ok) {
+      const errText = await upsertRes.text();
+      console.error("Payment methods upsert failed:", errText);
+      return json({ error: "Failed to save payment methods: " + errText }, 500);
+    }
+
+    return json({ success: true, count: methods.length });
+    }
+
+    // ── PAYMENT METHODS: ADMIN DELETE SINGLE ─────────────────────────────────────
+    async function handleAdminDeletePaymentMethod(slugOrId: string) {
+    let r = await fetch(
+      REST + "/payment_methods?slug=eq." + encodeURIComponent(slugOrId),
+      { method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" } },
+    );
+    if (!r.ok) {
+      r = await fetch(
+        REST + "/payment_methods?id=eq." + encodeURIComponent(slugOrId),
+        { method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" } },
+      );
+    }
+    if (!r.ok) return json({ error: "Failed to delete payment method" }, 500);
+    return json({ success: true });
+    }
+
+    
 async function handleSubmitPaymentProof(req: Request) {
   let body: Record<string, unknown>;
   try {
@@ -1231,6 +1311,8 @@ Deno.serve(async (req) => {
     if (route === "/api/payment-methods" && req.method === "GET") return await handlePublicPaymentMethods();
     if (route === "/api/admin/payment-methods" && req.method === "GET") return await handleAdminGetPaymentMethods();
     if (route === "/api/admin/payment-methods" && req.method === "POST") return await handleAdminSavePaymentMethods(req);
+    const pmDelMatch = route.match(/^\/api\/admin\/payment-methods\/([^/]+)$/);
+    if (pmDelMatch && req.method === "DELETE") return await handleAdminDeletePaymentMethod(decodeURIComponent(pmDelMatch[1]));
     // Payment submission from customer
     if (route === "/api/payment/submit" && req.method === "POST") return await handlePaymentSubmit(req);
     if (route === "/api/payment/status" && req.method === "GET") return await handleGetPaymentStatus(req);
