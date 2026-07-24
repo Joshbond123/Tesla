@@ -1016,41 +1016,39 @@
   }
 
   // ── LOAD PAYMENT METHODS ──
-  function loadDeliveryFees() {
-    // Try loading fees from API first
-    var API_BASE = typeof window.TESLA_API_BASE !== 'undefined' ? window.TESLA_API_BASE : '';
-    if (API_BASE) {
-      fetch(API_BASE + '/admin/settings').then(function(r) {
-        return r.json();
-      }).then(function(d) {
-        if (d.deliveryFeeStandard) {
-          localStorage.setItem('tesla_delivery_fee_standard', d.deliveryFeeStandard);
-          localStorage.setItem('tesla_delivery_fee', d.deliveryFeeStandard);
-        }
-        if (d.deliveryFeeExpress) {
-          localStorage.setItem('tesla_delivery_fee_express', d.deliveryFeeExpress);
-        }
-        renderOrderSummary();
-      }).catch(function() {
-        // Keep localStorage values
-      });
-    }
-  }
-
-  function loadPaymentMethods() {
-    paymentMethods = PM ? PM.getEnabled() : [];
+    function loadPaymentMethods() {
+    // Load enabled payment methods from Supabase REST API (direct DB query from static page)
+    var SUPABASE_URL = window.SUPABASE_URL || 'https://puebwzumwqizgbmksrpq.supabase.co';
+    var SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODEyMjYsImV4cCI6MjA2MTU1NzIyNn0.kfup1Lsb8vnvKLjAH0r-SM5mqLYMttOzQsN7YT6ISrw';
+    
+    // Load from localStorage fallback first (instant)
+    var saved = localStorage.getItem('tesla_payment_methods');
+    if (saved) { try { paymentMethods = JSON.parse(saved); } catch(e) {} }
     renderPaymentMethods();
     renderOrderSummary();
-    loadDeliveryFees();
-    if (PM && PM.syncFromApi) {
-      PM.syncFromApi('public', function() {
-        paymentMethods = PM.getEnabled();
-        if (selectedPaymentId && !findMethod(selectedPaymentId)) selectedPaymentId = null;
-        renderPaymentMethods();
-        if (!selectedPaymentId && paymentMethods.length) selectPaymentMethod(paymentMethods[0].id);
-        else if (selectedPaymentId) showPaymentDetails(selectedPaymentId);
-      });
-    }
+    
+    // Then try to load from Supabase REST API (async, updates when response arrives)
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', SUPABASE_URL + '/rest/v1/payment_methods?select=*&enabled=eq.true&order=sort_order.asc');
+      xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          if (data && data.length > 0) {
+            paymentMethods = data.map(function(m) {
+              return { id: m.id, name: m.name, display_name: m.display_name, type: m.type, logo_id: m.logo_id || 'pay-creditcard', enabled: m.enabled !== false, sort_order: m.sort_order || 0, wallet_address: m.wallet_address || '', account_details: m.account_details || '', account_email: m.account_email || '', cash_tag: m.cash_tag || '', username: m.username || '', email: m.email || '', payment_instructions: m.payment_instructions || '' };
+            });
+            localStorage.setItem('tesla_payment_methods', JSON.stringify(paymentMethods));
+            renderPaymentMethods();
+            if (!selectedPaymentId && paymentMethods.length > 0) {
+              selectPaymentMethod(paymentMethods[0].id);
+            }
+          }
+        }
+      };
+      xhr.send();
+    } catch(e) { console.warn('Supabase fetch failed:', e); }
   }
 
   function findMethod(id) {
@@ -1240,18 +1238,22 @@
   window.copyAddress = function(text) { copyToClipboard(text, null); showToast('Copied to clipboard', 'success'); };
 
   // ── ORDER SUMMARY ──
-  function renderOrderSummary() {
+    function renderOrderSummary() {
     var el = document.getElementById('orderSummaryContent');
     if (!el) return;
 
     var car = selectedCar || {};
     var delivery = deliveryDetails || {};
     var method = deliveryMethod || {};
-    var method = deliveryMethod || {};
-    var fee = (method.price && !isNaN(method.price)) ? method.price : parseInt(localStorage.getItem('tesla_delivery_fee_standard') || localStorage.getItem('tesla_delivery_fee') || '0', 10) || 0;
+    // Load delivery fee from delivery method price first, fallback to localStorage
+    var fee = method.price ? method.price : (parseInt(localStorage.getItem('tesla_delivery_fee') || '0', 10) || 0);
 
     var rows = [];
-    if (car.model || car.name) rows.push({ label: 'Car', value: (car.name || car.model) + (car.variant ? ' — ' + car.variant : '') });
+    // Show Car (Tesla model name) instead of Color
+    var carName = car.name || car.model || '';
+    if (carName) {
+      rows.push({ label: 'Car', value: 'Tesla ' + carName });
+    }
     if (delivery.recipientName) rows.push({ label: 'Recipient', value: delivery.recipientName });
     if (delivery.address || delivery.city) {
       var addr = [delivery.address, delivery.city, delivery.state].filter(Boolean).join(', ');
@@ -1263,43 +1265,9 @@
       return '<div class="summary-row"><span class="sr-label">' + escapeHtml(r.label) + '</span><span class="sr-value">' + escapeHtml(r.value) + '</span></div>';
     }).join('');
 
-    html += '<div class="summary-total"><span class="summary-total-label">Delivery Fee</span><span class="summary-total-amount">$' + fee.toLocaleString() + '</span></div>';
+    html += '<div class="summary-total"><span class="summary-total-label">Delivery Fee Due</span><span class="summary-total-amount">$' + (fee || 299).toLocaleString() + '</span></div>';
 
     el.innerHTML = html;
-  }
-
-  // ── PROOF UPLOAD (regular) ──
-  function handleFileSelect(input) {
-    var file = input.files && input.files[0];
-    if (!file) return;
-    var allowedTypes = ['image/jpeg','image/jpg','image/png','image/gif','image/webp','application/pdf'];
-    if (allowedTypes.indexOf(file.type) === -1) {
-      showToast('Please select a valid image or PDF file', 'error'); return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      showToast('File too large. Maximum size is 20MB', 'error'); return;
-    }
-    if (file.type === 'application/pdf') {
-      uploadedFileData = null; uploadedFileName = file.name;
-      document.getElementById('previewImage').style.display = 'none';
-      document.getElementById('previewFileName').textContent = file.name;
-      document.getElementById('previewFileSize').textContent = formatFileSize(file.size);
-      showUploadPreview();
-    } else {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        uploadedFileData = e.target.result;
-        uploadedFileName = file.name;
-        var img = document.getElementById('previewImage');
-        img.src = uploadedFileData;
-        img.style.display = 'block';
-        document.getElementById('previewFileName').textContent = file.name;
-        document.getElementById('previewFileSize').textContent = formatFileSize(file.size);
-        showUploadPreview();
-      };
-      reader.readAsDataURL(file);
-    }
-    input.value = '';
   }
 
   function showUploadPreview() {
@@ -1569,22 +1537,12 @@
   }
 
   function handlePaymentSuccess(payload) {
-    // Save proof data for confirmation page
-    var confirmationData = {
-      orderId: payload.orderId || ('ORD-' + Date.now().toString(36).toUpperCase()),
-      paymentMethod: payload.paymentMethodName || selectedPaymentId,
-      car: selectedCar,
-      delivery: deliveryDetails,
-      deliveryMethod: deliveryMethod,
-      timestamp: payload.timestamp || new Date().toISOString(),
-      status: 'pending',
-      sessionToken: sessionToken
-    };
-    localStorage.setItem('tesla_payment_confirmation', JSON.stringify(confirmationData));
-    localStorage.setItem('tesla_payment_submitted', 'true');
+    localStorage.removeItem('tesla_selected_car');
+    localStorage.removeItem('tesla_delivery_details');
+    localStorage.removeItem('tesla_delivery_method');
     showToast('Payment submitted successfully!', 'success');
     setTimeout(function() {
-      window.location.href = 'payment-confirmation.html';
+      window.location.href = 'confirmation.html';
     }, 1200);
   }
 
