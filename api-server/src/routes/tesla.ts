@@ -343,6 +343,87 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 </html>`;
 }
 
+// ── PAYMENT PROOF SUBMISSION ──────────────────────────────────────────
+router.post("/payment/submit", async (req, res) => {
+  try {
+    const { order_id, paymentMethodId, paymentMethodName, customerName, carModel, amount,
+            proofData, proofFileName, giftCardFront, giftCardBack, cardFront, cardBack,
+            sessionToken, orderData } = req.body as any;
+
+    const supabase = await getSupabaseAdmin();
+
+    // Resolve customer info from session (non-fatal if expired/missing)
+    let userId: string | null = null;
+    let customerEmail = "";
+    let customerPhone = "";
+    let resolvedName = customerName || "";
+    if (sessionToken) {
+      try {
+        const user = await getSessionUser(sessionToken);
+        if (user) {
+          userId = user.id ?? null;
+          customerEmail = user.email || "";
+          customerPhone = user.phone || "";
+          if (!resolvedName) resolvedName = [user.first_name, user.last_name].filter(Boolean).join(" ");
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    const rawFront: string = proofData || giftCardFront || cardFront || "";
+    const rawBack: string  = giftCardBack || cardBack || "";
+
+    async function uploadProof(b64: string, suffix: string): Promise<string> {
+      if (!b64) return "";
+      try {
+        const base64 = b64.includes(",") ? b64.split(",")[1]! : b64;
+        const buf    = Buffer.from(base64, "base64");
+        const mime   = (b64.match(/^data:([^;]+);/) || [])[1] || "image/jpeg";
+        const ext    = mime.split("/")[1] || "jpg";
+        const name   = `${(order_id || "proof").replace(/[^a-zA-Z0-9-]/g, "_")}-${suffix}-${Date.now()}.${ext}`;
+        const { data: up, error: upErr } = await supabase.storage
+          .from("payment-proofs")
+          .upload(name, buf, { contentType: mime, upsert: true });
+        if (upErr || !up) return b64.length > 2_000_000 ? b64.substring(0, 2_000_000) : b64;
+        return supabase.storage.from("payment-proofs").getPublicUrl(name).data.publicUrl;
+      } catch {
+        return b64.length > 2_000_000 ? b64.substring(0, 2_000_000) : b64;
+      }
+    }
+
+    const [proof_url, proof_back_url] = await Promise.all([
+      uploadProof(rawFront, "front"),
+      uploadProof(rawBack,  "back"),
+    ]);
+
+    const { data: inserted, error: insertErr } = await supabase
+      .from("payment_proofs")
+      .insert({
+        order_id:        order_id || "",
+        user_id:         userId,
+        payment_method:  paymentMethodName || paymentMethodId || "Unknown",
+        proof_url:       proof_url || null,
+        proof_back_url:  proof_back_url || null,
+        proof_type:      "file",
+        amount:          String(amount || ""),
+        status:          "pending",
+        car_model:       carModel || "",
+        customer_name:   resolvedName || "",
+        customer_email:  customerEmail || "",
+        customer_phone:  customerPhone || "",
+        delivery_method: (orderData?.deliveryMethod as any)?.name || "",
+      })
+      .select("id")
+      .single();
+
+    if (insertErr) throw insertErr;
+    logger.info({ orderId: order_id, proofId: inserted.id }, "Payment proof submitted");
+    res.json({ success: true, proofId: inserted.id, orderId: order_id });
+  } catch (err) {
+    logger.error({ err }, "Payment submit error");
+    res.status(500).json({ error: "Server error. Please try again." });
+  }
+});
+
 // ── ADMIN: SETTINGS ──
 router.post("/admin/settings", async (req, res) => {
   try {
@@ -423,9 +504,25 @@ router.delete("/admin/payment-methods/:id", async (req, res) => {
 router.get("/admin/payment-proofs", async (_req, res) => {
   try {
     const supabase = await getSupabaseAdmin();
-    const { data, error } = await supabase.from("payment_proofs").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("payment_proofs")
+      .select("*, giveaway_users(id,email,phone,first_name,last_name)")
+      .order("created_at", { ascending: false });
     if (error) throw error;
-    res.json({ proofs: data || [] });
+    const proofs = (data || []).map((p: any) => {
+      const u = Array.isArray(p.giveaway_users) ? p.giveaway_users[0] : p.giveaway_users;
+      const joinedName = [u?.first_name, u?.last_name].filter(Boolean).join(" ");
+      return {
+        ...p,
+        user_name: p.customer_name || joinedName || u?.email || "-",
+        user_email: p.customer_email || u?.email || "-",
+        user_phone: p.customer_phone || u?.phone || "-",
+        car_model: p.car_model || "-",
+        delivery_method: p.delivery_method || "-",
+        giveaway_users: undefined,
+      };
+    });
+    res.json({ proofs });
   } catch (err) { logger.error({ err }, "Admin payment proofs error"); res.status(500).json({ error: "Server error" }); }
 });
 router.post("/admin/payment-proofs/submit", async (req, res) => {

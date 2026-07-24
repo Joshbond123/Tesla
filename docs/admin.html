@@ -66,6 +66,7 @@
       </button>
       <button class="nav-item" data-tab="proofs">
         <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg></span> Payment Proofs
+        <span class="nav-badge" id="proofsNavBadge" style="display:none;">0</span>
       </button>
       <button class="nav-item" data-tab="social">
         <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Support & Social
@@ -300,11 +301,15 @@
       <div class="tab-panel" id="panelProofs">
         <div class="admin-card">
           <div class="card-header">
-            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg> Payment Proofs</h3>
+            <h3>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg>
+              Payment Proofs
+              <span id="proofsCountLabel" style="font-size:12px;font-weight:400;color:var(--admin-text-muted);margin-left:8px;"></span>
+            </h3>
             <div class="card-actions">
               <div class="search-box">
                 <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-                <input type="text" id="proofSearch" placeholder="Search proofs..." oninput="renderProofs()">
+                <input type="text" id="proofSearch" placeholder="Search name, email, order ID..." oninput="renderProofs()">
               </div>
               <select class="filter-select" id="proofFilter" onchange="renderProofs()">
                 <option value="all">All Status</option>
@@ -312,21 +317,30 @@
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
-              <button class="btn btn-ghost btn-sm" onclick="loadProofs()">
+              <select class="filter-select" id="proofSort" onchange="renderProofs()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="pending_first">Pending First</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" onclick="loadProofs()" title="Refresh">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               </button>
             </div>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Customer</th><th>Order ID</th><th>Tesla Model</th><th>Method</th><th>Amount</th><th>Proof</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody id="proofsTable"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--admin-text-muted);">Loading...</td></tr></tbody>
-            </table>
-          </div>
+          <div id="proofsContainer" style="padding:16px 20px 8px;"></div>
           <div class="empty-state" id="proofsEmpty" style="display:none;">
             <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg></div>
             <p>No payment proofs submitted yet.</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Payment Proof Full-View Modal -->
+      <div id="proofModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;padding:24px;" onclick="window.closeProofModal()">
+        <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;padding:24px;max-width:90vw;max-height:90vh;overflow:auto;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.4);">
+          <button onclick="window.closeProofModal()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.06);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#555;">&#x2715;</button>
+          <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:16px;">Payment Proof</div>
+          <img id="proofModalImg" src="" alt="Payment proof" style="max-width:min(800px,80vw);max-height:70vh;display:block;border-radius:8px;object-fit:contain;">
         </div>
       </div>
 

@@ -9,6 +9,14 @@ function updateStats() {
   var pending = allUsers.length - verified;
   setText("statTotal", allUsers.length); setText("statVerified", verified); setText("statPending", pending); setText("statOrders", allOrders.length);
   var badge = document.getElementById("usersNavBadge"); if (badge) badge.textContent = allUsers.length;
+  updateProofsBadge();
+}
+function updateProofsBadge() {
+  var count = (typeof allProofs !== "undefined" && allProofs) ? allProofs.length : 0;
+  var b = document.getElementById("proofsNavBadge");
+  if (b) { b.textContent = count; b.style.display = count > 0 ? "" : "none"; }
+  var lbl = document.getElementById("proofsCountLabel");
+  if (lbl) lbl.textContent = count + " total";
 }
 function renderRecentUsers() {
   var tbody = document.getElementById("recentTable"); if (!tbody) return;
