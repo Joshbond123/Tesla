@@ -318,7 +318,7 @@ document.getElementById('deliveryDetailsForm').addEventListener('submit', async 
 
   showLoading('Creating your order...');
 
-  var sessionToken = localStorage.getItem('tesla_session_token') || getSession() || '';
+  var sessionToken = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session') || (typeof getSession === 'function' ? getSession() : '') || '';
 
   // Generate order
   try {

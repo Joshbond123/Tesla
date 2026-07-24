@@ -527,13 +527,34 @@ async function handleOrder(req: Request) {
       }
     }
   }
+  let guestUserId = null;
   if (!user) {
+    // Create a guest user entry so FK constraints are satisfied
+    const guestEmail = (deliveryDetails?.email) || "guest-" + hexRandom(6) + "@tesla-guest.com";
+    const guestPhone = (deliveryDetails?.phone) || "+0000000000";
+    const guestName = (deliveryDetails?.fullName) || "Guest";
+    const { data: guestUser, error: guestError } = await dbInsert("giveaway_users", {
+      email: guestEmail,
+      phone: guestPhone,
+      first_name: guestName,
+      last_name: "",
+      verification_token: hexRandom(32),
+      verification_status: "verified",
+      entry_count: 1,
+    }, "id");
+    if (guestError || !guestUser) {
+      console.error("Order: guest user insert failed:", guestError);
+      return json({ error: "Server error. Please try again." }, 500);
+    }
     user = {
-      id: 0, email: (deliveryDetails?.email) || "guest@tesla.com",
-      phone: (deliveryDetails?.phone) || "",
-      firstName: (deliveryDetails?.fullName) || "Guest",
-      lastName: "", entryId: 0
+      id: guestUser.id,
+      email: guestEmail,
+      phone: guestPhone,
+      firstName: guestName,
+      lastName: "",
+      entryId: guestUser.id
     };
+    guestUserId = guestUser.id;
   }
 
   const orderId = "TSLA-" + crypto.randomUUID().substring(0, 8).toUpperCase();
