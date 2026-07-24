@@ -95,7 +95,7 @@
               <div class="option-days">7 – 12 business days</div>
             </div>
           </div>
-          <div class="option-price">$299 <span>delivery fee</span></div>
+          <div class="option-price"><span id="price-standard">$299</span> <span>delivery fee</span></div>
         </div>
         <div class="option-check" id="check-standard">✓</div>
       </div>
@@ -119,7 +119,7 @@
               <div class="option-days">1 – 3 business days</div>
             </div>
           </div>
-          <div class="option-price">$399 <span>delivery fee</span></div>
+          <div class="option-price"><span id="price-express">$399</span> <span>delivery fee</span></div>
         </div>
         <div class="option-check" id="check-express">✓</div>
       </div>
@@ -146,29 +146,59 @@
 <script src="js/app.js"></script>
 <script>
 let selectedMethod = null;
+// Dynamic fees loaded from DB; fall back to defaults
+let standardFeeAmt = 299;
+let expressFeeAmt  = 399;
 
 // Load saved data
-const savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
-const savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+let savedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+let savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
 
 // Try to recover from sessionStorage backup if localStorage empty
 if (!savedCar) {
   try { savedCar = JSON.parse(sessionStorage.getItem('tesla_selected_car') || 'null'); } catch(_) { savedCar = null; }
 }
-if (!savedDelivery) { 
+if (!savedDelivery) {
   try { savedDelivery = JSON.parse(sessionStorage.getItem('tesla_delivery_details') || 'null'); } catch(_) { savedDelivery = null; }
 }
-// Only redirect if BOTH are truly missing after recovery attempt
 if (!savedCar || !savedDelivery) {
-  // Try one more time with alternative keys
   try { savedCar = savedCar || JSON.parse(localStorage.getItem('selectedCar')); } catch(_) {}
   try { savedDelivery = savedDelivery || JSON.parse(localStorage.getItem('deliveryDetails')); } catch(_) {}
 }
 if (!savedCar || !savedDelivery) { window.location.href = 'dashboard.html'; }
 
 // Populate summary
-document.getElementById('summaryVehicle').textContent = savedCar ? `Tesla ${savedCar.name} (${savedCar.color})` : '—';
-document.getElementById('summaryAddress').textContent = savedDelivery ? `${savedDelivery.city}, ${savedDelivery.country}` : '—';
+document.getElementById('summaryVehicle').textContent = savedCar ? `Tesla ${savedCar.name} (${savedCar.color || ''})`.trim() : '—';
+document.getElementById('summaryAddress').textContent = savedDelivery ? `${savedDelivery.city || ''}, ${savedDelivery.country || ''}`.replace(/^,\s*|,\s*$/, '') || '—' : '—';
+
+// ── Load fees from DB ───────────────────────────────────────────────────────
+(function loadFeesFromDB() {
+  var SUPABASE_URL = (window.SUPABASE_URL || 'https://puebwzumwqizgbmksrpq.supabase.co');
+  var SUPABASE_KEY = (window.SUPABASE_ANON_KEY || '');
+  // Use the API base to fetch settings
+  var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE) ? window.TESLA_API_BASE : '';
+  if (!API_BASE) {
+    // Derive from config if available
+    if (typeof window.SUPABASE_URL !== 'undefined') {
+      API_BASE = window.SUPABASE_URL + '/functions/v1/tesla-api/api';
+    }
+  }
+  if (!API_BASE) return; // keep defaults
+
+  fetch(API_BASE + '/admin/settings', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data) return;
+      if (typeof data.deliveryFeeStandard === 'number') standardFeeAmt = data.deliveryFeeStandard;
+      if (typeof data.deliveryFeeExpress === 'number')  expressFeeAmt  = data.deliveryFeeExpress;
+      // Update displayed prices
+      var stdPriceEl = document.getElementById('price-standard');
+      var expPriceEl = document.getElementById('price-express');
+      if (stdPriceEl) stdPriceEl.textContent = '$' + standardFeeAmt;
+      if (expPriceEl) expPriceEl.textContent = '$' + expressFeeAmt;
+    })
+    .catch(function() { /* keep defaults */ });
+})();
 
 function selectMethod(method) {
   selectedMethod = method;
@@ -180,11 +210,13 @@ function selectMethod(method) {
 
 function continueToPayment() {
   if (!selectedMethod) return;
-  const methodData = {
+  var price    = selectedMethod === 'express' ? expressFeeAmt  : standardFeeAmt;
+  var display  = '$' + price;
+  var methodData = {
     id: selectedMethod,
     name: selectedMethod === 'express' ? 'Express Delivery' : 'Standard Delivery',
-    price: selectedMethod === 'express' ? 399 : 299,
-    priceDisplay: selectedMethod === 'express' ? '$399' : '$299',
+    price: price,
+    priceDisplay: display,
     days: selectedMethod === 'express' ? '1–3 days' : '7–12 days',
   };
   localStorage.setItem('tesla_delivery_method', JSON.stringify(methodData));

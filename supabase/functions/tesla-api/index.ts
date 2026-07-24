@@ -1134,6 +1134,7 @@ async function handlePaymentSubmit(req: Request) {
   const amount = String(body.amount || body.deliveryFee || "");
   const sessionToken = String(body.sessionToken || "");
   
+  // Only include columns that exist in the payment_proofs schema
   const proof: Record<string, unknown> = {
     order_id: orderId,
     payment_method: paymentMethod,
@@ -1142,8 +1143,6 @@ async function handlePaymentSubmit(req: Request) {
     amount: amount,
     status: "pending",
     user_id: null,
-    customer_name: customerName,
-    session_token: sessionToken,
     created_at: new Date().toISOString(),
   };
   

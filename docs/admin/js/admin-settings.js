@@ -10,7 +10,7 @@ function saveDeliveryFee() {
   if (exp < 0) exp = 0;
   if (std === 0) std = 299;
   if (exp === 0) exp = 399;
-  var data = { standard_fee: std, express_fee: exp };
+  var data = { deliveryFeeStandard: std, deliveryFeeExpress: exp };
   if (API_BASE) {
     api("POST", "/admin/settings", data).then(function() {
       standardFee = std; expressFee = exp; deliveryFee = std;
@@ -30,8 +30,8 @@ function saveDeliveryFee() {
 function loadDeliveryFees() {
   if (API_BASE) {
     api("GET", "/admin/settings").then(function(r) {
-      if (r.standard_fee) { standardFee = r.standard_fee; deliveryFee = r.standard_fee; }
-      if (r.express_fee) expressFee = r.express_fee;
+      if (r.deliveryFeeStandard) { standardFee = r.deliveryFeeStandard; deliveryFee = r.deliveryFeeStandard; }
+      if (r.deliveryFeeExpress) expressFee = r.deliveryFeeExpress;
       var sfi = document.getElementById("standardFeeInput");
       var efi = document.getElementById("expressFeeInput");
       if (sfi) sfi.value = standardFee;

