@@ -159,7 +159,10 @@ function renderProofCard(p) {
   var imgs        = getProofImages(p);
   var hasImg      = imgs.length > 0;
   var borderLeft  = status === "approved" ? "#22c55e" : status === "rejected" ? "#ef4444" : "#f97316";
-  var customerLabel = hasVal(p.user_name) ? esc(p.user_name) : '<span style="color:#94a3b8;font-style:italic;">Customer details loading…</span>';
+  var customerLabel = hasVal(p.user_name) ? esc(p.user_name)
+    : hasVal(p.user_email) ? esc(p.user_email)
+    : hasVal(p.order_id) ? '<span style="color:#94a3b8;font-size:11px;font-family:monospace;">Order ' + esc(p.order_id) + '</span>'
+    : '<span style="color:#94a3b8;font-style:italic;">Unknown Customer</span>';
 
   // Thumbnail — works for both base64 data URLs and https:// storage URLs
   var thumbHtml = hasImg
@@ -324,13 +327,15 @@ function openProofDetail(id) {
   body.innerHTML =
     // ── Customer header ──────────────────────────────────────────
     '<div style="display:flex;align-items:center;gap:14px;padding-bottom:20px;margin-bottom:20px;border-bottom:1.5px solid #f1f5f9;">' +
-      '<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.3);">' + initials(p.user_name) + '</div>' +
+      '<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.3);">' + initials(hasVal(p.user_name) ? p.user_name : p.user_email) + '</div>' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-weight:800;font-size:18px;color:#111827;line-height:1.2;margin-bottom:4px;">' +
-          (hasVal(p.user_name) ? esc(p.user_name) : '<span style="color:#9ca3af;font-style:italic;font-weight:400;">Name not available</span>') +
+        '<div style="font-weight:800;font-size:18px;color:#111827;line-height:1.2;margin-bottom:3px;">' +
+          (hasVal(p.user_name) ? esc(p.user_name) : hasVal(p.user_email) ? esc(p.user_email) : '<span style="color:#9ca3af;font-style:italic;font-weight:400;">Customer ' + esc(p.order_id || p.id || '—') + '</span>') +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+        (hasVal(p.user_name) && hasVal(p.user_email) ? '<div style="font-size:12px;color:#6b7280;margin-bottom:5px;">' + esc(p.user_email) + (hasVal(p.user_phone) ? ' · ' + esc(p.user_phone) : '') + '</div>' : '') +
+        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
           statusBadge(p.status, true) +
+          (hasVal(p.car_model) ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;color:#e2e8f0;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.02em;">Tesla ' + esc(p.car_model) + '</span>' : '') +
           (p.created_at ? '<span style="font-size:11.5px;color:#9ca3af;">Submitted ' + fmtDateTime(p.created_at) + '</span>' : '') +
         '</div>' +
       '</div>' +
@@ -349,14 +354,14 @@ function openProofDetail(id) {
       ]) +
       infoSection("Order", "📦", [
         ["Order ID",       p.order_id,        true],
-        ["Tesla Model",    hasVal(p.car_model) ? "Tesla " + p.car_model : ""],
+        ["Tesla Model", hasVal(p.car_model) ? "Tesla " + p.car_model : "Not specified"],
         ["Delivery Method",p.delivery_method]
       ]) +
       infoSection("Payment", "💳", [
         ["Method",    p.payment_method],
         ["Date",      fmtDate(p.created_at)],
         ["Time",      fmtTime(p.created_at)],
-        ["Proof Type",p.proof_type]
+        ["Proof Type",p.proof_type],["Phone",p.user_phone]
       ]) +
       infoSection("Status", "📊", [
         ["Current Status", normaliseStatus(p.status).charAt(0).toUpperCase() + normaliseStatus(p.status).slice(1)],
