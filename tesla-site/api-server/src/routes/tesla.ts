@@ -42,16 +42,24 @@ function parseAccountDetails(raw: any): Record<string, any> {
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
+function mergeNonEmpty(base: Record<string, any>, override: Record<string, any>): Record<string, any> {
+  const merged = { ...base };
+  for (const [key, value] of Object.entries(override || {})) {
+    if (value !== undefined && value !== null && String(value).trim() !== "") merged[key] = value;
+  }
+  return merged;
+}
+
 function enrichPaymentMethodRow(m: any) {
   const slug = paymentSlug(m);
   const sample = PAYMENT_METHOD_SAMPLE_CONFIG[slug];
-  const config = { ...(sample?.config || {}), ...parseAccountDetails(m.account_details) };
+  const config = mergeNonEmpty(sample?.config || {}, parseAccountDetails(m.account_details));
   if (m.wallet_address) config.walletAddress = m.wallet_address;
-  if (m.payment_instructions) config.instructions = m.payment_instructions;
+  if (m.payment_instructions && String(m.payment_instructions).trim()) config.instructions = m.payment_instructions;
   if (m.qr_code_url) config.qrCode = m.qr_code_url;
   return {
     id: slug || m.id, _dbId: m.id, name: m.display_name || m.name, type: m.type || "wallet",
-    description: m.description || sample?.description || "", logo: m.logo_url || "", logo_url: m.logo_url || "",
+    description: (m.description && m.description !== m.display_name && m.description !== m.name) ? m.description : (sample?.description || m.description || ""), logo: m.logo_url || "", logo_url: m.logo_url || "",
     enabled: m.enabled, displayOrder: m.sort_order || 0, sort_order: m.sort_order || 0, config,
     wallet_address: m.wallet_address || config.walletAddress || config.cashtag || config.username || config.email || "",
     payment_instructions: m.payment_instructions || config.instructions || "",
