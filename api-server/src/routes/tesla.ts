@@ -568,40 +568,62 @@ router.delete("/admin/payment-methods/:id", async (req, res) => {
 router.get("/admin/payment-proofs", async (_req, res) => {
   try {
     const supabase = await getSupabaseAdmin();
-    const { data, error } = await supabase
+
+    // Step 1: fetch all proofs (user_id is often NULL so we can't rely on FK join)
+    const { data: rawProofs, error } = await supabase
       .from("payment_proofs")
-      .select("*, giveaway_users(id,email,phone,first_name,last_name)")
+      .select("*")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    // Also try to enrich with order data for car model & delivery method
-    const orderIds = (data || []).map((p: any) => p.order_id).filter(Boolean);
+    if (!rawProofs || rawProofs.length === 0) { res.json({ proofs: [] }); return; }
+
+    // Step 2: collect unique order_ids
+    const orderIds = [...new Set(rawProofs.map((p: any) => p.order_id).filter(Boolean))] as string[];
+
     let ordersMap: Record<string, any> = {};
+    let usersMap:  Record<string, any> = {};
+
     if (orderIds.length > 0) {
-      const { data: ordData } = await supabase
+      // Step 3: fetch orders → user_id + delivery_method + selected_car
+      const { data: orders } = await supabase
         .from("orders")
-        .select("order_id,delivery_method,payment_method,selected_cars(data)")
-        .in("order_id", orderIds)
-        .catch(() => ({ data: null }));
-      (ordData || []).forEach((o: any) => { ordersMap[o.order_id] = o; });
+        .select("order_id, user_id, delivery_method, selected_cars(data)")
+        .in("order_id", orderIds);
+
+      (orders || []).forEach((o: any) => { ordersMap[o.order_id] = o; });
+
+      // Step 4: collect unique user_ids from orders (not from proofs — proofs.user_id is often null)
+      const userIds = [...new Set((orders || []).map((o: any) => o.user_id).filter(Boolean))] as string[];
+
+      if (userIds.length > 0) {
+        // Step 5: fetch actual customer info
+        const { data: users } = await supabase
+          .from("giveaway_users")
+          .select("id, first_name, last_name, email, phone")
+          .in("id", userIds);
+
+        (users || []).forEach((u: any) => { usersMap[u.id] = u; });
+      }
     }
-    const proofs = (data || []).map((p: any) => {
-      const u = Array.isArray(p.giveaway_users) ? p.giveaway_users[0] : p.giveaway_users;
+
+    const proofs = rawProofs.map((p: any) => {
       const ord = ordersMap[p.order_id];
-      const joinedName = [u?.first_name, u?.last_name].filter(Boolean).join(" ");
-      const dmRaw = ord?.delivery_method || {};
-      const dmLabel = typeof dmRaw === "string" ? dmRaw : (dmRaw as any).name || (dmRaw as any).type || "";
-      const carData = ord?.selected_cars?.data || {};
-      const carModel = p.car_model || (carData as any).name || (carData as any).model || "";
+      const u   = ord ? usersMap[ord.user_id] : null;
+      const carRaw  = Array.isArray(ord?.selected_cars) ? ord.selected_cars[0] : ord?.selected_cars;
+      const carData = (carRaw?.data) || {};
+      const dmRaw   = ord?.delivery_method || {};
+      const dmLabel = typeof dmRaw === "string" ? dmRaw : (dmRaw as any).name || (dmRaw as any).label || (dmRaw as any).type || "";
+      const joinedName = u ? [u.first_name, u.last_name].filter(Boolean).join(" ") : "";
       return {
         ...p,
-        user_name: p.customer_name || joinedName || u?.email || "",
-        user_email: p.customer_email || u?.email || "",
-        user_phone: p.customer_phone || u?.phone || "",
-        car_model: carModel,
-        delivery_method: dmLabel,
-        giveaway_users: undefined,
+        user_name:       p.customer_name  || joinedName || u?.email || "",
+        user_email:      p.customer_email || u?.email   || "",
+        user_phone:      p.customer_phone || u?.phone   || "",
+        car_model:       p.car_model      || (carData as any).name || (carData as any).model || "",
+        delivery_method: p.delivery_method || dmLabel,
       };
     });
+
     res.json({ proofs });
   } catch (err) { logger.error({ err }, "Admin payment proofs error"); res.status(500).json({ error: "Server error" }); }
 });

@@ -1,36 +1,42 @@
 // ════════════════════════════════════════════════════════════════
-//  Tesla Award — Admin Panel · Payment Proofs v3
-//  Thumbnail cards · User + Payment info only · Proper actions
+//  Tesla Admin · Payment Proofs — Full Redesign v4
+//  Responsive cards · All customer fields · Multi-image gallery
+//  Base64 + Storage URL images · Mobile-first layout
 // ════════════════════════════════════════════════════════════════
 
 var allProofs = [];
 
-// ── Helpers ─────────────────────────────────────────────────────
-function hasVal(v) { return v != null && v !== "" && v !== "-" && v !== "—"; }
+// ── Utilities ────────────────────────────────────────────────────
 function esc(s) {
-  return String(s || "")
+  return String(s == null ? "" : s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
-function display(v) { return hasVal(v) ? esc(v) : ""; }
+function hasVal(v) {
+  var s = String(v == null ? "" : v).trim();
+  return s !== "" && s !== "-" && s !== "—" && s !== "null" && s !== "undefined";
+}
 function fmtDate(iso) {
-  if (!hasVal(iso)) return "";
+  if (!iso) return "";
   var d = new Date(iso);
-  if (isNaN(d.getTime())) return String(iso);
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return isNaN(d) ? String(iso) : d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+function fmtTime(iso) {
+  if (!iso) return "";
+  var d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 function fmtDateTime(iso) {
-  if (!hasVal(iso)) return "";
+  if (!iso) return "";
   var d = new Date(iso);
-  if (isNaN(d.getTime())) return String(iso);
+  if (isNaN(d)) return String(iso);
   return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) +
-    " at " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+         " at " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 function initials(name) {
   if (!hasVal(name)) return "?";
-  return String(name).split(" ").slice(0, 2).map(function (w) { return w.charAt(0); }).join("").toUpperCase();
+  return String(name).split(/\s+/).slice(0, 2).map(function(w) { return w.charAt(0).toUpperCase(); }).join("");
 }
-// Normalise status — handles any casing coming from the DB
 function normaliseStatus(raw) {
   var s = String(raw || "").toLowerCase().trim();
   if (s === "approved" || s === "approve") return "approved";
@@ -39,131 +45,77 @@ function normaliseStatus(raw) {
 }
 function statusBadge(rawStatus, large) {
   var status = normaliseStatus(rawStatus);
-  var map = {
-    pending:  { label: "Pending",  bg: "#fef3c7", fg: "#92400e", dot: "#f59e0b" },
-    approved: { label: "Approved", bg: "#dcfce7", fg: "#166534", dot: "#16a34a" },
-    rejected: { label: "Rejected", bg: "#fee2e2", fg: "#991b1b", dot: "#ef4444" }
+  var cfg = {
+    pending:  { label: "Pending",  bg: "#fff7ed", fg: "#9a3412", dot: "#f97316", border: "#fed7aa" },
+    approved: { label: "Approved", bg: "#f0fdf4", fg: "#166534", dot: "#22c55e", border: "#bbf7d0" },
+    rejected: { label: "Rejected", bg: "#fef2f2", fg: "#991b1b", dot: "#ef4444", border: "#fecaca" }
   };
-  var s = map[status];
-  var pad = large ? "5px 14px" : "3px 10px";
+  var c = cfg[status];
+  var pad = large ? "6px 14px" : "4px 10px";
   var fs  = large ? "13px" : "11px";
-  return '<span style="display:inline-flex;align-items:center;gap:5px;padding:' + pad + ';border-radius:999px;font-size:' + fs + ';font-weight:600;background:' + s.bg + ';color:' + s.fg + ';">' +
-    '<span style="width:6px;height:6px;border-radius:50%;background:' + s.dot + ';display:inline-block;"></span>' + s.label + '</span>';
+  return '<span style="display:inline-flex;align-items:center;gap:5px;padding:' + pad +
+    ';border-radius:999px;font-size:' + fs + ';font-weight:700;background:' + c.bg +
+    ';color:' + c.fg + ';border:1px solid ' + c.border + ';white-space:nowrap;">' +
+    '<span style="width:6px;height:6px;border-radius:50%;background:' + c.dot + ';flex-shrink:0;"></span>' +
+    c.label + '</span>';
 }
 
-// ── Data ─────────────────────────────────────────────────────────
+// ── Proof image URLs ─────────────────────────────────────────────
+function getProofImages(p) {
+  var imgs = [];
+  if (hasVal(p.proof_url))      imgs.push({ url: p.proof_url,      label: "Front" });
+  if (hasVal(p.proof_back_url)) imgs.push({ url: p.proof_back_url, label: "Back"  });
+  if (imgs.length === 1) imgs[0].label = "Proof Image";
+  return imgs;
+}
+
+// ── Load data ────────────────────────────────────────────────────
 function loadProofs() {
   var container = document.getElementById("proofsContainer");
-  if (container) container.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8;"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div style="font-size:14px;">Loading payment proofs…</div></div>';
-  api("GET", "/admin/payment-proofs").then(function (r) {
-    allProofs = (r.proofs || []).map(function (p) {
-      // Parse proof_urls array from API (JSON string or array)
-      var proofUrls = [];
-      if (p.proof_urls) {
-        try {
-          if (typeof p.proof_urls === 'string') {
-            proofUrls = JSON.parse(p.proof_urls);
-          } else if (Array.isArray(p.proof_urls)) {
-            proofUrls = p.proof_urls;
-          }
-        } catch(e) { proofUrls = []; }
-      }
-      // Build proof_urls array from individual URLs if array is empty
-      if (proofUrls.length === 0) {
-        if (p.proof_url && String(p.proof_url).length > 0) proofUrls.push(String(p.proof_url));
-        if (p.proof_back_url && String(p.proof_back_url).length > 0) proofUrls.push(String(p.proof_back_url));
-      }
-      // Extract car name from selected_car data
-      var carName = "";
-      var carColor = "";
-      if (p.selected_car && typeof p.selected_car === 'object') {
-        carName = p.selected_car.name || p.selected_car.model || "";
-        carColor = p.selected_car.color || "";
-      }
-      // Get delivery method name
-      var deliveryMethodName = "";
-      if (p.delivery_method && typeof p.delivery_method === 'object') {
-        deliveryMethodName = p.delivery_method.name || p.delivery_method.id || "";
-      } else if (typeof p.delivery_method === 'string') {
-        deliveryMethodName = p.delivery_method;
-      }
+  if (container) {
+    container.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:60px 20px;color:#94a3b8;">' +
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;flex-shrink:0"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>' +
+      '<span style="font-size:14px;font-weight:500;">Loading payment proofs…</span></div>';
+  }
+  api("GET", "/admin/payment-proofs").then(function(r) {
+    allProofs = (r.proofs || []).map(function(p) {
       return {
-        id:               p.id,
-        order_id:         p.order_id         || "",
-        user_name:        p.user_name        || p.customer_name  || "",
-        user_email:       p.user_email       || p.customer_email || "",
-        user_phone:       p.user_phone       || p.customer_phone || "",
-        payment_method:   p.payment_method   || "",
-        amount:           p.amount           || "",
-        status:           normaliseStatus(p.status),
-        admin_notes:      p.admin_notes      || "",
-        proof_url:        p.proof_url        || "",
-        proof_back_url:   p.proof_back_url   || "",
-        proof_urls:       proofUrls,
-        proof_type:       p.proof_type       || "",
-        selected_car:     p.selected_car     || {},
-        car_name:         carName,
-        car_color:        carColor,
-        delivery_method:  p.delivery_method  || {},
-        delivery_method_name: deliveryMethodName,
-        delivery_details: p.delivery_details || {},
-        order_date:       p.order_date       || p.created_at || "",
-        reviewed_at:      p.reviewed_at      || "",
-        reviewed_by:      p.reviewed_by      || "",
-        created_at:       p.created_at       || ""
+        id:             p.id             || "",
+        order_id:       p.order_id       || "",
+        user_name:      p.user_name      || p.customer_name  || "",
+        user_email:     p.user_email     || p.customer_email || "",
+        user_phone:     p.user_phone     || p.customer_phone || "",
+        car_model:      p.car_model      || "",
+        delivery_method:p.delivery_method|| "",
+        payment_method: p.payment_method || "",
+        amount:         p.amount         || "",
+        status:         normaliseStatus(p.status),
+        admin_notes:    p.admin_notes    || "",
+        proof_url:      p.proof_url      || "",
+        proof_back_url: p.proof_back_url || "",
+        proof_type:     p.proof_type     || "",
+        reviewed_at:    p.reviewed_at    || "",
+        reviewed_by:    p.reviewed_by    || "",
+        created_at:     p.created_at     || ""
       };
     });
+    var pending = allProofs.filter(function(p) { return p.status === "pending"; }).length;
     var badge = document.getElementById("proofsNavBadge");
-    var pending = allProofs.filter(function (p) { return p.status === "pending"; }).length;
     if (badge) { badge.style.display = pending ? "inline-flex" : "none"; badge.textContent = String(pending); }
-    setApiStatus(true);
+    if (typeof setApiStatus === "function") setApiStatus(true);
     renderProofs();
-  }).catch(function () {
-    // Fallback: load from localStorage
-    try {
-      var localProofs = JSON.parse(localStorage.getItem('tesla_payment_proofs') || '[]');
-      if (localProofs.length > 0) {
-        allProofs = localProofs.map(function (p) {
-          var proofUrls = p.proofUrls || [];
-          if (proofUrls.length === 0 && p.proofUrl) proofUrls.push(p.proofUrl);
-          if (p.proofs && Array.isArray(p.proofs)) {
-            for (var i = 0; i < p.proofs.length; i++) {
-              if (p.proofs[i] && p.proofs[i].data && proofUrls.indexOf(p.proofs[i].data) === -1) {
-                proofUrls.push(p.proofs[i].data);
-              }
-            }
-          }
-          return {
-            id: p.id || ('local_'+Date.now()),
-            order_id: p.orderId || p.order_id || '',
-            user_name: p.customerName || p.customer_name || '',
-            user_email: p.customerEmail || p.customer_email || '',
-            user_phone: p.phone || p.customer_phone || '',
-            payment_method: p.paymentMethod || p.payment_method || '',
-            amount: p.amount || '',
-            status: normaliseStatus(p.status),
-            admin_notes: '',
-            proof_url: p.proofUrl || p.proof_url || '',
-            proof_back_url: p.proofBackUrl || p.proof_back_url || '',
-            proof_urls: proofUrls,
-            proof_type: 'image',
-            selected_car: {},
-            car_name: p.carModel || '',
-            car_color: '',
-            delivery_method: {},
-            delivery_method_name: '',
-            reviewed_at: p.reviewedAt || '',
-            reviewed_by: '',
-            created_at: p.createdAt || p.created_at || ''
-          };
-        });
-        setApiStatus(false);
-        renderProofs();
-        return;
-      }
-    } catch(e) {}
-    if (container) container.innerHTML = '<div style="padding:60px;text-align:center;color:#ef4444;"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div style="font-size:14px;font-weight:500;">Unable to load proofs</div><div style="font-size:12px;color:#94a3b8;margin-top:4px;">Check your API connection and try again</div></div>';
-    setApiStatus(false);
+  }).catch(function(err) {
+    if (container) {
+      container.innerHTML =
+        '<div style="text-align:center;padding:60px 20px;">' +
+        '<div style="font-size:40px;margin-bottom:12px;">⚠️</div>' +
+        '<div style="font-size:15px;font-weight:600;color:#dc2626;margin-bottom:6px;">Unable to load proofs</div>' +
+        '<div style="font-size:13px;color:#94a3b8;">Check the API connection and try again</div>' +
+        '<button onclick="loadProofs()" style="margin-top:16px;padding:8px 20px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Retry</button>' +
+        '</div>';
+    }
+    if (typeof setApiStatus === "function") setApiStatus(false);
   });
 }
 
@@ -174,302 +126,299 @@ function renderProofs() {
   var countLabel = document.getElementById("proofsCountLabel");
   if (!container) return;
 
-  var q      = (document.getElementById("proofSearch") || {}).value || "";
+  var q      = ((document.getElementById("proofSearch") || {}).value || "").trim().toLowerCase();
   var filter = (document.getElementById("proofFilter") || {}).value || "all";
   var sort   = (document.getElementById("proofSort")   || {}).value || "newest";
-  var needle = q.trim().toLowerCase();
 
-  var filtered = allProofs.filter(function (p) {
+  var list = allProofs.filter(function(p) {
     if (filter !== "all" && p.status !== filter) return false;
-    if (!needle) return true;
-    return [p.user_name, p.user_email, p.order_id, p.payment_method]
-      .some(function (f) { return String(f || "").toLowerCase().indexOf(needle) !== -1; });
+    if (!q) return true;
+    return [p.user_name, p.user_email, p.order_id, p.payment_method, p.car_model]
+      .some(function(f) { return String(f || "").toLowerCase().indexOf(q) !== -1; });
   });
 
-  if (sort === "oldest")       filtered.sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
-  else if (sort === "pending_first") filtered.sort(function (a, b) { return (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1); });
-  else                         filtered.sort(function (a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
+  if (sort === "oldest")       list.sort(function(a,b){ return new Date(a.created_at||0) - new Date(b.created_at||0); });
+  else if (sort === "pending_first") list.sort(function(a,b){ return (a.status==="pending"?0:1)-(b.status==="pending"?0:1); });
+  else                         list.sort(function(a,b){ return new Date(b.created_at||0) - new Date(a.created_at||0); });
 
-  if (countLabel) countLabel.textContent = filtered.length ? (filtered.length + (filtered.length === 1 ? " proof" : " proofs")) : "";
+  if (countLabel) countLabel.textContent = list.length + (list.length === 1 ? " proof" : " proofs");
 
-  if (!filtered.length) {
+  if (!list.length) {
     container.innerHTML = "";
     if (empty) empty.style.display = "block";
     return;
   }
   if (empty) empty.style.display = "none";
-  container.innerHTML = filtered.map(renderProofCard).join("");
+  container.innerHTML = '<div style="padding:16px 20px 8px;">' + list.map(renderProofCard).join("") + '</div>';
 }
 
 // ── Card ─────────────────────────────────────────────────────────
 function renderProofCard(p) {
-  var isPending   = p.status === "pending";
-  var proofUrls   = p.proof_urls || [];
-  var hasImg      = proofUrls.length > 0;
-  var borderColor = p.status === "approved" ? "#16a34a" : p.status === "rejected" ? "#ef4444" : "#f59e0b";
+  var status      = normaliseStatus(p.status);
+  var isPending   = status === "pending";
+  var imgs        = getProofImages(p);
+  var hasImg      = imgs.length > 0;
+  var borderLeft  = status === "approved" ? "#22c55e" : status === "rejected" ? "#ef4444" : "#f97316";
+  var customerLabel = hasVal(p.user_name) ? esc(p.user_name) : '<span style="color:#94a3b8;font-style:italic;">Customer details loading…</span>';
 
-  // Build thumbnail strip for multiple images
-  var thumbHtml = '';
-  if (hasImg) {
-    if (proofUrls.length === 1) {
-      thumbHtml = '<img src="' + esc(proofUrls[0]) + '" alt="Payment proof" ' +
-        'style="width:110px;height:100%;min-height:100px;max-height:160px;object-fit:cover;display:block;cursor:zoom-in;" ' +
-        'onclick="window.openImageZoom(\'' + esc(proofUrls[0]) + '\')" ' +
-        'onerror="this.parentElement.innerHTML=\'<div style=&quot;padding:16px;text-align:center;color:#94a3b8;font-size:11px;&quot;><div style=&quot;font-size:24px;margin-bottom:4px;&quot;>🖼️</div>No image</div>\'">';
-    } else {
-      // Multiple images: show stacked thumbnails
-      thumbHtml = '<div style="display:flex;flex-direction:column;gap:2px;height:100%;min-height:100px;max-height:160px;">';
-      var maxThumbs = Math.min(proofUrls.length, 3);
-      for (var i = 0; i < maxThumbs; i++) {
-        thumbHtml += '<img src="' + esc(proofUrls[i]) + '" alt="Payment proof ' + (i+1) + '" ' +
-          'style="flex:1;width:110px;object-fit:cover;display:block;cursor:zoom-in;min-height:0;" ' +
-          'onclick="window.openImageZoom(\'' + esc(proofUrls[i]) + '\')" ' +
-          'onerror="this.style.display=\'none\'">';
-      }
-      if (proofUrls.length > 3) {
-        thumbHtml += '<div style="height:30px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#64748b;font-weight:600;background:#e2e8f0;">+' + (proofUrls.length - 3) + ' more</div>';
-      }
-      thumbHtml += '</div>';
-    }
-  } else {
-    thumbHtml = '<div style="padding:16px;text-align:center;color:#94a3b8;font-size:11px;"><div style="font-size:24px;margin-bottom:4px;">🖼️</div>No image</div>';
-  }
+  // Thumbnail — works for both base64 data URLs and https:// storage URLs
+  var thumbHtml = hasImg
+    ? '<img src="' + esc(imgs[0].url) + '" alt="Proof" ' +
+        'style="width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;" ' +
+        'onclick="event.stopPropagation();window.openImageZoom(\'' + encodeURIComponent(imgs[0].url).replace(/'/g,"\\'",'g') + '\',0,[' + imgs.map(function(im){ return "'" + encodeURIComponent(im.url) + "'"; }).join(",") + '])" ' +
+        'onerror="this.parentElement.innerHTML=\'<div style=&quot;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;&quot;><svg width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot;/><circle cx=&quot;8.5&quot; cy=&quot;8.5&quot; r=&quot;1.5&quot;/><polyline points=&quot;21,15 16,10 5,21&quot;/></svg><span>Image</span></div>\'">'
+    : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;">' +
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
+        '<span>No image</span>' +
+      '</div>';
 
-  // Build car info line
-  var carInfo = '';
-  if (hasVal(p.car_name)) {
-    carInfo = '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-1Z"/><path d="M5 17V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"/></svg>' +
-      'Tesla ' + esc(p.car_name) + (hasVal(p.car_color) ? ' — ' + esc(p.car_color) : '') +
+  // Image count badge
+  var imgBadge = imgs.length > 1
+    ? '<div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.65);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;">' + imgs.length + ' imgs</div>'
+    : "";
+
+  // Info chips
+  function chip(icon, val, mono) {
+    if (!hasVal(val)) return "";
+    return '<div style="display:flex;align-items:flex-start;gap:6px;min-width:0;">' +
+      '<span style="font-size:13px;flex-shrink:0;line-height:1.4;">' + icon + '</span>' +
+      '<span style="font-size:12px;color:#374151;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (mono ? 'font-family:ui-monospace,monospace;font-size:11px;' : '') + '">' + esc(val) + '</span>' +
       '</div>';
   }
 
-  return '<div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ' + borderColor + ';border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .2s;" ' +
-    'onmouseenter="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.08)\'" onmouseleave="this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.05)\'">' +
+  return '<div style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid ' + borderLeft + ';border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:box-shadow .2s,transform .15s;" ' +
+    'onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.1)\';this.style.transform=\'translateY(-1px)\'" ' +
+    'onmouseleave="this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.05)\';this.style.transform=\'none\'">' +
 
-    '<div style="display:flex;gap:0;align-items:stretch;">' +
+    '<div style="display:flex;align-items:stretch;">' +
 
-    // ── Thumbnail panel ──────────────────────────────────────────
-    '<div style="width:110px;min-width:110px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden;border-right:1px solid #e2e8f0;">' +
+    // ── Thumbnail column ────────────────────────────────────────
+    '<div style="width:90px;min-width:90px;background:#f8fafc;position:relative;overflow:hidden;border-right:1px solid #f1f5f9;">' +
       thumbHtml +
+      imgBadge +
     '</div>' +
 
-    // ── Content panel ────────────────────────────────────────────
-    '<div style="flex:1;padding:16px 18px;min-width:0;">' +
+    // ── Content column ──────────────────────────────────────────
+    '<div style="flex:1;padding:14px 16px;min-width:0;">' +
 
-      // Top row: name + status badge
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;">' +
+      // Row 1: Name + status
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">' +
         '<div style="min-width:0;">' +
-          '<div style="font-weight:700;font-size:15px;color:#0f172a;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
-            (hasVal(p.user_name) ? esc(p.user_name) : '<span style="color:#94a3b8;">Unknown Customer</span>') +
-          '</div>' +
-          (hasVal(p.user_email) ? '<div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(p.user_email) + '</div>' : '') +
+          '<div style="font-weight:700;font-size:14px;color:#111827;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + customerLabel + '</div>' +
+          (hasVal(p.user_email) ? '<div style="font-size:11.5px;color:#6b7280;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(p.user_email) + '</div>' : '') +
         '</div>' +
         statusBadge(p.status) +
       '</div>' +
 
-      // User + car + payment info row
-      '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">' +
-        (hasVal(p.user_phone)
-          ? '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.56 3.44 2 2 0 0 1 3.54 1.25h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l1.37-1.37a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' +
-              esc(p.user_phone) +
-            '</div>'
-          : '') +
-        carInfo +
-        (hasVal(p.payment_method)
-          ? '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>' +
-              '<strong>' + esc(p.payment_method) + '</strong>' +
-            '</div>'
-          : '') +
-        (hasVal(p.delivery_method_name)
-          ? '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#475569;">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
-              esc(p.delivery_method_name) +
-            '</div>'
-          : '') +
-        (hasVal(p.created_at)
-          ? '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#94a3b8;">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>' +
-              fmtDateTime(p.created_at) +
-            '</div>'
-          : '') +
+      // Row 2: info chips grid
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px 16px;margin-bottom:12px;">' +
+        chip("📱", p.user_phone) +
+        chip("🚗", hasVal(p.car_model)  ? "Tesla " + p.car_model : "") +
+        chip("📋", p.order_id, true) +
+        chip("💳", p.payment_method) +
+        chip("🚚", p.delivery_method) +
+        chip("🕒", fmtDateTime(p.created_at)) +
       '</div>' +
 
-      // Actions
-      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
-        '<button onclick="window.openProofDetail(\'' + esc(p.id) + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#4f46e5;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" onmouseenter="this.style.background=\'#4338ca\'" onmouseleave="this.style.background=\'#4f46e5\'">' +
-          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Details' +
+      // Row 3: action buttons
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+        '<button onclick="window.openProofDetail(\'' + esc(p.id) + '\')" ' +
+          'style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:#4f46e5;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;" ' +
+          'onmouseenter="this.style.background=\'#4338ca\'" onmouseleave="this.style.background=\'#4f46e5\'">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Details' +
         '</button>' +
         (isPending
-          ? '<button onclick="window.quickApproveProof(\'' + esc(p.id) + '\')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" onmouseenter="this.style.background=\'#bbf7d0\'" onmouseleave="this.style.background=\'#dcfce7\'">✓ Approve</button>'
+          ? '<button onclick="window.quickApproveProof(\'' + esc(p.id) + '\')" ' +
+              'style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" ' +
+              'onmouseenter="this.style.background=\'#dcfce7\'" onmouseleave="this.style.background=\'#f0fdf4\'">✓ Approve</button>'
           : '') +
         (isPending
-          ? '<button onclick="window.quickRejectProof(\'' + esc(p.id) + '\')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#fff;color:#991b1b;border:1px solid #fecaca;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" onmouseenter="this.style.background=\'#fee2e2\'" onmouseleave="this.style.background=\'#fff\'">✕ Reject</button>'
+          ? '<button onclick="window.quickRejectProof(\'' + esc(p.id) + '\')" ' +
+              'style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#fff;color:#991b1b;border:1px solid #fecaca;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" ' +
+              'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">✕ Reject</button>'
           : '') +
-        (p.status !== "pending" && hasVal(p.reviewed_at)
-          ? '<span style="font-size:11px;color:#94a3b8;">Reviewed ' + fmtDate(p.reviewed_at) + '</span>'
+        (!isPending && hasVal(p.reviewed_at)
+          ? '<span style="font-size:11px;color:#9ca3af;">Reviewed ' + fmtDate(p.reviewed_at) + '</span>'
           : '') +
       '</div>' +
 
-    '</div>' + // content panel
+    '</div>' + // content col
     '</div>' + // flex row
-    '</div>';
+    '</div>';  // card
 }
 
-// ── Detail Modal — user + payment info only ───────────────────────
+// ── Detail Modal ─────────────────────────────────────────────────
 function openProofDetail(id) {
-  var p = (allProofs || []).find(function (x) { return x.id === id; });
+  var p = (allProofs || []).find(function(x) { return x.id === id; });
   if (!p) return;
   var modal = document.getElementById("proofDetailModal");
-  if (!modal) return;
-  var modalBody = document.getElementById("proofDetailBody");
-  if (!modalBody) return;
+  var body  = document.getElementById("proofDetailBody");
+  if (!modal || !body) return;
 
-  // Build proof images section — use all URLs from proof_urls array
-  var proofUrls = p.proof_urls || [];
-  var images = [];
-  for (var ui = 0; ui < proofUrls.length; ui++) {
-    if (hasVal(proofUrls[ui])) {
-      var label = proofUrls.length === 1 ? "Proof Image" : ("Image " + (ui + 1) + " of " + proofUrls.length);
-      if (proofUrls.length === 2) label = ui === 0 ? "Front / Main" : "Back";
-      images.push({ url: proofUrls[ui], label: label });
-    }
-  }
-  // Fallback to legacy single URLs if proof_urls is empty
-  if (images.length === 0) {
-    if (hasVal(p.proof_url))      images.push({ url: p.proof_url,      label: "Front / Main" });
-    if (hasVal(p.proof_back_url)) images.push({ url: p.proof_back_url, label: "Back" });
-    if (images.length === 1) images[0].label = "Proof Image";
-  }
+  var imgs     = getProofImages(p);
+  var status   = normaliseStatus(p.status);
+  var imgCount = imgs.length;
 
-  var imgHtml = images.length > 0
-    ? '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">' +
-        images.map(function (img) {
-          return '<div style="flex:1;min-width:180px;max-width:100%;">' +
-            '<div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">' + esc(img.label) + '</div>' +
+  // ── Image gallery ──────────────────────────────────────────────
+  var galleryHtml;
+  if (imgCount === 0) {
+    galleryHtml =
+      '<div style="padding:32px;text-align:center;background:#f8fafc;border-radius:12px;border:1.5px dashed #e2e8f0;color:#94a3b8;font-size:13px;">' +
+      '<div style="font-size:28px;margin-bottom:8px;">🖼️</div>No proof images uploaded</div>';
+  } else {
+    var cols = imgCount === 1 ? "1fr" : "1fr 1fr";
+    galleryHtml = '<div style="display:grid;grid-template-columns:' + cols + ';gap:12px;">';
+    imgs.forEach(function(img, i) {
+      var encodedUrl = encodeURIComponent(img.url);
+      var allEncoded = imgs.map(function(im) { return "'" + encodeURIComponent(im.url) + "'"; }).join(",");
+      galleryHtml +=
+        '<div>' +
+          '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:6px;">' + esc(img.label) + '</div>' +
+          '<div style="position:relative;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">' +
             '<img src="' + esc(img.url) + '" alt="' + esc(img.label) + '" ' +
-              'style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;cursor:zoom-in;" ' +
-              'onclick="window.openImageZoom(\'' + esc(img.url) + '\')" ' +
-              'onerror="this.parentElement.innerHTML=\'<div style=&quot;padding:32px;text-align:center;background:#f8fafc;border-radius:10px;border:1px dashed #e2e8f0;color:#94a3b8;font-size:13px;&quot;>Image unavailable</div>\'">' +
-          '</div>';
-        }).join('') +
-      '</div>'
-    : '<div style="padding:32px;text-align:center;background:#f8fafc;border-radius:10px;border:1px dashed #e2e8f0;margin-bottom:24px;color:#94a3b8;font-size:13px;">No proof images uploaded</div>';
+              'style="width:100%;max-height:220px;object-fit:contain;display:block;cursor:zoom-in;" ' +
+              'onclick="window.openImageZoom(\'' + encodedUrl + '\',' + i + ',[' + allEncoded + '])" ' +
+              'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+            '<div style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:120px;color:#94a3b8;font-size:12px;gap:6px;padding:20px;">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
+              '<span>Image could not be loaded</span>' +
+            '</div>' +
+            '<button onclick="window.openImageZoom(\'' + encodedUrl + '\',' + i + ',[' + allEncoded + '])" ' +
+              'style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);border:none;border-radius:6px;color:#fff;font-size:10px;font-weight:600;padding:4px 8px;cursor:pointer;">⤢ Expand</button>' +
+          '</div>' +
+        '</div>';
+    });
+    galleryHtml += '</div>';
+  }
 
-  // Approve / Reject buttons
-  var approveBtn = p.status !== "approved"
-    ? '<button onclick="window.approveProof(\'' + esc(p.id) + '\')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;" onmouseenter="this.style.opacity=\'.88\'" onmouseleave="this.style.opacity=\'1\'">' +
+  // ── Info section helper ────────────────────────────────────────
+  function infoSection(title, icon, rows) {
+    var content = rows.map(function(r) {
+      if (!hasVal(r[1])) return "";
+      return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:7px 0;border-bottom:1px solid #f1f5f9;">' +
+        '<span style="font-size:12px;color:#6b7280;white-space:nowrap;flex-shrink:0;">' + esc(r[0]) + '</span>' +
+        '<span style="font-size:12px;font-weight:600;color:#111827;text-align:right;' + (r[2] ? 'font-family:ui-monospace,monospace;font-size:11px;' : '') + '">' + esc(r[1]) + '</span>' +
+        '</div>';
+    }).join("");
+    if (!content) return "";
+    return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">' +
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:10px;">' + icon + '&nbsp; ' + esc(title) + '</div>' +
+      content +
+      '</div>';
+  }
+
+  // ── Approve / Reject buttons ───────────────────────────────────
+  var approveBtn = status !== "approved"
+    ? '<button onclick="window.approveProof(\'' + esc(p.id) + '\')" ' +
+        'style="flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;" ' +
+        'onmouseenter="this.style.opacity=\'.85\'" onmouseleave="this.style.opacity=\'1\'">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Approve Payment</button>'
-    : '';
-  var rejectBtn = p.status !== "rejected"
-    ? '<button onclick="window.rejectProof(\'' + esc(p.id) + '\')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;background:#fff;color:#dc2626;border:2px solid #fecaca;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;" onmouseenter="this.style.background=\'#fee2e2\'" onmouseleave="this.style.background=\'#fff\'">' +
+    : "";
+  var rejectBtn = status !== "rejected"
+    ? '<button onclick="window.rejectProof(\'' + esc(p.id) + '\')" ' +
+        'style="flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;background:#fff;color:#dc2626;border:2px solid #fecaca;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;" ' +
+        'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject Payment</button>'
-    : '';
+    : "";
 
-  modalBody.innerHTML =
-
-    // ── Header: customer name + status
-    '<div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #e2e8f0;">' +
-      '<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;">' + initials(p.user_name) + '</div>' +
+  body.innerHTML =
+    // ── Customer header ──────────────────────────────────────────
+    '<div style="display:flex;align-items:center;gap:14px;padding-bottom:20px;margin-bottom:20px;border-bottom:1.5px solid #f1f5f9;">' +
+      '<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.3);">' + initials(p.user_name) + '</div>' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-weight:700;font-size:18px;color:#0f172a;margin-bottom:4px;">' +
-          (hasVal(p.user_name) ? esc(p.user_name) : '<span style="color:#94a3b8;">Unknown Customer</span>') +
+        '<div style="font-weight:800;font-size:18px;color:#111827;line-height:1.2;margin-bottom:4px;">' +
+          (hasVal(p.user_name) ? esc(p.user_name) : '<span style="color:#9ca3af;font-style:italic;font-weight:400;">Name not available</span>') +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
           statusBadge(p.status, true) +
-          (hasVal(p.created_at) ? '<span style="font-size:12px;color:#94a3b8;">Submitted ' + fmtDateTime(p.created_at) + '</span>' : '') +
+          (p.created_at ? '<span style="font-size:11.5px;color:#9ca3af;">Submitted ' + fmtDateTime(p.created_at) + '</span>' : '') +
         '</div>' +
       '</div>' +
     '</div>' +
 
-    // ── Proof images
-    '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:10px;">Payment Proof Images</div>' +
-    imgHtml +
+    // ── Images ───────────────────────────────────────────────────
+    '<div style="margin-bottom:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;">Payment Proof' + (imgCount > 1 ? 's (' + imgCount + ')' : '') + '</div>' +
+    '<div style="margin-bottom:20px;">' + galleryHtml + '</div>' +
 
-    // ── All info panels: Customer | Order | Payment Method
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">' +
-
-      // Customer info
-      '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">' +
-        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">👤 Customer</div>' +
-        detailRow("Full Name",   p.user_name) +
-        detailRow("Email",       p.user_email) +
-        detailRow("Phone",       p.user_phone) +
-      '</div>' +
-
-      // Order info
-      '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">' +
-        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">📦 Order Details</div>' +
-        detailRow("Order ID",    p.order_id) +
-        detailRow("Tesla Model", (hasVal(p.car_name) ? "Tesla " + p.car_name + (hasVal(p.car_color) ? " — " + p.car_color : "") : "")) +
-        detailRow("Delivery",    p.delivery_method_name || "") +
-      '</div>' +
-
+    // ── Info grid ────────────────────────────────────────────────
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px;">' +
+      infoSection("Customer", "👤", [
+        ["Full Name",  p.user_name],
+        ["Email",      p.user_email],
+        ["Phone",      p.user_phone]
+      ]) +
+      infoSection("Order", "📦", [
+        ["Order ID",       p.order_id,        true],
+        ["Tesla Model",    hasVal(p.car_model) ? "Tesla " + p.car_model : ""],
+        ["Delivery Method",p.delivery_method]
+      ]) +
+      infoSection("Payment", "💳", [
+        ["Method",    p.payment_method],
+        ["Date",      fmtDate(p.created_at)],
+        ["Time",      fmtTime(p.created_at)],
+        ["Proof Type",p.proof_type]
+      ]) +
+      infoSection("Status", "📊", [
+        ["Current Status", normaliseStatus(p.status).charAt(0).toUpperCase() + normaliseStatus(p.status).slice(1)],
+        ["Reviewed By",    p.reviewed_by],
+        ["Reviewed At",    fmtDateTime(p.reviewed_at)],
+        ["Admin Notes",    p.admin_notes]
+      ]) +
     '</div>' +
 
-    // Second row: Payment info
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">' +
-      // Payment method info
-      '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">' +
-        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">💳 Payment Method</div>' +
-        detailRow("Method",       p.payment_method) +
-        detailRow("Amount",       p.amount) +
-        detailRow("Proof Type",   p.proof_type) +
-      '</div>' +
-
-      // Date info
-      '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">' +
-        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:12px;">📅 Submission</div>' +
-        detailRow("Date",         fmtDate(p.created_at)) +
-        detailRow("Time",         hasVal(p.created_at) ? new Date(p.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "") +
-        detailRow("Status",       p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : "Pending") +
-      '</div>' +
-
-    '</div>' +
-
-    // ── Review banner (if already reviewed)
-    (hasVal(p.reviewed_at)
-      ? '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;">' +
-          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>' +
-          '<div style="font-size:13px;color:#166534;">' +
-            '<strong>Reviewed</strong> by ' + esc(p.reviewed_by || "admin") + ' on ' + fmtDateTime(p.reviewed_at) +
-            (hasVal(p.admin_notes) ? '<br><span style="color:#14532d;margin-top:4px;display:inline-block;">' + esc(p.admin_notes) + '</span>' : '') +
-          '</div>' +
+    // ── Review banner ────────────────────────────────────────────
+    (hasVal(p.reviewed_at) && hasVal(p.admin_notes)
+      ? '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">' +
+          '<strong>Admin note:</strong> ' + esc(p.admin_notes) +
         '</div>'
       : '') +
 
-    // ── Action buttons
+    // ── Action buttons ───────────────────────────────────────────
     (approveBtn || rejectBtn
-      ? '<div style="display:flex;gap:12px;">' + (approveBtn || '') + (rejectBtn || '') + '</div>'
-      : '');
+      ? '<div style="display:flex;gap:10px;flex-wrap:wrap;">' + (approveBtn || '') + (rejectBtn || '') + '</div>'
+      : '<div style="text-align:center;padding:12px;font-size:13px;color:#94a3b8;font-style:italic;">This proof has already been ' + normaliseStatus(p.status) + '.</div>');
 
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
 }
 
-function detailRow(label, value, mono) {
-  if (!hasVal(value)) return "";
-  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.04);">' +
-    '<span style="font-size:12px;color:#64748b;white-space:nowrap;flex-shrink:0;">' + esc(label) + '</span>' +
-    '<span style="font-size:12px;font-weight:600;color:#1e293b;text-align:right;' + (mono ? 'font-family:ui-monospace,monospace;font-size:11px;' : '') + '">' + display(value) + '</span>' +
-  '</div>';
-}
-
 function closeProofDetail() {
-  var modal = document.getElementById("proofDetailModal");
-  if (modal) modal.style.display = "none";
+  var m = document.getElementById("proofDetailModal");
+  if (m) m.style.display = "none";
   document.body.style.overflow = "";
 }
 
-// ── Image zoom overlay ────────────────────────────────────────────
-function openImageZoom(url) {
+// ── Image lightbox (supports navigation between images) ──────────
+var _zoomImages = [];
+var _zoomIndex  = 0;
+
+function openImageZoom(encodedUrl, index, encodedAll) {
+  _zoomIndex  = index || 0;
+  _zoomImages = encodedAll ? encodedAll.map(decodeURIComponent) : [decodeURIComponent(encodedUrl)];
+  renderZoomImage();
   var z = document.getElementById("imageZoomOverlay");
-  var img = document.getElementById("imageZoomImg");
-  if (z)   z.style.display = "flex";
-  if (img) img.src = url;
+  if (z) z.style.display = "flex";
 }
+
+function renderZoomImage() {
+  var img = document.getElementById("imageZoomImg");
+  var ctr = document.getElementById("imageZoomCounter");
+  var prv = document.getElementById("imageZoomPrev");
+  var nxt = document.getElementById("imageZoomNext");
+  if (!img) return;
+  img.src = _zoomImages[_zoomIndex] || "";
+  if (ctr) ctr.textContent = _zoomImages.length > 1 ? (_zoomIndex + 1) + " / " + _zoomImages.length : "";
+  if (prv) prv.style.display = _zoomImages.length > 1 ? "flex" : "none";
+  if (nxt) nxt.style.display = _zoomImages.length > 1 ? "flex" : "none";
+}
+
+function zoomPrev() {
+  if (_zoomImages.length > 1) { _zoomIndex = (_zoomIndex - 1 + _zoomImages.length) % _zoomImages.length; renderZoomImage(); }
+}
+function zoomNext() {
+  if (_zoomImages.length > 1) { _zoomIndex = (_zoomIndex + 1) % _zoomImages.length; renderZoomImage(); }
+}
+
 function closeImageZoom() {
   var z = document.getElementById("imageZoomOverlay");
   if (z) z.style.display = "none";
@@ -478,58 +427,61 @@ function closeImageZoom() {
 // ── Actions ──────────────────────────────────────────────────────
 function approveProof(id) {
   var btn = event && event.currentTarget;
+  var orig = btn ? btn.innerHTML : "";
   if (btn) { btn.disabled = true; btn.textContent = "Approving…"; }
-  api("POST", "/admin/payment-proofs/approve", { id: id }).then(function () {
-    showToast("Payment approved successfully!", "success");
+  api("POST", "/admin/payment-proofs/approve", { id: id }).then(function() {
+    if (typeof showToast === "function") showToast("Payment approved ✓", "success");
     closeProofDetail();
     loadProofs();
-  }).catch(function (e) {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Approve Payment'; }
-    showToast("Approve failed: " + (e && e.message ? e.message : "Server error"), "error");
+  }).catch(function(e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+    if (typeof showToast === "function") showToast("Approve failed: " + ((e && e.message) || "Server error"), "error");
   });
 }
 
 function rejectProof(id) {
-  var reason = prompt("Reason for rejecting this payment proof (optional):", "");
+  var reason = prompt("Reason for rejecting (optional):", "");
   if (reason === null) return;
-  api("POST", "/admin/payment-proofs/reject", { id: id, reason: reason || "" }).then(function () {
-    showToast("Payment rejected.", "success");
+  api("POST", "/admin/payment-proofs/reject", { id: id, reason: reason || "" }).then(function() {
+    if (typeof showToast === "function") showToast("Payment rejected", "success");
     closeProofDetail();
     loadProofs();
-  }).catch(function (e) {
-    showToast("Reject failed: " + (e && e.message ? e.message : "Server error"), "error");
+  }).catch(function(e) {
+    if (typeof showToast === "function") showToast("Reject failed: " + ((e && e.message) || "Server error"), "error");
   });
 }
 
 function quickApproveProof(id) {
-  var p = (allProofs || []).find(function (x) { return x.id === id; });
-  if (!p || !confirm("Approve payment from " + (hasVal(p.user_name) ? p.user_name : "this customer") + "?")) return;
-  api("POST", "/admin/payment-proofs/approve", { id: id }).then(function () {
-    showToast("Payment approved!", "success");
+  var p = (allProofs || []).find(function(x) { return x.id === id; });
+  if (!p) return;
+  var who = hasVal(p.user_name) ? p.user_name : (hasVal(p.user_email) ? p.user_email : "this customer");
+  if (!confirm("Approve payment from " + who + "?")) return;
+  api("POST", "/admin/payment-proofs/approve", { id: id }).then(function() {
+    if (typeof showToast === "function") showToast("Payment approved ✓", "success");
     loadProofs();
-  }).catch(function (e) {
-    showToast("Approve failed: " + (e && e.message ? e.message : "error"), "error");
+  }).catch(function(e) {
+    if (typeof showToast === "function") showToast("Approve failed: " + ((e && e.message) || "error"), "error");
   });
 }
 
 function quickRejectProof(id) {
-  var p = (allProofs || []).find(function (x) { return x.id === id; });
+  var p = (allProofs || []).find(function(x) { return x.id === id; });
   if (!p) return;
   var reason = prompt("Reason for rejecting (optional):", "");
   if (reason === null) return;
-  api("POST", "/admin/payment-proofs/reject", { id: id, reason: reason || "" }).then(function () {
-    showToast("Payment rejected.", "success");
+  api("POST", "/admin/payment-proofs/reject", { id: id, reason: reason || "" }).then(function() {
+    if (typeof showToast === "function") showToast("Payment rejected", "success");
     loadProofs();
-  }).catch(function (e) {
-    showToast("Reject failed: " + (e && e.message ? e.message : "error"), "error");
+  }).catch(function(e) {
+    if (typeof showToast === "function") showToast("Reject failed: " + ((e && e.message) || "error"), "error");
   });
 }
 
 // Legacy aliases
-function viewProof(url) { if (hasVal(url)) openImageZoom(url); }
+function viewProof(url) { if (hasVal(url)) openImageZoom(encodeURIComponent(url), 0, null); }
 function closeProofModal() { closeProofDetail(); }
 
-// ── Expose globals ───────────────────────────────────────────────
+// ── Globals ──────────────────────────────────────────────────────
 window.loadProofs        = loadProofs;
 window.renderProofs      = renderProofs;
 window.openProofDetail   = openProofDetail;
@@ -540,5 +492,7 @@ window.quickApproveProof = quickApproveProof;
 window.quickRejectProof  = quickRejectProof;
 window.openImageZoom     = openImageZoom;
 window.closeImageZoom    = closeImageZoom;
+window.zoomPrev          = zoomPrev;
+window.zoomNext          = zoomNext;
 window.viewProof         = viewProof;
 window.closeProofModal   = closeProofModal;
