@@ -1024,22 +1024,8 @@
       ? window.TESLA_API_BASE.replace(/\/+$/, '')
       : '';
 
-    // Show cached data instantly while the API call is in flight
-    var saved = localStorage.getItem('tesla_pm_v2');
-    if (saved) {
-      try {
-        var cached = JSON.parse(saved);
-        if (Array.isArray(cached) && cached.length > 0) {
-          paymentMethods = cached;
-          renderPaymentMethods();
-          renderOrderSummary();
-          if (!selectedPaymentId) selectPaymentMethod(paymentMethods[0].id);
-        }
-      } catch(e) {}
-    } else {
-      renderPaymentMethods();
-      renderOrderSummary();
-    }
+    renderPaymentMethods();
+    renderOrderSummary();
 
     if (!API_BASE_PM) {
       // No API configured — use TeslaPaymentMethods store defaults
@@ -1062,8 +1048,7 @@
         paymentMethods = list
           .filter(function(m) { return m.enabled !== false; })
           .sort(function(a, b) { return (a.displayOrder || a.sort_order || 99) - (b.displayOrder || b.sort_order || 99); });
-        try { localStorage.setItem('tesla_pm_v2', JSON.stringify(paymentMethods)); } catch(e) {}
-        localStorage.removeItem('tesla_payment_methods'); // remove old format
+        try { localStorage.removeItem('tesla_pm_v2'); localStorage.removeItem('tesla_payment_methods'); } catch(e) {}
         renderPaymentMethods();
         renderOrderSummary();
         if (!selectedPaymentId && paymentMethods.length > 0) {
