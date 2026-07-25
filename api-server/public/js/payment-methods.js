@@ -423,6 +423,26 @@
     list.forEach(function(m) { pushMethodToApi(m, !m._dbId); });
   }
 
+  // Seed any methods that have empty DB configs to the API.
+  // Called after admin syncFromApi so Supabase gets realistic default data
+  // even before the admin has manually saved each method for the first time.
+  function seedEmptyToApi() {
+    var base = apiBase();
+    if (!base || !global.fetch) return;
+    var list = getAll();
+    list.forEach(function (m) {
+      var cfg = m.config || {};
+      var hasConfig = cfg.walletAddress || cfg.cashtag || cfg.email ||
+        cfg.username || cfg.instructions || cfg.recipientName ||
+        cfg.paypalMeLink || cfg.accountName || cfg.network;
+      // Push if it has no DB record yet OR if it has good config data
+      // (upsert is idempotent — safe to call for every method)
+      if (!m._dbId || hasConfig) {
+        pushMethodToApi(m, !m._dbId);
+      }
+    });
+  }
+
   // Pull from API and merge into localStorage
   function syncFromApi(scope, cb) {
     var base = apiBase();
@@ -437,6 +457,31 @@
         if (Array.isArray(list) && list.length > 0) {
           var norm = normalizeList(list);
           if (norm && norm.length > 0) {
+            // Admin scope: merge realistic DEFAULTS config for any DB records that
+            // have empty configs (e.g. newly-seeded rows from migrations).
+            // This preserves the full payment details in localStorage and lets
+            // seedEmptyToApi() push them back to Supabase so the customer page
+            // also gets the realistic data.
+            if (scope === 'admin') {
+              norm = norm.map(function (m) {
+                var cfg = m.config || {};
+                var hasConfig = cfg.walletAddress || cfg.cashtag || cfg.email ||
+                  cfg.username || cfg.instructions || cfg.recipientName ||
+                  cfg.paypalMeLink || cfg.accountName || cfg.network;
+                if (!hasConfig) {
+                  var def = null;
+                  for (var i = 0; i < DEFAULTS.length; i++) {
+                    if (DEFAULTS[i].id === m.id) { def = DEFAULTS[i]; break; }
+                  }
+                  if (def && def.config) {
+                    m.config = Object.assign({}, def.config);
+                    if (!m.logo && def.logo) m.logo = def.logo;
+                    if (!m.description && def.description) m.description = def.description;
+                  }
+                }
+                return m;
+              });
+            }
             save(norm);
             if (cb) cb(true);
           } else { if (cb) cb(false); }
@@ -468,6 +513,7 @@
     syncFromApi: syncFromApi,
     pushToApi: pushToApi,
     pushMethodToApi: pushMethodToApi,
+    seedEmptyToApi: seedEmptyToApi,
     toDbFormat: toDbFormat
   };
 })(window);

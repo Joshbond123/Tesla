@@ -523,7 +523,8 @@ router.post("/admin/payment-methods/upsert", async (req, res) => {
       ? JSON.stringify(m.account_details)
       : (m.account_details || "{}");
     const row: Record<string, any> = {
-      name: slug, display_name: m.display_name || m.name || slug,
+      name: slug, slug: m.slug || slug,
+      display_name: m.display_name || m.name || slug,
       type: m.type || "wallet", enabled: m.enabled !== false,
       logo_url: m.logo_url || "", wallet_address: m.wallet_address || "",
       account_details: accountDetails,
@@ -579,7 +580,9 @@ router.put("/admin/payment-methods/:id", async (req, res) => {
     if (updates.wallet_address !== undefined) updateData.wallet_address = updates.wallet_address;
     if (updates.account_details !== undefined) updateData.account_details = updates.account_details;
     if (updates.payment_instructions !== undefined) updateData.payment_instructions = updates.payment_instructions;
+    if (updates.logo_url !== undefined) updateData.logo_url = updates.logo_url;
     if (updates.logo_id !== undefined) updateData.logo_id = updates.logo_id;
+    if (updates.slug !== undefined) updateData.slug = updates.slug;
     if (updates.sort_order !== undefined) updateData.sort_order = updates.sort_order;
     if (updates.enabled !== undefined) updateData.enabled = updates.enabled;
     updateData.updated_at = new Date().toISOString();

@@ -40,7 +40,16 @@
   window.loadPaymentMethods = function () {
     renderPaymentMethods();
     if (PM && PM.syncFromApi) {
-      PM.syncFromApi('admin', function () { renderPaymentMethods(); });
+      PM.syncFromApi('admin', function (synced) {
+        renderPaymentMethods();
+        // After syncing from Supabase, push any methods that have empty configs
+        // back to the API so the DB is seeded with realistic default data.
+        // This ensures the customer Payment page always shows full details even
+        // before the admin has manually edited each method.
+        if (PM.seedEmptyToApi) {
+          setTimeout(function () { PM.seedEmptyToApi(); }, 500);
+        }
+      });
     }
   };
 

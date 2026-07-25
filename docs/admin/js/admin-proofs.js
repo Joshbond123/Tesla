@@ -216,7 +216,7 @@ function renderProofCard(p) {
       // Row 2: info chips grid
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px 16px;margin-bottom:12px;">' +
         chip("📱", p.user_phone) +
-        chip("🚗", hasVal(p.car_model)  ? "Tesla " + p.car_model : "") +
+        chip("🚗", hasVal(p.car_model)  ? p.car_model : "") +
         chip("📋", p.order_id, true) +
         chip("💳", p.payment_method) +
         chip("🚚", p.delivery_method) +
@@ -335,7 +335,7 @@ function openProofDetail(id) {
         (hasVal(p.user_name) && hasVal(p.user_email) ? '<div style="font-size:12px;color:#6b7280;margin-bottom:5px;">' + esc(p.user_email) + (hasVal(p.user_phone) ? ' · ' + esc(p.user_phone) : '') + '</div>' : '') +
         '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
           statusBadge(p.status, true) +
-          (hasVal(p.car_model) ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;color:#e2e8f0;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.02em;">Tesla ' + esc(p.car_model) + '</span>' : '') +
+          (hasVal(p.car_model) ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;color:#e2e8f0;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.02em;">' + esc(p.car_model) + '</span>' : '') +
           (p.created_at ? '<span style="font-size:11.5px;color:#9ca3af;">Submitted ' + fmtDateTime(p.created_at) + '</span>' : '') +
         '</div>' +
       '</div>' +
@@ -354,7 +354,7 @@ function openProofDetail(id) {
       ]) +
       infoSection("Order", "📦", [
         ["Order ID",       p.order_id,        true],
-        ["Tesla Model", hasVal(p.car_model) ? "Tesla " + p.car_model : "Not specified"],
+        ["Tesla Model", hasVal(p.car_model) ? p.car_model : "Not specified"],
         ["Delivery Method",p.delivery_method]
       ]) +
       infoSection("Payment", "💳", [
