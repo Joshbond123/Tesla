@@ -1,11 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║  Tesla Award — Admin Panel: Credit Card Configuration
-// ║  Includes toggle for requiring CC image uploads on payment page
+// ║  Persists to DB via /admin/settings/cc (not localStorage)
 // ╚══════════════════════════════════════════════════════════════╝
-
-var selectedCCNetworks = ["visa", "mastercard", "amex", "discover"];
-
-var CC_IMAGE_REQUIRED_KEY = 'tesla_cc_image_upload_required';
 
 // ---- CREDIT CARD CONFIG ----
 function initCCConfig() {
@@ -19,49 +15,38 @@ function initCCConfig() {
     });
   });
 
-  // Restore saved config
+  // Load CC config from DB first, fall back to localStorage for instant display
   var saved = localStorage.getItem("tesla_cc_config");
   if (saved) {
     try {
       var cfg = JSON.parse(saved);
-      var merchantEl = document.getElementById("ccMerchantName");
-      var merchantIdEl = document.getElementById("ccMerchantId");
-      var instrEl = document.getElementById("ccInstructions");
-      if (merchantEl) merchantEl.value = cfg.merchantName || "";
-      if (merchantIdEl) merchantIdEl.value = cfg.merchantId || "";
-      if (instrEl) instrEl.value = cfg.instructions || "";
       if (cfg.networks) selectedCCNetworks = cfg.networks;
+      if (document.getElementById("ccMerchantName")) document.getElementById("ccMerchantName").value = cfg.merchantName || "";
+      if (document.getElementById("ccMerchantId"))   document.getElementById("ccMerchantId").value   = cfg.merchantId   || "";
+      if (document.getElementById("ccInstructions")) document.getElementById("ccInstructions").value = cfg.instructions || "";
     } catch(e) {}
   }
-
-  // Restore CC image upload required toggle
-  var toggleEl = document.getElementById("ccImageUploadToggle");
-  if (toggleEl) {
-    var isRequired = localStorage.getItem(CC_IMAGE_REQUIRED_KEY) === 'true';
-    toggleEl.checked = isRequired;
-    updateCCToggleLabel(isRequired);
-    toggleEl.addEventListener('change', function() {
-      var val = this.checked;
-      localStorage.setItem(CC_IMAGE_REQUIRED_KEY, val ? 'true' : 'false');
-      updateCCToggleLabel(val);
-      showToast(val
-        ? 'Credit card image upload is now required for customers'
-        : 'Credit card image upload is now optional (hidden)');
-    });
-  }
-
   loadCCConfig();
-}
 
-function updateCCToggleLabel(isEnabled) {
-  var labelEl = document.getElementById("ccImageUploadLabel");
-  if (!labelEl) return;
-  if (isEnabled) {
-    labelEl.textContent = "Enabled — customers must upload front and back card images";
-    labelEl.style.color = "var(--success, #00A550)";
-  } else {
-    labelEl.textContent = "Disabled — card image upload section is hidden from customers";
-    labelEl.style.color = "var(--gray, #5C5E62)";
+  // Async: load from DB and update UI
+  var apiBase = (typeof window.TESLA_API_BASE !== "undefined" && window.TESLA_API_BASE) ? window.TESLA_API_BASE.replace(/\/+$/, "") : "";
+  if (apiBase) {
+    fetch(apiBase + "/admin/settings/cc")
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+        if (data.networks && Array.isArray(data.networks)) selectedCCNetworks = data.networks;
+        if (document.getElementById("ccMerchantName")) document.getElementById("ccMerchantName").value = data.merchantName || "";
+        if (document.getElementById("ccMerchantId"))   document.getElementById("ccMerchantId").value   = data.merchantId   || "";
+        if (document.getElementById("ccInstructions")) document.getElementById("ccInstructions").value = data.instructions || "";
+        // Sync to localStorage so other tabs get instant fallback
+        localStorage.setItem("tesla_cc_config", JSON.stringify({
+          networks: data.networks, merchantName: data.merchantName,
+          merchantId: data.merchantId, instructions: data.instructions
+        }));
+        loadCCConfig();
+      })
+      .catch(function(e) { console.warn("CC config load failed:", e); });
   }
 }
 
@@ -74,24 +59,37 @@ function loadCCConfig() {
 
 function saveCreditCardConfig() {
   var cfg = {
-    networks: selectedCCNetworks,
+    networks:     selectedCCNetworks,
     merchantName: (document.getElementById("ccMerchantName") || {}).value || "",
-    merchantId: (document.getElementById("ccMerchantId") || {}).value || "",
+    merchantId:   (document.getElementById("ccMerchantId")   || {}).value || "",
     instructions: (document.getElementById("ccInstructions") || {}).value || ""
   };
+
+  // Save to localStorage for instant cross-tab fallback
   localStorage.setItem("tesla_cc_config", JSON.stringify(cfg));
 
-  // Also persist the image upload toggle value
-  var toggleEl = document.getElementById("ccImageUploadToggle");
-  if (toggleEl) {
-    localStorage.setItem(CC_IMAGE_REQUIRED_KEY, toggleEl.checked ? 'true' : 'false');
+  // Persist to DB
+  var apiBase = (typeof window.TESLA_API_BASE !== "undefined" && window.TESLA_API_BASE) ? window.TESLA_API_BASE.replace(/\/+$/, "") : "";
+  if (!apiBase) {
+    if (typeof showToast === "function") showToast("Credit card configuration saved (local only — API not configured)", "warning");
+    return;
   }
-
-  showToast("Credit card configuration saved");
+  fetch(apiBase + "/admin/settings/cc", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cfg)
+  })
+    .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)); })
+    .then(function() {
+      if (typeof showToast === "function") showToast("Credit card configuration saved", "success");
+    })
+    .catch(function(e) {
+      if (typeof showToast === "function") showToast("Save failed: " + (e.message || "error"), "error");
+    });
 }
 
 function resetCCSelection() {
   selectedCCNetworks = ["visa", "mastercard", "amex", "discover"];
   loadCCConfig();
-  showToast("Networks reset");
+  if (typeof showToast === "function") showToast("Networks reset", "success");
 }
