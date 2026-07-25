@@ -450,6 +450,38 @@ router.get("/admin/settings", async (_req, res) => {
   } catch (err) { logger.error({ err }, "Admin settings get error"); res.status(500).json({ error: "Server error" }); }
 });
 
+
+// ── ADMIN: CC CONFIG ────────────────────────────────────────────────────────────
+router.get('/admin/settings/cc', async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from('admin_settings').select('value').eq('key', 'cc_config').maybeSingle();
+    if (error) throw error;
+    const v = (data?.value ?? {}) as any;
+    res.json({
+      networks: v.networks ?? ['visa', 'mastercard', 'amex', 'discover'],
+      merchantName: v.merchantName ?? 'Tesla Global Awards LLC',
+      merchantId: v.merchantId ?? 'TGA-2026-001',
+      instructions: v.instructions ?? 'Enter your card details below to complete payment.'
+    });
+  } catch (err) { logger.error({ err }, 'Admin CC config get error'); res.status(500).json({ error: 'Server error' }); }
+});
+router.post('/admin/settings/cc', async (req, res) => {
+  try {
+    const body = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const value: Record<string, any> = {};
+    if (body.networks     !== undefined) value.networks     = body.networks;
+    if (body.merchantName !== undefined) value.merchantName = body.merchantName;
+    if (body.merchantId   !== undefined) value.merchantId   = body.merchantId;
+    if (body.instructions !== undefined) value.instructions = body.instructions;
+    const { data: existing } = await supabase.from('admin_settings').select('value').eq('key', 'cc_config').maybeSingle();
+    const merged = existing?.value ? { ...(existing.value as any), ...value } : value;
+    const { error } = await supabase.from('admin_settings').upsert({ key: 'cc_config', value: merged, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) throw error;
+    res.json({ success: true, ...merged });
+  } catch (err) { logger.error({ err }, 'Admin CC config save error'); res.status(500).json({ error: 'Server error' }); }
+});
 // ── PUBLIC: PAYMENT METHODS (for customer payment page) ──
 router.get("/payment-methods", async (_req, res) => {
   try {
@@ -592,8 +624,10 @@ router.get("/admin/payment-proofs", async (_req, res) => {
 
       (orders || []).forEach((o: any) => { ordersMap[o.order_id] = o; });
 
-      // Step 4: collect unique user_ids from orders (not from proofs — proofs.user_id is often null)
-      const userIds = [...new Set((orders || []).map((o: any) => o.user_id).filter(Boolean))] as string[];
+      // Step 4: collect unique user_ids — from orders AND directly from proofs
+      const orderUserIds = (orders || []).map((o: any) => o.user_id).filter(Boolean);
+      const proofUserIds = rawProofs.map((p: any) => p.user_id).filter(Boolean);
+      const userIds = [...new Set([...orderUserIds, ...proofUserIds])] as string[];
 
       if (userIds.length > 0) {
         // Step 5: fetch actual customer info
@@ -608,7 +642,8 @@ router.get("/admin/payment-proofs", async (_req, res) => {
 
     const proofs = rawProofs.map((p: any) => {
       const ord = ordersMap[p.order_id];
-      const u   = ord ? usersMap[ord.user_id] : null;
+      // Try: user from order join first; fallback to proof.user_id direct lookup
+      const u   = (ord ? usersMap[ord.user_id] : null) || (p.user_id ? usersMap[p.user_id] : null);
       const carRaw  = Array.isArray(ord?.selected_cars) ? ord.selected_cars[0] : ord?.selected_cars;
       const carData = (carRaw?.data) || {};
       const dmRaw   = ord?.delivery_method || {};
