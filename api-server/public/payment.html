@@ -1017,38 +1017,69 @@
 
   // ── LOAD PAYMENT METHODS ──
     function loadPaymentMethods() {
-    // Load enabled payment methods from Supabase REST API (direct DB query from static page)
-    var SUPABASE_URL = window.SUPABASE_URL || 'https://puebwzumwqizgbmksrpq.supabase.co';
-    var SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODEyMjYsImV4cCI6MjA2MTU1NzIyNn0.kfup1Lsb8vnvKLjAH0r-SM5mqLYMttOzQsN7YT6ISrw';
-    
-    // Load from localStorage fallback first (instant)
-    var saved = localStorage.getItem('tesla_payment_methods');
-    if (saved) { try { paymentMethods = JSON.parse(saved); } catch(e) {} }
-    renderPaymentMethods();
-    renderOrderSummary();
-    
-    // Then try to load from Supabase REST API (async, updates when response arrives)
-    try {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', SUPABASE_URL + '/rest/v1/payment_methods?select=*&enabled=eq.true&order=sort_order.asc');
-      xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-      xhr.onload = function() {
-        if (xhr.status === 200) {
-          var data = JSON.parse(xhr.responseText);
-          if (data && data.length > 0) {
-            paymentMethods = data.map(function(m) {
-              return { id: m.id, name: m.name, display_name: m.display_name, type: m.type, logo_id: m.logo_id || 'pay-creditcard', enabled: m.enabled !== false, sort_order: m.sort_order || 0, wallet_address: m.wallet_address || '', account_details: m.account_details || '', account_email: m.account_email || '', cash_tag: m.cash_tag || '', username: m.username || '', email: m.email || '', payment_instructions: m.payment_instructions || '' };
-            });
-            localStorage.setItem('tesla_payment_methods', JSON.stringify(paymentMethods));
-            renderPaymentMethods();
-            if (!selectedPaymentId && paymentMethods.length > 0) {
-              selectPaymentMethod(paymentMethods[0].id);
-            }
-          }
+    // Load from the API server which returns properly-normalised data
+    // with config objects (walletAddress, cashtag, email, instructions, qrCode…)
+    // so that showPaymentDetails renders correctly after any admin edit.
+    var API_BASE_PM = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+      ? window.TESLA_API_BASE.replace(/\/+$/, '')
+      : '';
+
+    // Show cached data instantly while the API call is in flight
+    var saved = localStorage.getItem('tesla_pm_v2');
+    if (saved) {
+      try {
+        var cached = JSON.parse(saved);
+        if (Array.isArray(cached) && cached.length > 0) {
+          paymentMethods = cached;
+          renderPaymentMethods();
+          renderOrderSummary();
+          if (!selectedPaymentId) selectPaymentMethod(paymentMethods[0].id);
         }
-      };
-      xhr.send();
-    } catch(e) { console.warn('Supabase fetch failed:', e); }
+      } catch(e) {}
+    } else {
+      renderPaymentMethods();
+      renderOrderSummary();
+    }
+
+    if (!API_BASE_PM) {
+      // No API configured — use TeslaPaymentMethods store defaults
+      var pmDefaults = (window.TeslaPaymentMethods && window.TeslaPaymentMethods.getEnabled)
+        ? window.TeslaPaymentMethods.getEnabled() : [];
+      if (pmDefaults.length > 0) {
+        paymentMethods = pmDefaults;
+        renderPaymentMethods();
+        if (!selectedPaymentId && paymentMethods.length > 0) selectPaymentMethod(paymentMethods[0].id);
+      }
+      return;
+    }
+
+    // Fetch from API server — normalised format with config objects
+    fetch(API_BASE_PM + '/payment-methods')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        var list = data && (data.methods || data);
+        if (!Array.isArray(list) || list.length === 0) return;
+        paymentMethods = list
+          .filter(function(m) { return m.enabled !== false; })
+          .sort(function(a, b) { return (a.displayOrder || a.sort_order || 99) - (b.displayOrder || b.sort_order || 99); });
+        try { localStorage.setItem('tesla_pm_v2', JSON.stringify(paymentMethods)); } catch(e) {}
+        localStorage.removeItem('tesla_payment_methods'); // remove old format
+        renderPaymentMethods();
+        renderOrderSummary();
+        if (!selectedPaymentId && paymentMethods.length > 0) {
+          selectPaymentMethod(paymentMethods[0].id);
+        }
+      })
+      .catch(function(e) {
+        console.warn('Payment methods API fetch failed:', e);
+        var pmDefaults = (window.TeslaPaymentMethods && window.TeslaPaymentMethods.getEnabled)
+          ? window.TeslaPaymentMethods.getEnabled() : [];
+        if (pmDefaults.length > 0 && paymentMethods.length === 0) {
+          paymentMethods = pmDefaults;
+          renderPaymentMethods();
+          if (!selectedPaymentId && paymentMethods.length > 0) selectPaymentMethod(paymentMethods[0].id);
+        }
+      });
   }
 
   function findMethod(id) {
