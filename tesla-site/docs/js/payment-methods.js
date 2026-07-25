@@ -7,11 +7,10 @@
  * on the customer page.
  *
  * Sync model:
- *   - localStorage ("tesla_payment_methods") is the instant, same-
- *     browser source of truth.
- *   - When a backend API is configured (window.TESLA_API_BASE),
- *     the store hydrates from it and pushes admin changes to it,
- *     giving cross-device sync once the edge function is deployed.
+ *   - Supabase, via the backend API, is the source of truth when
+ *     window.TESLA_API_BASE is configured.
+ *   - localStorage is used only as a best-effort legacy cache fallback
+ *     when no backend API is available.
  *
  * Logos are local SVG files committed to the repo under
  * assets/payment-logos/ — no emoji, no third-party image URLs.
@@ -20,6 +19,7 @@
   'use strict';
 
   var STORAGE_KEY = 'tesla_payment_methods';
+  var cache = null;
   var LOGO_DIR = 'assets/payment-logos/';
 
   // Known brand logo files (local). Custom methods may store an
@@ -168,6 +168,8 @@
 
   // ── Internal storage ────────────────────────────────────────────
   function load() {
+    if (cache && cache.length) return cache.slice();
+    if (apiBase()) return null;
     try {
       var raw = global.localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
@@ -177,7 +179,10 @@
   }
 
   function save(list) {
-    try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+    cache = Array.isArray(list) ? list.slice() : [];
+    if (!apiBase()) {
+      try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify(cache)); } catch (e) {}
+    }
   }
 
   function sortByOrder(a, b) {
@@ -276,12 +281,12 @@
   }
 
   function remove(id) {
+    var existing = get(id);
     var list = getAll().filter(function (m) { return m.id !== id && m._dbId !== id; });
     save(list);
     // Best-effort delete via API
     var base = apiBase();
     if (!base || !global.fetch) return;
-    var existing = get(id);
     var dbId = existing && existing._dbId;
     if (dbId) {
       fetch(base + '/admin/payment-methods/' + encodeURIComponent(dbId), { method: 'DELETE' }).catch(function () {});
@@ -483,6 +488,7 @@
               });
             }
             save(norm);
+            try { global.localStorage.removeItem(STORAGE_KEY); global.localStorage.removeItem('tesla_pm_v2'); } catch (e) {}
             if (cb) cb(true);
           } else { if (cb) cb(false); }
         } else { if (cb) cb(false); }

