@@ -1,4 +1,4 @@
-// Tesla Award Program — Supabase Edge Function (v12)
+// Tesla Award Program — Supabase Edge Function (v13)
 // Email: tries SMTP on port 587 (STARTTLS), falls back to port 465 (SSL).
 // Both attempts are non-blocking. The response always includes verifyLink
 // so the congratulations page can offer instant verification.
@@ -295,7 +295,7 @@ async function trySmtpSend(port: number, useTls: boolean, to: string, subject: s
 
 // ── ROUTE HANDLERS ────────────────────────────────────────────────────────────
 async function handleHealth() {
-  return json({ status: "ok", version: "v12" });
+  return json({ status: "ok", version: "v13" });
 }
 
 async function handleEntry(req: Request) {
@@ -859,83 +859,132 @@ async function handleAdminDeleteUser(req: Request) {
   return json({ success: true });
 }
 
+// ── DELIVERY FEE SETTINGS ─────────────────────────────────────────────────────
+// Delivery fees live in admin_settings (key = "delivery_fee") as one JSON
+// document. We standardize on snake_case keys (standard_fee / express_fee) while
+// keeping the legacy standard/express aliases so every consumer — admin panel,
+// customer pages, stats — reads the same authoritative, DB-backed value.
+
+const DEFAULT_STANDARD_FEE = 299;
+const DEFAULT_EXPRESS_FEE = 399;
+
+function numberOr(val: any, fallback: number): number {
+  const n = typeof val === "string" ? Number(val) : val;
+  return typeof n === "number" && Number.isFinite(n) ? n : fallback;
+}
+
+// Coerce a user-supplied fee into a valid number, or null when invalid.
+function normalizeFee(val: any): number | null {
+  if (val === null || val === undefined || (typeof val === "string" && val.trim() === "")) return null;
+  const n = typeof val === "string" ? Number(val) : val;
+  if (typeof n !== "number" || !Number.isFinite(n) || n < 0) return null;
+  return Math.min(Math.round(n * 100) / 100, 100000); // round to cents, sane cap
+}
+
+// Insert-or-update a single admin_settings row keyed by `key` (true upsert).
+async function upsertAdminSetting(key: string, value: Record<string, unknown>) {
+  return fetch(REST + "/admin_settings?on_conflict=key", {
+    method: "POST",
+    headers: { ...SB_HEADERS, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+  });
+}
+
+// Read authoritative delivery fees, initializing the database with realistic
+// defaults the first time and normalizing legacy key names (standard/express).
+async function readDeliveryFees(): Promise<{ standard_fee: number; express_fee: number }> {
+  const row = await dbGet1("admin_settings", "value", { key: "eq.delivery_fee" });
+  const v = (row.data?.value ?? {}) as Record<string, any>;
+  const std = numberOr(v.standard_fee, numberOr(v.standard, numberOr(v.amount, NaN)));
+  const exp = numberOr(v.express_fee, numberOr(v.express, NaN));
+
+  const standard_fee = Number.isFinite(std) ? std : DEFAULT_STANDARD_FEE;
+  const express_fee = Number.isFinite(exp) ? exp : DEFAULT_EXPRESS_FEE;
+
+  if (!Number.isFinite(std) || !Number.isFinite(exp)) {
+    await upsertAdminSetting("delivery_fee", { standard_fee, express_fee, standard: standard_fee, express: express_fee });
+  }
+  return { standard_fee, express_fee };
+}
+
 async function handleAdminGetSettings() {
-  const feeR = await fetch(REST + "/admin_settings?select=key,value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
-  const phoneR = await fetch(REST + "/admin_settings?select=key,value&key=eq.payment_phone&limit=1", { headers: SB_HEADERS });
-  
-  let deliveryFeeStandard = 299;
-  let deliveryFeeExpress = 399;
+  const { standard_fee, express_fee } = await readDeliveryFees();
   let paymentPhone = "+1 (581) 478-3495";
-  
-  if (feeR.ok) {
-    const feeRows = await feeR.json();
-    if (feeRows[0]?.value) {
-      const v = feeRows[0].value;
-      if (typeof v.standard === 'number') deliveryFeeStandard = v.standard;
-      else if (typeof v.amount === 'number') deliveryFeeStandard = v.amount;
-      if (typeof v.express === 'number') deliveryFeeExpress = v.express;
-    }
-  }
-  if (phoneR.ok) {
-    const phoneRows = await phoneR.json();
-    if (phoneRows[0]?.value?.number) paymentPhone = phoneRows[0].value.number;
-  }
-  
-  return json({ deliveryFeeStandard, deliveryFeeExpress, paymentPhone });
+  const phoneRow = await dbGet1("admin_settings", "value", { key: "eq.payment_phone" });
+  if (phoneRow.data?.value?.number) paymentPhone = phoneRow.data.value.number;
+
+  return json({
+    standard_fee,
+    express_fee,
+    deliveryFee: standard_fee,         // legacy alias (= standard)
+    deliveryFeeStandard: standard_fee, // legacy alias
+    deliveryFeeExpress: express_fee,   // legacy alias
+    paymentPhone,
+  });
+}
+
+// Public endpoint for customer-facing pages (delivery-method, payment, etc.).
+// Always reads live from the database so admin updates appear with no code change.
+async function handlePublicDeliveryFees() {
+  const { standard_fee, express_fee } = await readDeliveryFees();
+  return new Response(JSON.stringify({
+    standard_fee,
+    express_fee,
+    deliveryFee: standard_fee,
+    deliveryFeeStandard: standard_fee,
+    deliveryFeeExpress: express_fee,
+  }), {
+    status: 200,
+    headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
 }
 
 async function handleAdminSaveSettings(req: Request) {
-  let body: { deliveryFeeStandard?: number; deliveryFeeExpress?: number; paymentPhone?: string };
-  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
-  
-  // Save delivery fees (standard + express)
-  if (body.deliveryFeeStandard !== undefined || body.deliveryFeeExpress !== undefined) {
-    let existingValue: Record<string, number> = { standard: 299, express: 399 };
-    const getR = await fetch(REST + "/admin_settings?select=value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
-    if (getR.ok) {
-      const rows = await getR.json();
-      if (rows[0]?.value) {
-        const v = rows[0].value;
-        existingValue.standard = typeof v.standard === 'number' ? v.standard : (typeof v.amount === 'number' ? v.amount : 299);
-        existingValue.express = typeof v.express === 'number' ? v.express : 399;
-      }
-    }
-    if (body.deliveryFeeStandard !== undefined) existingValue.standard = body.deliveryFeeStandard;
-    if (body.deliveryFeeExpress !== undefined) existingValue.express = body.deliveryFeeExpress;
-    
-    const r = await fetch(REST + "/admin_settings?key=eq.delivery_fee", {
-      method: "PATCH",
-      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify({ value: existingValue, updated_at: new Date().toISOString() }),
-    });
-    if (!r.ok) {
-      const insR = await fetch(REST + "/admin_settings", {
-        method: "POST",
-        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-        body: JSON.stringify({ key: "delivery_fee", value: existingValue }),
-      });
-      if (!insR.ok) return json({ error: "Failed to save delivery fees" }, 500);
-    }
+  let body: any;
+  try { body = await req.json(); } catch { return json({ error: "Invalid request body." }, 400); }
+
+  // Accept snake_case (current frontend) and legacy camelCase / short keys.
+  const hasStd = [body.standard_fee, body.deliveryFeeStandard, body.standard, body.amount].some((v) => v !== undefined);
+  const hasExp = [body.express_fee, body.deliveryFeeExpress, body.express].some((v) => v !== undefined);
+  const hasPhone = body.paymentPhone !== undefined;
+
+  if (!hasStd && !hasExp && !hasPhone) {
+    return json({ error: "No values to update." }, 400);
   }
-  
-  // Save payment phone
-  if (body.paymentPhone !== undefined) {
-    const pr = await fetch(REST + "/admin_settings?key=eq.payment_phone", {
-      method: "PATCH",
-      headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-      body: JSON.stringify({ value: { number: body.paymentPhone }, updated_at: new Date().toISOString() }),
-    });
-    if (!pr.ok) {
-      const insR = await fetch(REST + "/admin_settings", {
-        method: "POST",
-        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
-        body: JSON.stringify({ key: "payment_phone", value: { number: body.paymentPhone } }),
-      });
-      if (!insR.ok) return json({ error: "Failed to save payment phone" }, 500);
-    }
+
+  // Validate: every supplied fee must be a valid, non-negative number.
+  const std = hasStd ? normalizeFee(body.standard_fee ?? body.deliveryFeeStandard ?? body.standard ?? body.amount) : null;
+  const exp = hasExp ? normalizeFee(body.express_fee ?? body.deliveryFeeExpress ?? body.express) : null;
+  if (hasStd && std === null) return json({ error: "Standard delivery fee must be a valid number (0 or greater)." }, 400);
+  if (hasExp && exp === null) return json({ error: "Express delivery fee must be a valid number (0 or greater)." }, 400);
+
+  // Merge with the current values and persist to the database.
+  const current = await readDeliveryFees();
+  const standard_fee = std !== null ? std : current.standard_fee;
+  const express_fee = exp !== null ? exp : current.express_fee;
+  const feeR = await upsertAdminSetting("delivery_fee", { standard_fee, express_fee, standard: standard_fee, express: express_fee });
+  if (!feeR.ok) return json({ error: "Failed to save delivery fees." }, 500);
+
+  // Payment phone (optional field retained for the existing phone setting).
+  let paymentPhone = "+1 (581) 478-3495";
+  if (hasPhone) {
+    paymentPhone = String(body.paymentPhone ?? "").trim();
+    const pr = await upsertAdminSetting("payment_phone", { number: paymentPhone });
+    if (!pr.ok) return json({ error: "Failed to save payment phone." }, 500);
+  } else {
+    const phoneRow = await dbGet1("admin_settings", "value", { key: "eq.payment_phone" });
+    if (phoneRow.data?.value?.number) paymentPhone = phoneRow.data.value.number;
   }
-  
-  return json({ success: true, deliveryFeeStandard: body.deliveryFeeStandard, deliveryFeeExpress: body.deliveryFeeExpress, paymentPhone: body.paymentPhone });
+
+  return json({
+    success: true,
+    standard_fee,
+    express_fee,
+    deliveryFee: standard_fee,
+    deliveryFeeStandard: standard_fee,
+    deliveryFeeExpress: express_fee,
+    paymentPhone,
+  });
 }
 
 async function handleAdminOrders(_req: Request) {
@@ -967,14 +1016,8 @@ async function handleAdminGetStats() {
   const verified = users.filter((u: any) => u.verification_status === "verified").length;
   const pending = total - verified;
   
-  const feeR = await fetch(REST + "/admin_settings?select=value&key=eq.delivery_fee&limit=1", { headers: SB_HEADERS });
-  let deliveryFee = 299;
-  if (feeR.ok) {
-    const feeRows = await feeR.json();
-    if (feeRows[0]?.value?.amount) deliveryFee = feeRows[0].value.amount;
-  }
-  
-  return json({ total, verified, pending, deliveryFee });
+  const { standard_fee } = await readDeliveryFees();
+  return json({ total, verified, pending, deliveryFee: standard_fee });
 }
 
 // ── PAYMENT METHODS ───────────────────────────────────────────────────────────
@@ -1449,6 +1492,8 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/auth" && req.method === "POST") return await handleAdminAuth(req);
     if (route === "/api/admin/users" && req.method === "GET") return await handleAdminUsers(req);
     if (route === "/api/admin/users/delete" && req.method === "POST") return await handleAdminDeleteUser(req);
+    // Public delivery-fee settings for customer-facing pages (no auth required)
+    if (route === "/api/delivery-fees" && req.method === "GET") return await handlePublicDeliveryFees();
     if (route === "/api/admin/settings" && req.method === "GET") return await handleAdminGetSettings();
     if (route === "/api/admin/settings" && req.method === "POST") return await handleAdminSaveSettings(req);
     if (route === "/api/admin/orders" && req.method === "GET") return await handleAdminOrders(req);

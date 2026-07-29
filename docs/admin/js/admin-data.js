@@ -24,19 +24,13 @@ function loadSettings() {
   }
 }
 function loadSettingsLocal() {
-  standardFee = localStorage.getItem("tesla_standard_fee") ? parseInt(localStorage.getItem("tesla_standard_fee"), 10) : Math.floor(Math.random() * 150) + 150;
-  expressFee = localStorage.getItem("tesla_express_fee") ? parseInt(localStorage.getItem("tesla_express_fee"), 10) : standardFee + Math.floor(Math.random() * 100) + 50;
-  deliveryFee = standardFee;
-  
-  localStorage.setItem("tesla_standard_fee", standardFee);
-  localStorage.setItem("tesla_express_fee", expressFee);
-  localStorage.setItem("tesla_delivery_fee", deliveryFee);
-
+  // Fees are DB-backed; keep the sensible defaults until the API responds.
   var sfi = document.getElementById("standardFeeInput");
   var efi = document.getElementById("expressFeeInput");
   if (sfi) sfi.value = standardFee;
   if (efi) efi.value = expressFee;
 }
+
 
 function loadOrders() {
   var tbody = document.getElementById("ordersTable"); var empty = document.getElementById("ordersEmpty");

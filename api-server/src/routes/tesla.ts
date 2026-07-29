@@ -478,49 +478,71 @@ router.post("/payment/submit", async (req, res) => {
 });
 
 // ── ADMIN: SETTINGS ──
+// Coerce a user-supplied fee into a valid number, or null when invalid.
+function normalizeFeeValue(val: unknown): number | null {
+  if (val === null || val === undefined || (typeof val === "string" && val.trim() === "")) return null;
+  const n = typeof val === "string" ? Number(val) : val;
+  if (typeof n !== "number" || !Number.isFinite(n) || n < 0) return null;
+  return Math.min(Math.round(n * 100) / 100, 100000); // round to cents, sane cap
+}
+
 router.post("/admin/settings", async (req, res) => {
   try {
-    const { standard_fee, express_fee } = req.body as { standard_fee?: number; express_fee?: number };
+    const body = req.body as { standard_fee?: number; express_fee?: number };
+    const hasStd = body.standard_fee !== undefined;
+    const hasExp = body.express_fee !== undefined;
+    if (!hasStd && !hasExp) { res.status(400).json({ error: "No values to update" }); return; }
+
+    const std = hasStd ? normalizeFeeValue(body.standard_fee) : null;
+    const exp = hasExp ? normalizeFeeValue(body.express_fee) : null;
+    if (hasStd && std === null) { res.status(400).json({ error: "Standard delivery fee must be a valid number (0 or greater)." }); return; }
+    if (hasExp && exp === null) { res.status(400).json({ error: "Express delivery fee must be a valid number (0 or greater)." }); return; }
+
     const supabase = await getSupabaseAdmin();
-    const value: Record<string, number> = {};
-    if (standard_fee !== undefined) {
-      value.standard_fee = standard_fee;
-      value.standard = standard_fee;
-    }
-    if (express_fee !== undefined) {
-      value.express_fee = express_fee;
-      value.express = express_fee;
-    }
-    if (Object.keys(value).length === 0) { res.status(400).json({ error: "No values to update" }); return; }
     const { data: existing } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
-    const merged = existing?.value ? { ...existing.value as any, ...value } : value;
+    const cur = (existing?.value ?? {}) as Record<string, number>;
+    const standard_fee = std !== null ? std : (typeof cur.standard_fee === "number" ? cur.standard_fee : (typeof cur.standard === "number" ? cur.standard : 299));
+    const express_fee = exp !== null ? exp : (typeof cur.express_fee === "number" ? cur.express_fee : (typeof cur.express === "number" ? cur.express : 399));
+    const merged = { ...cur, standard_fee, express_fee, standard: standard_fee, express: express_fee };
     const { error } = await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
     if (error) throw error;
-    res.json({ success: true, standard_fee: merged.standard_fee, express_fee: merged.express_fee });
+    res.json({ success: true, standard_fee, express_fee, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
   } catch (err) { logger.error({ err }, "Admin settings error"); res.status(500).json({ error: "Server error" }); }
 });
 router.get("/admin/settings", async (_req, res) => {
   try {
     const supabase = await getSupabaseAdmin();
-    const { data, error } = await supabase.from("admin_settings").select("key,value").eq("key", "delivery_fee").maybeSingle();
+    const { data, error } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
     if (error) throw error;
-    const v = (data?.value ?? {}) as any;
-    
-    const db_std = v.standard_fee ?? v.standard;
-    const db_exp = v.express_fee ?? v.express;
-    
-    if (db_std === undefined || db_exp === undefined) {
-      const standard_fee = db_std !== undefined ? db_std : Math.floor(Math.random() * 150) + 150;
-      const express_fee = db_exp !== undefined ? db_exp : standard_fee + Math.floor(Math.random() * 100) + 50;
-      
-      const merged = { ...v, standard_fee, express_fee, standard: standard_fee, express: express_fee };
-      await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
-      
-      res.json({ standard_fee, express_fee });
-    } else {
-      res.json({ standard_fee: db_std, express_fee: db_exp });
+    const v = (data?.value ?? {}) as Record<string, number>;
+
+    const stdRaw = v.standard_fee ?? v.standard ?? v.amount;
+    const expRaw = v.express_fee ?? v.express;
+    const standard_fee = typeof stdRaw === "number" && Number.isFinite(stdRaw) ? stdRaw : 299;
+    const express_fee = typeof expRaw === "number" && Number.isFinite(expRaw) ? expRaw : 399;
+
+    // Initialize / normalize the database with realistic defaults if missing.
+    if (v.standard_fee === undefined || v.express_fee === undefined) {
+      const normalized = { ...v, standard_fee, express_fee, standard: standard_fee, express: express_fee };
+      await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: normalized, updated_at: new Date().toISOString() }, { onConflict: "key" });
     }
+
+    res.json({ standard_fee, express_fee, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
   } catch (err) { logger.error({ err }, "Admin settings get error"); res.status(500).json({ error: "Server error" }); }
+});
+
+// Public delivery-fee endpoint for customer-facing pages (no auth required).
+router.get("/delivery-fees", async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
+    if (error) throw error;
+    const v = (data?.value ?? {}) as Record<string, number>;
+    const standard_fee = typeof v.standard_fee === "number" ? v.standard_fee : (typeof v.standard === "number" ? v.standard : 299);
+    const express_fee = typeof v.express_fee === "number" ? v.express_fee : (typeof v.express === "number" ? v.express : 399);
+    res.set("Cache-Control", "no-store");
+    res.json({ standard_fee, express_fee, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
+  } catch (err) { logger.error({ err }, "Delivery fees get error"); res.status(500).json({ error: "Server error" }); }
 });
 
 

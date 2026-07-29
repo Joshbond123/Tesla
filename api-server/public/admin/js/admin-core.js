@@ -8,13 +8,12 @@ var allUsers = [];
 var allOrders = [];
 var allProofs = [];
 var socialSettings = { whatsapp: { number: "", enabled: true, label: "Chat with us on WhatsApp" }, telegram: { username: "", enabled: false, label: "Chat with us on Telegram" } };
-var standardFee = localStorage.getItem("tesla_standard_fee") ? parseInt(localStorage.getItem("tesla_standard_fee"), 10) : Math.floor(Math.random() * 150) + 150; // random $150-$299
-var expressFee = localStorage.getItem("tesla_express_fee") ? parseInt(localStorage.getItem("tesla_express_fee"), 10) : standardFee + Math.floor(Math.random() * 100) + 50; // standard + $50-$149
+// Delivery fees are database-backed. These are sensible in-memory defaults only;
+// loadDeliveryFees() overwrites them from the database when the panel loads.
+var standardFee = 299;
+var expressFee  = 399;
 var deliveryFee = standardFee;
 
-localStorage.setItem("tesla_standard_fee", standardFee);
-localStorage.setItem("tesla_express_fee", expressFee);
-localStorage.setItem("tesla_delivery_fee", deliveryFee);
 var adminPassword = localStorage.getItem("tesla_admin_pwd") || "admin123";
 var selectedCCNetworks = ["visa", "mastercard", "amex", "discover"];
 var feeMode = "standard";

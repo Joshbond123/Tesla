@@ -442,12 +442,10 @@
 'use strict';
 
 var selectedMethod = null;
+// Defaults only — overwritten live from the database below (no localStorage).
 var standardFeeAmt = 299;
 var expressFeeAmt  = 399;
-try {
-  standardFeeAmt = parseInt(localStorage.getItem('tesla_standard_fee') || '299', 10);
-  expressFeeAmt  = parseInt(localStorage.getItem('tesla_express_fee')  || '399', 10);
-} catch(e) {}
+
 
 // Set initial display from local storage
 document.addEventListener('DOMContentLoaded', function() {
@@ -484,22 +482,19 @@ document.getElementById('summaryAddress').textContent = addressText;
     ? window.TESLA_API_BASE : '';
   if (!base) return;
 
-  fetch(base + '/admin/settings', {
+  fetch(base + '/delivery-fees', {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' }
   })
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(data) {
       if (!data) return;
-      // Backend returns snake_case: standard_fee / express_fee
-      if (typeof data.standard_fee === 'number') {
-        standardFeeAmt = data.standard_fee;
-        localStorage.setItem('tesla_standard_fee', data.standard_fee);
-      }
-      if (typeof data.express_fee  === 'number') {
-        expressFeeAmt  = data.express_fee;
-        localStorage.setItem('tesla_express_fee', data.express_fee);
-      }
+      // snake_case primary; legacy aliases kept for backward compatibility.
+      if (typeof data.standard_fee === 'number') standardFeeAmt = data.standard_fee;
+      else if (typeof data.deliveryFeeStandard === 'number') standardFeeAmt = data.deliveryFeeStandard;
+      else if (typeof data.deliveryFee === 'number') standardFeeAmt = data.deliveryFee;
+      if (typeof data.express_fee === 'number') expressFeeAmt = data.express_fee;
+      else if (typeof data.deliveryFeeExpress === 'number') expressFeeAmt = data.deliveryFeeExpress;
       var stdEl = document.getElementById('price-standard');
       var expEl = document.getElementById('price-express');
       if (stdEl) stdEl.textContent = '$' + standardFeeAmt;

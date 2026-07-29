@@ -1258,13 +1258,15 @@
     (function fetchDeliveryFeesForSummary() {
       var API_BASE = typeof window.TESLA_API_BASE !== 'undefined' ? window.TESLA_API_BASE : '';
       if (!API_BASE) return;
-      fetch(API_BASE + '/admin/settings', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+      fetch(API_BASE + '/delivery-fees', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
         .then(function(r) { return r.ok ? r.json() : null; })
         .then(function(data) {
           if (!data) return;
           // Update the deliveryMethod price if the DB value differs
           var isExpress = deliveryMethod && deliveryMethod.id === 'express';
-          var dbFee = isExpress ? (data.deliveryFeeExpress || 399) : (data.deliveryFeeStandard || 299);
+          var stdFee = (typeof data.standard_fee === 'number') ? data.standard_fee : (data.deliveryFeeStandard || data.deliveryFee || 299);
+          var expFee = (typeof data.express_fee === 'number') ? data.express_fee : (data.deliveryFeeExpress || 399);
+          var dbFee = isExpress ? expFee : stdFee;
           if (deliveryMethod && deliveryMethod.price !== dbFee) {
             deliveryMethod.price = dbFee;
             deliveryMethod.priceDisplay = '$' + dbFee;

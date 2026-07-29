@@ -1,7 +1,19 @@
 // ╔══════════════════════════════════════════════════════════╗
 // ║  Tesla Award — Admin Panel: System Settings              ║
-// ║  Standard + Express Fees · DB-first · snake_case API     ║
+// ║  Standard + Express Fees · DB-backed · validated input   ║
 // ╚══════════════════════════════════════════════════════════╝
+
+// Restore the Save button to its normal (icon + label) state.
+function restoreSaveButton(saveBtn) {
+  if (!saveBtn) return;
+  saveBtn.disabled = false;
+  saveBtn.innerHTML =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>'
+    + '<polyline points="17,21 17,13 7,13 7,21"/>'
+    + '<polyline points="7,3 7,8 15,8"/>'
+    + '</svg> Save All Fees';
+}
 
 function saveDeliveryFee() {
   var stdInput = document.getElementById("standardFeeInput");
@@ -9,122 +21,97 @@ function saveDeliveryFee() {
   var statusEl = document.getElementById("feeStatus");
   var saveBtn  = document.querySelector('[onclick="saveDeliveryFee()"]');
 
-  var std = stdInput && stdInput.value.trim() !== "" ? parseInt(stdInput.value, 10) : NaN;
-  var exp = expInput && expInput.value.trim() !== "" ? parseInt(expInput.value, 10) : NaN;
+  var stdRaw = stdInput ? stdInput.value : "";
+  var expRaw = expInput ? expInput.value : "";
 
-  // Clear previous status
+  // Clear previous status + borders
   if (statusEl) { statusEl.textContent = ""; statusEl.style.color = ""; }
-
-  // If blank, 0, or invalid (NaN), set random fee and update UI
-  if (isNaN(std) || std <= 0) {
-    std = Math.floor(Math.random() * 150) + 150; // random $150-$299
-    if (stdInput) stdInput.value = std;
-  }
-  if (isNaN(exp) || exp <= 0) {
-    exp = std + Math.floor(Math.random() * 100) + 50; // standard + $50-$149
-    if (expInput) expInput.value = exp;
-  }
-
-  // Reset input borders
   if (stdInput) stdInput.style.borderColor = "";
   if (expInput) expInput.style.borderColor = "";
 
-  // Saving state
+  // Validate: only valid, non-negative numbers are accepted (no random fallback).
+  var std = stdRaw.trim() === "" ? NaN : Number(stdRaw);
+  var exp = expRaw.trim() === "" ? NaN : Number(expRaw);
+  var invalid = [];
+  if (!Number.isFinite(std) || std < 0) invalid.push("Standard");
+  if (!Number.isFinite(exp) || exp < 0) invalid.push("Express");
+  if (invalid.length) {
+    if (invalid.indexOf("Standard") >= 0 && stdInput) stdInput.style.borderColor = "#EF4444";
+    if (invalid.indexOf("Express")  >= 0 && expInput) expInput.style.borderColor = "#EF4444";
+    var msg = "Enter a valid amount (0 or greater) for: " + invalid.join(", ");
+    if (statusEl) { statusEl.textContent = "✗ " + msg; statusEl.style.color = "#EF4444"; }
+    showToast(msg, "error");
+    return;
+  }
+  std = Math.round(std * 100) / 100;
+  exp = Math.round(exp * 100) / 100;
+
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Saving…"; }
 
   if (typeof API_BASE !== "undefined" && API_BASE) {
-    // Backend expects snake_case: standard_fee / express_fee
+    // Backend persists to the database (snake_case: standard_fee / express_fee).
     api("POST", "/admin/settings", { standard_fee: std, express_fee: exp })
-      .then(function() {
-        standardFee = std;
-        expressFee  = exp;
-        deliveryFee = std;
-        
-        localStorage.setItem("tesla_standard_fee", std);
-        localStorage.setItem("tesla_express_fee", exp);
-        localStorage.setItem("tesla_delivery_fee", std);
-
+      .then(function(r) {
+        standardFee = (typeof r.standard_fee === "number") ? r.standard_fee : std;
+        expressFee  = (typeof r.express_fee  === "number") ? r.express_fee  : exp;
+        deliveryFee = standardFee;
+        if (stdInput) stdInput.value = standardFee;
+        if (expInput) expInput.value = expressFee;
         if (statusEl) {
-          statusEl.textContent = "✓ Saved — Standard $" + std + " · Express $" + exp;
+          statusEl.textContent = "✓ Saved — Standard $" + standardFee + " · Express $" + expressFee;
           statusEl.style.color = "#00A550";
         }
-        showToast("Delivery fees updated: Standard $" + std + ", Express $" + exp);
-        setTimeout(function() {
-          if (statusEl) { statusEl.textContent = ""; statusEl.style.color = ""; }
-        }, 6000);
+        showToast("Delivery fees updated: Standard $" + standardFee + ", Express $" + expressFee);
+        setTimeout(function() { if (statusEl) { statusEl.textContent = ""; statusEl.style.color = ""; } }, 6000);
       })
       .catch(function(e) {
         if (statusEl) {
-          statusEl.textContent = "Failed: " + (e && e.message ? e.message : "Server error");
+          statusEl.textContent = "✗ Failed: " + (e && e.message ? e.message : "Server error");
           statusEl.style.color = "#EF4444";
         }
-        showToast("Failed to save fees", "error");
+        showToast("Failed to save fees: " + (e && e.message ? e.message : "Server error"), "error");
       })
-      .finally(function() {
-        if (saveBtn) {
-          saveBtn.disabled = false;
-          saveBtn.innerHTML =
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
-            + '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>'
-            + '<polyline points="17,21 17,13 7,13 7,21"/>'
-            + '<polyline points="7,3 7,8 15,8"/>'
-            + '</svg> Save All Fees';
-        }
-      });
+      .finally(function() { restoreSaveButton(saveBtn); });
   } else {
-    standardFee = std;
-    expressFee  = exp;
-    deliveryFee = std;
-    
-    localStorage.setItem("tesla_standard_fee", std);
-    localStorage.setItem("tesla_express_fee", exp);
-    localStorage.setItem("tesla_delivery_fee", std);
-
+    // No backend configured — we cannot persist to the database.
     if (statusEl) {
-      statusEl.textContent = "✓ Saved Locally — Standard $" + std + " · Express $" + exp;
-      statusEl.style.color = "#00A550";
+      statusEl.textContent = "✗ API not configured — cannot save to database.";
+      statusEl.style.color = "#EF4444";
     }
-    showToast("Delivery fees updated locally: Standard $" + std + ", Express $" + exp);
-    setTimeout(function() {
-      if (statusEl) { statusEl.textContent = ""; statusEl.style.color = ""; }
-    }, 6000);
-
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.innerHTML =
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
-        + '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>'
-        + '<polyline points="17,21 17,13 7,13 7,21"/>'
-        + '<polyline points="7,3 7,8 15,8"/>'
-        + '</svg> Save All Fees';
-    }
+    showToast("API not configured — changes cannot be saved", "error");
+    restoreSaveButton(saveBtn);
   }
 }
 
-function loadDeliveryFees() {
-  if (typeof API_BASE !== "undefined" && API_BASE) {
-    api("GET", "/admin/settings")
-      .then(function(r) {
-        // Backend returns snake_case: standard_fee / express_fee
-        if (typeof r.standard_fee === "number") { standardFee = r.standard_fee; deliveryFee = r.standard_fee; }
-        if (typeof r.express_fee  === "number") expressFee = r.express_fee;
-        var sfi = document.getElementById("standardFeeInput");
-        var efi = document.getElementById("expressFeeInput");
-        if (sfi) sfi.value = standardFee;
-        if (efi) efi.value = expressFee;
-      })
-      .catch(function() {
-        var sfi = document.getElementById("standardFeeInput");
-        var efi = document.getElementById("expressFeeInput");
-        if (sfi) sfi.value = standardFee;
-        if (efi) efi.value = expressFee;
-      });
-  } else {
-    var sfi = document.getElementById("standardFeeInput");
-    var efi = document.getElementById("expressFeeInput");
-    if (sfi) sfi.value = standardFee;
-    if (efi) efi.value = expressFee;
+// Return the first finite number found among the given keys, else null.
+function pickFeeNum(obj, keys) {
+  for (var i = 0; i < keys.length; i++) {
+    var v = obj ? obj[keys[i]] : undefined;
+    if (typeof v === "number" && Number.isFinite(v)) return v;
   }
+  return null;
+}
+
+function loadDeliveryFees() {
+  var sfi = document.getElementById("standardFeeInput");
+  var efi = document.getElementById("expressFeeInput");
+  // Show current/default values immediately, then refresh from the database.
+  if (sfi) sfi.value = standardFee;
+  if (efi) efi.value = expressFee;
+  if (typeof API_BASE === "undefined" || !API_BASE) return;
+
+  api("GET", "/admin/settings")
+    .then(function(r) {
+      // snake_case is primary; legacy aliases kept for backward compatibility.
+      var s = pickFeeNum(r, ["standard_fee", "deliveryFeeStandard", "deliveryFee", "standard"]);
+      var e = pickFeeNum(r, ["express_fee", "deliveryFeeExpress", "express"]);
+      if (s !== null) standardFee = s;
+      if (e !== null) expressFee = e;
+      deliveryFee = standardFee;
+      if (sfi) sfi.value = standardFee;
+      if (efi) efi.value = expressFee;
+    })
+    .catch(function() { /* keep current values in the inputs */ });
 }
 
 function changePassword() {
@@ -147,6 +134,8 @@ function clearLocalData() {
   allUsers = [];
   localStorage.removeItem("tesla_registered_users");
   localStorage.removeItem("tesla_entry_users");
+  localStorage.removeItem("tesla_standard_fee");
+  localStorage.removeItem("tesla_express_fee");
   localStorage.removeItem("tesla_delivery_fee");
   localStorage.removeItem("tesla_payment_methods");
   localStorage.removeItem("tesla_payment_proofs");
@@ -157,4 +146,3 @@ function clearLocalData() {
 }
 
 window.loadDeliveryFees = loadDeliveryFees;
-
