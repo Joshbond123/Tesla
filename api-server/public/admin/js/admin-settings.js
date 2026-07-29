@@ -144,15 +144,18 @@ function changePassword() {
   var cur  = document.getElementById("currentPwd").value;
   var neu  = document.getElementById("newPwd").value;
   var conf = document.getElementById("confirmPwd").value;
-  if (cur !== adminPassword) { showToast("Current password is incorrect", "error"); return; }
-  if (!neu || neu.length < 3) { showToast("New password must be at least 3 characters", "error"); return; }
+  if (!neu || neu.length < 8) { showToast("New password must be at least 8 characters", "error"); return; }
   if (neu !== conf)           { showToast("Passwords do not match", "error"); return; }
-  adminPassword = neu;
-  localStorage.setItem("tesla_admin_pwd", neu);
-  document.getElementById("currentPwd").value = "";
-  document.getElementById("newPwd").value     = "";
-  document.getElementById("confirmPwd").value = "";
-  showToast("Password changed successfully");
+  if (typeof API_BASE === "undefined" || !API_BASE) { showToast("API not configured", "error"); return; }
+  api("POST", "/admin/change-password", { current: cur, new: neu })
+    .then(function() {
+      try { localStorage.removeItem("tesla_admin_pwd"); } catch (e) {}
+      document.getElementById("currentPwd").value = "";
+      document.getElementById("newPwd").value     = "";
+      document.getElementById("confirmPwd").value = "";
+      showToast("Password changed successfully");
+    })
+    .catch(function(e) { showToast("Failed: " + (e && e.message ? e.message : "Server error"), "error"); });
 }
 
 function clearLocalData() {

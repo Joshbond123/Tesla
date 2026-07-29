@@ -24,7 +24,14 @@ function setApiStatus(ok) {
 
 function api(method, path, body) {
   if (!API_BASE) return Promise.reject(new Error("API not configured"));
-  var url = API_BASE + path; var opts = { method: method, headers: { "Content-Type": "application/json" } };
+  var url = API_BASE + path;
+  var headers = { "Content-Type": "application/json" };
+  // Attach the admin session token (if present) so protected routes authorize.
+  try {
+    var token = localStorage.getItem("tesla_admin_token");
+    if (token) headers["Authorization"] = "Bearer " + token;
+  } catch (e) {}
+  var opts = { method: method, headers: headers };
   if (body) opts.body = JSON.stringify(body);
   return fetch(url, opts).then(function(r) { return r.json().then(function(d) { if (!r.ok) throw new Error(d.error || "Request failed (" + r.status + ")"); return d; }); });
 }

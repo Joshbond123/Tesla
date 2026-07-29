@@ -5,8 +5,8 @@
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SMTP_USER = Deno.env.get("SMTP_USER") ?? "techledger10@gmail.com";
-const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "***REMOVED***";
+const SMTP_USER = Deno.env.get("SMTP_USER") ?? "";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "";
 const FRONTEND_URL = (Deno.env.get("FRONTEND_URL") ?? "https://joshbond123.github.io/Tesla").replace(/\/$/, "");
 const SELF_BASE = SUPABASE_URL + "/functions/v1/tesla-api";
 
@@ -807,7 +807,16 @@ function buildOrderConfirmationEmail(order: any) {
 }
 
 // ── ADMIN HANDLERS ────────────────────────────────────────────────────────────
-const ADMIN_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e83198408c64e9defa8ff52cf3";
+// Default password hash is "admin123". It is overridable via the database
+// (admin_settings key "admin_password_hash") once the admin changes their password.
+const DEFAULT_ADMIN_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e83198408c64e9defa8ff52cf3";
+
+// Resolve the active admin password hash (DB override, else the default).
+async function getAdminPasswordHash(): Promise<string> {
+  const row = await dbGet1("admin_settings", "value", { key: "eq.admin_password_hash" });
+  const h = (row.data?.value as any)?.hash;
+  return typeof h === "string" && /^[0-9a-f]{64}$/.test(h) ? h : DEFAULT_ADMIN_PASSWORD_HASH;
+}
 
 async function sha256(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);
@@ -815,12 +824,30 @@ async function sha256(text: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Validate an admin session token (stored in admin_settings as "session_<token>").
+// Returns an error Response if invalid, or null when authorized.
+async function requireAdmin(req: Request): Promise<Response | null> {
+  const auth = req.headers.get("authorization") || "";
+  const xtok = req.headers.get("x-admin-token") || "";
+  const token = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : xtok.trim();
+  if (!token) return json({ error: "Authentication required." }, 401);
+  const row = await dbGet1("admin_settings", "key", { key: "eq.session_" + token });
+  if (!row.data) return json({ error: "Invalid or expired session." }, 401);
+  return null;
+}
+
+// Guard wrapper: enforce admin auth before running an admin handler.
+async function adminGuard(req: Request, fn: () => Promise<Response>): Promise<Response> {
+  const err = await requireAdmin(req);
+  return err ? err : fn();
+}
+
 async function handleAdminAuth(req: Request) {
   let body: { password?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
   if (!body.password) return json({ error: "Password required" }, 400);
   const hash = await sha256(body.password);
-  if (hash !== ADMIN_PASSWORD_HASH) return json({ error: "Invalid password" }, 401);
+  if (hash !== await getAdminPasswordHash()) return json({ error: "Invalid password" }, 401);
   const token = hexRandom(32);
   const { error: sessionError } = await dbInsert("admin_settings", { key: "session_" + token, value: { created: new Date().toISOString() } });
   if (sessionError) {
@@ -828,6 +855,20 @@ async function handleAdminAuth(req: Request) {
     return json({ error: "Server error. Please try again." }, 500);
   }
   return json({ success: true, token });
+}
+
+// Change the admin password (requires an active session). Minimum 8 characters.
+async function handleAdminChangePassword(req: Request) {
+  let body: { current?: string; new?: string };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  const current = String(body.current || "");
+  const neu = String(body.new || "");
+  if (!neu || neu.length < 8) return json({ error: "New password must be at least 8 characters." }, 400);
+  if (await sha256(current) !== await getAdminPasswordHash()) return json({ error: "Current password is incorrect." }, 401);
+  const newHash = await sha256(neu);
+  const upR = await upsertAdminSetting("admin_password_hash", { hash: newHash });
+  if (!upR.ok) return json({ error: "Failed to update password." }, 500);
+  return json({ success: true });
 }
 
 async function handleAdminUsers(_req: Request) {
@@ -1508,31 +1549,32 @@ Deno.serve(async (req) => {
     if (trackM && req.method === "GET") return await handleTracking(trackM[1]);
     const orderM = route.match(/^\/api\/order\/([^/]+)$/);
     if (orderM && req.method === "GET") return await handleOrderLookup(orderM[1]);
-    // Admin routes
+    // Admin routes — all require a valid admin session EXCEPT login
     if (route === "/api/admin/auth" && req.method === "POST") return await handleAdminAuth(req);
-    if (route === "/api/admin/users" && req.method === "GET") return await handleAdminUsers(req);
-    if (route === "/api/admin/users/delete" && req.method === "POST") return await handleAdminDeleteUser(req);
+    if (route === "/api/admin/change-password" && req.method === "POST") return await adminGuard(req, () => handleAdminChangePassword(req));
+    if (route === "/api/admin/users" && req.method === "GET") return await adminGuard(req, () => handleAdminUsers(req));
+    if (route === "/api/admin/users/delete" && req.method === "POST") return await adminGuard(req, () => handleAdminDeleteUser(req));
     // Public delivery-fee settings for customer-facing pages (no auth required)
     if (route === "/api/delivery-fees" && req.method === "GET") return await handlePublicDeliveryFees();
-    if (route === "/api/admin/settings" && req.method === "GET") return await handleAdminGetSettings();
-    if (route === "/api/admin/settings" && req.method === "POST") return await handleAdminSaveSettings(req);
-    if (route === "/api/admin/orders" && req.method === "GET") return await handleAdminOrders(req);
-    if (route === "/api/admin/stats" && req.method === "GET") return await handleAdminGetStats();
+    if (route === "/api/admin/settings" && req.method === "GET") return await adminGuard(req, () => handleAdminGetSettings());
+    if (route === "/api/admin/settings" && req.method === "POST") return await adminGuard(req, () => handleAdminSaveSettings(req));
+    if (route === "/api/admin/orders" && req.method === "GET") return await adminGuard(req, () => handleAdminOrders(req));
+    if (route === "/api/admin/stats" && req.method === "GET") return await adminGuard(req, () => handleAdminGetStats());
     // Payment methods (public read + admin manage) and payment proofs
     if (route === "/api/payment-methods" && req.method === "GET") return await handlePublicPaymentMethods();
-    if (route === "/api/admin/payment-methods" && req.method === "GET") return await handleAdminGetPaymentMethods();
-    if (route === "/api/admin/payment-methods" && req.method === "POST") return await handleAdminSavePaymentMethods(req);
+    if (route === "/api/admin/payment-methods" && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentMethods());
+    if (route === "/api/admin/payment-methods" && req.method === "POST") return await adminGuard(req, () => handleAdminSavePaymentMethods(req));
     const pmDelMatch = route.match(/^\/api\/admin\/payment-methods\/([^/]+)$/);
-    if (pmDelMatch && req.method === "DELETE") return await handleAdminDeletePaymentMethod(decodeURIComponent(pmDelMatch[1]));
+    if (pmDelMatch && req.method === "DELETE") return await adminGuard(req, () => handleAdminDeletePaymentMethod(decodeURIComponent(pmDelMatch[1])));
     // Payment submission from customer
     if (route === "/api/payment/submit" && req.method === "POST") return await handlePaymentSubmit(req);
     if (route === "/api/payment-proof" && req.method === "POST") return await handlePaymentSubmit(req);
     if (route === "/api/payment/status" && req.method === "GET") return await handleGetPaymentStatus(req);
     // Admin payment proof management
-    if (route === "/api/admin/payment-proofs" && req.method === "GET") return await handleAdminGetPaymentProofs();
-    if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await handleSubmitPaymentProof(req);
-    if (route === "/api/admin/payment-proofs/approve" && req.method === "POST") return await handleAdminApproveProof(req);
-    if (route === "/api/admin/payment-proofs/reject" && req.method === "POST") return await handleAdminRejectProof(req);
+    if (route === "/api/admin/payment-proofs" && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentProofs());
+    if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await adminGuard(req, () => handleSubmitPaymentProof(req));
+    if (route === "/api/admin/payment-proofs/approve" && req.method === "POST") return await adminGuard(req, () => handleAdminApproveProof(req));
+    if (route === "/api/admin/payment-proofs/reject" && req.method === "POST") return await adminGuard(req, () => handleAdminRejectProof(req));
     return json({ error: "Not found." }, 404);
   } catch (err) {
     console.error("Unhandled error:", err);
