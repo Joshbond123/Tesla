@@ -867,6 +867,11 @@ async function handleAdminDeleteUser(req: Request) {
 
 const DEFAULT_STANDARD_FEE = 299;
 const DEFAULT_EXPRESS_FEE = 399;
+const DEFAULT_CURRENCY = "USD";
+const SUPPORTED_CURRENCY_CODES = new Set([
+  "USD", "EUR", "GBP", "CAD", "AUD", "NGN", "GHS", "KES", "ZAR",
+  "INR", "JPY", "CNY", "CHF", "AED", "BRL",
+]);
 
 function numberOr(val: any, fallback: number): number {
   const n = typeof val === "string" ? Number(val) : val;
@@ -890,9 +895,9 @@ async function upsertAdminSetting(key: string, value: Record<string, unknown>) {
   });
 }
 
-// Read authoritative delivery fees, initializing the database with realistic
-// defaults the first time and normalizing legacy key names (standard/express).
-async function readDeliveryFees(): Promise<{ standard_fee: number; express_fee: number }> {
+// Read authoritative delivery fees + currency, initializing the database with
+// realistic defaults the first time and normalizing legacy key names.
+async function readDeliveryFees(): Promise<{ standard_fee: number; express_fee: number; currency: string }> {
   const row = await dbGet1("admin_settings", "value", { key: "eq.delivery_fee" });
   const v = (row.data?.value ?? {}) as Record<string, any>;
   const std = numberOr(v.standard_fee, numberOr(v.standard, numberOr(v.amount, NaN)));
@@ -900,15 +905,17 @@ async function readDeliveryFees(): Promise<{ standard_fee: number; express_fee: 
 
   const standard_fee = Number.isFinite(std) ? std : DEFAULT_STANDARD_FEE;
   const express_fee = Number.isFinite(exp) ? exp : DEFAULT_EXPRESS_FEE;
+  const currency = typeof v.currency === "string" && SUPPORTED_CURRENCY_CODES.has(v.currency.toUpperCase())
+    ? v.currency.toUpperCase() : DEFAULT_CURRENCY;
 
-  if (!Number.isFinite(std) || !Number.isFinite(exp)) {
-    await upsertAdminSetting("delivery_fee", { standard_fee, express_fee, standard: standard_fee, express: express_fee });
+  if (!Number.isFinite(std) || !Number.isFinite(exp) || !v.currency) {
+    await upsertAdminSetting("delivery_fee", { standard_fee, express_fee, standard: standard_fee, express: express_fee, currency });
   }
-  return { standard_fee, express_fee };
+  return { standard_fee, express_fee, currency };
 }
 
 async function handleAdminGetSettings() {
-  const { standard_fee, express_fee } = await readDeliveryFees();
+  const { standard_fee, express_fee, currency } = await readDeliveryFees();
   let paymentPhone = "+1 (581) 478-3495";
   const phoneRow = await dbGet1("admin_settings", "value", { key: "eq.payment_phone" });
   if (phoneRow.data?.value?.number) paymentPhone = phoneRow.data.value.number;
@@ -916,6 +923,7 @@ async function handleAdminGetSettings() {
   return json({
     standard_fee,
     express_fee,
+    currency,
     deliveryFee: standard_fee,         // legacy alias (= standard)
     deliveryFeeStandard: standard_fee, // legacy alias
     deliveryFeeExpress: express_fee,   // legacy alias
@@ -926,10 +934,11 @@ async function handleAdminGetSettings() {
 // Public endpoint for customer-facing pages (delivery-method, payment, etc.).
 // Always reads live from the database so admin updates appear with no code change.
 async function handlePublicDeliveryFees() {
-  const { standard_fee, express_fee } = await readDeliveryFees();
+  const { standard_fee, express_fee, currency } = await readDeliveryFees();
   return new Response(JSON.stringify({
     standard_fee,
     express_fee,
+    currency,
     deliveryFee: standard_fee,
     deliveryFeeStandard: standard_fee,
     deliveryFeeExpress: express_fee,
@@ -946,9 +955,10 @@ async function handleAdminSaveSettings(req: Request) {
   // Accept snake_case (current frontend) and legacy camelCase / short keys.
   const hasStd = [body.standard_fee, body.deliveryFeeStandard, body.standard, body.amount].some((v) => v !== undefined);
   const hasExp = [body.express_fee, body.deliveryFeeExpress, body.express].some((v) => v !== undefined);
+  const hasCurrency = typeof body.currency === "string" && body.currency.trim() !== "";
   const hasPhone = body.paymentPhone !== undefined;
 
-  if (!hasStd && !hasExp && !hasPhone) {
+  if (!hasStd && !hasExp && !hasCurrency && !hasPhone) {
     return json({ error: "No values to update." }, 400);
   }
 
@@ -958,11 +968,20 @@ async function handleAdminSaveSettings(req: Request) {
   if (hasStd && std === null) return json({ error: "Standard delivery fee must be a valid number (0 or greater)." }, 400);
   if (hasExp && exp === null) return json({ error: "Express delivery fee must be a valid number (0 or greater)." }, 400);
 
+  // Validate currency (must be one of the supported codes).
+  let currency: string | null = null;
+  if (hasCurrency) {
+    const c = String(body.currency).trim().toUpperCase();
+    if (!SUPPORTED_CURRENCY_CODES.has(c)) return json({ error: "Unsupported currency: " + c + "." }, 400);
+    currency = c;
+  }
+
   // Merge with the current values and persist to the database.
   const current = await readDeliveryFees();
   const standard_fee = std !== null ? std : current.standard_fee;
   const express_fee = exp !== null ? exp : current.express_fee;
-  const feeR = await upsertAdminSetting("delivery_fee", { standard_fee, express_fee, standard: standard_fee, express: express_fee });
+  const cur = currency !== null ? currency : current.currency;
+  const feeR = await upsertAdminSetting("delivery_fee", { standard_fee, express_fee, standard: standard_fee, express: express_fee, currency: cur });
   if (!feeR.ok) return json({ error: "Failed to save delivery fees." }, 500);
 
   // Payment phone (optional field retained for the existing phone setting).
@@ -980,6 +999,7 @@ async function handleAdminSaveSettings(req: Request) {
     success: true,
     standard_fee,
     express_fee,
+    currency: cur,
     deliveryFee: standard_fee,
     deliveryFeeStandard: standard_fee,
     deliveryFeeExpress: express_fee,

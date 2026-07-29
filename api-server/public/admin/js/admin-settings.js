@@ -1,6 +1,6 @@
 // ╔══════════════════════════════════════════════════════════╗
 // ║  Tesla Award — Admin Panel: System Settings              ║
-// ║  Standard + Express Fees · DB-backed · validated input   ║
+// ║  Currency + Standard/Express Fees · DB-backed · validated║
 // ╚══════════════════════════════════════════════════════════╝
 
 // Restore the Save button to its normal (icon + label) state.
@@ -12,17 +12,37 @@ function restoreSaveButton(saveBtn) {
     + '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>'
     + '<polyline points="17,21 17,13 7,13 7,21"/>'
     + '<polyline points="7,3 7,8 15,8"/>'
-    + '</svg> Save All Fees';
+    + '</svg> Save Settings';
+}
+
+// Populate the currency dropdown from the shared catalog (config.js).
+function populateCurrencySelect() {
+  var sel = document.getElementById("currencySelect");
+  if (!sel || sel.options.length) return;
+  var list = (typeof window.TESLA_CURRENCIES !== "undefined") ? window.TESLA_CURRENCIES : [];
+  var html = "";
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i];
+    html += '<option value="' + c.code + '">' + c.code + " \u2014 " + c.label + " (" + c.symbol + ")</option>";
+  }
+  sel.innerHTML = html || '<option value="USD">USD \u2014 US Dollar ($)</option>';
+}
+
+function setCurrencySelect(code) {
+  var sel = document.getElementById("currencySelect");
+  if (sel && code) sel.value = code;
 }
 
 function saveDeliveryFee() {
   var stdInput = document.getElementById("standardFeeInput");
   var expInput = document.getElementById("expressFeeInput");
+  var curSel   = document.getElementById("currencySelect");
   var statusEl = document.getElementById("feeStatus");
   var saveBtn  = document.querySelector('[onclick="saveDeliveryFee()"]');
 
   var stdRaw = stdInput ? stdInput.value : "";
   var expRaw = expInput ? expInput.value : "";
+  var currency = curSel ? (curSel.value || "USD") : selectedCurrency || "USD";
 
   // Clear previous status + borders
   if (statusEl) { statusEl.textContent = ""; statusEl.style.color = ""; }
@@ -39,46 +59,48 @@ function saveDeliveryFee() {
     if (invalid.indexOf("Standard") >= 0 && stdInput) stdInput.style.borderColor = "#EF4444";
     if (invalid.indexOf("Express")  >= 0 && expInput) expInput.style.borderColor = "#EF4444";
     var msg = "Enter a valid amount (0 or greater) for: " + invalid.join(", ");
-    if (statusEl) { statusEl.textContent = "✗ " + msg; statusEl.style.color = "#EF4444"; }
+    if (statusEl) { statusEl.textContent = "\u2717 " + msg; statusEl.style.color = "#EF4444"; }
     showToast(msg, "error");
     return;
   }
   std = Math.round(std * 100) / 100;
   exp = Math.round(exp * 100) / 100;
 
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Saving…"; }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Saving\u2026"; }
 
   if (typeof API_BASE !== "undefined" && API_BASE) {
-    // Backend persists to the database (snake_case: standard_fee / express_fee).
-    api("POST", "/admin/settings", { standard_fee: std, express_fee: exp })
+    // Backend persists currency + fees to the database.
+    api("POST", "/admin/settings", { standard_fee: std, express_fee: exp, currency: currency })
       .then(function(r) {
         standardFee = (typeof r.standard_fee === "number") ? r.standard_fee : std;
         expressFee  = (typeof r.express_fee  === "number") ? r.express_fee  : exp;
         deliveryFee = standardFee;
+        if (typeof r.currency === "string") { selectedCurrency = r.currency; setCurrencySelect(selectedCurrency); }
+        var sym = (typeof window.teslaCurrencySymbol === "function") ? window.teslaCurrencySymbol(selectedCurrency) : "$";
         if (stdInput) stdInput.value = standardFee;
         if (expInput) expInput.value = expressFee;
         if (statusEl) {
-          statusEl.textContent = "✓ Saved — Standard $" + standardFee + " · Express $" + expressFee;
+          statusEl.textContent = "\u2713 Saved \u2014 " + selectedCurrency + " \u00b7 Standard " + sym + standardFee + " \u00b7 Express " + sym + expressFee;
           statusEl.style.color = "#00A550";
         }
-        showToast("Delivery fees updated: Standard $" + standardFee + ", Express $" + expressFee);
+        showToast("Settings updated: " + selectedCurrency + " \u00b7 Standard " + sym + standardFee + ", Express " + sym + expressFee);
         setTimeout(function() { if (statusEl) { statusEl.textContent = ""; statusEl.style.color = ""; } }, 6000);
       })
       .catch(function(e) {
         if (statusEl) {
-          statusEl.textContent = "✗ Failed: " + (e && e.message ? e.message : "Server error");
+          statusEl.textContent = "\u2717 Failed: " + (e && e.message ? e.message : "Server error");
           statusEl.style.color = "#EF4444";
         }
-        showToast("Failed to save fees: " + (e && e.message ? e.message : "Server error"), "error");
+        showToast("Failed to save: " + (e && e.message ? e.message : "Server error"), "error");
       })
       .finally(function() { restoreSaveButton(saveBtn); });
   } else {
     // No backend configured — we cannot persist to the database.
     if (statusEl) {
-      statusEl.textContent = "✗ API not configured — cannot save to database.";
+      statusEl.textContent = "\u2717 API not configured \u2014 cannot save to database.";
       statusEl.style.color = "#EF4444";
     }
-    showToast("API not configured — changes cannot be saved", "error");
+    showToast("API not configured \u2014 changes cannot be saved", "error");
     restoreSaveButton(saveBtn);
   }
 }
@@ -95,9 +117,11 @@ function pickFeeNum(obj, keys) {
 function loadDeliveryFees() {
   var sfi = document.getElementById("standardFeeInput");
   var efi = document.getElementById("expressFeeInput");
+  populateCurrencySelect();
   // Show current/default values immediately, then refresh from the database.
   if (sfi) sfi.value = standardFee;
   if (efi) efi.value = expressFee;
+  setCurrencySelect(selectedCurrency);
   if (typeof API_BASE === "undefined" || !API_BASE) return;
 
   api("GET", "/admin/settings")
@@ -108,10 +132,12 @@ function loadDeliveryFees() {
       if (s !== null) standardFee = s;
       if (e !== null) expressFee = e;
       deliveryFee = standardFee;
+      if (typeof r.currency === "string") selectedCurrency = r.currency;
       if (sfi) sfi.value = standardFee;
       if (efi) efi.value = expressFee;
+      setCurrencySelect(selectedCurrency);
     })
-    .catch(function() { /* keep current values in the inputs */ });
+    .catch(function() { /* keep current values */ });
 }
 
 function changePassword() {

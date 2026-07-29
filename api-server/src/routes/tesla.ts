@@ -478,6 +478,17 @@ router.post("/payment/submit", async (req, res) => {
 });
 
 // ── ADMIN: SETTINGS ──
+const DEFAULT_CURRENCY = "USD";
+const SUPPORTED_CURRENCY_CODES = new Set([
+  "USD", "EUR", "GBP", "CAD", "AUD", "NGN", "GHS", "KES", "ZAR",
+  "INR", "JPY", "CNY", "CHF", "AED", "BRL",
+]);
+function validCurrency(code: unknown): string | null {
+  if (typeof code !== "string") return null;
+  const c = code.trim().toUpperCase();
+  return SUPPORTED_CURRENCY_CODES.has(c) ? c : null;
+}
+
 // Coerce a user-supplied fee into a valid number, or null when invalid.
 function normalizeFeeValue(val: unknown): number | null {
   if (val === null || val === undefined || (typeof val === "string" && val.trim() === "")) return null;
@@ -488,25 +499,29 @@ function normalizeFeeValue(val: unknown): number | null {
 
 router.post("/admin/settings", async (req, res) => {
   try {
-    const body = req.body as { standard_fee?: number; express_fee?: number };
+    const body = req.body as { standard_fee?: number; express_fee?: number; currency?: string };
     const hasStd = body.standard_fee !== undefined;
     const hasExp = body.express_fee !== undefined;
-    if (!hasStd && !hasExp) { res.status(400).json({ error: "No values to update" }); return; }
+    const hasCur = typeof body.currency === "string" && body.currency.trim() !== "";
+    if (!hasStd && !hasExp && !hasCur) { res.status(400).json({ error: "No values to update" }); return; }
 
     const std = hasStd ? normalizeFeeValue(body.standard_fee) : null;
     const exp = hasExp ? normalizeFeeValue(body.express_fee) : null;
     if (hasStd && std === null) { res.status(400).json({ error: "Standard delivery fee must be a valid number (0 or greater)." }); return; }
     if (hasExp && exp === null) { res.status(400).json({ error: "Express delivery fee must be a valid number (0 or greater)." }); return; }
+    const currencyIn = hasCur ? validCurrency(body.currency) : null;
+    if (hasCur && currencyIn === null) { res.status(400).json({ error: "Unsupported currency: " + String(body.currency).trim().toUpperCase() + "." }); return; }
 
     const supabase = await getSupabaseAdmin();
     const { data: existing } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
-    const cur = (existing?.value ?? {}) as Record<string, number>;
+    const cur = (existing?.value ?? {}) as Record<string, any>;
     const standard_fee = std !== null ? std : (typeof cur.standard_fee === "number" ? cur.standard_fee : (typeof cur.standard === "number" ? cur.standard : 299));
     const express_fee = exp !== null ? exp : (typeof cur.express_fee === "number" ? cur.express_fee : (typeof cur.express === "number" ? cur.express : 399));
-    const merged = { ...cur, standard_fee, express_fee, standard: standard_fee, express: express_fee };
+    const currency = currencyIn !== null ? currencyIn : (validCurrency(cur.currency) ?? DEFAULT_CURRENCY);
+    const merged = { ...cur, standard_fee, express_fee, standard: standard_fee, express: express_fee, currency };
     const { error } = await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: merged, updated_at: new Date().toISOString() }, { onConflict: "key" });
     if (error) throw error;
-    res.json({ success: true, standard_fee, express_fee, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
+    res.json({ success: true, standard_fee, express_fee, currency, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
   } catch (err) { logger.error({ err }, "Admin settings error"); res.status(500).json({ error: "Server error" }); }
 });
 router.get("/admin/settings", async (_req, res) => {
@@ -514,20 +529,21 @@ router.get("/admin/settings", async (_req, res) => {
     const supabase = await getSupabaseAdmin();
     const { data, error } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
     if (error) throw error;
-    const v = (data?.value ?? {}) as Record<string, number>;
+    const v = (data?.value ?? {}) as Record<string, any>;
 
     const stdRaw = v.standard_fee ?? v.standard ?? v.amount;
     const expRaw = v.express_fee ?? v.express;
     const standard_fee = typeof stdRaw === "number" && Number.isFinite(stdRaw) ? stdRaw : 299;
     const express_fee = typeof expRaw === "number" && Number.isFinite(expRaw) ? expRaw : 399;
+    const currency = validCurrency(v.currency) ?? DEFAULT_CURRENCY;
 
     // Initialize / normalize the database with realistic defaults if missing.
-    if (v.standard_fee === undefined || v.express_fee === undefined) {
-      const normalized = { ...v, standard_fee, express_fee, standard: standard_fee, express: express_fee };
+    if (v.standard_fee === undefined || v.express_fee === undefined || !v.currency) {
+      const normalized = { ...v, standard_fee, express_fee, standard: standard_fee, express: express_fee, currency };
       await supabase.from("admin_settings").upsert({ key: "delivery_fee", value: normalized, updated_at: new Date().toISOString() }, { onConflict: "key" });
     }
 
-    res.json({ standard_fee, express_fee, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
+    res.json({ standard_fee, express_fee, currency, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
   } catch (err) { logger.error({ err }, "Admin settings get error"); res.status(500).json({ error: "Server error" }); }
 });
 
@@ -537,11 +553,12 @@ router.get("/delivery-fees", async (_req, res) => {
     const supabase = await getSupabaseAdmin();
     const { data, error } = await supabase.from("admin_settings").select("value").eq("key", "delivery_fee").maybeSingle();
     if (error) throw error;
-    const v = (data?.value ?? {}) as Record<string, number>;
+    const v = (data?.value ?? {}) as Record<string, any>;
     const standard_fee = typeof v.standard_fee === "number" ? v.standard_fee : (typeof v.standard === "number" ? v.standard : 299);
     const express_fee = typeof v.express_fee === "number" ? v.express_fee : (typeof v.express === "number" ? v.express : 399);
+    const currency = validCurrency(v.currency) ?? DEFAULT_CURRENCY;
     res.set("Cache-Control", "no-store");
-    res.json({ standard_fee, express_fee, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
+    res.json({ standard_fee, express_fee, currency, deliveryFee: standard_fee, deliveryFeeStandard: standard_fee, deliveryFeeExpress: express_fee });
   } catch (err) { logger.error({ err }, "Delivery fees get error"); res.status(500).json({ error: "Server error" }); }
 });
 

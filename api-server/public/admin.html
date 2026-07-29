@@ -466,8 +466,14 @@
               </div>
               <div>
                 <p class="sg-title">Delivery Fee Settings</p>
-                <p class="sg-desc">Set the Standard and Express delivery fees. Changes are saved to the database and immediately reflected on the checkout page.</p>
+                <p class="sg-desc">Set the display currency and the Standard / Express delivery fees. Changes are saved to the database and immediately reflected across the website.</p>
               </div>
+            </div>
+
+            <div class="fee-currency">
+              <label class="fee-field-label" for="currencySelect">Display Currency</label>
+              <select id="currencySelect" class="fee-select" style="width:100%;max-width:280px;padding:11px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;font-size:14px;color:#171a20;cursor:pointer;"></select>
+              <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">This currency is used wherever delivery fees are shown.</p>
             </div>
 
             <div class="fee-grid">
@@ -521,7 +527,7 @@
                   <polyline points="17,21 17,13 7,13 7,21"/>
                   <polyline points="7,3 7,8 15,8"/>
                 </svg>
-                Save All Fees
+                Save Settings
               </button>
               <span class="fee-status" id="feeStatus"></span>
             </div>

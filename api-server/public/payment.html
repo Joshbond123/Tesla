@@ -1255,6 +1255,11 @@
 
   // ── ORDER SUMMARY ──
     // Fetch delivery fees from DB once, then re-render order summary
+    var currentCurrency = 'USD';
+    function paySymbol() {
+      return (typeof window.teslaCurrencySymbol === 'function') ? window.teslaCurrencySymbol(currentCurrency) : '$';
+    }
+
     (function fetchDeliveryFeesForSummary() {
       var API_BASE = typeof window.TESLA_API_BASE !== 'undefined' ? window.TESLA_API_BASE : '';
       if (!API_BASE) return;
@@ -1262,6 +1267,7 @@
         .then(function(r) { return r.ok ? r.json() : null; })
         .then(function(data) {
           if (!data) return;
+          if (typeof data.currency === 'string') currentCurrency = data.currency;
           // Update the deliveryMethod price if the DB value differs
           var isExpress = deliveryMethod && deliveryMethod.id === 'express';
           var stdFee = (typeof data.standard_fee === 'number') ? data.standard_fee : (data.deliveryFeeStandard || data.deliveryFee || 299);
@@ -1269,7 +1275,7 @@
           var dbFee = isExpress ? expFee : stdFee;
           if (deliveryMethod && deliveryMethod.price !== dbFee) {
             deliveryMethod.price = dbFee;
-            deliveryMethod.priceDisplay = '$' + dbFee;
+            deliveryMethod.priceDisplay = paySymbol() + dbFee;
             renderOrderSummary();
           }
         })
@@ -1303,7 +1309,7 @@
       return '<div class="summary-row"><span class="sr-label">' + escapeHtml(r.label) + '</span><span class="sr-value">' + escapeHtml(r.value) + '</span></div>';
     }).join('');
 
-    html += '<div class="summary-total"><span class="summary-total-label">Delivery Fee Due</span><span class="summary-total-amount">$' + (fee || 299).toLocaleString() + '</span></div>';
+    html += '<div class="summary-total"><span class="summary-total-label">Delivery Fee Due</span><span class="summary-total-amount">' + paySymbol() + (fee || 299).toLocaleString() + '</span></div>';
 
     el.innerHTML = html;
   }
@@ -1512,7 +1518,7 @@
 
     // Build delivery fee value from stored method
     var feeAmt = (deliveryMethod && deliveryMethod.price) ? deliveryMethod.price : 299;
-    var feeDisplay = (deliveryMethod && deliveryMethod.priceDisplay) ? deliveryMethod.priceDisplay : ('$' + feeAmt);
+    var feeDisplay = (deliveryMethod && deliveryMethod.priceDisplay) ? deliveryMethod.priceDisplay : (paySymbol() + feeAmt);
 
     // Customer name from delivery details
     var customerName = (deliveryDetails && (deliveryDetails.fullName || deliveryDetails.recipientName)) || '';

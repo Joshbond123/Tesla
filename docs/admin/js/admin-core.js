@@ -13,6 +13,9 @@ var socialSettings = { whatsapp: { number: "", enabled: true, label: "Chat with 
 var standardFee = 299;
 var expressFee  = 399;
 var deliveryFee = standardFee;
+// Active display currency (overwritten from the database on panel load).
+var selectedCurrency = "USD";
+
 
 var adminPassword = localStorage.getItem("tesla_admin_pwd") || "admin123";
 var selectedCCNetworks = ["visa", "mastercard", "amex", "discover"];

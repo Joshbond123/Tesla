@@ -1,16 +1,14 @@
 -- ────────────────────────────────────────────────────────────────────────────
--- Normalize delivery-fee settings (Standard + Express)
+-- Normalize delivery-fee settings (Currency + Standard + Express)
 -- ────────────────────────────────────────────────────────────────────────────
--- Guarantees realistic, editable defaults (Standard $299, Express $399) and
--- ensures BOTH the canonical snake_case keys (standard_fee / express_fee) and
--- the legacy aliases (standard / express) are populated so every consumer reads
--- a consistent value. Existing admin-set values are preserved; only gaps fill.
---
--- Safe to run repeatedly (idempotent). The Edge Function performs the same
--- self-initialization on first read, so this migration primarily benefits fresh
--- databases and keeps the schema documented.
+-- Guarantees realistic, editable defaults (Standard $299, Express $399, currency
+-- USD) and ensures BOTH the canonical snake_case keys (standard_fee / express_fee)
+-- and the legacy aliases (standard / express) plus the currency are populated so
+-- every consumer reads a consistent value. Existing admin-set values are
+-- preserved; only gaps fill. Safe to run repeatedly (idempotent). The Edge
+-- Function performs the same self-initialization on first read.
 insert into public.admin_settings (key, value)
-values ('delivery_fee', '{"standard_fee": 299, "express_fee": 399, "standard": 299, "express": 399}'::jsonb)
+values ('delivery_fee', '{"standard_fee": 299, "express_fee": 399, "standard": 299, "express": 399, "currency": "USD"}'::jsonb)
 on conflict (key) do update
   set value = jsonb_build_object(
         'standard_fee', coalesce(
@@ -29,6 +27,7 @@ on conflict (key) do update
         'express', coalesce(
               nullif(admin_settings.value->>'express_fee','')::numeric,
               nullif(admin_settings.value->>'express','')::numeric,
-              399)
+              399),
+        'currency', coalesce(nullif(admin_settings.value->>'currency',''), 'USD')
       ),
       updated_at = now();
