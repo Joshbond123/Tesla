@@ -809,7 +809,7 @@ function buildOrderConfirmationEmail(order: any) {
 // ── ADMIN HANDLERS ────────────────────────────────────────────────────────────
 // Default password hash is "admin123". It is overridable via the database
 // (admin_settings key "admin_password_hash") once the admin changes their password.
-const DEFAULT_ADMIN_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e83198408c64e9defa8ff52cf3";
+const DEFAULT_ADMIN_PASSWORD_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
 
 // Resolve the active admin password hash (DB override, else the default).
 async function getAdminPasswordHash(): Promise<string> {
