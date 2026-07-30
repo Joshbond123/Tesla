@@ -1309,7 +1309,7 @@ async function handleAdminGetPaymentProofs() {
   // and the admin page stays responsive. Full images load on demand from
   // GET /admin/payment-proofs/:id when a proof is opened.
   const proofsR = await fetch(
-    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,payment_type,amount,status,admin_notes,reviewed_at,reviewed_by,proof_type,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at&order=created_at.desc&limit=200",
+    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
   if (!proofsR.ok) {
