@@ -1400,11 +1400,11 @@ async function handleAdminGetPaymentProof(id: string) {
 // Lightweight thumbnail (primary image only) for list cards — keeps the proofs
 // list lean while still showing images. Loaded lazily per card by the admin UI.
 async function handleAdminProofThumb(id: string) {
-  const row = await dbGet1("payment_proofs", "proof_url,proof_urls", { id: "eq." + id });
+  const row = await dbGet1("payment_proofs", "*", { id: "eq." + id });
   const p = (row.data as any) || {};
   let url = p.proof_url || "";
-  if (!url) {
-    try { const a = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls || "[]"); if (Array.isArray(a) && a[0]) url = a[0]; } catch { /* ignore */ }
+  if (!url && p.proof_urls) {
+    try { const a = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls); if (Array.isArray(a) && a[0]) url = a[0]; } catch { /* ignore */ }
   }
   return json({ url });
 }
