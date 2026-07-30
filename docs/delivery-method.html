@@ -295,7 +295,7 @@
       </div>
 
       <div class="dm-card-price">
-        <span class="dm-card-amount" id="price-standard">$299</span>
+        <span class="dm-card-amount" id="price-standard">—</span>
         <span class="dm-card-unit">delivery fee</span>
       </div>
 
@@ -364,7 +364,7 @@
       </div>
 
       <div class="dm-card-price">
-        <span class="dm-card-amount" id="price-express">$399</span>
+        <span class="dm-card-amount" id="price-express">—</span>
         <span class="dm-card-unit">delivery fee</span>
       </div>
 
@@ -442,21 +442,27 @@
 'use strict';
 
 var selectedMethod = null;
-// Defaults only — overwritten live from the database below (no localStorage).
-var standardFeeAmt = 299;
-var expressFeeAmt  = 399;
+// No fallback prices: values come ONLY from the admin-set database values.
+var standardFeeAmt = null;
+var expressFeeAmt  = null;
+var feesLoaded = false;
 var currentCurrency = 'USD';
 function feeSymbol() {
   return (typeof window.teslaCurrencySymbol === 'function') ? window.teslaCurrencySymbol(currentCurrency) : '$';
 }
-
-
-// Set initial display from local storage
-document.addEventListener('DOMContentLoaded', function() {
+// Render the fee — placeholder until the DB value has loaded.
+function renderFees() {
   var stdEl = document.getElementById('price-standard');
   var expEl = document.getElementById('price-express');
-  if (stdEl) stdEl.textContent = feeSymbol() + standardFeeAmt;
-  if (expEl) expEl.textContent = feeSymbol() + expressFeeAmt;
+  if (stdEl) stdEl.textContent = (feesLoaded && standardFeeAmt !== null) ? (feeSymbol() + standardFeeAmt) : '—';
+  if (expEl) expEl.textContent = (feesLoaded && expressFeeAmt !== null) ? (feeSymbol() + expressFeeAmt) : '—';
+}
+
+// No hardcoded price: show a placeholder until the admin-set value loads.
+document.addEventListener('DOMContentLoaded', function() {
+  renderFees();
+  var btn = document.getElementById('continueBtn');
+  if (btn) btn.disabled = true;
 });
 
 // ── Restore session data ─────────────────────────────────────────────────────
@@ -492,20 +498,22 @@ document.getElementById('summaryAddress').textContent = addressText;
   })
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(data) {
-      if (!data) return;
+      if (!data) { renderFees(); return; }
       if (typeof data.currency === 'string') currentCurrency = data.currency;
       // snake_case primary; legacy aliases kept for backward compatibility.
       if (typeof data.standard_fee === 'number') standardFeeAmt = data.standard_fee;
       else if (typeof data.deliveryFeeStandard === 'number') standardFeeAmt = data.deliveryFeeStandard;
-      else if (typeof data.deliveryFee === 'number') standardFeeAmt = data.deliveryFee;
       if (typeof data.express_fee === 'number') expressFeeAmt = data.express_fee;
       else if (typeof data.deliveryFeeExpress === 'number') expressFeeAmt = data.deliveryFeeExpress;
-      var stdEl = document.getElementById('price-standard');
-      var expEl = document.getElementById('price-express');
-      if (stdEl) stdEl.textContent = feeSymbol() + standardFeeAmt;
-      if (expEl) expEl.textContent = feeSymbol() + expressFeeAmt;
+      feesLoaded = (standardFeeAmt !== null && expressFeeAmt !== null);
+      renderFees();
+      // Re-enable continue if a method was already chosen while loading.
+      if (feesLoaded && selectedMethod) {
+        var btn = document.getElementById('continueBtn');
+        if (btn) btn.disabled = false;
+      }
     })
-    .catch(function() { /* network error — keep defaults */ });
+    .catch(function() { feesLoaded = false; renderFees(); });
 })();
 
 // ── Interaction ──────────────────────────────────────────────────────────────
@@ -516,7 +524,7 @@ function selectMethod(method) {
   });
   document.getElementById('card-' + method).classList.add('selected');
   var btn = document.getElementById('continueBtn');
-  btn.disabled = false;
+  if (btn) btn.disabled = !feesLoaded; // cannot continue until the admin-set fee has loaded
 }
 
 // Keyboard accessibility
@@ -531,6 +539,10 @@ document.querySelectorAll('.dm-card').forEach(function(card) {
 
 function continueToPayment() {
   if (!selectedMethod) return;
+  if (!feesLoaded || standardFeeAmt === null || expressFeeAmt === null) {
+    alert('Delivery fees are still loading. Please try again in a moment.');
+    return;
+  }
   var price = selectedMethod === 'express' ? expressFeeAmt : standardFeeAmt;
   localStorage.setItem('tesla_delivery_method', JSON.stringify({
     id:           selectedMethod,

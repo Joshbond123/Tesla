@@ -1270,10 +1270,10 @@
           if (typeof data.currency === 'string') currentCurrency = data.currency;
           // Update the deliveryMethod price if the DB value differs
           var isExpress = deliveryMethod && deliveryMethod.id === 'express';
-          var stdFee = (typeof data.standard_fee === 'number') ? data.standard_fee : (data.deliveryFeeStandard || data.deliveryFee || 299);
-          var expFee = (typeof data.express_fee === 'number') ? data.express_fee : (data.deliveryFeeExpress || 399);
+          var stdFee = (typeof data.standard_fee === 'number') ? data.standard_fee : (typeof data.deliveryFeeStandard === 'number' ? data.deliveryFeeStandard : null);
+          var expFee = (typeof data.express_fee === 'number') ? data.express_fee : (typeof data.deliveryFeeExpress === 'number' ? data.deliveryFeeExpress : null);
           var dbFee = isExpress ? expFee : stdFee;
-          if (deliveryMethod && deliveryMethod.price !== dbFee) {
+          if (dbFee !== null && deliveryMethod && deliveryMethod.price !== dbFee) {
             deliveryMethod.price = dbFee;
             deliveryMethod.priceDisplay = paySymbol() + dbFee;
             renderOrderSummary();
@@ -1289,8 +1289,8 @@
     var car = selectedCar || {};
     var delivery = deliveryDetails || {};
     var method = deliveryMethod || {};
-    // Load delivery fee from delivery method price first, fallback to 299
-    var fee = method.price ? method.price : 299;
+    // Delivery fee comes from the admin-set value chosen on the delivery page.
+    var fee = (typeof method.price === 'number') ? method.price : null;
 
     var rows = [];
     // Show Car (Tesla model name) instead of Color
@@ -1309,7 +1309,7 @@
       return '<div class="summary-row"><span class="sr-label">' + escapeHtml(r.label) + '</span><span class="sr-value">' + escapeHtml(r.value) + '</span></div>';
     }).join('');
 
-    html += '<div class="summary-total"><span class="summary-total-label">Delivery Fee Due</span><span class="summary-total-amount">' + paySymbol() + (fee || 299).toLocaleString() + '</span></div>';
+    html += '<div class="summary-total"><span class="summary-total-label">Delivery Fee Due</span><span class="summary-total-amount">' + (fee !== null ? (paySymbol() + fee.toLocaleString()) : '—') + '</span></div>';
 
     el.innerHTML = html;
   }
