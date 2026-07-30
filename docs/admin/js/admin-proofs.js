@@ -240,6 +240,9 @@ function renderProofCard(p) {
               'style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#fff;color:#991b1b;border:1px solid #fecaca;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" ' +
               'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">✕ Reject</button>'
           : '') +
+        '<button onclick="window.deleteProof(\'' + esc(p.id) + '\')" ' +
+          'style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#fff;color:#b91c1c;border:1px solid #fecaca;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" ' +
+          'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'" title="Delete proof">🗑 Delete</button>' +
         (!isPending && hasVal(p.reviewed_at)
           ? '<span style="font-size:11px;color:#9ca3af;">Reviewed ' + fmtDate(p.reviewed_at) + '</span>'
           : '') +
@@ -323,6 +326,10 @@ function openProofDetail(id) {
         'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject Payment</button>'
     : "";
+  var deleteBtn = '<button onclick="window.deleteProof(\'' + esc(p.id) + '\')" ' +
+    'style="flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;background:#fff;color:#b91c1c;border:2px solid #fecaca;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;" ' +
+    'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Delete Proof</button>';
 
   body.innerHTML =
     // ── Customer header ──────────────────────────────────────────
@@ -379,9 +386,7 @@ function openProofDetail(id) {
       : '') +
 
     // ── Action buttons ───────────────────────────────────────────
-    (approveBtn || rejectBtn
-      ? '<div style="display:flex;gap:10px;flex-wrap:wrap;">' + (approveBtn || '') + (rejectBtn || '') + '</div>'
-      : '<div style="text-align:center;padding:12px;font-size:13px;color:#94a3b8;font-style:italic;">This proof has already been ' + normaliseStatus(p.status) + '.</div>');
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;">' + (approveBtn || '') + (rejectBtn || '') + deleteBtn + '</div>';
 
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -486,6 +491,21 @@ function quickRejectProof(id) {
 function viewProof(url) { if (hasVal(url)) openImageZoom(encodeURIComponent(url), 0, null); }
 function closeProofModal() { closeProofDetail(); }
 
+// ── DELETE PROOF (permanent) ────────────────────────────────────────────────
+function deleteProof(id) {
+  var p = (allProofs || []).find(function (x) { return x.id === id; });
+  if (!p) return;
+  var who = hasVal(p.user_name) ? p.user_name : (hasVal(p.user_email) ? p.user_email : "this customer");
+  if (!confirm("Permanently DELETE this payment proof from " + who + " (" + (p.order_id || p.id) + ")?\nThis removes the record and cannot be undone.")) return;
+  api("POST", "/admin/payment-proofs/delete", { id: id }).then(function () {
+    if (typeof showToast === "function") showToast("Payment proof deleted", "success");
+    closeProofDetail();
+    loadProofs();
+  }).catch(function (e) {
+    if (typeof showToast === "function") showToast("Delete failed: " + ((e && e.message) || "Server error"), "error");
+  });
+}
+
 // ── Globals ──────────────────────────────────────────────────────
 window.loadProofs        = loadProofs;
 window.renderProofs      = renderProofs;
@@ -495,6 +515,7 @@ window.approveProof      = approveProof;
 window.rejectProof       = rejectProof;
 window.quickApproveProof = quickApproveProof;
 window.quickRejectProof  = quickRejectProof;
+window.deleteProof       = deleteProof;
 window.openImageZoom     = openImageZoom;
 window.closeImageZoom    = closeImageZoom;
 window.zoomPrev          = zoomPrev;

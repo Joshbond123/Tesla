@@ -1097,6 +1097,7 @@
   }
 
   // ── SELECT PAYMENT METHOD ──
+  var firstSelection = true;
   function selectPaymentMethod(id) {
     selectedPaymentId = id;
     var pm = findMethod(id);
@@ -1128,6 +1129,15 @@
     renderPaymentMethods();
     showPaymentDetails(id);
     refreshSubmitState();
+    // Smooth-scroll to the payment details / instructions on a user selection
+    // (skip the initial auto-select so the page does not jolt on load).
+    var wasFirst = firstSelection; firstSelection = false;
+    if (!wasFirst) {
+      var detail = document.getElementById('payDetailSection');
+      if (detail && typeof detail.scrollIntoView === 'function') {
+        setTimeout(function () { detail.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+      }
+    }
   }
 
   // ── SHOW PAYMENT DETAILS ──

@@ -1233,6 +1233,25 @@ async function handleAdminGetStats() {
     return json({ success: true });
     }
 
+    // ── PAYMENT METHODS: ADMIN SINGLE UPSERT (add / edit) ────────────────────────
+    // Used by the admin panel's per-method save (add/edit/toggle). Upserts by slug
+    // and returns the DB id so the client can issue PUTs on subsequent edits.
+    async function handleAdminUpsertPaymentMethod(req: Request) {
+    let body: Record<string, unknown>;
+    try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+    if (!body || (!body.id && !body.name)) return json({ error: "id or name required" }, 400);
+    const row = methodToRow(body);
+    const upR = await fetch(REST + "/payment_methods?on_conflict=slug", {
+      method: "POST",
+      headers: { ...SB_HEADERS, Prefer: "resolution=merge-duplicates,return=representation" },
+      body: JSON.stringify(row),
+    });
+    if (!upR.ok) return json({ error: "Failed to save payment method: " + await upR.text() }, 500);
+    const rows = (await upR.json()) as Record<string, unknown>[];
+    const saved = rows[0] || {};
+    return json({ success: true, _db_id: saved.id || row.slug, method: rowToMethod(saved) });
+    }
+
     
 async function handleSubmitPaymentProof(req: Request) {
   let body: Record<string, unknown>;
@@ -1430,6 +1449,43 @@ async function handleAdminRejectProof(req: Request) {
   return json({ success: true, proof: rows[0] });
 }
 
+// ── PAYMENT PROOF: PERMANENT DELETE ──────────────────────────────────────────
+// Removes the database record and best-effort deletes any Supabase Storage
+// objects referenced by the proof (data: URLs are skipped — they live in the row).
+async function handleAdminDeleteProof(req: Request) {
+  let body: { id?: string };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  if (!body.id) return json({ error: "Proof id required" }, 400);
+
+  // Best-effort storage cleanup for any real storage object URLs.
+  try {
+    const proofRow = await dbGet1("payment_proofs", "proof_url,proof_urls,proof_back_url", { id: "eq." + body.id });
+    const urls: string[] = [];
+    const collect = (v: unknown) => {
+      if (typeof v !== "string" || !v) return;
+      try { const p = JSON.parse(v); if (Array.isArray(p)) { p.forEach(collect); return; } } catch { /* not json */ }
+      urls.push(v);
+    };
+    if (proofRow.data) {
+      const d = proofRow.data as Record<string, unknown>;
+      collect(d.proof_urls); collect(d.proof_url); collect(d.proof_back_url);
+    }
+    for (const u of urls) {
+      const m = String(u).match(/\/storage\/v1\/object\/(?:public\/)?([^/]+)\/(.+)$/);
+      if (m) {
+        await fetch(SUPABASE_URL + "/storage/v1/object/" + m[1] + "/" + m[2], { method: "DELETE", headers: SB_HEADERS });
+      }
+    }
+  } catch { /* best-effort; proceed to row delete */ }
+
+  const r = await fetch(REST + "/payment_proofs?id=eq." + encodeURIComponent(body.id), {
+    method: "DELETE",
+    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+  });
+  if (!r.ok) return json({ error: "Failed to delete proof" }, 500);
+  return json({ success: true });
+}
+
 async function handleGetPaymentStatus(req: Request) {
   const url = new URL(req.url);
   const orderId = url.searchParams.get("order_id");
@@ -1564,8 +1620,10 @@ Deno.serve(async (req) => {
     if (route === "/api/payment-methods" && req.method === "GET") return await handlePublicPaymentMethods();
     if (route === "/api/admin/payment-methods" && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentMethods());
     if (route === "/api/admin/payment-methods" && req.method === "POST") return await adminGuard(req, () => handleAdminSavePaymentMethods(req));
-    const pmDelMatch = route.match(/^\/api\/admin\/payment-methods\/([^/]+)$/);
-    if (pmDelMatch && req.method === "DELETE") return await adminGuard(req, () => handleAdminDeletePaymentMethod(decodeURIComponent(pmDelMatch[1])));
+    if (route === "/api/admin/payment-methods/upsert" && req.method === "POST") return await adminGuard(req, () => handleAdminUpsertPaymentMethod(req));
+    const pmMatch = route.match(/^\/api\/admin\/payment-methods\/([^/]+)$/);
+    if (pmMatch && req.method === "DELETE") return await adminGuard(req, () => handleAdminDeletePaymentMethod(decodeURIComponent(pmMatch[1])));
+    if (pmMatch && req.method === "PUT") return await adminGuard(req, () => handleAdminUpsertPaymentMethod(req));
     // Payment submission from customer
     if (route === "/api/payment/submit" && req.method === "POST") return await handlePaymentSubmit(req);
     if (route === "/api/payment-proof" && req.method === "POST") return await handlePaymentSubmit(req);
@@ -1575,6 +1633,7 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await adminGuard(req, () => handleSubmitPaymentProof(req));
     if (route === "/api/admin/payment-proofs/approve" && req.method === "POST") return await adminGuard(req, () => handleAdminApproveProof(req));
     if (route === "/api/admin/payment-proofs/reject" && req.method === "POST") return await adminGuard(req, () => handleAdminRejectProof(req));
+    if (route === "/api/admin/payment-proofs/delete" && req.method === "POST") return await adminGuard(req, () => handleAdminDeleteProof(req));
     return json({ error: "Not found." }, 404);
   } catch (err) {
     console.error("Unhandled error:", err);
