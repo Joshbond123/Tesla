@@ -157,7 +157,8 @@ function renderProofCard(p) {
   var status      = normaliseStatus(p.status);
   var isPending   = status === "pending";
   var imgs        = getProofImages(p);
-  var hasImg      = imgs.length > 0;
+  var hasInline   = imgs.length > 0;
+  var hasImg      = hasInline || p.has_image === true;
   var borderLeft  = status === "approved" ? "#22c55e" : status === "rejected" ? "#ef4444" : "#f97316";
   var customerLabel = hasVal(p.user_name) ? esc(p.user_name)
     : hasVal(p.user_email) ? esc(p.user_email)
@@ -165,15 +166,20 @@ function renderProofCard(p) {
     : '<span style="color:#94a3b8;font-style:italic;">Unknown Customer</span>';
 
   // Thumbnail — works for both base64 data URLs and https:// storage URLs
-  var thumbHtml = hasImg
+  var thumbHtml = hasInline
     ? '<img src="' + esc(imgs[0].url) + '" alt="Proof" ' +
         'style="width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;" ' +
         'onclick="event.stopPropagation();window.openImageZoom(\'' + encodeURIComponent(imgs[0].url).replace(/'/g,"\\'",'g') + '\',0,[' + imgs.map(function(im){ return "'" + encodeURIComponent(im.url) + "'"; }).join(",") + '])" ' +
         'onerror="this.parentElement.innerHTML=\'<div style=&quot;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;&quot;><svg width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot;/><circle cx=&quot;8.5&quot; cy=&quot;8.5&quot; r=&quot;1.5&quot;/><polyline points=&quot;21,15 16,10 5,21&quot;/></svg><span>Image</span></div>\'">'
-    : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;">' +
-        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
-        '<span>No image</span>' +
-      '</div>';
+    : (hasImg
+      ? '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:11px;gap:6px;">' +
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
+          '<span>View proof</span>' +
+        '</div>'
+      : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;">' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
+          '<span>No image</span>' +
+        '</div>');
 
   // Image count badge
   var imgBadge = imgs.length > 1
@@ -255,8 +261,21 @@ function renderProofCard(p) {
 
 // ── Detail Modal ─────────────────────────────────────────────────
 function openProofDetail(id) {
-  var p = (allProofs || []).find(function(x) { return x.id === id; });
-  if (!p) return;
+  var modal = document.getElementById("proofDetailModal");
+  var body  = document.getElementById("proofDetailBody");
+  if (!modal || !body) return;
+  body.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8;font-size:14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading proof…</div>';
+  modal.style.display = "flex";
+  api("GET", "/admin/payment-proofs/" + encodeURIComponent(id)).then(function (r) {
+    var p = r && r.proof;
+    if (!p) { body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Proof not found.</div>'; return; }
+    renderProofDetail(p);
+  }).catch(function () {
+    body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Failed to load proof.</div>';
+  });
+}
+
+function renderProofDetail(p) {
   var modal = document.getElementById("proofDetailModal");
   var body  = document.getElementById("proofDetailBody");
   if (!modal || !body) return;

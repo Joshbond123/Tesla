@@ -1305,118 +1305,97 @@ async function handleSubmitPaymentProof(req: Request) {
 }
 
 async function handleAdminGetPaymentProofs() {
-  // Load payment proofs WITH joined user, order, car, and delivery data
-  // Step 1: Get all proofs
+  // LEAN list: exclude the giant base64 image columns so the payload stays small
+  // and the admin page stays responsive. Full images load on demand from
+  // GET /admin/payment-proofs/:id when a proof is opened.
   const proofsR = await fetch(
-    REST + "/payment_proofs?select=*&order=created_at.desc&limit=200",
+    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,payment_type,amount,status,admin_notes,reviewed_at,reviewed_by,proof_type,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
   if (!proofsR.ok) {
     console.error("Payment proofs: load failed:", await proofsR.text());
     return json({ proofs: [] });
   }
-  const proofs = await proofsR.json() as Record<string, unknown>[];
+  const proofs = (await proofsR.json()) as Record<string, any>[];
 
-  // Step 2: For each proof, look up the order and associated user/car/delivery data
-  const enrichedProofs = [];
-  for (const proof of proofs) {
-    const orderId = String(proof.order_id || "");
-    const enriched = { ...proof };
-
-    if (orderId) {
-      try {
-        // Look up the order to get user_id
-        const orderR = await fetch(
-          REST + "/orders?select=id,user_id,delivery_method,payment_method,order_date,estimated_delivery&order_id=eq." + encodeURIComponent(orderId) + "&limit=1",
-          { headers: SB_HEADERS },
-        );
-        if (orderR.ok) {
-          const orderRows = await orderR.json();
-          if (orderRows.length > 0) {
-            const order = orderRows[0];
-            enriched.delivery_method = order.delivery_method || {};
-            enriched.order_date = order.order_date || proof.created_at;
-
-            // Look up user data
-            if (order.user_id) {
-              const userR = await fetch(
-                REST + "/giveaway_users?select=id,email,phone,first_name,last_name&id=eq." + order.user_id + "&limit=1",
-                { headers: SB_HEADERS },
-              );
-              if (userR.ok) {
-                const userRows = await userR.json();
-                if (userRows.length > 0) {
-                  const user = userRows[0];
-                  enriched.user_name = (user.first_name || "") + " " + (user.last_name || "");
-                  enriched.user_name = enriched.user_name.trim();
-                  enriched.user_email = user.email || "";
-                  enriched.user_phone = user.phone || "";
-                  enriched.user_id = user.id;
-                }
-              }
-
-              // Look up selected car
-              const carR = await fetch(
-                REST + "/selected_cars?select=data&user_id=eq." + order.user_id + "&order=created_at.desc&limit=1",
-                { headers: SB_HEADERS },
-              );
-              if (carR.ok) {
-                const carRows = await carR.json();
-                if (carRows.length > 0 && carRows[0].data) {
-                  enriched.selected_car = carRows[0].data;
-                }
-              }
-
-              // Look up delivery details
-              const deliveryR = await fetch(
-                REST + "/delivery_details?select=data&user_id=eq." + order.user_id + "&order=created_at.desc&limit=1",
-                { headers: SB_HEADERS },
-              );
-              if (deliveryR.ok) {
-                const deliveryRows = await deliveryR.json();
-                if (deliveryRows.length > 0 && deliveryRows[0].data) {
-                  enriched.delivery_details = deliveryRows[0].data;
-                }
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Payment proofs: failed to enrich proof " + orderId + ":", err);
-      }
-    }
-
-    // Handle proof_urls array for multiple images
-    // If proof_urls exists as a JSON string, parse it; otherwise create array from proof_url + proof_back_url
-    let proofUrls: string[] = [];
-    if (proof.proof_urls) {
-      try {
-        if (typeof proof.proof_urls === 'string') {
-          proofUrls = JSON.parse(proof.proof_urls);
-        } else if (Array.isArray(proof.proof_urls)) {
-          proofUrls = proof.proof_urls as string[];
-        }
-      } catch { /* ignore */ }
-    }
-    // Also include proof_url and proof_back_url if they're not in the array
-    if (proof.proof_url && typeof proof.proof_url === 'string' && proof.proof_url.length > 0) {
-      if (!proofUrls.includes(proof.proof_url)) {
-        proofUrls.unshift(proof.proof_url);
-      }
-    }
-    if (proof.proof_back_url && typeof proof.proof_back_url === 'string' && proof.proof_back_url.length > 0) {
-      if (!proofUrls.includes(proof.proof_back_url)) {
-        proofUrls.push(proof.proof_back_url);
-      }
-    }
-    enriched.proof_urls = proofUrls;
-
-    enrichedProofs.push(enriched);
+  // Batched enrichment (avoids the slow N+1 pattern): one query per related table.
+  const orderIds = Array.from(new Set(proofs.map((p) => String(p.order_id || "")).filter(Boolean)));
+  const orderMap = new Map<string, any>();
+  if (orderIds.length) {
+    const or = await fetch(
+      REST + "/orders?order_id=in.(" + orderIds.map(encodeURIComponent).join(",") + ")&select=order_id,user_id,delivery_method,order_date,estimated_delivery",
+      { headers: SB_HEADERS },
+    );
+    if (or.ok) (await or.json()).forEach((o: any) => orderMap.set(String(o.order_id), o));
+  }
+  const userIds = Array.from(new Set([...orderMap.values()].map((o: any) => o.user_id).filter(Boolean)));
+  const userMap = new Map<string, any>();
+  const carMap = new Map<string, any>();
+  const delMap = new Map<string, any>();
+  if (userIds.length) {
+    const inU = userIds.map(encodeURIComponent).join(",");
+    const ur = await fetch(REST + "/giveaway_users?id=in.(" + inU + ")&select=id,email,phone,first_name,last_name", { headers: SB_HEADERS });
+    if (ur.ok) (await ur.json()).forEach((u: any) => userMap.set(u.id, u));
+    const cr = await fetch(REST + "/selected_cars?user_id=in.(" + inU + ")&select=user_id,data&order=created_at.desc", { headers: SB_HEADERS });
+    if (cr.ok) (await cr.json()).forEach((c: any) => { if (!carMap.has(c.user_id)) carMap.set(c.user_id, c.data); });
+    const dr = await fetch(REST + "/delivery_details?user_id=in.(" + inU + ")&select=user_id,data&order=created_at.desc", { headers: SB_HEADERS });
+    if (dr.ok) (await dr.json()).forEach((d: any) => { if (!delMap.has(d.user_id)) delMap.set(d.user_id, d.data); });
   }
 
-  return json({ proofs: enrichedProofs });
+  const enriched = proofs.map((p: any) => {
+    const order = orderMap.get(String(p.order_id));
+    const uid = (order && order.user_id) || p.user_id || null;
+    const user = uid ? userMap.get(uid) : null;
+    return {
+      ...p,
+      delivery_method: (order && order.delivery_method) || p.delivery_method || "",
+      order_date: (order && order.order_date) || p.created_at,
+      user_name: user ? ((user.first_name || "") + " " + (user.last_name || "")).trim() : (p.customer_name || ""),
+      user_email: (user && user.email) || p.customer_email || "",
+      user_phone: (user && user.phone) || p.customer_phone || "",
+      user_id: uid,
+      selected_car: (uid && carMap.get(uid)) || null,
+      delivery_details: (uid && delMap.get(uid)) || null,
+      has_image: true,
+    };
+  });
+
+  return json({ proofs: enriched });
 }
 
+// Full single proof (with images) for the detail view.
+async function handleAdminGetPaymentProof(id: string) {
+  const row = await dbGet1("payment_proofs", "*", { id: "eq." + id });
+  if (!row.data) return json({ error: "Proof not found." }, 404);
+  const p = { ...(row.data as any) };
+  let urls: string[] = [];
+  try {
+    if (Array.isArray(p.proof_urls)) urls = p.proof_urls;
+    else if (typeof p.proof_urls === "string") urls = JSON.parse(p.proof_urls);
+  } catch { /* ignore */ }
+  if (typeof p.proof_url === "string" && p.proof_url && !urls.includes(p.proof_url)) urls.unshift(p.proof_url);
+  if (typeof p.proof_back_url === "string" && p.proof_back_url && !urls.includes(p.proof_back_url)) urls.push(p.proof_back_url);
+  p.proof_urls = urls;
+
+  const orderId = String(p.order_id || "");
+  if (orderId) {
+    const or = await fetch(REST + "/orders?order_id=eq." + encodeURIComponent(orderId) + "&select=user_id,delivery_method,order_date,estimated_delivery&limit=1", { headers: SB_HEADERS });
+    if (or.ok) {
+      const rows = await or.json();
+      if (rows[0]) {
+        const o = rows[0];
+        if (!p.delivery_method) p.delivery_method = o.delivery_method || "";
+        if (!p.order_date) p.order_date = o.order_date || p.created_at;
+        const uid = o.user_id || p.user_id;
+        if (uid) {
+          const ur = await fetch(REST + "/giveaway_users?id=eq." + uid + "&select=email,phone,first_name,last_name&limit=1", { headers: SB_HEADERS });
+          if (ur.ok) { const u = (await ur.json())[0]; if (u) { p.user_name = ((u.first_name || "") + " " + (u.last_name || "")).trim(); p.user_email = u.email || ""; p.user_phone = u.phone || ""; } }
+        }
+      }
+    }
+  }
+  return json({ proof: p });
+}
 
 // ── PAYMENT PROOF APPROVAL / REJECTION ──────────────────────────────────────
 async function handleAdminApproveProof(req: Request) {
@@ -1630,6 +1609,8 @@ Deno.serve(async (req) => {
     if (route === "/api/payment/status" && req.method === "GET") return await handleGetPaymentStatus(req);
     // Admin payment proof management
     if (route === "/api/admin/payment-proofs" && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentProofs());
+    const proofIdMatch = route.match(/^\/api\/admin\/payment-proofs\/([^/]+)$/);
+    if (proofIdMatch && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentProof(decodeURIComponent(proofIdMatch[1])));
     if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await adminGuard(req, () => handleSubmitPaymentProof(req));
     if (route === "/api/admin/payment-proofs/approve" && req.method === "POST") return await adminGuard(req, () => handleAdminApproveProof(req));
     if (route === "/api/admin/payment-proofs/reject" && req.method === "POST") return await adminGuard(req, () => handleAdminRejectProof(req));
