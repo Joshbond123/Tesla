@@ -1394,7 +1394,15 @@ async function handleAdminGetPaymentProof(id: string) {
       }
     }
   }
-  return json({ proof: p });
+  return json({ proof: {
+    id: p.id, order_id: p.order_id, user_id: p.user_id, payment_method: p.payment_method,
+    payment_type: p.payment_type, proof_type: p.proof_type, amount: p.amount, status: p.status,
+    admin_notes: p.admin_notes, reviewed_at: p.reviewed_at, reviewed_by: p.reviewed_by,
+    car_model: p.car_model, customer_name: p.customer_name, customer_email: p.customer_email,
+    customer_phone: p.customer_phone, delivery_method: p.delivery_method, created_at: p.created_at,
+    user_name: p.user_name, user_email: p.user_email, user_phone: p.user_phone, order_date: p.order_date,
+    image_count: urls.length
+  }});
 }
 
 // Lightweight thumbnail (primary image only) for list cards — keeps the proofs
@@ -1407,6 +1415,37 @@ async function handleAdminProofThumb(id: string) {
     try { const a = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls); if (Array.isArray(a) && a[0]) url = a[0]; } catch { /* ignore */ }
   }
   return json({ url });
+}
+
+// Serve a single proof image as a real binary response (img-friendly URL) so the
+// admin UI can use <img src="..."> instead of huge inline data: URLs.
+// Auth via ?t= session token (for <img> tags) or the Authorization header.
+async function handleAdminProofImage(id: string, req: Request) {
+  const u = new URL(req.url);
+  const qTok = u.searchParams.get("t") || "";
+  const authH = req.headers.get("authorization") || "";
+  const hTok = authH.toLowerCase().startsWith("bearer ") ? authH.slice(7).trim() : "";
+  const token = qTok || hTok;
+  if (!token) return json({ error: "Authentication required." }, 401);
+  const srow = await dbGet1("admin_settings", "key", { key: "eq.session_" + token });
+  if (!srow.data) return json({ error: "Invalid session." }, 401);
+
+  const idx = Math.max(0, parseInt(u.searchParams.get("n") || "0", 10) || 0);
+  const row = await dbGet1("payment_proofs", "*", { id: "eq." + id });
+  const p: any = row.data || {};
+  const urls: string[] = [];
+  if (typeof p.proof_url === "string" && p.proof_url) urls.push(p.proof_url);
+  if (typeof p.proof_back_url === "string" && p.proof_back_url && !urls.includes(p.proof_back_url)) urls.push(p.proof_back_url);
+  try { const a: any = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls || "[]"); if (Array.isArray(a)) a.forEach((x: string) => { if (x && !urls.includes(x)) urls.push(x); }); } catch { /* ignore */ }
+  const dataUrl = urls[idx] || urls[0] || "";
+  const m = String(dataUrl).match(/^data:([^;]+)?;base64,(.+)$/);
+  if (!m) return new Response(new Uint8Array(0), { status: 404, headers: { ...CORS, "Content-Type": "image/png" } });
+  const mime = m[1] || "image/jpeg";
+  let bin: string;
+  try { bin = atob(m[2]); } catch { return new Response(new Uint8Array(0), { status: 404, headers: CORS }); }
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Response(bytes, { status: 200, headers: { ...CORS, "Content-Type": mime, "Cache-Control": "private, max-age=300" } });
 }
 
 // ── PAYMENT PROOF APPROVAL / REJECTION ──────────────────────────────────────
@@ -1623,6 +1662,8 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/payment-proofs" && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentProofs());
     const proofThumbMatch = route.match(/^\/api\/admin\/payment-proofs\/([^/]+)\/thumb$/);
     if (proofThumbMatch && req.method === "GET") return await adminGuard(req, () => handleAdminProofThumb(decodeURIComponent(proofThumbMatch[1])));
+    const proofImgMatch = route.match(/^\/api\/admin\/payment-proofs\/([^/]+)\/image$/);
+    if (proofImgMatch && req.method === "GET") return await handleAdminProofImage(decodeURIComponent(proofImgMatch[1]), req);
     const proofIdMatch = route.match(/^\/api\/admin\/payment-proofs\/([^/]+)$/);
     if (proofIdMatch && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentProof(decodeURIComponent(proofIdMatch[1])));
     if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await adminGuard(req, () => handleSubmitPaymentProof(req));

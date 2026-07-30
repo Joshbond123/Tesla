@@ -12,6 +12,17 @@ function esc(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
+// URL of a proof image served as a real binary response (img-friendly).
+// Token is passed via ?t= so <img> tags can authenticate.
+function proofImgUrl(id, n) {
+  var base = (typeof API_BASE !== "undefined" && API_BASE) ? API_BASE : "";
+  var tok = "";
+  try { tok = localStorage.getItem("tesla_admin_token") || ""; } catch (e) {}
+  var url = base + "/admin/payment-proofs/" + encodeURIComponent(id) + "/image";
+  var q = tok ? ("?t=" + encodeURIComponent(tok)) : "";
+  if (n) q += (q ? "&" : "?") + "n=" + n;
+  return url + q;
+}
 function hasVal(v) {
   var s = String(v == null ? "" : v).trim();
   return s !== "" && s !== "-" && s !== "—" && s !== "null" && s !== "undefined";
@@ -179,7 +190,6 @@ function renderProofs() {
   }
   if (empty) empty.style.display = "none";
   container.innerHTML = '<div style="padding:16px 20px 8px;">' + list.map(renderProofCard).join("") + '</div>';
-  loadProofThumbnails();
 }
 
 // ── Card ─────────────────────────────────────────────────────────
@@ -202,9 +212,7 @@ function renderProofCard(p) {
         'onclick="event.stopPropagation();window.openImageZoom(\'' + encodeURIComponent(imgs[0].url).replace(/'/g,"\\'",'g') + '\',0,[' + imgs.map(function(im){ return "'" + encodeURIComponent(im.url) + "'"; }).join(",") + '])" ' +
         'onerror="this.parentElement.innerHTML=\'<div style=&quot;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;&quot;><svg width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot;/><circle cx=&quot;8.5&quot; cy=&quot;8.5&quot; r=&quot;1.5&quot;/><polyline points=&quot;21,15 16,10 5,21&quot;/></svg><span>Image</span></div>\'">'
     : (hasImg
-      ? '<div data-proof-thumb="' + esc(p.id) + '" style="display:flex;align-items:center;justify-content:center;height:100%;background:#f1f5f9;">' +
-          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
-        '</div>'
+      ? '<img src="' + proofImgUrl(p.id, 0) + '" alt="Proof" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">'
       : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;">' +
           '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
           '<span>No image</span>' +
@@ -309,7 +317,12 @@ function renderProofDetail(p) {
   var body  = document.getElementById("proofDetailBody");
   if (!modal || !body) return;
 
-  var imgs     = getProofImages(p);
+  var _ic = p.image_count || getProofImages(p).length || 0;
+  var _labels = ["Front", "Back"];
+  var imgs = [];
+  for (var _i = 0; _i < _ic; _i++) {
+    imgs.push({ url: proofImgUrl(p.id, _i), label: (_ic === 1 ? "Proof Image" : (_labels[_i] || ("Image " + (_i + 1)))) });
+  }
   var status   = normaliseStatus(p.status);
   var imgCount = imgs.length;
 
