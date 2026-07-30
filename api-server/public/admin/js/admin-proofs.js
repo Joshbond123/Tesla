@@ -120,6 +120,35 @@ function loadProofs() {
 }
 
 // ── Render list ──────────────────────────────────────────────────
+// ── Lazy thumbnail loading (keeps the proofs list lean) ────────────────────────
+var _thumbCache = {};
+var _thumbLoading = {};
+function applyProofThumb(node, url) {
+  if (!node) return;
+  if (url) {
+    node.innerHTML = '<img src="' + esc(url) + '" alt="Proof" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">';
+  } else {
+    node.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg><span>No image</span></div>';
+  }
+}
+function loadProofThumbnails() {
+  Array.prototype.forEach.call(document.querySelectorAll('[data-proof-thumb]'), function (node) {
+    var id = node.getAttribute('data-proof-thumb');
+    if (id in _thumbCache) { applyProofThumb(node, _thumbCache[id]); return; }
+    if (_thumbLoading[id]) return;
+    _thumbLoading[id] = true;
+    api("GET", "/admin/payment-proofs/" + encodeURIComponent(id) + "/thumb").then(function (r) {
+      _thumbCache[id] = (r && r.url) || "";
+      delete _thumbLoading[id];
+      applyProofThumb(node, _thumbCache[id]);
+    }).catch(function () {
+      _thumbCache[id] = "";
+      delete _thumbLoading[id];
+      applyProofThumb(node, "");
+    });
+  });
+}
+
 function renderProofs() {
   var container  = document.getElementById("proofsContainer");
   var empty      = document.getElementById("proofsEmpty");
@@ -150,6 +179,7 @@ function renderProofs() {
   }
   if (empty) empty.style.display = "none";
   container.innerHTML = '<div style="padding:16px 20px 8px;">' + list.map(renderProofCard).join("") + '</div>';
+  loadProofThumbnails();
 }
 
 // ── Card ─────────────────────────────────────────────────────────
@@ -172,9 +202,8 @@ function renderProofCard(p) {
         'onclick="event.stopPropagation();window.openImageZoom(\'' + encodeURIComponent(imgs[0].url).replace(/'/g,"\\'",'g') + '\',0,[' + imgs.map(function(im){ return "'" + encodeURIComponent(im.url) + "'"; }).join(",") + '])" ' +
         'onerror="this.parentElement.innerHTML=\'<div style=&quot;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;&quot;><svg width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot;/><circle cx=&quot;8.5&quot; cy=&quot;8.5&quot; r=&quot;1.5&quot;/><polyline points=&quot;21,15 16,10 5,21&quot;/></svg><span>Image</span></div>\'">'
     : (hasImg
-      ? '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:11px;gap:6px;">' +
-          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
-          '<span>View proof</span>' +
+      ? '<div data-proof-thumb="' + esc(p.id) + '" style="display:flex;align-items:center;justify-content:center;height:100%;background:#f1f5f9;">' +
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
         '</div>'
       : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;">' +
           '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +

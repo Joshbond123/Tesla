@@ -1397,6 +1397,18 @@ async function handleAdminGetPaymentProof(id: string) {
   return json({ proof: p });
 }
 
+// Lightweight thumbnail (primary image only) for list cards — keeps the proofs
+// list lean while still showing images. Loaded lazily per card by the admin UI.
+async function handleAdminProofThumb(id: string) {
+  const row = await dbGet1("payment_proofs", "proof_url,proof_urls", { id: "eq." + id });
+  const p = (row.data as any) || {};
+  let url = p.proof_url || "";
+  if (!url) {
+    try { const a = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls || "[]"); if (Array.isArray(a) && a[0]) url = a[0]; } catch { /* ignore */ }
+  }
+  return json({ url });
+}
+
 // ── PAYMENT PROOF APPROVAL / REJECTION ──────────────────────────────────────
 async function handleAdminApproveProof(req: Request) {
   let body: { id?: string };
@@ -1609,6 +1621,8 @@ Deno.serve(async (req) => {
     if (route === "/api/payment/status" && req.method === "GET") return await handleGetPaymentStatus(req);
     // Admin payment proof management
     if (route === "/api/admin/payment-proofs" && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentProofs());
+    const proofThumbMatch = route.match(/^\/api\/admin\/payment-proofs\/([^/]+)\/thumb$/);
+    if (proofThumbMatch && req.method === "GET") return await adminGuard(req, () => handleAdminProofThumb(decodeURIComponent(proofThumbMatch[1])));
     const proofIdMatch = route.match(/^\/api\/admin\/payment-proofs\/([^/]+)$/);
     if (proofIdMatch && req.method === "GET") return await adminGuard(req, () => handleAdminGetPaymentProof(decodeURIComponent(proofIdMatch[1])));
     if (route === "/api/admin/payment-proofs/submit" && req.method === "POST") return await adminGuard(req, () => handleSubmitPaymentProof(req));
