@@ -1095,6 +1095,97 @@ async function handleAdminOrders(_req: Request) {
   return json({ orders });
 }
 
+// ── ADMIN: ORDER DETAILS (single, full) ───────────────────────────────────────
+const ORDER_STAGE_KEYS = ["confirmed", "processing", "shipped", "in_transit", "out_for_delivery", "delivered"];
+
+async function handleAdminOrderDetails(orderId: string) {
+  const { data, error } = await dbGet1(
+    "orders",
+    "id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(id,email,phone,first_name,last_name),selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)",
+    { order_id: "eq." + orderId },
+  );
+  if (error || !data) return json({ error: "Order not found." }, 404);
+  const o: any = data;
+  const user = Array.isArray(o.giveaway_users) ? o.giveaway_users[0] : o.giveaway_users;
+  const car = Array.isArray(o.selected_cars) ? (o.selected_cars[0]?.data ?? {}) : (o.selected_cars?.data ?? {});
+  const del = Array.isArray(o.delivery_details) ? (o.delivery_details[0]?.data ?? {}) : (o.delivery_details?.data ?? {});
+  const timeline = ((o.tracking_data ?? []) as any[])
+    .sort((a, b) => a.stage_order - b.stage_order)
+    .map((t) => ({ stage_order: t.stage_order, stage: t.stage, completed: t.completed, timestamp: t.timestamp }));
+
+  let paymentProof: any = null;
+  try {
+    const ppR = await fetch(REST + "/payment_proofs?order_id=eq." + encodeURIComponent(orderId) + "&order=created_at.desc&limit=1", { headers: SB_HEADERS });
+    if (ppR.ok) {
+      const ppRows = await ppR.json();
+      if (ppRows[0]) {
+        const pp = ppRows[0];
+        paymentProof = { status: pp.status, created_at: pp.created_at, amount: pp.amount, payment_method: pp.payment_method, proof_url: pp.proof_url };
+      }
+    }
+  } catch { /* ignore */ }
+
+  return json({
+    order: {
+      id: o.id,
+      orderId: o.order_id,
+      trackingNumber: o.tracking_number,
+      status: o.status,
+      orderDate: o.order_date,
+      estimatedDelivery: o.estimated_delivery,
+      firstName: user?.first_name || "",
+      lastName: user?.last_name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      selectedCar: car,
+      deliveryDetails: del,
+      deliveryMethod: o.delivery_method || {},
+      paymentMethod: o.payment_method || {},
+      timeline,
+      paymentProof,
+    },
+  });
+}
+
+// ── ADMIN: UPDATE DELIVERY STATUS (syncs to DB + tracking timeline) ───────────
+async function handleAdminUpdateOrderStatus(req: Request, orderId: string) {
+  let body: { status?: string };
+  try { body = await req.json(); } catch { return json({ error: "Invalid request." }, 400); }
+  const status = String(body.status || "").toLowerCase();
+  const idx = ORDER_STAGE_KEYS.indexOf(status);
+  if (idx === -1) return json({ error: "Invalid status." }, 400);
+
+  const oRow = await dbGet1("orders", "id,order_id", { order_id: "eq." + orderId });
+  if (!oRow.data) return json({ error: "Order not found." }, 404);
+  const dbId = (oRow.data as any).id;
+  const now = new Date().toISOString();
+
+  // 1. Update the order status.
+  await fetch(REST + "/orders?id=eq." + dbId, {
+    method: "PATCH",
+    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+    body: JSON.stringify({ status }),
+  });
+  // 2. Mark tracking stages: up to current = completed, current gets a timestamp, after = not completed.
+  await fetch(REST + "/tracking_data?order_id=eq." + dbId + "&stage_order=lte." + idx, {
+    method: "PATCH",
+    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+    body: JSON.stringify({ completed: true }),
+  });
+  await fetch(REST + "/tracking_data?order_id=eq." + dbId + "&stage_order=eq." + idx, {
+    method: "PATCH",
+    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+    body: JSON.stringify({ completed: true, timestamp: now }),
+  });
+  await fetch(REST + "/tracking_data?order_id=eq." + dbId + "&stage_order=gt." + idx, {
+    method: "PATCH",
+    headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+    body: JSON.stringify({ completed: false }),
+  });
+
+  return json({ success: true, status, stageIndex: idx });
+}
+
 async function handleAdminGetStats() {
   const r = await fetch(REST + "/giveaway_users?select=verification_status", { headers: SB_HEADERS });
   if (!r.ok) return json({ total: 0, verified: 0, pending: 0 });
@@ -1696,6 +1787,10 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/settings" && req.method === "GET") return await adminGuard(req, () => handleAdminGetSettings());
     if (route === "/api/admin/settings" && req.method === "POST") return await adminGuard(req, () => handleAdminSaveSettings(req));
     if (route === "/api/admin/orders" && req.method === "GET") return await adminGuard(req, () => handleAdminOrders(req));
+    const adminOrderStatusMatch = route.match(/^\/api\/admin\/orders\/([^/]+)\/status$/);
+    if (adminOrderStatusMatch && req.method === "PUT") return await adminGuard(req, () => handleAdminUpdateOrderStatus(req, decodeURIComponent(adminOrderStatusMatch[1])));
+    const adminOrderMatch = route.match(/^\/api\/admin\/orders\/([^/]+)$/);
+    if (adminOrderMatch && req.method === "GET") return await adminGuard(req, () => handleAdminOrderDetails(decodeURIComponent(adminOrderMatch[1])));
     if (route === "/api/admin/stats" && req.method === "GET") return await adminGuard(req, () => handleAdminGetStats());
     // Payment methods (public read + admin manage) and payment proofs
     if (route === "/api/payment-methods" && req.method === "GET") return await handlePublicPaymentMethods();
