@@ -467,14 +467,21 @@ async function handleLogin(req: Request) {
   } catch (err) {
     console.error("Login: failed to load existing order:", err);
   }
-  
+
+  // DB-driven: has the customer already uploaded a payment proof? (linked by email)
+  let hasPaymentProof = false;
+  try {
+    const ppR = await fetch(REST + "/payment_proofs?select=id&customer_email=eq." + encodeURIComponent(entry.email) + "&limit=1", { headers: SB_HEADERS });
+    if (ppR.ok) { const ppRows = await ppR.json(); hasPaymentProof = Array.isArray(ppRows) && ppRows.length > 0; }
+  } catch { /* ignore */ }
+
   const sessionToken = hexRandom(32);
   const { error: sessionError } = await dbInsert("user_sessions", { token: sessionToken, user_id: entry.id });
   if (sessionError) {
     console.error("Login: session insert failed:", sessionError);
     return json({ error: "Login failed. Please try again." }, 500);
   }
-  return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
+  return json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, hasPaymentProof, order: orderData });
 }
 
 async function getSessionUser(sessionToken: string) {
@@ -1115,7 +1122,8 @@ async function handleAdminOrderDetails(orderId: string) {
 
   let paymentProof: any = null;
   try {
-    const ppR = await fetch(REST + "/payment_proofs?order_id=eq." + encodeURIComponent(orderId) + "&order=created_at.desc&limit=1", { headers: SB_HEADERS });
+    const proofEmail = (user?.email || "").trim();
+    const ppR = await fetch(REST + "/payment_proofs?customer_email=eq." + encodeURIComponent(proofEmail) + "&order=created_at.desc&limit=1", { headers: SB_HEADERS });
     if (ppR.ok) {
       const ppRows = await ppR.json();
       if (ppRows[0]) {
