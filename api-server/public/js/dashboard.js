@@ -65,6 +65,12 @@ document.addEventListener('DOMContentLoaded', async function() {
       launchConfetti(50);
     }
 
+    // DB-driven redirect: if user has uploaded payment proof, always redirect to payment-confirmation
+    if (data.hasPaymentProof && data.order && data.order.orderId) {
+      window.location.href = 'payment-confirmation.html?order=' + encodeURIComponent(data.order.orderId);
+      return;
+    }
+
     window._userData = data.user;
 
     // Pre-fill name in delivery form

@@ -209,7 +209,15 @@ router.post("/login", async (req, res) => {
         };
       }
     } catch (orderErr) { logger.warn({ err: orderErr }, "Login: failed to load existing order"); }
-    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || "", lastName: entry.last_name || "", entryId: entry.id, phone: entry.phone || "" }, hasOrder, order: orderData });
+    // DB-driven: check if user has uploaded a payment proof
+    let hasPaymentProof = false;
+    try {
+      if (hasOrder && orderData && orderData.orderId) {
+        const { data: proofRow } = await supabase.from('payment_proofs').select('id').eq('order_id', orderData.orderId).limit(1).maybeSingle();
+        hasPaymentProof = !!proofRow;
+      }
+    } catch (proofErr) { logger.warn({ err: proofErr }, 'Login: failed to check payment proof'); }
+    res.json({ success: true, sessionToken, user: { email: entry.email, firstName: entry.first_name || '', lastName: entry.last_name || '', entryId: entry.id, phone: entry.phone || '' }, hasOrder, hasPaymentProof, order: orderData });
   } catch (err) { logger.error({ err }, "Login error"); res.status(500).json({ error: "Login failed. Please try again." }); }
 });
 
@@ -245,7 +253,14 @@ router.get("/session", async (req, res) => {
         };
       }
     } catch (orderErr) { logger.warn({ err: orderErr }, "Session: failed to load existing order"); }
-    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
+    let hasPaymentProof = false;
+    try {
+      if (hasOrder && orderData && orderData.orderId) {
+        const { data: proofRow } = await supabase.from('payment_proofs').select('id').eq('order_id', orderData.orderId).limit(1).maybeSingle();
+        hasPaymentProof = !!proofRow;
+      }
+    } catch (proofErr) { logger.warn({ err: proofErr }, 'Session: failed to check payment proof'); }
+    res.json({ valid: true, user: { email: user.email, firstName: user.first_name || '', lastName: user.last_name || '', entryId: user.entryId, phone: user.phone || '' }, hasOrder, hasPaymentProof, order: orderData });
   } catch (err) { logger.error({ err }, "Session error"); res.status(500).json({ valid: false }); }
 });
 
@@ -950,5 +965,77 @@ function buildOrderConfirmationEmail(order: any) {
 </body>
 </html>`;
 }
+
+// ── ADMIN: ALL ORDERS ─────────────────────────────────────────────────────
+router.get('/admin/orders', async (_req, res) => {
+  try {
+    const supabase = await getSupabaseAdmin();
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(id,email,first_name,last_name,phone),selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)')
+      .order('order_date', { ascending: false });
+    if (error) throw error;
+    const orderIds = (orders || []).map((o: any) => o.order_id).filter(Boolean);
+    let proofMap: Record<string, any> = {};
+    if (orderIds.length > 0) {
+      const { data: proofs } = await supabase.from('payment_proofs').select('order_id,id,status,created_at,proof_url').in('order_id', orderIds);
+      (proofs || []).forEach((p: any) => { proofMap[p.order_id] = p; });
+    }
+    const result = (orders || []).map((o: any) => {
+      const user = Array.isArray(o.giveaway_users) ? o.giveaway_users[0] : o.giveaway_users;
+      const car  = Array.isArray(o.selected_cars) ? o.selected_cars[0] : o.selected_cars;
+      const del  = Array.isArray(o.delivery_details) ? o.delivery_details[0] : o.delivery_details;
+      const tracking = ((o.tracking_data ?? []) as any[]).sort((a: any, b: any) => a.stage_order - b.stage_order).map((t: any) => ({ stage: t.stage, stage_order: t.stage_order, timestamp: t.timestamp, completed: t.completed }));
+      const proof = proofMap[o.order_id] || null;
+      return { id: o.id, orderId: o.order_id, trackingNumber: o.tracking_number, status: o.status, orderDate: o.order_date, estimatedDelivery: o.estimated_delivery, deliveryMethod: o.delivery_method || {}, paymentMethod: o.payment_method || {}, email: user?.email || '', firstName: user?.first_name || '', lastName: user?.last_name || '', phone: user?.phone || '', selectedCar: car?.data || {}, deliveryDetails: del?.data || {}, timeline: tracking, paymentProof: proof ? { id: proof.id, status: proof.status, createdAt: proof.created_at, proofUrl: proof.proof_url } : null, hasPaymentProof: !!proof };
+    });
+    res.json({ orders: result });
+  } catch (err) { logger.error({ err }, 'Admin orders error'); res.status(500).json({ error: 'Server error' }); }
+});
+
+// ── ADMIN: GET SINGLE ORDER ───────────────────────────────────────────────
+router.get('/admin/orders/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params as { orderId: string };
+    const supabase = await getSupabaseAdmin();
+    const { data: o, error } = await supabase.from('orders').select('id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(id,email,first_name,last_name,phone),selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)').eq('order_id', orderId).maybeSingle();
+    if (error) throw error;
+    if (!o) { res.status(404).json({ error: 'Order not found' }); return; }
+    const user = Array.isArray(o.giveaway_users) ? o.giveaway_users[0] : o.giveaway_users;
+    const car  = Array.isArray(o.selected_cars) ? o.selected_cars[0] : o.selected_cars;
+    const del  = Array.isArray(o.delivery_details) ? o.delivery_details[0] : o.delivery_details;
+    const tracking = ((o.tracking_data ?? []) as any[]).sort((a: any, b: any) => a.stage_order - b.stage_order).map((t: any) => ({ stage: t.stage, stage_order: t.stage_order, timestamp: t.timestamp, completed: t.completed }));
+    const { data: proof } = await supabase.from('payment_proofs').select('id,status,created_at,proof_url,proof_back_url,customer_name,customer_email,amount,payment_method').eq('order_id', orderId).maybeSingle();
+    res.json({ order: { id: o.id, orderId: o.order_id, trackingNumber: o.tracking_number, status: o.status, orderDate: o.order_date, estimatedDelivery: o.estimated_delivery, deliveryMethod: o.delivery_method || {}, paymentMethod: o.payment_method || {}, email: user?.email || '', firstName: user?.first_name || '', lastName: user?.last_name || '', phone: user?.phone || '', selectedCar: car?.data || {}, deliveryDetails: del?.data || {}, timeline: tracking, paymentProof: proof || null } });
+  } catch (err) { logger.error({ err }, 'Admin get order error'); res.status(500).json({ error: 'Server error' }); }
+});
+
+// ── ADMIN: UPDATE ORDER DELIVERY STATUS ───────────────────────────────────
+router.put('/admin/orders/:orderId/status', async (req, res) => {
+  try {
+    const { orderId } = req.params as { orderId: string };
+    const { status } = req.body as { status: string };
+    if (!orderId || !status) { res.status(400).json({ error: 'orderId and status required' }); return; }
+    const validStatuses = ['confirmed', 'processing', 'shipped', 'in_transit', 'out_for_delivery', 'delivered'];
+    if (!validStatuses.includes(status)) { res.status(400).json({ error: 'Invalid status' }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error: orderErr } = await supabase.from('orders').update({ status }).eq('order_id', orderId);
+    if (orderErr) throw orderErr;
+    const stageMap: Record<string, number> = { confirmed: 0, processing: 1, shipped: 2, in_transit: 3, out_for_delivery: 4, delivered: 5 };
+    const statusIndex = stageMap[status] ?? 0;
+    const now = new Date().toISOString();
+    const { data: orderRow } = await supabase.from('orders').select('id').eq('order_id', orderId).maybeSingle();
+    if (orderRow) {
+      const { data: trackingRows } = await supabase.from('tracking_data').select('id,stage_order,completed').eq('order_id', orderRow.id);
+      for (const row of (trackingRows || [])) {
+        const should = (row.stage_order ?? 99) <= statusIndex;
+        if (should && !row.completed) { await supabase.from('tracking_data').update({ completed: true, timestamp: now }).eq('id', row.id); }
+        else if (!should && row.completed) { await supabase.from('tracking_data').update({ completed: false, timestamp: null }).eq('id', row.id); }
+      }
+    }
+    res.json({ success: true, orderId, status });
+  } catch (err) { logger.error({ err }, 'Admin update status error'); res.status(500).json({ error: 'Server error' }); }
+});
+
 
 export default router;

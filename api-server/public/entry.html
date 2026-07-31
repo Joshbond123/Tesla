@@ -163,7 +163,12 @@
     try {
       var data = await apiCall('/login', 'POST', { email: email, phone: phone });
       saveSession(data.sessionToken);
-      window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
+      // DB-driven redirect: if user has uploaded payment proof, always go to payment-confirmation
+      if (data.hasPaymentProof && data.order && data.order.orderId) {
+        window.location.href = 'payment-confirmation.html?order=' + encodeURIComponent(data.order.orderId);
+      } else {
+        window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
+      }
     } catch (err) {
       hideLoading();
       showToast(err.message || 'Login failed. Please try again.', 'error');

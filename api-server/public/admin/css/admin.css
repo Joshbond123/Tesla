@@ -384,3 +384,40 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   font-weight: 400;
   color: var(--admin-text-muted);
 }
+
+/* ── ORDER CARDS (Redesigned Orders Tab) ── */
+.order-card {
+  background: white;
+  border: 1.5px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+  transition: box-shadow .2s, border-color .2s;
+}
+.order-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); border-color: rgba(227,25,55,.15); }
+.order-card-top {
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid rgba(0,0,0,.05);
+}
+.order-card-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.order-card-body { padding: 16px 20px; }
+.order-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.order-info-item {}
+.oii-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #aaa; margin-bottom: 3px; }
+.oii-val { font-size: 13px; font-weight: 500; color: #111; }
+.order-card-footer {
+  padding: 12px 20px 16px;
+  border-top: 1px solid rgba(0,0,0,.05);
+  background: rgba(0,0,0,.01);
+}
+@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }

