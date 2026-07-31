@@ -297,14 +297,23 @@ function openProofDetail(id) {
   var body  = document.getElementById("proofDetailBody");
   if (!modal || !body) return;
   modal.style.display = "flex";
-  // BUG FIX: use already-loaded allProofs data — the /admin/payment-proofs/:id
-  // endpoint did not exist, causing the modal to always show "Failed to load proof."
-  var p = (allProofs || []).find(function(x) { return x.id === id; });
-  if (!p) {
-    body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Proof not found.</div>';
+  // Try local allProofs first (proof_url is now included in the list response).
+  // Fall back to API call for any proof not yet in memory.
+  var local = (allProofs || []).find(function(x) { return x.id === id; });
+  if (local && (local.proof_url || local.proof_back_url || !local.has_image)) {
+    renderProofDetail(local);
     return;
   }
-  renderProofDetail(p);
+  body.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8;font-size:14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading proof…</div>';
+  api("GET", "/admin/payment-proofs/" + encodeURIComponent(id)).then(function(r) {
+    var p = r && r.proof;
+    if (!p) { body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Proof not found.</div>'; return; }
+    renderProofDetail(p);
+  }).catch(function() {
+    // Final fallback: use local data even without image URLs
+    if (local) { renderProofDetail(local); return; }
+    body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Failed to load proof.</div>';
+  });
 }
 
 function renderProofDetail(p) {

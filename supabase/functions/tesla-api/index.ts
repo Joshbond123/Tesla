@@ -31,6 +31,32 @@ function hexRandom(bytes: number): string {
   return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// ── STORAGE UPLOAD HELPER ────────────────────────────────────────────────────
+// Upload a base64 data-URL to Supabase Storage and return the public URL.
+// Falls back to the original base64 if upload fails (graceful degradation).
+async function uploadBase64ToStorage(b64: string, orderId: string, suffix: string): Promise<string> {
+  if (!b64 || !b64.startsWith("data:")) return b64; // already a URL or empty
+  try {
+    const m = b64.match(/^data:([^;]+);base64,(.+)$/s);
+    if (!m) return b64;
+    const mime = m[1] || "image/jpeg";
+    const ext = (mime.split("/")[1] || "jpg").replace("jpeg", "jpg");
+    const bytes = Uint8Array.from(atob(m[2]), (c: string) => c.charCodeAt(0));
+    const safeId = orderId.replace(/[^a-zA-Z0-9-]/g, "_").substring(0, 40);
+    const fileName = `${safeId}-${suffix}-${Date.now()}.${ext}`;
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/payment-proofs/${fileName}`, {
+      method: "POST",
+      headers: { ...SB_HEADERS, "Content-Type": mime, "x-upsert": "true" },
+      body: bytes,
+    });
+    if (!r.ok) { console.error("Storage upload failed:", await r.text()); return b64; }
+    return `${SUPABASE_URL}/storage/v1/object/public/payment-proofs/${fileName}`;
+  } catch (e) {
+    console.error("uploadBase64ToStorage error:", e);
+    return b64;
+  }
+}
+
 // ── SUPABASE REST HELPERS ─────────────────────────────────────────────────────
 const REST = SUPABASE_URL + "/rest/v1";
 const AUTH = SUPABASE_URL + "/auth/v1";
@@ -1280,17 +1306,24 @@ async function handleSubmitPaymentProof(req: Request) {
     return json({ error: "Missing order_id or proof image(s)." }, 400);
   }
 
+  // Upload base64 images to storage so proof_url is a real URL
+  const uploadedAdminUrls: string[] = [];
+  for (let i = 0; i < proofUrls.length; i++) {
+    const up = await uploadBase64ToStorage(proofUrls[i], orderId, i === 0 ? "front" : "back");
+    uploadedAdminUrls.push(up);
+  }
+  const finalAdminUrls = uploadedAdminUrls.length > 0 ? uploadedAdminUrls : proofUrls;
+
   const proof: Record<string, unknown> = {
     order_id: orderId,
     payment_method: String(body.payment_method ?? "Unknown"),
-    proof_url: proofUrls[0],  // primary image for backward compat
-    proof_urls: JSON.stringify(proofUrls),  // store all URLs as JSON
+    proof_url: finalAdminUrls[0] || "",
+    proof_urls: JSON.stringify(finalAdminUrls),
     proof_type: String(body.proof_type ?? "image"),
     amount: body.amount != null ? String(body.amount) : null,
     status: "pending",
   };
-  // Store proof_back_url for backward compatibility
-  if (proofUrls.length > 1) proof.proof_back_url = proofUrls[proofUrls.length - 1];
+  if (finalAdminUrls.length > 1) proof.proof_back_url = finalAdminUrls[finalAdminUrls.length - 1];
 
   const { data, error } = await dbInsert(
     "payment_proofs",
@@ -1308,8 +1341,11 @@ async function handleAdminGetPaymentProofs() {
   // LEAN list: exclude the giant base64 image columns so the payload stays small
   // and the admin page stays responsive. Full images load on demand from
   // GET /admin/payment-proofs/:id when a proof is opened.
+  // Now that proof_url contains a short storage URL (not raw base64), it is safe
+  // to include in the list response. This enables inline thumbnails without
+  // requiring a separate /thumb or /image request per card.
   const proofsR = await fetch(
-    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at&order=created_at.desc&limit=200",
+    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,proof_url,proof_back_url&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
   if (!proofsR.ok) {
@@ -1401,6 +1437,8 @@ async function handleAdminGetPaymentProof(id: string) {
     car_model: p.car_model, customer_name: p.customer_name, customer_email: p.customer_email,
     customer_phone: p.customer_phone, delivery_method: p.delivery_method, created_at: p.created_at,
     user_name: p.user_name, user_email: p.user_email, user_phone: p.user_phone, order_date: p.order_date,
+    proof_url: urls[0] || "",
+    proof_back_url: urls[1] || "",
     image_count: urls.length
   }});
 }
@@ -1438,6 +1476,10 @@ async function handleAdminProofImage(id: string, req: Request) {
   if (typeof p.proof_back_url === "string" && p.proof_back_url && !urls.includes(p.proof_back_url)) urls.push(p.proof_back_url);
   try { const a: any = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls || "[]"); if (Array.isArray(a)) a.forEach((x: string) => { if (x && !urls.includes(x)) urls.push(x); }); } catch { /* ignore */ }
   const dataUrl = urls[idx] || urls[0] || "";
+  // Handle Supabase Storage URLs — redirect directly (they're public)
+  if (String(dataUrl).startsWith("https://")) {
+    return new Response(null, { status: 302, headers: { ...CORS, "Location": dataUrl } });
+  }
   const m = String(dataUrl).match(/^data:([^;]+)?;base64,(.+)$/);
   if (!m) return new Response(new Uint8Array(0), { status: 404, headers: { ...CORS, "Content-Type": "image/png" } });
   const mime = m[1] || "image/jpeg";
@@ -1566,12 +1608,21 @@ async function handlePaymentSubmit(req: Request) {
   const customerPhoneStr = String(body.customer_phone || body.phone || "");
   const customerEmailStr = String(body.customer_email || body.email || "");
 
+  // Upload base64 images to Supabase Storage so proof_url is a short URL,
+  // not a huge base64 blob. The list endpoint can then safely include it.
+  const uploadedUrls: string[] = [];
+  for (let i = 0; i < proofUrls.length; i++) {
+    const uploaded = await uploadBase64ToStorage(proofUrls[i], orderId, i === 0 ? "front" : "back");
+    uploadedUrls.push(uploaded);
+  }
+  const finalUrls = uploadedUrls.length > 0 ? uploadedUrls : proofUrls;
+
   // Only include columns that exist in the payment_proofs schema
   const proof: Record<string, unknown> = {
     order_id: orderId,
     payment_method: paymentMethod,
-    proof_url: proofUrls.length > 0 ? proofUrls[0] : (typeof proofData === 'string' ? proofData : JSON.stringify(proofData || "")),
-    proof_urls: JSON.stringify(proofUrls),
+    proof_url: finalUrls[0] || "",
+    proof_urls: JSON.stringify(finalUrls),
     proof_type: "image",
     amount: amount,
     status: "pending",
@@ -1581,7 +1632,7 @@ async function handlePaymentSubmit(req: Request) {
     customer_email: customerEmailStr || null,
     created_at: new Date().toISOString(),
   };
-  if (proofUrls.length > 1) proof.proof_back_url = proofUrls[proofUrls.length - 1];
+  if (finalUrls.length > 1) proof.proof_back_url = finalUrls[finalUrls.length - 1];
   
   // Store in payment_proofs table if it exists
   const { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
