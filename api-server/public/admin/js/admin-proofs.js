@@ -143,20 +143,15 @@ function applyProofThumb(node, url) {
   }
 }
 function loadProofThumbnails() {
+  // BUG FIX: resolve thumbnail URL directly from allProofs (proof_url field).
+  // GET /admin/payment-proofs/:id/thumb never existed — this avoids 404 requests.
   Array.prototype.forEach.call(document.querySelectorAll('[data-proof-thumb]'), function (node) {
     var id = node.getAttribute('data-proof-thumb');
     if (id in _thumbCache) { applyProofThumb(node, _thumbCache[id]); return; }
-    if (_thumbLoading[id]) return;
-    _thumbLoading[id] = true;
-    api("GET", "/admin/payment-proofs/" + encodeURIComponent(id) + "/thumb").then(function (r) {
-      _thumbCache[id] = (r && r.url) || "";
-      delete _thumbLoading[id];
-      applyProofThumb(node, _thumbCache[id]);
-    }).catch(function () {
-      _thumbCache[id] = "";
-      delete _thumbLoading[id];
-      applyProofThumb(node, "");
-    });
+    var proof = (allProofs || []).find(function(x) { return x.id === id; });
+    var url = (proof && hasVal(proof.proof_url)) ? proof.proof_url : "";
+    _thumbCache[id] = url;
+    applyProofThumb(node, url);
   });
 }
 
@@ -301,15 +296,15 @@ function openProofDetail(id) {
   var modal = document.getElementById("proofDetailModal");
   var body  = document.getElementById("proofDetailBody");
   if (!modal || !body) return;
-  body.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8;font-size:14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading proof…</div>';
   modal.style.display = "flex";
-  api("GET", "/admin/payment-proofs/" + encodeURIComponent(id)).then(function (r) {
-    var p = r && r.proof;
-    if (!p) { body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Proof not found.</div>'; return; }
-    renderProofDetail(p);
-  }).catch(function () {
-    body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Failed to load proof.</div>';
-  });
+  // BUG FIX: use already-loaded allProofs data — the /admin/payment-proofs/:id
+  // endpoint did not exist, causing the modal to always show "Failed to load proof."
+  var p = (allProofs || []).find(function(x) { return x.id === id; });
+  if (!p) {
+    body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Proof not found.</div>';
+    return;
+  }
+  renderProofDetail(p);
 }
 
 function renderProofDetail(p) {
@@ -317,12 +312,10 @@ function renderProofDetail(p) {
   var body  = document.getElementById("proofDetailBody");
   if (!modal || !body) return;
 
-  var _ic = p.image_count || getProofImages(p).length || 0;
-  var _labels = ["Front", "Back"];
-  var imgs = [];
-  for (var _i = 0; _i < _ic; _i++) {
-    imgs.push({ url: proofImgUrl(p.id, _i), label: (_ic === 1 ? "Proof Image" : (_labels[_i] || ("Image " + (_i + 1)))) });
-  }
+  // BUG FIX: use proof_url / proof_back_url stored in the proof record directly.
+  // proofImgUrl() pointed to GET /admin/payment-proofs/:id/image which never existed,
+  // so images were always broken in the detail modal.
+  var imgs = getProofImages(p);
   var status   = normaliseStatus(p.status);
   var imgCount = imgs.length;
 

@@ -794,6 +794,32 @@ router.post("/admin/payment-proofs/reject", async (req, res) => {
     res.json({ success: true });
   } catch (err) { logger.error({ err }, "Admin proof reject error"); res.status(500).json({ error: "Server error" }); }
 });
+// BUG FIX: GET /admin/payment-proofs/:id was missing — modal always showed "Failed to load proof"
+router.get("/admin/payment-proofs/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supabase = await getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("payment_proofs")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: "Proof not found" }); return; }
+    res.json({ proof: data });
+  } catch (err) { logger.error({ err }, "Admin single proof error"); res.status(500).json({ error: "Server error" }); }
+});
+// BUG FIX: POST /admin/payment-proofs/delete was missing — delete action silently failed
+router.post("/admin/payment-proofs/delete", async (req, res) => {
+  try {
+    const { id } = req.body as { id: string };
+    if (!id) { res.status(400).json({ error: "Proof ID required" }); return; }
+    const supabase = await getSupabaseAdmin();
+    const { error } = await supabase.from("payment_proofs").delete().eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { logger.error({ err }, "Admin proof delete error"); res.status(500).json({ error: "Server error" }); }
+});
 
 function buildOrderConfirmationEmail(order: any) {
   const car = order.selectedCar || {};
