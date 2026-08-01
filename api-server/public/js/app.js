@@ -39,7 +39,7 @@ if (configuredApiBase && !isValidApiBase(configuredApiBase)) {
 
 const API_BASE = isValidApiBase(configuredApiBase)
   ? configuredApiBase
-  : (isLocalhost ? '/api' : (isGitHubPages ? '' : '/api'));
+  : (isLocalhost ? '/api' : (isGitHubPages ? 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api' : '/api'));
 
 window.TESLA_API_BASE = API_BASE;
 
@@ -131,14 +131,17 @@ function showLoading(message) {
   var existing = document.getElementById('globalLoader');
   if (existing) existing.remove();
 
+  // Resolve asset path — works from any subdirectory depth (e.g. vehicles/)
+  var assetPath = window.location.pathname.indexOf('/vehicles/') !== -1 ? '../assets/' : 'assets/';
+
   var overlay = document.createElement('div');
   overlay.className = 'loading-overlay';
   overlay.id = 'globalLoader';
   overlay.setAttribute('role', 'alertdialog');
   overlay.setAttribute('aria-label', 'Loading');
   
-  // Full Tesla logo (T + TESLA wordmark) for loading animation
-  var loaderTSvg = '<img src="assets/tesla-logo.png" alt="Tesla" style="display:block;width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(227,25,55,.9));">';
+  // Full Tesla logo using the resolved path so it works from any subdirectory
+  var loaderTSvg = '<img src="' + assetPath + 'tesla-logo.png" alt="Tesla" style="display:block;width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(227,25,55,.9));">';
 
   overlay.innerHTML = 
     '<div class="ev-loader-container">' +
@@ -258,8 +261,9 @@ function hideLoading(callback) {
 
 
 function enhanceBranding() {
-  // Official Tesla "T" emblem as inline SVG — no external file, no flash, no broken image
-  var tSvg = '<img src="assets/tesla-logo.png" alt="Tesla" style="height:32px;width:auto;vertical-align:middle;flex-shrink:0;">';
+  // Resolve asset path — works from any subdirectory depth (e.g. vehicles/)
+  var assetPath = window.location.pathname.indexOf('/vehicles/') !== -1 ? '../assets/' : 'assets/';
+  var tSvg = '<img src="' + assetPath + 'tesla-logo.png" alt="Tesla" style="height:32px;width:auto;vertical-align:middle;flex-shrink:0;">';
   // Update every nav-logo with Tesla T emblem + text — guard against double-run
   document.querySelectorAll('.nav-logo').forEach(function(el) {
     if (el.getAttribute('data-enhanced')) return;
@@ -268,6 +272,11 @@ function enhanceBranding() {
     el.innerHTML = tSvg + '<span>' + text + '</span>';
   });
 }
+
+// Store user data locally (used after successful registration)
+window.__teslaStoreUser = function(userObj) {
+  try { localStorage.setItem('tesla_user_data', JSON.stringify(userObj)); } catch(e) {}
+};
 
 function initHiddenAdminAccess() {
   // Do NOT show admin hotspot on the admin panel page itself

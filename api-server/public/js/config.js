@@ -17,15 +17,21 @@
   var deployedApiBase = '__TESLA_API_BASE__';
   var hasInjectedApiBase = deployedApiBase.indexOf('__') !== 0;
 
+  // Built-in production fallback — used when CI injection did not run
+  // (e.g. the repo variable was not set at deploy time). Keeps the site
+  // functional even without a fresh re-deploy.
+  var supabaseApiBase = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+
   function normalizeApiBase(value) {
     return String(value || '').trim().replace(/\/+$/, '');
   }
 
   global.TESLA_API_BASE = normalizeApiBase(
-    global.TESLA_API_BASE || (hasInjectedApiBase ? deployedApiBase : '')
+    global.TESLA_API_BASE || (hasInjectedApiBase ? deployedApiBase : supabaseApiBase)
   );
 
   // ── CURRENCY CATALOG (shared by admin + customer pages) ─────────────────────
+  // Single source of truth for the currency dropdown and for rendering money.
   global.TESLA_CURRENCIES = [
     { code: "USD", symbol: "$",   label: "US Dollar" },
     { code: "EUR", symbol: "€",   label: "Euro" },
@@ -43,6 +49,7 @@
     { code: "AED", symbol: "AED", label: "UAE Dirham" },
     { code: "BRL", symbol: "R$",  label: "Brazilian Real" }
   ];
+  // Resolve a currency code to its display symbol (falls back to the code/$).
   global.teslaCurrencySymbol = function (code) {
     var list = global.TESLA_CURRENCIES || [];
     for (var i = 0; i < list.length; i++) {

@@ -50,7 +50,7 @@ function renderCars() {
     <div class="glass rounded-2xl overflow-hidden group hover:border-red-500/30 transition-all duration-300">
       <div class="h-48 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-6">
         <img src="${car.image}" alt="${car.name}" class="h-full object-contain group-hover:scale-110 transition-transform duration-500"
-          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'text-6xl\\'>${car.fallback || '🚗'}</div>'">
+          onerror="this.style.display='none'">
       </div>
       <div class="p-6">
         <h3 class="text-xl font-semibold mb-1">${car.name}</h3>
