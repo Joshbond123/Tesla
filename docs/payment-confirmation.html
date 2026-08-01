@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Confirmation - Tesla Award Program</title>
+  <title>Payment Confirmation — Tesla Award Program</title>
   <meta name="description" content="View your payment confirmation and delivery progress for the Tesla Award Program.">
   <link rel="canonical" href="https://joshbond123.github.io/Tesla/payment-confirmation.html">
   <link rel="icon" type="image/png" href="assets/tesla-logo.png">
@@ -15,329 +15,490 @@
   <style>
     :root {
       --red: #E31937;
+      --red-dark: #c41030;
       --green: #00A550;
       --orange: #F59E0B;
-      --blue: #3B82F6;
-      --dark: #171A20;
-      --bg: #f5f5f7;
-      --card-shadow: 0 4px 24px rgba(0,0,0,.07);
+      --dark: #0D0F14;
+      --dark-2: #171A20;
+      --dark-3: #1E2228;
+      --bg: #F2F3F5;
+      --surface: #FFFFFF;
+      --border: rgba(0,0,0,.07);
+      --shadow-sm: 0 1px 4px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 20px rgba(0,0,0,.07);
+      --shadow-lg: 0 12px 48px rgba(0,0,0,.1);
+      --radius: 20px;
+      --radius-sm: 12px;
     }
-    * { box-sizing: border-box; }
-    body { background: var(--bg); font-family: Inter, -apple-system, sans-serif; color: var(--dark); margin: 0; }
-    .page-wrap { max-width: 860px; margin: 0 auto; padding: 88px 20px 80px; }
+    *, *::before, *::after { box-sizing: border-box; }
 
-    /* ── HERO HEADER ── */
-    .conf-hero {
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--dark-2);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────── */
+    .pc-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(13,15,20,.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      height: 60px;
+      display: flex; align-items: center;
+    }
+    .pc-nav-inner {
+      max-width: 980px; margin: 0 auto; padding: 0 24px;
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .pc-nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: white;
+      font-size: 15px; font-weight: 800; letter-spacing: .06em;
+    }
+    .pc-nav-logo img { height: 28px; object-fit: contain; }
+    .pc-nav-label {
+      font-size: 13px; font-weight: 600; color: rgba(255,255,255,.5);
+      letter-spacing: .02em;
+    }
+    .pc-nav-back {
+      font-size: 13px; font-weight: 600; color: rgba(255,255,255,.5);
+      text-decoration: none; display: flex; align-items: center; gap: 5px;
+      transition: color .15s;
+    }
+    .pc-nav-back:hover { color: white; }
+
+    /* ── PAGE ────────────────────────────────────────────── */
+    .pc-page { max-width: 980px; margin: 0 auto; padding: 80px 20px 80px; }
+
+    /* ── ANIMATIONS ──────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(.88); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes pulseRing {
+      0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,.3); }
+      50%      { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+    }
+    @keyframes pulseRingGreen {
+      0%,100% { box-shadow: 0 0 0 0 rgba(0,165,80,.3); }
+      50%      { box-shadow: 0 0 0 8px rgba(0,165,80,0); }
+    }
+    @keyframes pulseRingRed {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.3); }
+      50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+    }
+    @keyframes dotPulse { 0%,100%{opacity:.4;transform:scale(.85)} 50%{opacity:1;transform:scale(1)} }
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    @keyframes progressGrow { from{width:0} }
+    .anim-0 { animation: fadeUp .55s ease both; }
+    .anim-1 { animation: fadeUp .55s .08s ease both; }
+    .anim-2 { animation: fadeUp .55s .16s ease both; }
+    .anim-3 { animation: fadeUp .55s .24s ease both; }
+    .anim-4 { animation: fadeUp .55s .32s ease both; }
+    .anim-5 { animation: fadeUp .55s .40s ease both; }
+    .anim-6 { animation: fadeUp .55s .48s ease both; }
+
+    /* ── STATUS HERO ─────────────────────────────────────── */
+    .status-hero {
       background: white;
-      border-radius: 24px;
-      box-shadow: 0 20px 64px rgba(0,0,0,.1);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
       overflow: hidden;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       position: relative;
     }
-    .conf-hero::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--red), #ff6b6b);
+    .status-hero-bar {
+      height: 3px;
+      background: linear-gradient(90deg, var(--red), #ff6b6b, var(--red));
+      background-size: 200% 100%;
     }
-    .hero-top {
-      padding: 44px 48px 36px;
+    .status-hero-bar.pending { background: linear-gradient(90deg, var(--orange), #fbbf24); }
+    .status-hero-bar.approved { background: linear-gradient(90deg, var(--green), #34d399); }
+    .status-hero-bar.rejected { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+    .status-hero-inner {
+      padding: 40px 48px 36px;
       text-align: center;
-      border-bottom: 1px solid rgba(0,0,0,.06);
       transition: background .4s ease;
     }
-    .hero-top.pending { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
-    .hero-top.approved { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
-    .hero-top.rejected { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
-    .status-icon {
-      width: 72px; height: 72px;
+    .status-hero-inner.pending  { background: linear-gradient(160deg, #fffbeb 0%, #fef9e8 100%); }
+    .status-hero-inner.approved { background: linear-gradient(160deg, #f0fdf6 0%, #ecfdf5 100%); }
+    .status-hero-inner.rejected { background: linear-gradient(160deg, #fef2f2 0%, #fde8e8 100%); }
+    @media(max-width:560px){ .status-hero-inner { padding: 32px 22px 28px; } }
+
+    .status-icon-wrap {
+      width: 80px; height: 80px;
       border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
       margin: 0 auto 20px;
-      font-size: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px;
+      transition: all .4s ease;
     }
-    .pending .status-icon { background: rgba(245,158,11,.12); border: 2px solid rgba(245,158,11,.3); }
-    .approved .status-icon { background: rgba(0,165,80,.12); border: 2px solid rgba(0,165,80,.3); }
-    .rejected .status-icon { background: rgba(239,68,68,.12); border: 2px solid rgba(239,68,68,.3); }
-    .hero-title { font-size: 30px; font-weight: 900; letter-spacing: -.5px; margin-bottom: 8px; }
-    .pending .hero-title { color: #92400e; }
-    .approved .hero-title { color: #14532d; }
-    .rejected .hero-title { color: #7f1d1d; }
-    .hero-sub { font-size: 15px; line-height: 1.7; max-width: 500px; margin: 0 auto 20px; }
-    .pending .hero-sub { color: #78350f; }
-    .approved .hero-sub { color: #15803d; }
-    .rejected .hero-sub { color: #991b1b; }
-    .status-pill {
+    .pending  .status-icon-wrap { background: rgba(245,158,11,.1); border: 2px solid rgba(245,158,11,.25); animation: pulseRing 2s infinite; }
+    .approved .status-icon-wrap { background: rgba(0,165,80,.1); border: 2px solid rgba(0,165,80,.25); animation: pulseRingGreen 2s infinite; }
+    .rejected .status-icon-wrap { background: rgba(239,68,68,.1); border: 2px solid rgba(239,68,68,.2); animation: pulseRingRed 2s infinite; }
+
+    .status-title {
+      font-size: 28px; font-weight: 900; letter-spacing: -.4px; margin-bottom: 10px;
+    }
+    .pending  .status-title { color: #78350f; }
+    .approved .status-title { color: #14532d; }
+    .rejected .status-title { color: #7f1d1d; }
+
+    .status-sub {
+      font-size: 15px; line-height: 1.7; max-width: 480px; margin: 0 auto 22px; font-weight: 400;
+    }
+    .pending  .status-sub { color: #92400e; }
+    .approved .status-sub { color: #166534; }
+    .rejected .status-sub { color: #991b1b; }
+
+    .status-badge {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 7px 18px;
-      border-radius: 999px;
-      font-size: 14px; font-weight: 700;
+      padding: 8px 20px; border-radius: 999px;
+      font-size: 13px; font-weight: 700; letter-spacing: .02em;
     }
-    .pending .status-pill { background: rgba(245,158,11,.15); color: #92400e; }
-    .approved .status-pill { background: rgba(0,165,80,.15); color: #14532d; }
-    .rejected .status-pill { background: rgba(239,68,68,.15); color: #7f1d1d; }
-    .pulse { width: 8px; height: 8px; border-radius: 50%; animation: pulseAnim 1.5s infinite; }
-    .pending .pulse { background: var(--orange); }
-    .approved .pulse { background: var(--green); }
-    .rejected .pulse { background: #EF4444; }
-    @keyframes pulseAnim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+    .pending  .status-badge { background: rgba(245,158,11,.14); color: #92400e; border: 1px solid rgba(245,158,11,.25); }
+    .approved .status-badge { background: rgba(0,165,80,.12);   color: #14532d; border: 1px solid rgba(0,165,80,.25); }
+    .rejected .status-badge { background: rgba(239,68,68,.1);   color: #7f1d1d; border: 1px solid rgba(239,68,68,.2); }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .pending  .status-dot { background: var(--orange); animation: dotPulse 1.8s infinite; }
+    .approved .status-dot { background: var(--green); }
+    .rejected .status-dot { background: #ef4444; }
 
-    /* ── VEHICLE HERO ── */
-    .vehicle-card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: var(--card-shadow);
-      padding: 28px 32px;
+    /* ── VEHICLE HERO ────────────────────────────────────── */
+    .vehicle-hero {
+      background: linear-gradient(135deg, var(--dark-2) 0%, #1a1e27 50%, #1f1015 100%);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 36px 44px;
+      display: flex; align-items: center; gap: 36px;
       margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 28px;
+      overflow: hidden;
+      position: relative;
     }
-    @media(max-width:560px){ .vehicle-card{flex-direction:column;text-align:center;padding:24px 20px;} }
-    .vehicle-img-wrap { flex-shrink: 0; }
-    .vehicle-img-wrap img { height: 120px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(0,0,0,.12)); }
-    .vehicle-name { font-size: 26px; font-weight: 900; color: var(--dark); margin-bottom: 4px; }
-    .vehicle-badge {
+    .vehicle-hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(227,25,55,.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    @media(max-width:640px){
+      .vehicle-hero { flex-direction: column; text-align: center; padding: 28px 22px; gap: 20px; }
+    }
+    .vehicle-img-box { flex-shrink: 0; }
+    .vehicle-img-box img {
+      height: 130px; max-width: 260px; object-fit: contain;
+      filter: drop-shadow(0 12px 28px rgba(0,0,0,.4));
+      transition: transform .4s ease;
+    }
+    .vehicle-hero:hover .vehicle-img-box img { transform: scale(1.03); }
+    .vehicle-info { flex: 1; }
+    .vehicle-badge-tag {
       display: inline-block;
-      background: var(--red);
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
       color: white;
-      font-size: 11px; font-weight: 700;
-      padding: 4px 12px;
-      border-radius: 20px;
-      text-transform: uppercase; letter-spacing: .06em;
-      margin-bottom: 8px;
+      font-size: 10px; font-weight: 800;
+      padding: 4px 12px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: .1em;
+      margin-bottom: 10px;
     }
-    .vehicle-price { font-size: 14px; color: #888; }
-    .vehicle-price .free { color: var(--red); font-weight: 700; }
+    .vehicle-name {
+      font-size: 30px; font-weight: 900; color: white;
+      letter-spacing: -.5px; margin-bottom: 6px;
+    }
+    .vehicle-tagline {
+      font-size: 14px; color: rgba(255,255,255,.45); font-weight: 400;
+    }
+    .vehicle-tagline strong { color: rgba(255,255,255,.85); font-weight: 700; }
 
-    /* ── GRID ── */
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-    @media(max-width:640px){ .info-grid{grid-template-columns:1fr;} }
+    /* ── SECTION HEADING ─────────────────────────────────── */
+    .section-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: #aaa;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px;
+    }
+    .section-label svg { opacity: .6; flex-shrink: 0; }
+
+    /* ── INFO GRID ───────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media(max-width:640px) { .info-grid { grid-template-columns: 1fr; } }
 
     .info-card {
       background: white;
-      border-radius: 20px;
-      box-shadow: var(--card-shadow);
-      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 24px 28px;
+      border: 1px solid var(--border);
     }
-    .card-label {
-      font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .08em;
-      color: #999;
-      margin-bottom: 16px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .card-label svg { opacity: .6; }
+
     .detail-row {
-      display: flex; justify-content: space-between; align-items: flex-start;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       padding: 9px 0;
       font-size: 14px;
+      gap: 12px;
     }
     .detail-row:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,.05); }
-    .dr-key { color: #888; flex-shrink: 0; margin-right: 12px; }
+    .dr-key { color: #999; flex-shrink: 0; font-weight: 500; white-space: nowrap; }
     .dr-val { color: #111; font-weight: 600; text-align: right; word-break: break-word; }
-    .dr-val.mono { font-family: 'Courier New', monospace; font-size: 12px; color: var(--red); }
+    .dr-val.mono { font-family: 'Courier New', monospace; font-size: 12px; color: var(--red); letter-spacing: .02em; }
     .dr-val.green { color: var(--green); }
     .dr-val.orange { color: var(--orange); }
 
-    /* ── DELIVERY PROGRESS TIMELINE ── */
+    /* ── PAYMENT STATUS BADGE ────────────────────────────── */
+    .proof-status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 700;
+    }
+    .proof-status-badge.pending  { background: rgba(245,158,11,.12); color: #92400e; }
+    .proof-status-badge.approved { background: rgba(0,165,80,.1);    color: #14532d; }
+    .proof-status-badge.rejected { background: rgba(239,68,68,.1);   color: #7f1d1d; }
+
+    /* ── TIMELINE CARD ───────────────────────────────────── */
     .timeline-card {
       background: white;
-      border-radius: 20px;
-      box-shadow: var(--card-shadow);
-      padding: 28px 32px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 32px 32px;
       margin-bottom: 20px;
+      border: 1px solid var(--border);
     }
-    .timeline-header {
+    @media(max-width:560px){ .timeline-card { padding: 22px 18px; } }
+    .timeline-top {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 28px;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 10px;
     }
-    .timeline-header h3 {
-      font-size: 12px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .08em;
-      color: #999; margin: 0;
-    }
+    .timeline-progress-wrap { flex: 1; max-width: 200px; }
     .progress-track {
-      height: 4px;
+      height: 5px;
       background: rgba(0,0,0,.08);
-      border-radius: 4px;
-      margin-bottom: 28px;
+      border-radius: 999px;
       overflow: hidden;
     }
     .progress-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--red), #ff6b6b);
-      border-radius: 4px;
-      transition: width .8s ease;
+      border-radius: 999px;
+      transition: width 1s cubic-bezier(.4,0,.2,1);
+      animation: progressGrow 1s ease both;
     }
-    .tl-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+    .progress-pct {
+      font-size: 12px; font-weight: 700; color: var(--red);
+      margin-top: 5px; text-align: right;
     }
+
+    .tl-steps { display: flex; flex-direction: column; }
+
     .tl-step {
-      display: flex;
-      gap: 20px;
-      padding: 12px 0;
+      display: flex; gap: 18px;
+      padding: 14px 0;
       position: relative;
     }
     .tl-step:not(:last-child)::after {
       content: '';
       position: absolute;
-      left: 20px; top: 48px;
+      left: 20px; top: 54px; bottom: -2px;
       width: 2px;
-      bottom: -2px;
       background: rgba(0,0,0,.08);
+      z-index: 0;
     }
-    .tl-step.done::after { background: var(--green); }
-    .tl-step.current::after { background: linear-gradient(to bottom, var(--red), rgba(0,0,0,.08)); }
+    .tl-step.done::after  { background: var(--green); }
+    .tl-step.current::after { background: linear-gradient(to bottom, var(--red), rgba(0,0,0,.07)); }
+
     .tl-dot {
-      width: 40px; height: 40px;
-      flex-shrink: 0;
+      width: 40px; height: 40px; flex-shrink: 0;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
       border: 2px solid rgba(0,0,0,.1);
       background: white;
-      z-index: 1;
-      position: relative;
+      z-index: 1; position: relative;
+      transition: all .3s ease;
     }
-    .tl-step.done .tl-dot {
-      background: var(--green);
-      border-color: var(--green);
-      color: white;
-      font-size: 16px;
-    }
-    .tl-step.current .tl-dot {
-      background: var(--red);
-      border-color: var(--red);
-      color: white;
-    }
-    .tl-step.upcoming .tl-dot { background: #f5f5f7; border-color: rgba(0,0,0,.1); color: #bbb; }
-    .tl-info { flex: 1; padding-top: 8px; }
-    .tl-stage { font-size: 15px; font-weight: 700; color: #111; }
-    .tl-step.upcoming .tl-stage { color: #aaa; }
-    .tl-time { font-size: 13px; color: #888; margin-top: 3px; }
-    .tl-step.current .tl-stage { color: var(--red); }
-    .tl-current-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: rgba(227,25,55,.1); color: var(--red);
-      font-size: 11px; font-weight: 700;
-      padding: 3px 10px; border-radius: 999px;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-    .tl-current-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulseAnim 1.5s infinite; }
+    .tl-step.done .tl-dot    { background: var(--green); border-color: var(--green); color: white; }
+    .tl-step.current .tl-dot { background: var(--red);   border-color: var(--red);   color: white; box-shadow: 0 0 0 4px rgba(227,25,55,.14); }
+    .tl-step.upcoming .tl-dot{ background: #f5f5f7; border-color: rgba(0,0,0,.08); color: #ccc; }
 
-    /* ── MAP ── */
+    .tl-body { flex: 1; padding-top: 8px; }
+    .tl-stage { font-size: 15px; font-weight: 700; color: #111; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .tl-step.upcoming .tl-stage { color: #bbb; }
+    .tl-step.current .tl-stage  { color: var(--red); }
+    .tl-time { font-size: 13px; color: #aaa; margin-top: 3px; font-weight: 500; }
+
+    .active-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(227,25,55,.09); color: var(--red);
+      font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      padding: 2px 9px; border-radius: 999px;
+    }
+    .active-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: dotPulse 1.5s infinite; }
+
+    /* ── MAP CARD ────────────────────────────────────────── */
     .map-card {
       background: white;
-      border-radius: 20px;
-      box-shadow: var(--card-shadow);
-      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 28px;
       margin-bottom: 20px;
+      border: 1px solid var(--border);
     }
-    .map-card h3 {
-      font-size: 12px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .08em;
-      color: #999; margin-bottom: 16px;
+    #confMap {
+      height: 320px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
     }
-    #confMap { height: 300px; border-radius: 14px; overflow: hidden; }
 
-    /* ── PROOF ── */
-    .proof-card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: var(--card-shadow);
-      padding: 24px;
-      margin-bottom: 20px;
+    /* ── PROOF IMAGE ─────────────────────────────────────── */
+    .proof-img-wrap {
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid rgba(0,0,0,.06);
     }
-    .proof-img { max-width: 100%; border-radius: 12px; border: 1.5px solid rgba(0,0,0,.07); }
+    .proof-img-wrap img {
+      max-width: 100%; border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(0,0,0,.07);
+      box-shadow: var(--shadow-sm);
+    }
 
-    /* ── ACTION BUTTONS ── */
-    .action-bar { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--red), #c41030);
-      color: white;
-      border: none; cursor: pointer;
-      padding: 14px 28px;
-      border-radius: 14px;
+    /* ── ACTION BAR ──────────────────────────────────────── */
+    .action-bar {
+      display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px;
+    }
+    .btn-pc-primary {
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: white; border: none; cursor: pointer;
+      padding: 14px 28px; border-radius: 14px;
       font-size: 15px; font-weight: 700;
       display: inline-flex; align-items: center; gap: 8px;
       text-decoration: none;
-      box-shadow: 0 6px 20px rgba(227,25,55,.3);
+      box-shadow: 0 6px 20px rgba(227,25,55,.28);
       transition: transform .15s, box-shadow .15s;
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(227,25,55,.4); }
-    .btn-outline {
-      background: white;
-      color: #555;
-      border: 1.5px solid rgba(0,0,0,.12);
-      cursor: pointer;
-      padding: 14px 28px;
-      border-radius: 14px;
+    .btn-pc-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(227,25,55,.38); }
+    .btn-pc-outline {
+      background: white; color: #555;
+      border: 1.5px solid rgba(0,0,0,.11);
+      cursor: pointer; padding: 14px 24px; border-radius: 14px;
       font-size: 15px; font-weight: 600;
       display: inline-flex; align-items: center; gap: 8px;
       text-decoration: none;
-      transition: border-color .15s, color .15s;
+      transition: border-color .15s, color .15s, transform .15s;
     }
-    .btn-outline:hover { border-color: var(--red); color: var(--red); }
+    .btn-pc-outline:hover { border-color: var(--red); color: var(--red); transform: translateY(-1px); }
 
-    /* ── SKELETON LOADER ── */
-    .skel { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skelShim 1.4s infinite; border-radius: 8px; height: 16px; margin: 4px 0; }
-    @keyframes skelShim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-    @media(max-width:560px) {
-      .timeline-card, .map-card, .proof-card { padding: 20px 16px; }
-      .hero-top { padding: 32px 20px 24px; }
-      .vehicle-card { padding: 20px; }
-      .info-card { padding: 20px 16px; }
+    /* ── SKELETON ────────────────────────────────────────── */
+    .skel {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px; height: 14px; display: inline-block; width: 80px;
     }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-    .fade-up { animation: fadeUp .5s ease forwards; }
+
+    /* ── WHATSAPP ────────────────────────────────────────── */
+    .whatsapp-float {
+      position: fixed; bottom: 28px; right: 28px; z-index: 999;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .whatsapp-label {
+      background: rgba(0,0,0,.75); color: white;
+      font-size: 11px; font-weight: 600; line-height: 1.4;
+      padding: 5px 10px; border-radius: 8px; text-align: center;
+      opacity: 0; transition: opacity .2s;
+    }
+    .whatsapp-float:hover .whatsapp-label { opacity: 1; }
+    .whatsapp-btn {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #25D366;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(37,211,102,.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .whatsapp-btn:hover { transform: scale(1.08); box-shadow: 0 6px 22px rgba(37,211,102,.5); }
+    .whatsapp-btn svg { width: 28px; height: 28px; }
+
+    @media(max-width:480px){
+      .vehicle-name { font-size: 24px; }
+      .status-title { font-size: 24px; }
+      .action-bar { flex-direction: column; }
+      .action-bar > * { width: 100%; justify-content: center; }
+    }
   </style>
 </head>
 <body>
-<nav class="navbar" id="navbar">
-  <div class="nav-inner">
-    <a href="index.html" class="nav-logo">
-      <img src="assets/tesla-logo.png" alt="Tesla" style="height:32px;object-fit:contain;">
+
+<!-- Nav -->
+<nav class="pc-nav">
+  <div class="pc-nav-inner">
+    <a href="index.html" class="pc-nav-logo">
+      <img src="assets/tesla-logo.png" alt="Tesla">
+      TESLA
     </a>
-    <div style="font-size:13px;font-weight:600;color:#555;">Payment Confirmation</div>
+    <span class="pc-nav-label">Payment Confirmation</span>
+    <a href="dashboard.html" class="pc-nav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Dashboard
+    </a>
   </div>
 </nav>
 
-<div class="page-wrap">
-  <!-- Hero Status -->
-  <div class="conf-hero fade-up" id="confHero">
-    <div class="hero-top pending" id="heroTop">
-      <div class="status-icon" id="statusIcon">⏳</div>
-      <div class="hero-title" id="heroTitle">Payment Under Review</div>
-      <div class="hero-sub" id="heroSub">Your payment proof has been received. Our team is verifying your submission. This typically takes 24–48 hours.</div>
-      <div><span class="status-pill" id="statusPill"><span class="pulse"></span> <span id="statusText">Pending Review</span></span></div>
+<div class="pc-page">
+
+  <!-- Status Hero -->
+  <div class="status-hero anim-0" id="confHero">
+    <div class="status-hero-bar pending" id="heroBar"></div>
+    <div class="status-hero-inner pending" id="heroTop">
+      <div class="status-icon-wrap" id="statusIconWrap">⏳</div>
+      <div class="status-title" id="heroTitle">Payment Under Review</div>
+      <div class="status-sub" id="heroSub">Your payment proof has been received. Our team is currently verifying your submission. This typically takes 24–48 hours.</div>
+      <div>
+        <span class="status-badge" id="statusBadge">
+          <span class="status-dot"></span>
+          <span id="statusText">Pending Review</span>
+        </span>
+      </div>
     </div>
   </div>
 
-  <!-- Vehicle -->
-  <div class="vehicle-card fade-up" id="vehicleCard" style="animation-delay:.08s">
-    <div class="vehicle-img-wrap">
+  <!-- Vehicle Hero -->
+  <div class="vehicle-hero anim-1" id="vehicleHeroCard">
+    <div class="vehicle-img-box">
       <img id="vehicleImg" src="https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png" alt="Tesla">
     </div>
-    <div>
-      <div class="vehicle-badge">FREE Award Vehicle</div>
+    <div class="vehicle-info">
+      <div class="vehicle-badge-tag">Free Award Vehicle</div>
       <div class="vehicle-name" id="vehicleName">Tesla Model S</div>
-      <div class="vehicle-price">Retail Value: <span id="vehiclePrice">$74,990</span> &nbsp;·&nbsp; <span class="free">$0 to you</span></div>
+      <div class="vehicle-tagline">Retail Value: <strong id="vehiclePrice">$74,990</strong> &nbsp;·&nbsp; <strong style="color:var(--red)">$0 to you</strong></div>
     </div>
   </div>
 
-  <!-- Info Grid -->
+  <!-- Info Grid: 4 cards -->
   <div class="info-grid">
+
     <!-- Order Summary -->
-    <div class="info-card fade-up" style="animation-delay:.12s">
-      <div class="card-label">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    <div class="info-card anim-2">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M5 3H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1"/><path d="M9 10h6M9 14h4"/></svg>
         Order Summary
       </div>
       <div class="detail-row"><span class="dr-key">Order ID</span><span class="dr-val mono" id="orderId">—</span></div>
@@ -348,56 +509,60 @@
       <div class="detail-row"><span class="dr-key">Delivery</span><span class="dr-val" id="deliveryMethod">—</span></div>
     </div>
 
-    <!-- Customer Info -->
-    <div class="info-card fade-up" style="animation-delay:.16s">
-      <div class="card-label">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    <!-- Customer Information -->
+    <div class="info-card anim-2">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Customer Information
       </div>
-      <div class="detail-row"><span class="dr-key">Name</span><span class="dr-val" id="custName">—</span></div>
+      <div class="detail-row"><span class="dr-key">Full Name</span><span class="dr-val" id="custName">—</span></div>
       <div class="detail-row"><span class="dr-key">Email</span><span class="dr-val" id="custEmail" style="font-size:13px">—</span></div>
       <div class="detail-row"><span class="dr-key">Phone</span><span class="dr-val" id="custPhone">—</span></div>
     </div>
 
     <!-- Delivery Address -->
-    <div class="info-card fade-up" style="animation-delay:.20s">
-      <div class="card-label">
+    <div class="info-card anim-3">
+      <div class="section-label">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         Delivery Address
       </div>
-      <div class="detail-row"><span class="dr-key">Name</span><span class="dr-val" id="delName">—</span></div>
+      <div class="detail-row"><span class="dr-key">Recipient</span><span class="dr-val" id="delName">—</span></div>
       <div class="detail-row"><span class="dr-key">Address</span><span class="dr-val" id="delAddr">—</span></div>
       <div class="detail-row"><span class="dr-key">City</span><span class="dr-val" id="delCity">—</span></div>
       <div class="detail-row"><span class="dr-key">State / ZIP</span><span class="dr-val" id="delStateZip">—</span></div>
       <div class="detail-row"><span class="dr-key">Country</span><span class="dr-val" id="delCountry">—</span></div>
     </div>
 
-    <!-- Payment Status -->
-    <div class="info-card fade-up" style="animation-delay:.24s">
-      <div class="card-label">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <!-- Payment Details -->
+    <div class="info-card anim-3">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Payment Details
       </div>
-      <div class="detail-row"><span class="dr-key">Proof Status</span><span class="dr-val" id="proofStatus">—</span></div>
+      <div class="detail-row">
+        <span class="dr-key">Status</span>
+        <span class="dr-val" id="proofStatus">—</span>
+      </div>
       <div class="detail-row"><span class="dr-key">Submitted</span><span class="dr-val" id="proofDate">—</span></div>
       <div class="detail-row"><span class="dr-key">Method</span><span class="dr-val" id="proofMethod">—</span></div>
-      <div id="proofImgWrap" style="display:none;margin-top:12px;">
-        <img id="proofImg" class="proof-img" src="" alt="Payment Proof">
+      <div id="proofImgWrap" class="proof-img-wrap" style="display:none">
+        <img id="proofImg" src="" alt="Payment Proof">
       </div>
     </div>
+
   </div>
 
   <!-- Delivery Progress Timeline -->
-  <div class="timeline-card fade-up" style="animation-delay:.28s">
-    <div class="timeline-header">
-      <h3>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-.15em"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><polyline points="12 6 12 12 16 14"/></svg>
+  <div class="timeline-card anim-4">
+    <div class="timeline-top">
+      <div class="section-label" style="margin:0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><polyline points="12 6 12 12 16 14"/></svg>
         Delivery Progress
-      </h3>
-      <div id="progressLabel" style="font-size:13px;font-weight:600;color:#888;">Loading…</div>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="timeline-progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:5%"></div></div>
+        <div class="progress-pct" id="progressPct">—</div>
+      </div>
     </div>
     <div class="tl-steps" id="tlSteps">
       <!-- Filled by JS -->
@@ -405,29 +570,38 @@
   </div>
 
   <!-- Delivery Map -->
-  <div class="map-card fade-up" style="animation-delay:.32s" id="mapCard">
-    <h3>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:-.15em"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      Live Delivery Map
-    </h3>
+  <div class="map-card anim-5" id="mapCard">
+    <div class="section-label" style="margin-bottom:18px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Live Delivery Tracking
+    </div>
     <div id="confMap"></div>
   </div>
 
-  <!-- Action Buttons -->
-  <div class="action-bar fade-up" style="animation-delay:.36s">
-    <button class="btn-primary" onclick="location.reload()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+  <!-- Action Bar -->
+  <div class="action-bar anim-6">
+    <button class="btn-pc-primary" onclick="location.reload()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       Refresh Status
     </button>
-    <a class="btn-outline" href="track.html" id="trackBtn">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <a class="btn-pc-outline" href="track.html" id="trackBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16 10,8"/></svg>
       Track Order
     </a>
-    <a class="btn-outline" href="index.html">
+    <a class="btn-pc-outline" href="dashboard.html">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-      Home
+      Dashboard
     </a>
   </div>
+
+</div>
+
+<!-- WhatsApp -->
+<div class="whatsapp-float">
+  <span class="whatsapp-label">Need help?<br>Chat with us</span>
+  <a class="whatsapp-btn" href="https://wa.me/15814783495?text=Hi%2C%20I%20need%20support%20with%20my%20Tesla%20Award%20Program%20order." target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
 </div>
 
 <script src="js/config.js"></script>
@@ -437,13 +611,12 @@
 (function() {
   'use strict';
 
-  var SUPABASE_URL = (window.SUPABASE_URL || 'https://puebwzumwqizgbmksrpq.supabase.co');
+  var SUPABASE_URL      = (window.SUPABASE_URL      || 'https://puebwzumwqizgbmksrpq.supabase.co');
   var SUPABASE_ANON_KEY = (window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODEyMjYsImV4cCI6MjA2MTU1NzIyNn0.kfup1Lsb8vnvKLjAH0r-SM5mqLYMttOzQsN7YT6ISrw');
 
-  var params = new URLSearchParams(window.location.search);
+  var params     = new URLSearchParams(window.location.search);
   var urlOrderId = params.get('order') || '';
 
-  // Vehicle image map
   var carImgMap = {
     cybertruck: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png',
     modely:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',
@@ -453,132 +626,146 @@
     roadster:   'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png'
   };
 
-  var stageIcons  = ['📋', '⚙️', '📦', '🚚', '🏠', '✅'];
+  var stageIcons = [
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M5 3H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1"/></svg>',
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>',
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="M16.5 9.4 7.55 4.24"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/><circle cx="18.5" cy="15.5" r="2.5"/><path d="M20.27 17.27 22 19"/></svg>',
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>',
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+  ];
+  var doneIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+
   var stageLabels = ['Order Confirmed', 'Processing', 'Shipped', 'In Transit', 'Out for Delivery', 'Delivered'];
-  var stageKeys   = ['confirmed', 'processing', 'shipped', 'in_transit', 'out_for_delivery', 'delivered'];
-  var statusLabels = { confirmed: 'Order Confirmed', processing: 'Processing', shipped: 'Shipped', in_transit: 'In Transit', out_for_delivery: 'Out for Delivery', delivered: 'Delivered', pending: 'Pending Review', approved: 'Approved', rejected: 'Rejected' };
 
   function el(id) { return document.getElementById(id); }
   function setText(id, v) { var e = el(id); if (e) e.textContent = v || '—'; }
   function fmt(iso) {
     if (!iso) return '—';
-    try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch(e) { return iso; }
+    try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+    catch(e) { return iso; }
   }
   function fmtDT(iso) {
     if (!iso) return '—';
-    try { return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch(e) { return iso; }
+    try { return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    catch(e) { return iso; }
   }
 
   function setStatus(proofStatus) {
-    var top = el('heroTop');
-    var icon = el('statusIcon');
-    var title = el('heroTitle');
-    var sub = el('heroSub');
-    var pill = el('statusPill');
-    var st = el('statusText');
+    var bar  = el('heroBar');
+    var top  = el('heroTop');
+    var icon = el('statusIconWrap');
+    var title= el('heroTitle');
+    var sub  = el('heroSub');
+    var badge= el('statusBadge');
+    var st   = el('statusText');
+    var proofEl = el('proofStatus');
 
-    top.className = 'hero-top';
+    ['pending','approved','rejected'].forEach(function(c){
+      if (bar) bar.classList.remove(c);
+      if (top) top.classList.remove(c);
+    });
+
     if (proofStatus === 'approved') {
-      top.classList.add('approved');
+      if (bar) bar.classList.add('approved');
+      if (top) top.classList.add('approved');
       if (icon) icon.textContent = '✅';
-      if (title) title.textContent = 'Payment Approved';
-      if (sub) sub.textContent = 'Your payment has been verified and approved. Your Tesla is being prepared for delivery. Track your order progress below.';
+      if (title) title.textContent = 'Payment Approved!';
+      if (sub) sub.textContent = 'Your payment has been verified and approved. Your Tesla is being prepared for delivery — track your order progress below.';
+      if (badge) badge.className = 'status-badge approved';
       if (st) st.textContent = 'Payment Approved';
+      if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge approved">Approved</span>';
     } else if (proofStatus === 'rejected') {
-      top.classList.add('rejected');
+      if (bar) bar.classList.add('rejected');
+      if (top) top.classList.add('rejected');
       if (icon) icon.textContent = '❌';
       if (title) title.textContent = 'Payment Rejected';
-      if (sub) sub.textContent = 'Unfortunately your payment could not be verified. Please contact support or resubmit your payment proof.';
+      if (sub) sub.textContent = 'Unfortunately your payment could not be verified. Please contact support or resubmit your payment proof with a clear screenshot.';
+      if (badge) badge.className = 'status-badge rejected';
       if (st) st.textContent = 'Payment Rejected';
+      if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge rejected">Rejected</span>';
     } else {
-      top.classList.add('pending');
+      if (bar) bar.classList.add('pending');
+      if (top) top.classList.add('pending');
       if (icon) icon.textContent = '⏳';
       if (title) title.textContent = 'Payment Under Review';
-      if (sub) sub.textContent = 'Your payment proof has been received and is being verified by our team. This typically takes 24–48 hours.';
+      if (sub) sub.textContent = 'Your payment proof has been received. Our team is currently verifying your submission. This typically takes 24–48 hours.';
+      if (badge) badge.className = 'status-badge pending';
       if (st) st.textContent = 'Pending Review';
+      if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge pending">Pending Review</span>';
     }
   }
 
   function populateOrder(order) {
     if (!order) return;
-    var sc = order.selectedCar || {};
+    var sc = order.selectedCar    || {};
     var dd = order.deliveryDetails || {};
-    var dm = order.deliveryMethod || {};
-    var pm = order.paymentMethod || {};
+    var dm = order.deliveryMethod  || {};
+    var pm = order.paymentMethod   || {};
 
     // Vehicle
-    var carId = String(sc.id || sc.model || sc.name || '').toLowerCase().replace(/\s/g,'').replace('model','model');
-    var imgKey = Object.keys(carImgMap).find(function(k) { return carId.indexOf(k) !== -1 || k.indexOf(carId) !== -1; }) || 'models';
+    var carId = String(sc.id || sc.model || sc.name || '').toLowerCase().replace(/\s/g,'');
+    var imgKey = Object.keys(carImgMap).find(function(k){ return carId.indexOf(k) !== -1 || k.indexOf(carId) !== -1; }) || 'models';
     var imgEl = el('vehicleImg');
     if (imgEl) imgEl.src = carImgMap[imgKey] || carImgMap.models;
-    setText('vehicleName', 'Tesla ' + (sc.name || sc.model || 'Model S'));
+    setText('vehicleName',  'Tesla ' + (sc.name || sc.model || 'Model S'));
     setText('vehiclePrice', sc.price || '—');
 
     // Order summary
-    setText('orderId', order.orderId);
-    setText('trackingNum', order.trackingNumber);
-    setText('orderDate', fmt(order.orderDate));
-    setText('estDelivery', order.estimatedDelivery || '—');
-    setText('paymentMethod', pm.name || pm.label || pm.type || '—');
+    setText('orderId',        order.orderId);
+    setText('trackingNum',    order.trackingNumber);
+    setText('orderDate',      fmt(order.orderDate));
+    setText('estDelivery',    order.estimatedDelivery || '—');
+    setText('paymentMethod',  pm.name || pm.label || pm.type || '—');
     setText('deliveryMethod', dm.name || dm.label || '—');
 
     // Customer
     var user = window._userData || {};
-    setText('custName', (user.firstName || '') + ' ' + (user.lastName || ''));
+    var fullName = [(user.firstName||''), (user.lastName||'')].filter(Boolean).join(' ');
+    setText('custName',  fullName || '—');
     setText('custEmail', user.email || '—');
     setText('custPhone', user.phone || dd.phone || '—');
 
-    // Delivery address
-    setText('delName', dd.fullName || dd.name || '—');
-    setText('delAddr', dd.address || dd.street || '—');
-    setText('delCity', dd.city || '—');
+    // Delivery
+    setText('delName',     dd.fullName || dd.name || '—');
+    setText('delAddr',     dd.address  || dd.street || '—');
+    setText('delCity',     dd.city     || '—');
     setText('delStateZip', [dd.state, dd.zipCode || dd.zip].filter(Boolean).join(' ') || '—');
-    setText('delCountry', dd.country || '—');
+    setText('delCountry',  dd.country  || '—');
 
-    // Track button
+    // Track link
     var tb = el('trackBtn');
-    if (tb && order.orderId) tb.href = 'track.html?order=' + encodeURIComponent(order.orderId) + '&tracking=' + encodeURIComponent(order.trackingNumber || '');
+    if (tb && order.orderId)
+      tb.href = 'track.html?order=' + encodeURIComponent(order.orderId) + '&tracking=' + encodeURIComponent(order.trackingNumber || '');
 
-    // Timeline
+    // Timeline & map
     renderTimeline(order.timeline || [], order.status || 'confirmed');
-
-    // Map
-    setTimeout(function() { initMap(dd); }, 500);
+    setTimeout(function(){ initMap(dd); }, 500);
   }
 
   function renderTimeline(timeline, status) {
     var steps = el('tlSteps');
+    var fill  = el('progressFill');
+    var pctEl = el('progressPct');
     if (!steps) return;
 
-    var defaultTimeline = stageLabels.map(function(label, i) {
-      return { stage: label, completed: false, timestamp: null };
-    });
+    var tl = (timeline && timeline.length > 0) ? timeline : stageLabels.map(function(s){ return { stage: s, completed: false, timestamp: null }; });
+    var done = tl.filter(function(t){ return t.completed; }).length;
+    var pct  = tl.length > 0 ? Math.max(5, Math.min(100, Math.round((done / tl.length) * 100))) : 5;
 
-    var tl = (timeline && timeline.length > 0) ? timeline : defaultTimeline;
-
-    // Find current step index
-    var doneCount = tl.filter(function(t) { return t.completed; }).length;
-    var pct = tl.length > 0 ? Math.max(5, Math.min(100, (doneCount / tl.length) * 100)) : 5;
-
-    var fill = el('progressFill');
     if (fill) fill.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
 
-    var progLabel = el('progressLabel');
-    if (progLabel) {
-      var currentStage = tl.filter(function(t) { return t.completed; }).slice(-1)[0];
-      progLabel.textContent = currentStage ? currentStage.stage : 'Order Placed';
-    }
-
-    steps.innerHTML = tl.map(function(step, i) {
-      var isDone = step.completed;
-      var isCurrent = !isDone && i === doneCount;
-      var cls = isDone ? 'done' : (isCurrent ? 'current' : 'upcoming');
-      var icon = isDone ? '✓' : (stageIcons[i] || '○');
-      var timeStr = step.timestamp ? fmtDT(step.timestamp) : (isCurrent ? 'In progress…' : 'Upcoming');
-      var badge = isCurrent ? '<span class="tl-current-badge"><span class="tl-current-dot"></span>Active</span>' : '';
+    steps.innerHTML = tl.map(function(step, i){
+      var isDone    = step.completed;
+      var isCurrent = !isDone && i === done;
+      var cls       = isDone ? 'done' : (isCurrent ? 'current' : 'upcoming');
+      var icon      = isDone ? doneIcon : (stageIcons[i] || stageIcons[0]);
+      var timeStr   = step.timestamp ? fmtDT(step.timestamp) : (isCurrent ? 'In progress…' : 'Upcoming');
+      var badge     = isCurrent ? '<span class="active-badge"><span class="active-dot"></span>Active</span>' : '';
       return '<div class="tl-step ' + cls + '">' +
         '<div class="tl-dot">' + icon + '</div>' +
-        '<div class="tl-info">' +
+        '<div class="tl-body">' +
           '<div class="tl-stage">' + (step.stage || stageLabels[i] || '') + badge + '</div>' +
           '<div class="tl-time">' + timeStr + '</div>' +
         '</div>' +
@@ -588,153 +775,135 @@
 
   var mapInited = false;
   function initMap(dd) {
-    if (mapInited) return;
-    if (!window.L) return;
+    if (mapInited || !window.L) return;
     mapInited = true;
-    var origin = [37.4936, -121.9448]; // Tesla Factory, Fremont CA
-    var dest = [40.7128, -74.0060]; // fallback NYC
-    var city = dd.city || '';
-    var state = dd.state || '';
+    var origin = [37.4936, -121.9448];
+    var dest   = [40.7128, -74.0060];
+    var city    = dd.city    || '';
+    var state   = dd.state   || '';
     var country = dd.country || '';
+
     var map = L.map('confMap').setView([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], 4);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap © CARTO', maxZoom: 19 }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 19
+    }).addTo(map);
+
     var rI = L.divIcon({ html: '<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>', className: '', iconSize: [14,14], iconAnchor: [7,7] });
     var gI = L.divIcon({ html: '<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>', className: '', iconSize: [14,14], iconAnchor: [7,7] });
-    var tI = L.divIcon({ html: '<div style="font-size:20px;line-height:1;">🚚</div>', className: '', iconSize: [24,24], iconAnchor: [12,12] });
+    var tI = L.divIcon({ html: '<div style="font-size:22px;line-height:1;">🚚</div>', className: '', iconSize: [24,24], iconAnchor: [12,12] });
+
     L.marker(origin, { icon: rI }).addTo(map).bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
-    var destMarker = L.marker(dest, { icon: gI }).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>' + (city ? city + ', ' : '') + country);
-    var truckMarker = L.marker([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], { icon: tI }).addTo(map).bindPopup('<strong>Your Tesla</strong><br>🚚 En Route');
-    var line = L.polyline([origin, dest], { color: '#E31937', weight: 2.5, opacity: .55, dashArray: '8,8' }).addTo(map);
-    map.fitBounds(L.latLngBounds([origin, dest]), { padding: [40,40] });
+    var destMk  = L.marker(dest,   { icon: gI }).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>' + (city || '') + (country ? ', ' + country : ''));
+    var truckMk = L.marker([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], { icon: tI }).addTo(map).bindPopup('<strong>Your Tesla</strong><br>🚚 En Route');
+    var line    = L.polyline([origin, dest], { color: '#E31937', weight: 2.5, opacity: .5, dashArray: '8,8' }).addTo(map);
+    map.fitBounds(L.latLngBounds([origin, dest]), { padding: [50, 50] });
+
     if (city || country) {
       fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent([city, state, country].filter(Boolean).join(', ')))
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
+        .then(function(r){ return r.json(); })
+        .then(function(d){
           if (d && d.length) {
             dest = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
-            destMarker.setLatLng(dest).bindPopup('<strong>Delivery Destination</strong><br>' + (city || '') + (country ? ', ' + country : ''));
+            destMk.setLatLng(dest).bindPopup('<strong>Delivery Destination</strong><br>' + (city || '') + (country ? ', ' + country : ''));
             line.setLatLngs([origin, dest]);
-            map.fitBounds(L.latLngBounds([origin, dest]), { padding: [40,40] });
+            map.fitBounds(L.latLngBounds([origin, dest]), { padding: [50, 50] });
           }
-        }).catch(function() {});
+        }).catch(function(){});
     }
-    var p = 0;
-    setInterval(function() {
-      p = (p + .003) % 1;
-      truckMarker.setLatLng([origin[0]+(dest[0]-origin[0])*p + Math.sin(p*12)*.05, origin[1]+(dest[1]-origin[1])*p + Math.cos(p*12)*.05]);
+
+    var p = 0.3;
+    setInterval(function(){
+      p = (p + 0.003) % 1;
+      truckMk.setLatLng([
+        origin[0] + (dest[0]-origin[0])*p + Math.sin(p*12)*.05,
+        origin[1] + (dest[1]-origin[1])*p + Math.cos(p*12)*.05
+      ]);
     }, 80);
   }
 
   function loadFromDB(orderId) {
     if (!orderId) return;
-    // Load live order data from API
     var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
-    if (!session) return;
-    apiCall('/session?token=' + encodeURIComponent(session))
-      .then(function(data) {
-        if (data.valid && data.order) {
-          window._userData = data.user;
-          populateOrder(data.order);
-        }
-      })
-      .catch(function() {});
+    if (session) {
+      apiCall('/session?token=' + encodeURIComponent(session))
+        .then(function(data){
+          if (data.valid && data.order) {
+            window._userData = data.user;
+            populateOrder(data.order);
+          }
+        }).catch(function(){});
+    }
 
-    // Also load live proof status from Supabase REST
     fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&order_id=eq.' + encodeURIComponent(orderId) + '&limit=1', {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
-    }).then(function(r) { return r.ok ? r.json() : null; })
-    .then(function(rows) {
+    }).then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(rows){
       if (rows && rows.length > 0) {
         var row = rows[0];
         setStatus(row.status || 'pending');
-        setText('proofStatus', row.status ? (row.status.charAt(0).toUpperCase() + row.status.slice(1)) : '—');
-        setText('proofDate', row.created_at ? fmtDT(row.created_at) : '—');
+        setText('proofDate',   row.created_at ? fmtDT(row.created_at) : '—');
         setText('proofMethod', row.payment_method || '—');
         if (row.proof_url && !row.proof_url.startsWith('data:')) {
           var wrap = el('proofImgWrap');
-          var img = el('proofImg');
+          var img  = el('proofImg');
           if (wrap) wrap.style.display = 'block';
           if (img) img.src = row.proof_url;
         }
       }
-    }).catch(function() {});
+    }).catch(function(){});
 
-    // Poll for live tracking status every 30 sec
-    setInterval(function() { loadLiveTracking(orderId); }, 30000);
+    setInterval(function(){
+      var s = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+      if (!s) return;
+      apiCall('/session?token=' + encodeURIComponent(s))
+        .then(function(data){
+          if (data.valid && data.order) {
+            renderTimeline(data.order.timeline || [], data.order.status || 'confirmed');
+          }
+        }).catch(function(){});
+    }, 30000);
   }
 
-  function loadLiveTracking(orderId) {
-    // Reload timeline from API
-    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
-    if (!session) return;
-    apiCall('/session?token=' + encodeURIComponent(session))
-      .then(function(data) {
-        if (data.valid && data.order) {
-          renderTimeline(data.order.timeline || [], data.order.status || 'confirmed');
-          var progLabel = el('progressLabel');
-          var tl = data.order.timeline || [];
-          var cur = tl.filter(function(t) { return t.completed; }).slice(-1)[0];
-          if (progLabel && cur) progLabel.textContent = cur.stage;
-        }
-      }).catch(function() {});
+  function loadFromLocalStorage(oi) {
+    try {
+      var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+      if (stored) { populateOrder(stored); oi = oi || stored.orderId; }
+    } catch(e) {}
+    if (oi) loadFromDB(oi);
+    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&order_id=eq.' + encodeURIComponent(oi||'') + '&limit=1', {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+    }).then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(rows){
+      if (rows && rows.length > 0) {
+        var row = rows[0];
+        setStatus(row.status || 'pending');
+        setText('proofDate',   row.created_at ? fmtDT(row.created_at) : '—');
+        setText('proofMethod', row.payment_method || '—');
+      }
+    }).catch(function(){});
+    renderTimeline([], 'confirmed');
   }
 
-  // ── INIT ──────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', function() {
-    // Try getting order from session first (DB-driven)
+  document.addEventListener('DOMContentLoaded', function(){
     var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
     var oi = urlOrderId;
 
     if (session) {
       apiCall('/session?token=' + encodeURIComponent(session))
-        .then(function(data) {
+        .then(function(data){
           if (data.valid) {
             window._userData = data.user;
-            if (data.order) {
-              oi = data.order.orderId || oi;
-              populateOrder(data.order);
-            }
-            // Now load proof status from Supabase
+            if (data.order) { oi = data.order.orderId || oi; populateOrder(data.order); }
             if (oi) loadFromDB(oi);
           } else {
-            // No session, fall back to localStorage order data
             loadFromLocalStorage(oi);
           }
-        })
-        .catch(function() { loadFromLocalStorage(oi); });
+        }).catch(function(){ loadFromLocalStorage(oi); });
     } else {
       loadFromLocalStorage(oi);
     }
   });
 
-  function loadFromLocalStorage(oi) {
-    // Fallback: try localStorage for order data
-    try {
-      var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
-      if (stored) {
-        populateOrder(stored);
-        oi = oi || stored.orderId;
-      }
-    } catch(e) {}
-    if (oi) loadFromDB(oi);
-    // Also try proof status
-    if (oi) {
-      fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&order_id=eq.' + encodeURIComponent(oi) + '&limit=1', {
-        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
-      }).then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(rows) {
-        if (rows && rows.length > 0) {
-          var row = rows[0];
-          setStatus(row.status || 'pending');
-          setText('proofStatus', row.status ? (row.status.charAt(0).toUpperCase() + row.status.slice(1)) : '—');
-          setText('proofDate', row.created_at ? fmtDT(row.created_at) : '—');
-          setText('proofMethod', row.payment_method || '—');
-        }
-      }).catch(function() {});
-    }
-    // Default timeline if nothing
-    renderTimeline([], 'confirmed');
-  }
 })();
 </script>
 </body>

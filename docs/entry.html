@@ -1,4 +1,13 @@
-<!DOCTYPE html>
+// Success — redirect directly to dashboard
+      setTimeout(function() {
+        hideLoading();
+        if (data.sessionToken) {
+          saveSession(data.sessionToken);
+          window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      }, 2500);<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -222,12 +231,15 @@
         lastName: lastName 
       });
 
-      // Success — redirect to congratulations page
-      
-
+      // Success — redirect directly to dashboard (no email confirmation step)
       setTimeout(function() {
         hideLoading();
-        window.location.href = 'congratulations.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(firstName || 'there');
+        if (data.sessionToken) {
+          saveSession(data.sessionToken);
+          window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
+        } else {
+          window.location.href = 'dashboard.html';
+        }
       }, 2500);
 
     } catch (err) {
