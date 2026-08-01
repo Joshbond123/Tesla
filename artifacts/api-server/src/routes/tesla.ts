@@ -68,9 +68,12 @@ router.post("/entry", async (req, res) => {
       throw error;
     }
 
-    const verifyLink = `${getBaseUrl()}/api/verify?token=${verificationToken}&email=${encodeURIComponent(emailKey)}`;
-    // Email verification disabled
-    res.json({ success: true, message: "Entry submitted successfully!", entryId: entry.id, emailSent: false });
+    // Email verification disabled — mark user as verified immediately and create session
+    await supabase.from("giveaway_users").update({ verification_status: "verified", verified_at: new Date().toISOString() }).eq("id", entry.id);
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    const { error: sessionError } = await supabase.from("user_sessions").insert({ token: sessionToken, user_id: entry.id });
+    if (sessionError) throw sessionError;
+    res.json({ success: true, message: "Entry submitted successfully!", entryId: entry.id, emailSent: false, sessionToken });
   } catch (err) { logger.error({ err }, "Entry error"); res.status(500).json({ error: "Server error. Please try again." }); }
 });
 

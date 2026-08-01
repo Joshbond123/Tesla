@@ -217,7 +217,7 @@ form.addEventListener('submit', async (e) => {
   try {
     const data = await apiCall('/entry', 'POST', { email, phone, firstName, lastName });
 
-    setTimeout(() => { bar.style.width = '90%'; step.textContent = 'Sending verification email...'; sub.textContent = 'Almost done!'; }, 2200);
+    setTimeout(() => { bar.style.width = '90%'; step.textContent = 'Setting up your dashboard...'; sub.textContent = 'Almost done!'; }, 2200);
     setTimeout(() => {
       bar.style.width = '100%';
       document.getElementById('loaderSpinner').style.display = 'none';
@@ -227,7 +227,8 @@ form.addEventListener('submit', async (e) => {
     }, 3400);
 
     setTimeout(() => {
-      window.location.href = `/congratulations.html?email=${encodeURIComponent(email)}&name=${encodeURIComponent(firstName || 'there')}`;
+      saveSession(data.sessionToken);
+      window.location.href = `/dashboard.html?session=${encodeURIComponent(data.sessionToken)}`;
     }, 4200);
 
   } catch (err) {
