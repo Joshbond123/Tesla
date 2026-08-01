@@ -1,13 +1,4 @@
-// Success — redirect directly to dashboard
-      setTimeout(function() {
-        hideLoading();
-        if (data.sessionToken) {
-          saveSession(data.sessionToken);
-          window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
-        } else {
-          window.location.href = 'dashboard.html';
-        }
-      }, 2500);<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
