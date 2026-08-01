@@ -2,26 +2,11 @@
 // ║     Tesla Giveaway — Winner Dashboard Logic              ║
 // ╚══════════════════════════════════════════════════════════╝
 
-var cars = [
-  { id:'model3',  name:'Model 3',    color:'Pearl White',      price:'$38,990',  emoji:'🚗',
-    img:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
-    specs:['3.1s 0–60','333mi Range','AWD Dual Motor','5★ Safety'], badge:'Most Popular' },
-  { id:'modely',  name:'Model Y',    color:'Midnight Silver',  price:'$44,990',  emoji:'🚙',
-    img:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
-    specs:['3.5s 0–60','330mi Range','76 cu ft Cargo','7 Seats'], badge:'Best Seller' },
-  { id:'models',  name:'Model S',    color:'Ultra Red',        price:'$74,990',  emoji:'🏎️',
-    img:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
-    specs:['1.99s 0–60','396mi Range','1,020 hp Plaid','200mph Top'], badge:'Ludicrous' },
-  { id:'modelx',  name:'Model X',    color:'Deep Blue',        price:'$79,990',  emoji:'🚐',
-    img:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png',
-    specs:['2.5s 0–60','333mi Range','Falcon Wing Doors','7 Seats'], badge:'Iconic' },
-  { id:'cybertruck', name:'Cybertruck', color:'Stainless Steel', price:'$60,990', emoji:'🛻',
-    img:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
-    specs:['2.6s 0–60','340mi Range','11,000lb Towing','Exo-skeleton'], badge:'Tough' },
-  { id:'roadster', name:'Roadster',  color:'Signature Red',    price:'$200,000', emoji:'🏎️',
-    img:'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png',
-    specs:['1.1s 0–60','620mi Range','250+ mph Top','4 Seats'], badge:'Ultimate' },
-];
+// Use VEHICLE_DATA from vehicle-data.js as the single source of truth.
+// Roadster intentionally removed — no vehicle page or Supabase images exist for it.
+var cars = (typeof VEHICLE_DATA !== 'undefined')
+  ? Object.values(VEHICLE_DATA)
+  : [];
 
 var selectedCar = null;
 
@@ -104,21 +89,32 @@ document.addEventListener('DOMContentLoaded', async function() {
 function renderCars() {
   var grid = document.getElementById('carGrid');
   if (!grid) return;
-  
-  grid.innerHTML = cars.map(function(car) {
-    return '<div class="car-card" onclick="selectCar(\'' + car.id + '\')" id="card-' + car.id + '">' +
-      '<div class="sel-check">✓</div>' +
-      '<div class="car-img-area">' +
-        '<img src="' + car.img + '" alt="Tesla ' + car.name + '" ' +
-          'onerror="this.outerHTML=\'<div style=\\\'font-size:52px;padding:30px;\\\'>' + car.emoji + '</div>\'" ' +
-          'loading="lazy">' +
+
+  var list = (typeof VEHICLE_DATA !== 'undefined') ? Object.values(VEHICLE_DATA) : cars;
+
+  grid.innerHTML = list.map(function(car) {
+    var specs = Array.isArray(car.specs)
+      ? car.specs
+      : [car.range, car.accel, car.drivetrain, car.seats].filter(Boolean);
+
+    return '<div class="dash-car-card" onclick="selectCar(\'' + car.id + '\')">' +
+      '<div style="background:linear-gradient(135deg,#f9fafb,#eef0f3);padding:32px 24px;display:flex;align-items:center;justify-content:center;min-height:210px;overflow:hidden;">' +
+        '<img src="' + car.img + '" alt="Tesla ' + car.name + '" loading="lazy" ' +
+          'style="height:160px;max-width:100%;object-fit:contain;transition:transform .4s cubic-bezier(.4,0,.2,1);" ' +
+          'onerror="this.outerHTML=\'<div style=\\\'font-size:64px;text-align:center;\\\'>' + (car.emoji || '🚗') + '</div>\'">' +
       '</div>' +
-      '<div class="car-body">' +
-        '<div class="car-badge">' + car.badge + '</div>' +
-        '<div class="car-title">Tesla ' + car.name + '</div>' +
-        '<div class="car-meta">' + car.color + ' · ' + car.price + '</div>' +
-        '<div class="car-specs">' +
-          car.specs.map(function(s) { return '<span class="car-spec-pill">' + s + '</span>'; }).join('') +
+      '<div style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:8px;flex:1;">' +
+        '<span style="display:inline-block;background:rgba(227,25,55,.08);color:#e31937;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;border:1px solid rgba(227,25,55,.15);letter-spacing:.04em;width:fit-content;">' + (car.badge || '') + '</span>' +
+        '<div style="font-size:20px;font-weight:900;color:#111;letter-spacing:-.4px;">Tesla ' + car.name + '</div>' +
+        '<div style="font-size:14px;font-weight:700;color:#e31937;">FREE &mdash; <span style="text-decoration:line-through;color:#aaa;font-size:12px;font-weight:500;">' + car.price + '</span></div>' +
+        '<div class="dash-specs" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">' +
+          specs.slice(0,4).map(function(s) {
+            return '<div style="background:#f4f5f7;border:1px solid rgba(0,0,0,.07);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;color:#555;">' + s + '</div>';
+          }).join('') +
+        '</div>' +
+        '<div style="margin-top:auto;padding-top:14px;display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:#e31937;">' +
+          'View Details &amp; Select' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -126,22 +122,8 @@ function renderCars() {
 }
 
 function selectCar(carId) {
-  var cards = document.querySelectorAll('.car-card');
-  for (var i = 0; i < cards.length; i++) cards[i].classList.remove('selected');
-  
-  var card = document.getElementById('card-' + carId);
-  if (card) { 
-    card.classList.add('selected'); 
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
-  }
-  
-  selectedCar = null;
-  for (var j = 0; j < cars.length; j++) {
-    if (cars[j].id === carId) { selectedCar = cars[j]; break; }
-  }
-  
-  var btn = document.getElementById('confirmCarBtn');
-  if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+  // Navigate to the vehicle detail page — user selects the car there
+  window.location.href = 'vehicles/' + carId + '.html';
 }
 
 function confirmCar() {
