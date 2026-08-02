@@ -1089,11 +1089,12 @@ async function handleAdminSaveSettings(req: Request) {
 }
 
 async function handleAdminOrders(_req: Request) {
-  const r = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(email)&order=order_date.desc&limit=200", { headers: SB_HEADERS });
+  const r = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,giveaway_users(email),selected_cars(data)&order=order_date.desc&limit=200", { headers: SB_HEADERS });
   if (!r.ok) return json({ orders: [] });
   const rows = await r.json();
   const orders = rows.map((row: any) => {
     const user = Array.isArray(row.giveaway_users) ? row.giveaway_users[0] : row.giveaway_users;
+    const car = Array.isArray(row.selected_cars) ? row.selected_cars[0] : row.selected_cars;
     return {
       orderId: row.order_id,
       trackingNumber: row.tracking_number,
@@ -1103,7 +1104,7 @@ async function handleAdminOrders(_req: Request) {
       orderDate: row.order_date,
       deliveryMethod: row.delivery_method ?? {},
       paymentMethod: row.payment_method ?? {},
-      selectedCar: {}
+      selectedCar: car?.data ?? {}
     };
   });
   return json({ orders });
