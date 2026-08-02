@@ -529,8 +529,15 @@ async function handleSession(req: Request) {
   } catch (err) {
     console.error("Session: failed to load existing order:", err);
   }
-  
-  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, order: orderData });
+
+  // DB-driven: has the customer uploaded a payment proof? (checked by email)
+  let hasPaymentProof = false;
+  try {
+    const ppR = await fetch(REST + "/payment_proofs?select=id&customer_email=eq." + encodeURIComponent(user.email) + "&limit=1", { headers: SB_HEADERS });
+    if (ppR.ok) { const ppRows = await ppR.json(); hasPaymentProof = Array.isArray(ppRows) && ppRows.length > 0; }
+  } catch { /* ignore */ }
+
+  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, hasPaymentProof, order: orderData });
 }
 
 async function handleOrder(req: Request) {

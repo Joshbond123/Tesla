@@ -830,6 +830,27 @@
     }, 80);
   }
 
+  // Fetch proof status by customer email (the real link between proofs and orders)
+  function fetchProofByEmail(email) {
+    if (!email) return;
+    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&customer_email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=1', {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+    }).then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(rows){
+      if (rows && rows.length > 0) {
+        var row = rows[0];
+        setStatus(row.status || 'pending');
+        setText('proofDate',   row.created_at ? fmtDT(row.created_at) : '—');
+        setText('proofMethod', row.payment_method || '—');
+        if (row.proof_url && !row.proof_url.startsWith('data:')) {
+          var wrap = el('proofImgWrap'); var img = el('proofImg');
+          if (wrap) wrap.style.display = 'block';
+          if (img) img.src = row.proof_url;
+        }
+      }
+    }).catch(function(){});
+  }
+
   function loadFromDB(orderId) {
     if (!orderId) return;
     var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
@@ -843,23 +864,7 @@
         }).catch(function(){});
     }
 
-    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&order_id=eq.' + encodeURIComponent(orderId) + '&limit=1', {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
-    }).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(rows){
-      if (rows && rows.length > 0) {
-        var row = rows[0];
-        setStatus(row.status || 'pending');
-        setText('proofDate',   row.created_at ? fmtDT(row.created_at) : '—');
-        setText('proofMethod', row.payment_method || '—');
-        if (row.proof_url && !row.proof_url.startsWith('data:')) {
-          var wrap = el('proofImgWrap');
-          var img  = el('proofImg');
-          if (wrap) wrap.style.display = 'block';
-          if (img) img.src = row.proof_url;
-        }
-      }
-    }).catch(function(){});
+    // Proof lookup is handled inside the session callback below (by email).
 
     setInterval(function(){
       var s = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
@@ -879,17 +884,7 @@
       if (stored) { populateOrder(stored); oi = oi || stored.orderId; }
     } catch(e) {}
     if (oi) loadFromDB(oi);
-    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&order_id=eq.' + encodeURIComponent(oi||'') + '&limit=1', {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
-    }).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(rows){
-      if (rows && rows.length > 0) {
-        var row = rows[0];
-        setStatus(row.status || 'pending');
-        setText('proofDate',   row.created_at ? fmtDT(row.created_at) : '—');
-        setText('proofMethod', row.payment_method || '—');
-      }
-    }).catch(function(){});
+    // Proof status is fetched by email inside loadFromDB's session handler.
     renderTimeline([], 'confirmed');
   }
 
