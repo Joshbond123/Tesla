@@ -43,10 +43,11 @@
     /* ── NAV ─────────────────────────────────────────────── */
     .pc-nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(13,15,20,.92);
+      background: rgba(255,255,255,.95);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      border-bottom: 1px solid rgba(0,0,0,.07);
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
       height: 60px;
       display: flex; align-items: center;
     }
@@ -57,20 +58,20 @@
     }
     .pc-nav-logo {
       display: flex; align-items: center; gap: 10px;
-      text-decoration: none; color: white;
+      text-decoration: none; color: #171a20;
       font-size: 15px; font-weight: 800; letter-spacing: .06em;
     }
     .pc-nav-logo img { height: 28px; object-fit: contain; }
     .pc-nav-label {
-      font-size: 13px; font-weight: 600; color: rgba(255,255,255,.5);
+      font-size: 13px; font-weight: 600; color: #5c5e62;
       letter-spacing: .02em;
     }
     .pc-nav-back {
-      font-size: 13px; font-weight: 600; color: rgba(255,255,255,.5);
+      font-size: 13px; font-weight: 600; color: #5c5e62;
       text-decoration: none; display: flex; align-items: center; gap: 5px;
       transition: color .15s;
     }
-    .pc-nav-back:hover { color: white; }
+    .pc-nav-back:hover { color: #171a20; }
 
     /* ── PAGE ────────────────────────────────────────────── */
     .pc-page { max-width: 980px; margin: 0 auto; padding: 80px 20px 80px; }
@@ -455,10 +456,7 @@
       TESLA
     </a>
     <span class="pc-nav-label">Payment Confirmation</span>
-    <a href="dashboard.html" class="pc-nav-back">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Dashboard
-    </a>
+
   </div>
 </nav>
 
@@ -470,7 +468,7 @@
     <div class="status-hero-inner pending" id="heroTop">
       <div class="status-icon-wrap" id="statusIconWrap">⏳</div>
       <div class="status-title" id="heroTitle">Payment Under Review</div>
-      <div class="status-sub" id="heroSub">Your payment proof has been received. Our team is currently verifying your submission. This typically takes 24–48 hours.</div>
+      <div class="status-sub" id="heroSub">Your payment proof has been received and is being reviewed. We will update the status here once verified.</div>
       <div>
         <span class="status-badge" id="statusBadge">
           <span class="status-dot"></span>
@@ -588,13 +586,18 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16 10,8"/></svg>
       Track Order
     </a>
-    <a class="btn-pc-outline" href="dashboard.html">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-      Dashboard
-    </a>
   </div>
 
 </div>
+
+
+  <!-- Rejected CTA (shown only when payment is rejected) -->
+  <div id="rejectedCTA" style="display:none;text-align:center;padding:0 24px 40px;max-width:980px;margin:0 auto;">
+    <a href="payment.html" style="display:inline-flex;align-items:center;gap:8px;padding:14px 40px;background:linear-gradient(135deg,#E31937,#c41030);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(227,25,55,.3);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(227,25,55,.35)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(227,25,55,.3)'">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Upload New Payment Proof
+    </a>
+  </div>
 
 <!-- WhatsApp -->
 <div class="whatsapp-float">
@@ -672,6 +675,8 @@
       if (icon) icon.textContent = '✅';
       if (title) title.textContent = 'Payment Approved!';
       if (sub) sub.textContent = 'Your payment has been verified and approved. Your Tesla is being prepared for delivery — track your order progress below.';
+      var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'none';
+      var ab = document.querySelector('.action-bar'); if (ab) ab.style.display = 'flex';
       if (badge) badge.className = 'status-badge approved';
       if (st) st.textContent = 'Payment Approved';
       if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge approved">Approved</span>';
@@ -680,7 +685,9 @@
       if (top) top.classList.add('rejected');
       if (icon) icon.textContent = '❌';
       if (title) title.textContent = 'Payment Rejected';
-      if (sub) sub.textContent = 'Unfortunately your payment could not be verified. Please contact support or resubmit your payment proof with a clear screenshot.';
+      if (sub) sub.textContent = 'Your payment could not be verified. Please return to the payment page to upload a new proof.';
+      var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'block';
+      var ab = document.querySelector('.action-bar'); if (ab) ab.style.display = 'none';
       if (badge) badge.className = 'status-badge rejected';
       if (st) st.textContent = 'Payment Rejected';
       if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge rejected">Rejected</span>';
@@ -689,7 +696,9 @@
       if (top) top.classList.add('pending');
       if (icon) icon.textContent = '⏳';
       if (title) title.textContent = 'Payment Under Review';
-      if (sub) sub.textContent = 'Your payment proof has been received. Our team is currently verifying your submission. This typically takes 24–48 hours.';
+      if (sub) sub.textContent = 'Your payment proof has been received and is being reviewed. We will update the status here once verified.';
+      var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'none';
+      var ab = document.querySelector('.action-bar'); if (ab) ab.style.display = 'flex';
       if (badge) badge.className = 'status-badge pending';
       if (st) st.textContent = 'Pending Review';
       if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge pending">Pending Review</span>';
