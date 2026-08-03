@@ -978,6 +978,10 @@
   var deliveryDetails = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
   var deliveryMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
   var sessionToken = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
+  // Resolve customer email from delivery details or a stored value so the
+  // backend can link the proof to the user record by email.
+  var userEmail = (deliveryDetails && deliveryDetails.email) ||
+    localStorage.getItem('tesla_user_email') || '';
 
   if (!selectedCar || !deliveryDetails || !deliveryMethod) {
     window.location.href = 'dashboard.html';
@@ -1534,6 +1538,8 @@
       amount: String(feeAmt),
       deliveryFee: String(feeAmt),
       sessionToken: sessionToken,
+      customer_email: userEmail,
+      email: userEmail,
       timestamp: new Date().toISOString(),
       orderData: {
         car: selectedCar,
@@ -1613,6 +1619,11 @@
     localStorage.removeItem('tesla_selected_car');
     localStorage.removeItem('tesla_delivery_details');
     localStorage.removeItem('tesla_delivery_method');
+    // Persist a proof-submitted marker so the redirect guard always works —
+    // even if the user clears localStorage later. The cookie layer survives
+    // a typical browser "clear cache" (which clears only storage, not cookies).
+    try { localStorage.setItem('tesla_proof_submitted', 'true'); } catch(e) {}
+    try { document.cookie = 'tesla_proof_submitted=1; max-age=31536000; path=/; SameSite=Lax'; } catch(e) {}
     showToast('Payment submitted successfully!', 'success');
     setTimeout(function() {
       window.location.href = 'payment-confirmation.html';
