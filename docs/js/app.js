@@ -452,3 +452,60 @@ if (document.readyState === 'loading') {
   initScrollAnimations();
   initNavbar();
 }
+
+// ── PROOF REDIRECT GUARD ──────────────────────────────────────────────
+// Any user who has uploaded a payment proof is always redirected to
+// payment-confirmation.html — even after clearing cache or logging out.
+// Three layers: cookie (survives cache clear), localStorage, session API.
+(function proofRedirectGuard() {
+  var p = window.location.pathname;
+  // Do not redirect if already on the confirmation page or on admin/error pages
+  if (p.indexOf('payment-confirmation') !== -1) return;
+  if (p.indexOf('/admin') !== -1 || p.indexOf('admin.html') !== -1) return;
+  if (p.indexOf('verify-error') !== -1) return;
+
+  // Derive the base path so the redirect works on GitHub Pages sub-paths
+  var BASE = p.replace(/\/[^/]*$/, '/');
+  if (!BASE || BASE === '/') BASE = '/Tesla/';
+
+  function goToConfirmation() {
+    var dest = BASE + 'payment-confirmation.html';
+    if (window.location.href.indexOf('payment-confirmation') === -1) {
+      window.location.replace(dest);
+    }
+  }
+
+  // ── Layer 1: Cookie (survives localStorage / "clear cache") ──────────
+  function getCookie(name) {
+    var m = document.cookie.match('(?:^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  if (getCookie('tesla_proof_submitted') === '1') { goToConfirmation(); return; }
+
+  // ── Layer 2: localStorage ────────────────────────────────────────────
+  try {
+    if (localStorage.getItem('tesla_proof_submitted') === 'true') { goToConfirmation(); return; }
+  } catch(e) {}
+
+  // ── Layer 3: Session API (handles re-login after full data wipe) ──────
+  var sessionToken = '';
+  try { sessionToken = localStorage.getItem('tesla_session_token') || ''; } catch(e) {}
+  if (!sessionToken && typeof getSession === 'function') {
+    try { sessionToken = getSession() || ''; } catch(e) {}
+  }
+  var apiBase = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+    ? window.TESLA_API_BASE : '';
+  if (sessionToken && apiBase) {
+    fetch(apiBase + '/session?token=' + encodeURIComponent(sessionToken), { method: 'GET' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data && data.valid && data.hasPaymentProof) {
+          // Restore persistent markers so future visits skip the API call
+          try { localStorage.setItem('tesla_proof_submitted', 'true'); } catch(e) {}
+          try { document.cookie = 'tesla_proof_submitted=1; max-age=31536000; path=/; SameSite=Lax'; } catch(e) {}
+          goToConfirmation();
+        }
+      })
+      .catch(function() { /* ignore network errors */ });
+  }
+})();
