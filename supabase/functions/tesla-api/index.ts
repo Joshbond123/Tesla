@@ -1220,19 +1220,35 @@ async function handleAdminGetStats() {
 
     // ── ROW <-> METHOD CONVERSION HELPERS ────────────────────────────────────────
     function methodToRow(m: Record<string, unknown>): Record<string, unknown> {
-    const config = (typeof m.config === 'object' && m.config !== null
-      ? m.config
-      : {}) as Record<string, unknown>;
-    const slug = String(m.id || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 64) || ('method-' + Date.now());
+    // Config may arrive in two shapes depending on the caller:
+    //   (a) m.config — a plain JS object (from rowToMethod or direct API callers)
+    //   (b) m.account_details — a JSON string (from payment-methods.js toDbFormat,
+    //       used by the admin panel when it saves a method via pushMethodToApi)
+    // Bug fix: support both shapes so admin edits always persist the full config.
+    let config: Record<string, unknown> = {};
+    if (typeof m.config === 'object' && m.config !== null && !Array.isArray(m.config)) {
+      config = m.config as Record<string, unknown>;
+    } else if (typeof m.account_details === 'string' && m.account_details) {
+      try { config = JSON.parse(m.account_details); } catch { config = {}; }
+    }
+    // Absorb top-level flat fields sent by toDbFormat as a safety net so wallet
+    // address and instructions survive even if account_details is absent.
+    if (!config.walletAddress && m.wallet_address) config.walletAddress = String(m.wallet_address);
+    if (!config.instructions && m.payment_instructions) config.instructions = String(m.payment_instructions);
+
+    // Bug fix: admin panel sends a top-level `slug` field (via toDbFormat).
+    // Previously this only read m.id, so every edit produced a random slug
+    // (method-<timestamp>) instead of matching the existing DB row.
+    const slug = String(m.slug || m.id || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 64) || ('method-' + Date.now());
     return {
       slug,
-      name: String(m.name || ''),
-      display_name: String(m.name || ''),
+      name: String(m.name || m.display_name || ''),
+      display_name: String(m.name || m.display_name || ''),
       type: String(m.type || 'wallet'),
       description: String(m.description || ''),
       enabled: m.enabled !== false,
-      sort_order: Number(m.displayOrder) || 999,
-      logo_url: String(m.logo || ''),
+      sort_order: Number(m.sort_order ?? m.displayOrder) || 999,
+      logo_url: String(m.logo_url || m.logo || ''),
       logo_id: slug,
       wallet_address: String(
         config.walletAddress ?? config.cashtag ?? config.username ?? config.email ?? config.phone ?? ''
