@@ -1619,11 +1619,8 @@
     localStorage.removeItem('tesla_selected_car');
     localStorage.removeItem('tesla_delivery_details');
     localStorage.removeItem('tesla_delivery_method');
-    // Persist a proof-submitted marker so the redirect guard always works —
-    // even if the user clears localStorage later. The cookie layer survives
-    // a typical browser "clear cache" (which clears only storage, not cookies).
-    try { localStorage.setItem('tesla_proof_submitted', 'true'); } catch(e) {}
-    try { document.cookie = 'tesla_proof_submitted=1; max-age=31536000; path=/; SameSite=Lax'; } catch(e) {}
+    // Proof state is now DB-driven only — no localStorage or cookie markers.
+    // The redirect guard checks the database via the session API on every page load.
     showToast('Payment submitted successfully!', 'success');
     setTimeout(function() {
       window.location.href = 'payment-confirmation.html';

@@ -475,23 +475,18 @@ if (document.readyState === 'loading') {
     }
   }
 
-  // ── Layer 1: Cookie (survives localStorage / "clear cache") ──────────
-  function getCookie(name) {
-    var m = document.cookie.match('(?:^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-    return m ? decodeURIComponent(m[1]) : null;
-  }
-  if (getCookie('tesla_proof_submitted') === '1') { goToConfirmation(); return; }
-
-  // ── Layer 2: localStorage ────────────────────────────────────────────
-  try {
-    if (localStorage.getItem('tesla_proof_submitted') === 'true') { goToConfirmation(); return; }
-  } catch(e) {}
-
-  // ── Layer 3: Session API (handles re-login after full data wipe) ──────
+  // ── DB-only: Session API proof check ─────────────────────────────────
+  // Proof status is NEVER cached in localStorage, cookies, or any browser
+  // storage. It is always read from the database via the session API so that
+  // it works after logout/login, browser change, device change, or cache wipe.
   var sessionToken = '';
-  try { sessionToken = localStorage.getItem('tesla_session_token') || ''; } catch(e) {}
-  if (!sessionToken && typeof getSession === 'function') {
+  if (typeof getSession === 'function') {
     try { sessionToken = getSession() || ''; } catch(e) {}
+  }
+  // getSession() already reads ?session= URL param first, then localStorage.
+  // We only use localStorage here for the session TOKEN (auth), not proof state.
+  if (!sessionToken) {
+    try { sessionToken = localStorage.getItem('tesla_session_token') || ''; } catch(e) {}
   }
   var apiBase = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
     ? window.TESLA_API_BASE : '';
@@ -500,12 +495,9 @@ if (document.readyState === 'loading') {
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (data && data.valid && data.hasPaymentProof) {
-          // Restore persistent markers so future visits skip the API call
-          try { localStorage.setItem('tesla_proof_submitted', 'true'); } catch(e) {}
-          try { document.cookie = 'tesla_proof_submitted=1; max-age=31536000; path=/; SameSite=Lax'; } catch(e) {}
           goToConfirmation();
         }
       })
-      .catch(function() { /* ignore network errors */ });
+      .catch(function() { /* ignore network errors — guard is best-effort */ });
   }
 })();

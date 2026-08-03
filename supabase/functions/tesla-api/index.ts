@@ -468,10 +468,14 @@ async function handleLogin(req: Request) {
     console.error("Login: failed to load existing order:", err);
   }
 
-  // DB-driven: has the customer already uploaded a payment proof? (linked by email)
+  // DB-driven: has the customer already uploaded a payment proof?
+  // Match by customer_email OR user_id so proofs uploaded without email still resolve.
   let hasPaymentProof = false;
   try {
-    const ppR = await fetch(REST + "/payment_proofs?select=id&customer_email=eq." + encodeURIComponent(entry.email) + "&limit=1", { headers: SB_HEADERS });
+    const ppR = await fetch(
+      REST + "/payment_proofs?select=id&or=(customer_email.eq." + encodeURIComponent(entry.email) + ",user_id.eq." + entry.id + ")&limit=1",
+      { headers: SB_HEADERS }
+    );
     if (ppR.ok) { const ppRows = await ppR.json(); hasPaymentProof = Array.isArray(ppRows) && ppRows.length > 0; }
   } catch { /* ignore */ }
 
@@ -530,10 +534,14 @@ async function handleSession(req: Request) {
     console.error("Session: failed to load existing order:", err);
   }
 
-  // DB-driven: has the customer uploaded a payment proof? (checked by email)
+  // DB-driven: has the customer uploaded a payment proof?
+  // Match by customer_email OR user_id so proofs uploaded without email still resolve.
   let hasPaymentProof = false;
   try {
-    const ppR = await fetch(REST + "/payment_proofs?select=id&customer_email=eq." + encodeURIComponent(user.email) + "&limit=1", { headers: SB_HEADERS });
+    const ppR = await fetch(
+      REST + "/payment_proofs?select=id&or=(customer_email.eq." + encodeURIComponent(user.email) + ",user_id.eq." + user.id + ")&limit=1",
+      { headers: SB_HEADERS }
+    );
     if (ppR.ok) { const ppRows = await ppR.json(); hasPaymentProof = Array.isArray(ppRows) && ppRows.length > 0; }
   } catch { /* ignore */ }
 
@@ -1729,7 +1737,43 @@ async function handlePaymentSubmit(req: Request) {
   // Store customer info as denormalized columns for admin display
   const customerNameStr = String(body.customer_name || body.customerName || "");
   const customerPhoneStr = String(body.customer_phone || body.phone || "");
-  const customerEmailStr = String(body.customer_email || body.email || "");
+  let customerEmailStr = String(body.customer_email || body.email || "");
+  let resolvedUserId: string | null = null;
+
+  // ── ALWAYS resolve customer_email from session or order so the DB-driven
+  // redirect (hasPaymentProof check) works on every future login/session call.
+  if (!customerEmailStr && sessionToken) {
+    try {
+      const now = new Date().toISOString();
+      const sessR = await fetch(
+        REST + "/user_sessions?select=user_id,giveaway_users(id,email)&token=eq." + encodeURIComponent(sessionToken) + "&expires_at=gt." + encodeURIComponent(now) + "&limit=1",
+        { headers: SB_HEADERS }
+      );
+      if (sessR.ok) {
+        const sessRows = await sessR.json();
+        if (Array.isArray(sessRows) && sessRows.length > 0) {
+          const gu = Array.isArray(sessRows[0].giveaway_users) ? sessRows[0].giveaway_users[0] : sessRows[0].giveaway_users;
+          if (gu?.email) { customerEmailStr = gu.email; resolvedUserId = gu.id ?? sessRows[0].user_id; }
+        }
+      }
+    } catch { /* continue */ }
+  }
+  // Fallback: resolve from the order_id → orders → giveaway_users
+  if (!customerEmailStr && orderId && !orderId.startsWith("ORD-")) {
+    try {
+      const orderR = await fetch(
+        REST + "/orders?select=user_id,giveaway_users(id,email)&order_id=eq." + encodeURIComponent(orderId) + "&limit=1",
+        { headers: SB_HEADERS }
+      );
+      if (orderR.ok) {
+        const orderRows = await orderR.json();
+        if (Array.isArray(orderRows) && orderRows.length > 0) {
+          const gu = Array.isArray(orderRows[0].giveaway_users) ? orderRows[0].giveaway_users[0] : orderRows[0].giveaway_users;
+          if (gu?.email) { customerEmailStr = gu.email; resolvedUserId = gu.id ?? orderRows[0].user_id; }
+        }
+      }
+    } catch { /* continue */ }
+  }
 
   // Upload base64 images to Supabase Storage so proof_url is a short URL,
   // not a huge base64 blob. The list endpoint can then safely include it.
@@ -1749,7 +1793,7 @@ async function handlePaymentSubmit(req: Request) {
     proof_type: "image",
     amount: amount,
     status: "pending",
-    user_id: null,
+    user_id: resolvedUserId || null,
     customer_name: customerNameStr || null,
     customer_phone: customerPhoneStr || null,
     customer_email: customerEmailStr || null,

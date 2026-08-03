@@ -277,6 +277,8 @@ window.submitProof=function(){
   }
   var proofUrl = proofUrls.length > 0 ? proofUrls[0] : '';
   var proofBackUrl = proofUrls.length > 1 ? proofUrls[proofUrls.length - 1] : '';
+  var sessionTok = '';
+  try { sessionTok = (typeof getSession==='function' ? getSession() : null) || localStorage.getItem('tesla_session_token') || ''; } catch(e) {}
   var payload = {
     order_id: orderId,
     payment_method: pm.name,
@@ -286,7 +288,8 @@ window.submitProof=function(){
     proof_count: proofs.length,
     status: 'pending',
     proof_url: proofUrl,
-    proof_urls: proofUrls
+    proof_urls: proofUrls,
+    sessionToken: sessionTok
   };
   if (proofBackUrl) payload.proof_back_url = proofBackUrl;
   fetch(B+'/payment-proof',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){});

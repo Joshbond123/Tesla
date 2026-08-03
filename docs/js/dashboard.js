@@ -51,8 +51,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // DB-driven redirect: if user has uploaded payment proof, always redirect to payment-confirmation
-    if (data.hasPaymentProof && data.order && data.order.orderId) {
-      window.location.href = 'payment-confirmation.html?order=' + encodeURIComponent(data.order.orderId);
+    // Do NOT require data.order — proof may exist even when order data is temporarily unavailable
+    if (data.hasPaymentProof) {
+      var dest = 'payment-confirmation.html';
+      if (data.order && data.order.orderId) dest += '?order=' + encodeURIComponent(data.order.orderId);
+      window.location.href = dest;
       return;
     }
 
