@@ -46,9 +46,7 @@
         // back to the API so the DB is seeded with realistic default data.
         // This ensures the customer Payment page always shows full details even
         // before the admin has manually edited each method.
-        if (PM.seedEmptyToApi) {
-          setTimeout(function () { PM.seedEmptyToApi(); }, 500);
-        }
+        // seedEmptyToApi removed — admin edits are the source of truth
       });
     }
   };
@@ -280,10 +278,6 @@
     var qrHtml    = c.qrCode ? '<img src="' + esc(c.qrCode) + '" alt="QR Code">' : '<span>No QR</span>';
     var hasQr     = !!c.qrCode;
 
-    var logoOpts = Object.keys(PM.LOGO_KEYS).map(function (k) {
-      var selected = pm && pm.logo && pm.logo.indexOf(k + '.svg') !== -1 ? ' selected' : '';
-      return '<option value="' + k + '"' + selected + '>' + k + '</option>';
-    }).join('');
 
     var typeOpts = ['wallet', 'bank', 'crypto', 'card', 'gift'].map(function (t) {
       return '<option value="' + t + '"' + (t === type ? ' selected' : '') + '>' + typeLabel(t) + '</option>';
@@ -342,11 +336,7 @@
             '<div class="drw-logo-row">',
               '<div class="drw-logo-preview" id="drwLogoThumb">' + logoHtml + '</div>',
               '<div class="drw-logo-opts">',
-                '<select id="drw_logoKey" onchange="window._pmLogoKeyChange()">',
-                  '<option value="">— Upload your own —</option>',
-                  logoOpts,
-                '</select>',
-                '<div class="drw-hint">Choose a built-in brand logo, or upload a custom image.</div>',
+                '<div class="drw-hint">Upload a logo image for this payment method.</div>',
                 '<label class="drw-upload-label">',
                   ICON_UPLOAD + ' Upload logo',
                   '<input type="file" accept="image/*" style="display:none" onchange="window._pmLogoFile(this)">',
@@ -484,11 +474,6 @@
     _renderTypeFields(type, c, mappedId);
   };
 
-  window._pmLogoKeyChange = function () {
-    _logoUpload = null; // user picked a built-in, clear any upload
-    _updateLogoPreview();
-  };
-
   window._pmLogoFile = function (input) {
     var file = input && input.files && input.files[0];
     if (!file) return;
@@ -496,7 +481,6 @@
     var reader = new FileReader();
     reader.onload = function (e) {
       _logoUpload = e.target.result;
-      var sel = $id('drw_logoKey'); if (sel) sel.value = '';
       _updateLogoPreview();
     };
     reader.readAsDataURL(file);
@@ -525,7 +509,6 @@
   };
 
   function _updateLogoPreview() {
-    var key   = val('drw_logoKey');
     var thumb = $id('drwLogoThumb');
     var head  = $id('drwHeadLogo');
     var html;
@@ -582,7 +565,7 @@
 
     // Logo
     var logo;
-    var logoKey = val('drw_logoKey');
+    var logoKey = '';
     if (_logoUpload) {
       logo = _logoUpload;
     } else if (logoKey && PM.LOGO_KEYS[logoKey]) {

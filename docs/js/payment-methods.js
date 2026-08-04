@@ -459,31 +459,7 @@
         if (Array.isArray(list) && list.length > 0) {
           var norm = normalizeList(list);
           if (norm && norm.length > 0) {
-            // Admin scope: merge realistic DEFAULTS config for any DB records that
-            // have empty configs (e.g. newly-seeded rows from migrations).
-            // This preserves the full payment details in localStorage and lets
-            // seedEmptyToApi() push them back to Supabase so the customer page
-            // also gets the realistic data.
-            if (scope === 'admin') {
-              norm = norm.map(function (m) {
-                var cfg = m.config || {};
-                var hasConfig = cfg.walletAddress || cfg.cashtag || cfg.email ||
-                  cfg.username || cfg.instructions || cfg.recipientName ||
-                  cfg.paypalMeLink || cfg.accountName || cfg.network;
-                if (!hasConfig) {
-                  var def = null;
-                  for (var i = 0; i < DEFAULTS.length; i++) {
-                    if (DEFAULTS[i].id === m.id) { def = DEFAULTS[i]; break; }
-                  }
-                  if (def && def.config) {
-                    m.config = Object.assign({}, def.config);
-                    if (!m.logo && def.logo) m.logo = def.logo;
-                    if (!m.description && def.description) m.description = def.description;
-                  }
-                }
-                return m;
-              });
-            }
+            // No DEFAULTS merging — admin sees exactly what's in the DB.
             save(norm);
             try { global.localStorage.removeItem(STORAGE_KEY); global.localStorage.removeItem('tesla_pm_v2'); } catch (e) {}
             if (cb) cb(true);
