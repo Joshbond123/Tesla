@@ -243,7 +243,11 @@
   // ── Public API ──────────────────────────────────────────────────
   function getAll() {
     var stored = load();
-    return (stored || DEFAULTS).slice().sort(sortByOrder);
+    // When the API is configured, never fall back to hard-coded DEFAULTS —
+    // the database is the source of truth. Return an empty array until
+    // syncFromApi completes so the admin sees a loading state, not mock data.
+    if (!stored) return apiBase() ? [] : DEFAULTS.slice().sort(sortByOrder);
+    return stored.slice().sort(sortByOrder);
   }
 
   function getEnabled() {
