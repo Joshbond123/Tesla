@@ -368,6 +368,7 @@
       slug: String(m.id || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       name: m.name || m.id,
       display_name: m.name || m.id,
+      description: m.description || '',
       type: m.type || 'wallet',
       enabled: m.enabled !== false,
       logo_url: m.logo || '',
@@ -379,21 +380,36 @@
     };
   }
 
+  // Build request headers for admin API calls.
+  // Reads the session token stored by admin-auth.js so protected routes authorize.
+  function adminApiHeaders() {
+    var headers = { 'Content-Type': 'application/json' };
+    try {
+      var tok = global.localStorage && global.localStorage.getItem('tesla_admin_token');
+      if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    } catch (e) {}
+    return headers;
+  }
+
   // Push a single method to the API (upsert by slug)
   function pushMethodToApi(method, isNew) {
     var base = apiBase();
     if (!base || !global.fetch) return;
     var dbMethod = toDbFormat(method);
     var dbId = method._dbId;
+    var headers = adminApiHeaders();
     try {
       if (!isNew && dbId) {
         // Update existing record
         fetch(base + '/admin/payment-methods/' + encodeURIComponent(dbId), {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify(dbMethod)
         }).then(function(r) {
-          return r.ok ? r.json() : null;
+          if (!r.ok) {
+            return r.text().then(function(t) { console.error('[PM] PUT failed (' + r.status + '):', t); return null; });
+          }
+          return r.json();
         }).then(function(data) {
           if (data && data._db_id) {
             // Store returned UUID for future updates
@@ -401,15 +417,18 @@
             var m = list.find(function(x) { return x.id === method.id; });
             if (m) { m._dbId = data._db_id; save(list); }
           }
-        }).catch(function () {});
+        }).catch(function (e) { console.error('[PM] PUT error:', e); });
       } else {
-        // Upsert by slug (create or update by name)
+        // Upsert by slug (create or update by slug)
         fetch(base + '/admin/payment-methods/upsert', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify(dbMethod)
         }).then(function(r) {
-          return r.ok ? r.json() : null;
+          if (!r.ok) {
+            return r.text().then(function(t) { console.error('[PM] POST upsert failed (' + r.status + '):', t); return null; });
+          }
+          return r.json();
         }).then(function(data) {
           if (data && data._db_id) {
             // Store the UUID so future edits use PUT
@@ -417,9 +436,9 @@
             var m = list.find(function(x) { return x.id === method.id; });
             if (m) { m._dbId = data._db_id; save(list); }
           }
-        }).catch(function () {});
+        }).catch(function (e) { console.error('[PM] POST upsert error:', e); });
       }
-    } catch (e) { /* best-effort */ }
+    } catch (e) { console.error('[PM] pushMethodToApi error:', e); }
   }
 
   // Push all methods (used for reorder/reset)
