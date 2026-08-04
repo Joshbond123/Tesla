@@ -452,7 +452,17 @@
     var path = scope === 'admin' ? '/admin/payment-methods' : '/payment-methods';
     var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
-    fetch(base + path, ctrl ? { signal: ctrl.signal } : undefined)
+    var syncHeaders = {};
+    if (scope === 'admin') {
+      try {
+        var adminTok = global.localStorage && global.localStorage.getItem('tesla_admin_token');
+        if (adminTok) syncHeaders['Authorization'] = 'Bearer ' + adminTok;
+      } catch (_) {}
+    }
+    var syncOpts = ctrl
+      ? Object.assign({ signal: ctrl.signal }, syncHeaders['Authorization'] ? { headers: syncHeaders } : {})
+      : (syncHeaders['Authorization'] ? { headers: syncHeaders } : undefined);
+    fetch(base + path, syncOpts)
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         var list = data && (data.methods || data.payment_methods || data);
