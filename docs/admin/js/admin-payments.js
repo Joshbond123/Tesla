@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  Tesla Award — Admin Panel: Payment Methods (v3 Redesign)   ║
-// ║  Premium UI · Supabase-first persistence · No hard-coded    ║
-// ║  mock data shown in the admin panel.                         ║
+// ║  Tesla Award — Admin Panel: Payment Methods (v4)            ║
+// ║  Per-slug dedicated edit interfaces · Custom methods        ║
+// ║  Supabase-first · Premium UI · No generic PayPal leakage   ║
 // ╚══════════════════════════════════════════════════════════════╝
 (function () {
   'use strict';
@@ -22,9 +22,10 @@
   function $id(id)        { return document.getElementById(id); }
   function val(id)        { var e = $id(id); return e ? e.value : ''; }
   function setText(id, v) { var e = $id(id); if (e) e.textContent = v; }
+  function _setVal(id, v) { var e = $id(id); if (e) e.value = (v == null ? '' : v); }
 
   function typeLabel(t) {
-    return ({ wallet: 'Wallet / App', bank: 'Bank Transfer', crypto: 'Cryptocurrency', card: 'Card', gift: 'Gift Card' }[t]) || 'Wallet / App';
+    return ({ wallet: 'Wallet / App', bank: 'Bank Transfer', crypto: 'Cryptocurrency', card: 'Card', gift: 'Gift Card' }[t]) || 'Other';
   }
 
   function typeColor(t) {
@@ -62,21 +63,213 @@
     return '';
   }
 
-  // ── Load & render ───────────────────────────────────────────────
-  window.loadPaymentMethods = function () {
-    renderPaymentMethods();
-    if (PM && PM.syncFromApi) {
-      // Show loading indicator while syncing
-      var grid = $id('paymentMethodsGrid');
-      if (grid && (!PM.getAll || PM.getAll().length === 0)) {
-        grid.innerHTML = _loadingHtml();
-      }
-      PM.syncFromApi('admin', function (synced) {
-        renderPaymentMethods();
-      });
+  function showToast(msg, type) {
+    var existing = $id('pm3Toast');
+    if (existing) existing.remove();
+    var t = document.createElement('div');
+    t.id = 'pm3Toast';
+    t.className = 'pm3-toast' + (type === 'error' ? ' pm3-toast--error' : '');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('pm3-toast--show'); });
+    setTimeout(function () {
+      t.classList.remove('pm3-toast--show');
+      setTimeout(function () { t.remove(); }, 300);
+    }, 3000);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // METHOD SCHEMAS — defines exact fields per payment method slug
+  // This is the authoritative fix: each method has its own schema,
+  // so editPaymentMethod always renders the correct dedicated fields.
+  // ─────────────────────────────────────────────────────────────────
+  var METHOD_SCHEMAS = {
+
+    paypal: {
+      label: 'PayPal',
+      type: 'wallet',
+      fields: [
+        { id: 'drw_email',       key: 'email',       label: 'PayPal Email',                    inputType: 'email',    placeholder: 'payments@example.com',          required: true  },
+        { id: 'drw_accountName', key: 'accountName', label: 'Account Holder Name (optional)',  inputType: 'text',     placeholder: 'Your Name or Business Name',    required: false },
+        { id: 'drw_paypalMe',    key: 'paypalMeLink',label: 'PayPal.me Link (optional)',        inputType: 'text',     placeholder: 'https://paypal.me/yourname',    required: false },
+        { id: 'drw_instructions',key: 'instructions',label: 'Payment Instructions',            inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+        { id: 'drw_qr',          key: 'qrCode',      label: 'QR Code (optional)',              inputType: 'qr' },
+      ]
+    },
+
+    cashapp: {
+      label: 'Cash App',
+      type: 'wallet',
+      fields: [
+        { id: 'drw_cashtag',     key: 'cashtag',     label: 'Cashtag',                         inputType: 'text',     placeholder: '$YourCashtag',                 required: true  },
+        { id: 'drw_accountName', key: 'accountName', label: 'Account Holder Name (optional)',  inputType: 'text',     placeholder: 'Your Name',                    required: false },
+        { id: 'drw_qr',          key: 'qrCode',      label: 'QR Code (optional)',              inputType: 'qr' },
+        { id: 'drw_instructions',key: 'instructions',label: 'Payment Instructions',            inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    venmo: {
+      label: 'Venmo',
+      type: 'wallet',
+      fields: [
+        { id: 'drw_username',    key: 'username',    label: 'Venmo Username (optional)',       inputType: 'text',     placeholder: '@YourVenmoUsername',            required: false },
+        { id: 'drw_accountName', key: 'accountName', label: 'Account Holder Name (optional)',  inputType: 'text',     placeholder: 'Your Name',                    required: false },
+        { id: 'drw_qr',          key: 'qrCode',      label: 'QR Code (optional)',              inputType: 'qr' },
+        { id: 'drw_instructions',key: 'instructions',label: 'Payment Instructions',            inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    zelle: {
+      label: 'Zelle',
+      type: 'bank',
+      fields: [
+        { id: 'drw_recipientName',key: 'recipientName',label: 'Recipient Name',              inputType: 'text',     placeholder: 'Your Name or Business Name',    required: true  },
+        { id: 'drw_email',        key: 'email',       label: 'Email (optional)',              inputType: 'email',    placeholder: 'zelle@example.com',            required: false },
+        { id: 'drw_phone',        key: 'phone',       label: 'Phone Number (optional)',       inputType: 'tel',      placeholder: '+1 (555) 000-0000',            required: false },
+        { id: 'drw_bankName',     key: 'bankName',    label: 'Bank Name (optional)',          inputType: 'text',     placeholder: 'Chase, Wells Fargo, etc.',     required: false },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    bitcoin: {
+      label: 'Bitcoin (BTC)',
+      type: 'crypto',
+      fields: [
+        { id: 'drw_walletAddress',key: 'walletAddress',label: 'Wallet Address',              inputType: 'text',     placeholder: 'bc1q...',                      required: true  },
+        { id: 'drw_walletLabel',  key: 'walletLabel', label: 'Wallet Label',                 inputType: 'text',     placeholder: 'Bitcoin Mainnet Wallet',       required: false },
+        { id: 'drw_network',      key: 'network',     label: 'Network',                      inputType: 'text',     placeholder: 'Bitcoin (BTC) — Mainnet',      required: false },
+        { id: 'drw_qr',           key: 'qrCode',      label: 'QR Code (optional)',            inputType: 'qr' },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    ethereum: {
+      label: 'Ethereum (ETH)',
+      type: 'crypto',
+      fields: [
+        { id: 'drw_walletAddress',key: 'walletAddress',label: 'Wallet Address',              inputType: 'text',     placeholder: '0x...',                        required: true  },
+        { id: 'drw_walletLabel',  key: 'walletLabel', label: 'Wallet Label',                 inputType: 'text',     placeholder: 'Ethereum Mainnet Wallet',      required: false },
+        { id: 'drw_network',      key: 'network',     label: 'Network',                      inputType: 'text',     placeholder: 'Ethereum (ETH) — Mainnet',     required: false },
+        { id: 'drw_qr',           key: 'qrCode',      label: 'QR Code (optional)',            inputType: 'qr' },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    'usdt-erc20': {
+      label: 'USDT (ERC-20)',
+      type: 'crypto',
+      fields: [
+        { id: 'drw_walletAddress',key: 'walletAddress',label: 'Wallet Address',              inputType: 'text',     placeholder: '0x...',                        required: true  },
+        { id: 'drw_network',      key: 'network',     label: 'Network',                      inputType: 'text',     placeholder: 'ERC-20 (Ethereum)',             required: false },
+        { id: 'drw_qr',           key: 'qrCode',      label: 'QR Code (optional)',            inputType: 'qr' },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    'usdt-trc20': {
+      label: 'USDT (TRC-20)',
+      type: 'crypto',
+      fields: [
+        { id: 'drw_walletAddress',key: 'walletAddress',label: 'Wallet Address',              inputType: 'text',     placeholder: 'T...',                         required: true  },
+        { id: 'drw_network',      key: 'network',     label: 'Network',                      inputType: 'text',     placeholder: 'TRC-20 (TRON)',                required: false },
+        { id: 'drw_qr',           key: 'qrCode',      label: 'QR Code (optional)',            inputType: 'qr' },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    creditcard: {
+      label: 'Credit / Debit Card',
+      type: 'card',
+      fields: [
+        { id: 'drw_cardHolder',   key: 'cardHolder',  label: 'Card Holder Name',              inputType: 'text',     placeholder: 'Name on card',                 required: false },
+        { id: 'drw_cardNumber',   key: 'cardNumber',  label: 'Card Number',                   inputType: 'text',     placeholder: '4111 1111 1111 1111',          required: false },
+        { id: 'drw_expiryDate',   key: 'expiryDate',  label: 'Expiry Date',                   inputType: 'text',     placeholder: 'MM/YY',                        required: false },
+        { id: 'drw_cvv',          key: 'cvv',         label: 'CVV',                           inputType: 'text',     placeholder: '123',                          required: false },
+        { id: 'drw_billingAddress',key:'billingAddress',label:'Billing Address',              inputType: 'textarea', placeholder: '123 Main St, City, State, ZIP',required: false },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+
+    applegift: {
+      label: 'Apple Gift Card',
+      type: 'gift',
+      fields: [
+        { id: 'drw_frontImageRequired', key: 'frontImageRequired', label: 'Front Image Required', inputType: 'toggle', defaultVal: true  },
+        { id: 'drw_backImageRequired',  key: 'backImageRequired',  label: 'Back Image Required',  inputType: 'toggle', defaultVal: true  },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
     }
   };
 
+  // Fallback generic schemas by type (for custom methods)
+  var GENERIC_SCHEMAS = {
+    wallet: {
+      fields: [
+        { id: 'drw_email',       key: 'email',       label: 'Payment Email',                  inputType: 'email',    placeholder: 'payments@example.com',          required: false },
+        { id: 'drw_username',    key: 'username',     label: 'Username / Handle (optional)',   inputType: 'text',     placeholder: '@username or $handle',         required: false },
+        { id: 'drw_accountName', key: 'accountName', label: 'Account Name (optional)',        inputType: 'text',     placeholder: 'Your Name or Business',         required: false },
+        { id: 'drw_phone',       key: 'phone',        label: 'Phone Number (optional)',        inputType: 'tel',      placeholder: '+1 (555) 000-0000',            required: false },
+        { id: 'drw_qr',          key: 'qrCode',      label: 'QR Code (optional)',              inputType: 'qr' },
+        { id: 'drw_instructions',key: 'instructions',label: 'Payment Instructions',            inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+    bank: {
+      fields: [
+        { id: 'drw_recipientName',key: 'recipientName',label: 'Recipient / Account Name',    inputType: 'text',     placeholder: 'Business Legal Name',          required: false },
+        { id: 'drw_email',        key: 'email',       label: 'Email Address (optional)',      inputType: 'email',    placeholder: 'bank@example.com',             required: false },
+        { id: 'drw_phone',        key: 'phone',       label: 'Phone Number (optional)',       inputType: 'tel',      placeholder: '+1 (555) 000-0000',            required: false },
+        { id: 'drw_bankName',     key: 'bankName',    label: 'Bank Name (optional)',          inputType: 'text',     placeholder: 'Chase, Wells Fargo, etc.',     required: false },
+        { id: 'drw_accountNumber',key: 'accountNumber',label: 'Account Number (optional)',   inputType: 'text',     placeholder: '000000000000',                 required: false },
+        { id: 'drw_routingNumber',key: 'routingNumber',label: 'Routing Number (optional)',   inputType: 'text',     placeholder: '000000000',                    required: false },
+        { id: 'drw_qr',           key: 'qrCode',      label: 'QR Code (optional)',            inputType: 'qr' },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+    crypto: {
+      fields: [
+        { id: 'drw_walletAddress',key: 'walletAddress',label: 'Wallet Address',              inputType: 'text',     placeholder: 'Wallet address',               required: false },
+        { id: 'drw_network',      key: 'network',     label: 'Network / Chain',               inputType: 'text',     placeholder: 'Network name',                 required: false },
+        { id: 'drw_memo',         key: 'memo',        label: 'Memo / Tag (optional)',         inputType: 'text',     placeholder: 'Leave blank if not required',  required: false },
+        { id: 'drw_qr',           key: 'qrCode',      label: 'QR Code (optional)',            inputType: 'qr' },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+    card: {
+      fields: [
+        { id: 'drw_merchantName', key: 'merchantName', label: 'Merchant Name',              inputType: 'text',     placeholder: 'Your Business Name',           required: false },
+        { id: 'drw_acceptedNetworks',key:'acceptedNetworks',label:'Accepted Networks',      inputType: 'text',     placeholder: 'Visa, Mastercard, Amex',       required: false },
+        { id: 'drw_supportPhone', key: 'supportPhone', label: 'Support Phone (optional)',   inputType: 'tel',      placeholder: '+1 (888) 000-0000',            required: false },
+        { id: 'drw_instructions', key: 'instructions', label: 'Payment Instructions',        inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+    gift: {
+      fields: [
+        { id: 'drw_frontImageRequired', key: 'frontImageRequired', label: 'Front Image Required', inputType: 'toggle', defaultVal: true  },
+        { id: 'drw_backImageRequired',  key: 'backImageRequired',  label: 'Back Image Required',  inputType: 'toggle', defaultVal: false },
+        { id: 'drw_denominations',key: 'denominationsAccepted',label: 'Accepted Denominations', inputType: 'text',   placeholder: '$25, $50, $100, $200',       required: false },
+        { id: 'drw_purchaseLoc',  key: 'purchaseLocations',   label: 'Where to Purchase (optional)',inputType: 'text',placeholder: 'Apple Store, Walmart, etc.',required: false },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',              inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    },
+    other: {
+      fields: [
+        { id: 'drw_accountName', key: 'accountName', label: 'Account Name (optional)',        inputType: 'text',     placeholder: 'Your Name or Business',         required: false },
+        { id: 'drw_accountNumber',key:'accountNumber',label:'Account Number / Address (optional)',inputType:'text', placeholder: 'Account number or address',    required: false },
+        { id: 'drw_bankName',     key: 'bankName',    label: 'Bank / Provider Name (optional)',inputType: 'text',   placeholder: 'Provider name',                required: false },
+        { id: 'drw_network',      key: 'network',     label: 'Network (optional)',              inputType: 'text',   placeholder: 'Network or chain',             required: false },
+        { id: 'drw_email',        key: 'email',       label: 'Payment Email (optional)',        inputType: 'email',  placeholder: 'payments@example.com',         required: false },
+        { id: 'drw_qr',           key: 'qrCode',      label: 'QR Code (optional)',              inputType: 'qr' },
+        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',            inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+      ]
+    }
+  };
+
+  // ── Get schema for a method (by slug first, then type fallback) ──
+  function _getSchema(slug, type) {
+    return METHOD_SCHEMAS[slug] || GENERIC_SCHEMAS[type] || GENERIC_SCHEMAS.other;
+  }
+
+  // ── Loading placeholder ────────────────────────────────────────
   function _loadingHtml() {
     return '<div class="pm3-loading" style="grid-column:1/-1">' +
       '<div class="pm3-spinner"></div>' +
@@ -84,6 +277,7 @@
       '</div>';
   }
 
+  // ── Render payment method cards ────────────────────────────────
   function renderPaymentMethods() {
     var grid = $id('paymentMethodsGrid');
     if (!grid || !PM) return;
@@ -126,7 +320,6 @@
     var empty = $id('pmEmpty');
 
     if (list.length === 0 && all.length === 0) {
-      // Still loading or truly empty DB
       grid.innerHTML = _loadingHtml();
       if (empty) empty.style.display = 'none';
       return;
@@ -148,41 +341,35 @@
       var color = typeColor(p.type);
       var summary = getConfigSummary(p);
       var isActive = p.enabled;
+      var isBuiltIn = !!METHOD_SCHEMAS[p.id];
 
-      return '<div class="pm3-card' + (isActive ? '' : ' pm3-card--inactive') + '" data-id="' + esc(p.id) + '">' +
-        // Top accent bar
+      return '<div class="pm3-card' + (isActive ? '' : ' pm3-card--inactive') + '" data-id="' + esc(p.id) + '" draggable="true" ondragstart="window.pmDragStart(event,\'' + esc(p.id) + '\')" ondragover="event.preventDefault()" ondrop="window.pmDrop(event,\'' + esc(p.id) + '\')">' +
         '<div class="pm3-card__accent" style="background:' + color + '"></div>' +
-
-        // Header row
         '<div class="pm3-card__header">' +
           '<div class="pm3-card__logo">' +
             (logo
               ? '<img src="' + esc(logo) + '" alt="' + esc(p.name) + '" onerror="this.style.display=\'none\'">'
               : '<div class="pm3-card__logo-fallback" style="background:' + color + '22;color:' + color + '">' + typeIcon(p.type) + '</div>') +
           '</div>' +
-          '<div class="pm3-card__status">' +
+          '<div class="pm3-card__header-right">' +
+            (isBuiltIn ? '<span class="pm3-badge pm3-badge--builtin" title="Built-in method">Built-in</span>' : '<span class="pm3-badge pm3-badge--custom" title="Custom method">Custom</span>') +
             '<button class="pm3-toggle' + (isActive ? ' pm3-toggle--on' : '') + '" onclick="togglePaymentMethod(\'' + esc(p.id) + '\')" title="' + (isActive ? 'Disable' : 'Enable') + '">' +
               '<span class="pm3-toggle__thumb"></span>' +
             '</button>' +
           '</div>' +
         '</div>' +
-
-        // Body
         '<div class="pm3-card__body">' +
           '<div class="pm3-card__name">' + esc(p.name) + '</div>' +
           '<div class="pm3-card__type"><span class="pm3-badge pm3-badge--type" style="--badge-color:' + color + '">' + typeIcon(p.type) + typeLabel(p.type) + '</span></div>' +
           (summary ? '<div class="pm3-card__summary" title="' + esc(summary) + '">' + esc(summary) + '</div>' : '<div class="pm3-card__summary pm3-card__summary--empty">No account details configured</div>') +
           '<div class="pm3-card__meta">' +
             '<span class="pm3-badge pm3-badge--status' + (isActive ? ' pm3-badge--on' : ' pm3-badge--off') + '">' +
-              (isActive
-                ? '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="currentColor"/></svg>Active'
-                : '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="currentColor"/></svg>Inactive') +
+              '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="currentColor"/></svg>' +
+              (isActive ? 'Active' : 'Inactive') +
             '</span>' +
             (p.lastUpdated ? '<span class="pm3-card__updated">Updated ' + fmtDate(p.lastUpdated) + '</span>' : '') +
           '</div>' +
         '</div>' +
-
-        // Footer actions
         '<div class="pm3-card__footer">' +
           '<button class="pm3-btn pm3-btn--edit" onclick="editPaymentMethod(\'' + esc(p.id) + '\')">' +
             '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
@@ -196,7 +383,27 @@
     }).join('');
   }
 
-  // ── Public action callbacks ─────────────────────────────────────
+  // ── Drag & drop reorder ────────────────────────────────────────
+  var _dragItem = null;
+  window.pmDragStart = function (e, id) {
+    _dragItem = id;
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  window.pmDrop = function (e, targetId) {
+    e.preventDefault();
+    if (!_dragItem || _dragItem === targetId || !PM) return;
+    var ordered = PM.getAll().map(function (m) { return m.id; });
+    var fromIdx = ordered.indexOf(_dragItem), toIdx = ordered.indexOf(targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    ordered.splice(fromIdx, 1);
+    ordered.splice(toIdx, 0, _dragItem);
+    PM.reorder(ordered);
+    _dragItem = null;
+    renderPaymentMethods();
+    showToast('Order saved');
+  };
+
+  // ── Public action callbacks ────────────────────────────────────
   window.togglePaymentMethod = function (id) {
     if (!PM) return;
     PM.toggle(id);
@@ -224,29 +431,46 @@
     openDrawer(null);
   };
 
-  // ── Drawer ──────────────────────────────────────────────────────
+  // ── Drawer ─────────────────────────────────────────────────────
   function openDrawer(method) {
     _editingId   = method ? method.id : null;
     _logoUpload  = null;
     _qrUpload    = null;
 
-    // Ensure drawer exists
     var drw = $id('pmDrawer');
     if (!drw) { buildDrawerHtml(); drw = $id('pmDrawer'); }
 
-    // Populate fields
     var isNew = !method;
-    setText('drwTitle', isNew ? 'Add Payment Method' : 'Edit Payment Method');
-    setText('drwSubtitle', isNew ? 'Add a new payment method to your checkout' : 'Update the payment method details and configuration');
+    setText('drwTitle', isNew ? 'Add Payment Method' : 'Edit — ' + (method.name || 'Payment Method'));
+    setText('drwSubtitle', isNew
+      ? 'Create a new payment method for your checkout'
+      : 'Update settings for this payment method');
 
+    // Populate basic fields
     _setVal('drw_id',          isNew ? '' : (method.id || ''));
     _setVal('drw_name',        isNew ? '' : (method.name || ''));
     _setVal('drw_description', isNew ? '' : (method.description || ''));
-    _setVal('drw_type',        isNew ? 'wallet' : (method.type || 'wallet'));
     _setVal('drw_order',       isNew ? '' : (method.displayOrder || ''));
 
+    // Type selector — show/hide based on whether it's a named method
+    var typeRow = $id('drwTypeRow');
+    var idRow   = $id('drwIdRow');
+    if (method && METHOD_SCHEMAS[method.id]) {
+      // Built-in: hide type/id selectors, show schema label instead
+      if (typeRow) typeRow.style.display = 'none';
+      if (idRow)   idRow.style.display   = 'none';
+    } else {
+      if (typeRow) typeRow.style.display = '';
+      if (idRow)   idRow.style.display   = '';
+      _setVal('drw_type', isNew ? 'wallet' : (method && method.type) || 'wallet');
+    }
+
+    // Enabled toggle
     var enabledEl = $id('drw_enabled');
-    if (enabledEl) enabledEl.checked = isNew ? true : (method.enabled !== false);
+    var toggleEl  = document.querySelector('#pmDrawer .pm3-field-toggle');
+    var checked   = isNew ? true : (method.enabled !== false);
+    if (enabledEl) enabledEl.checked = checked;
+    if (toggleEl)  toggleEl.classList.toggle('pm3-field-toggle--on', checked);
 
     // Logo preview
     var logoPreview = $id('drwLogoPreview');
@@ -261,19 +485,24 @@
       }
     }
     var logoFileName = $id('drwLogoFileName');
-    if (logoFileName) logoFileName.textContent = !isNew && method.logo ? 'Current logo' : 'No file selected';
+    if (logoFileName) logoFileName.textContent = (!isNew && method.logo) ? 'Current logo' : 'No file selected';
 
-    // Config fields
-    updateConfigFields(isNew ? 'wallet' : (method.type || 'wallet'), isNew ? {} : (method.config || {}));
+    // Config fields — dispatch on method ID (the core fix)
+    var slug = method ? method.id : null;
+    var type = method ? (method.type || 'wallet') : 'wallet';
+    var cfg  = method ? (method.config || {}) : {};
+    _renderConfigFields(slug, type, cfg);
 
-    // Open overlay + panel
+    // Open overlay
     var overlay = $id('pmDrawerOverlay');
     if (overlay) {
       overlay.classList.add('pm3-drw-open');
-      setTimeout(function () { var panel = $id('pmDrawerPanel'); if (panel) panel.classList.add('pm3-drw-panel-open'); }, 10);
+      setTimeout(function () {
+        var panel = $id('pmDrawerPanel');
+        if (panel) panel.classList.add('pm3-drw-panel-open');
+      }, 10);
     }
 
-    // Focus first input
     setTimeout(function () { var n = $id('drw_name'); if (n) n.focus(); }, 200);
   }
 
@@ -295,10 +524,9 @@
   function buildDrawerHtml() {
     var div = document.createElement('div');
     div.id = 'pmDrawer';
-    div.innerHTML = '' +
+    div.innerHTML =
       '<div id="pmDrawerOverlay" class="pm3-drw-overlay" onclick="closePaymentDrawer()">' +
         '<div id="pmDrawerPanel" class="pm3-drw-panel" onclick="event.stopPropagation()">' +
-          // Header
           '<div class="pm3-drw-head">' +
             '<div class="pm3-drw-head-text">' +
               '<div class="pm3-drw-icon">' +
@@ -313,38 +541,35 @@
               '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
             '</button>' +
           '</div>' +
-          // Body
           '<div class="pm3-drw-body">' +
-            // Basic info section
             '<div class="pm3-drw-section">' +
               '<div class="pm3-drw-section-title">' +
                 '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>' +
                 'Basic Information' +
               '</div>' +
-              '<div class="pm3-drw-grid2">' +
-                '<div class="pm3-field">' +
-                  '<label class="pm3-label">Method Name <span class="pm3-req">*</span></label>' +
-                  '<input class="pm3-input" id="drw_name" type="text" placeholder="e.g. PayPal, Cash App, Bitcoin" autocomplete="off">' +
-                '</div>' +
-                '<div class="pm3-field">' +
-                  '<label class="pm3-label">Type <span class="pm3-req">*</span></label>' +
-                  '<select class="pm3-select" id="drw_type" onchange="updateConfigFields(this.value, {})">' +
-                    '<option value="wallet">Wallet / App</option>' +
-                    '<option value="bank">Bank Transfer</option>' +
-                    '<option value="crypto">Cryptocurrency</option>' +
-                    '<option value="card">Card</option>' +
-                    '<option value="gift">Gift Card</option>' +
-                  '</select>' +
-                '</div>' +
+              '<div class="pm3-field">' +
+                '<label class="pm3-label">Method Name <span class="pm3-req">*</span></label>' +
+                '<input class="pm3-input" id="drw_name" type="text" placeholder="e.g. PayPal, Cash App, Bitcoin" autocomplete="off">' +
+              '</div>' +
+              '<div id="drwTypeRow" class="pm3-field">' +
+                '<label class="pm3-label">Payment Type</label>' +
+                '<select class="pm3-select" id="drw_type" onchange="window.updateConfigFields(this.value,{})">' +
+                  '<option value="wallet">Wallet / Digital App</option>' +
+                  '<option value="bank">Bank Transfer</option>' +
+                  '<option value="crypto">Cryptocurrency</option>' +
+                  '<option value="card">Credit / Debit Card</option>' +
+                  '<option value="gift">Gift Card</option>' +
+                  '<option value="other">Other</option>' +
+                '</select>' +
               '</div>' +
               '<div class="pm3-field">' +
-                '<label class="pm3-label">Description</label>' +
+                '<label class="pm3-label">Description (optional)</label>' +
                 '<input class="pm3-input" id="drw_description" type="text" placeholder="Brief description shown to customers" autocomplete="off">' +
               '</div>' +
               '<div class="pm3-drw-grid2">' +
-                '<div class="pm3-field">' +
-                  '<label class="pm3-label">ID <span style="font-size:11px;font-weight:500;color:var(--admin-text-muted)">(auto-generated for new)</span></label>' +
-                  '<input class="pm3-input pm3-input--mono" id="drw_id" type="text" placeholder="e.g. paypal, cashapp" autocomplete="off">' +
+                '<div id="drwIdRow" class="pm3-field">' +
+                  '<label class="pm3-label">ID <span style="font-size:11px;font-weight:500;color:var(--admin-text-muted)">(auto-generated)</span></label>' +
+                  '<input class="pm3-input pm3-input--mono" id="drw_id" type="text" placeholder="e.g. my-payment" autocomplete="off">' +
                 '</div>' +
                 '<div class="pm3-field">' +
                   '<label class="pm3-label">Display Order</label>' +
@@ -361,8 +586,6 @@
                 '</label>' +
               '</div>' +
             '</div>' +
-
-            // Logo section
             '<div class="pm3-drw-section">' +
               '<div class="pm3-drw-section-title">' +
                 '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
@@ -372,31 +595,26 @@
                 '<div class="pm3-logo-preview" id="drwLogoPreview" style="display:none"></div>' +
                 '<div class="pm3-logo-upload-controls">' +
                   '<label class="pm3-upload-btn" for="drwLogoFile">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
                     'Upload Logo' +
                   '</label>' +
                   '<input type="file" id="drwLogoFile" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">' +
                   '<span class="pm3-upload-filename" id="drwLogoFileName">No file selected</span>' +
-                  '<button class="pm3-clear-btn" id="drwLogoClearBtn" onclick="clearLogoUpload()" style="display:none">Remove</button>' +
+                  '<button class="pm3-clear-btn" id="drwLogoClearBtn" style="display:none" onclick="clearLogoUpload()">Remove</button>' +
                 '</div>' +
-                '<p class="pm3-upload-hint">PNG, SVG, JPG or WebP. Logo appears on the customer payment page.</p>' +
               '</div>' +
             '</div>' +
-
-            // Config fields (type-dependent)
-            '<div class="pm3-drw-section" id="drwConfigSection">' +
+            '<div class="pm3-drw-section">' +
               '<div class="pm3-drw-section-title">' +
-                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M16.24 7.76a6 6 0 0 1 0 8.49"/></svg>' +
-                'Payment Details' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
+                'Account Configuration' +
               '</div>' +
               '<div id="drwConfigFields"></div>' +
             '</div>' +
-
-          '</div>' + // end body
-          // Footer
-          '<div class="pm3-drw-foot">' +
-            '<button class="pm3-btn-ghost" onclick="closePaymentDrawer()">Cancel</button>' +
-            '<button class="pm3-btn-save" onclick="window._pmSave()">' +
+          '</div>' +
+          '<div class="pm3-drw-footer">' +
+            '<button class="pm3-btn-cancel" onclick="closePaymentDrawer()">Cancel</button>' +
+            '<button class="pm3-btn-save pm3-btn pm3-btn--primary" onclick="window._pmSave()">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13"/><polyline points="7,3 7,8 15,8"/></svg>' +
               'Save Changes' +
             '</button>' +
@@ -406,7 +624,7 @@
     document.body.appendChild(div);
   }
 
-  // ── Logo upload handling ──────────────────────────────────────
+  // ── Logo upload ────────────────────────────────────────────────
   window.handleLogoUpload = function (input) {
     if (!input.files || !input.files[0]) return;
     var file = input.files[0];
@@ -414,10 +632,7 @@
     reader.onload = function (e) {
       _logoUpload = e.target.result;
       var preview = $id('drwLogoPreview');
-      if (preview) {
-        preview.innerHTML = '<img src="' + _logoUpload + '" alt="logo preview">';
-        preview.style.display = 'flex';
-      }
+      if (preview) { preview.innerHTML = '<img src="' + _logoUpload + '" alt="logo preview">'; preview.style.display = 'flex'; }
       var fname = $id('drwLogoFileName');
       if (fname) fname.textContent = file.name;
       var clearBtn = $id('drwLogoClearBtn');
@@ -438,72 +653,47 @@
     if (fileInput) fileInput.value = '';
   };
 
-  // ── Config fields (per payment type) ──────────────────────────
-  window.updateConfigFields = function (type, existingConfig) {
-    var cfg = existingConfig || {};
-    // If existingConfig not passed, check if we're editing
-    if (!existingConfig && _editingId) {
-      var m = PM && PM.get(_editingId);
-      cfg = m ? (m.config || {}) : {};
-    }
-
-    var container = $id('drwConfigFields');
-    if (!container) return;
-
-    var fields = '';
-
-    if (type === 'wallet') {
-      fields += _field('drw_email',       'Email / PayPal Address',    'text',     cfg.email     || cfg.paypalEmail || '', 'payments@yourdomain.com');
-      fields += _field('drw_cashtag',     'Cashtag / Username / Handle','text',    cfg.cashtag   || cfg.username   || '', '$YourHandle or @username');
-      fields += _field('drw_accountName', 'Account / Business Name',   'text',     cfg.accountName || cfg.businessName || '', 'Your Business Name');
-      fields += _field('drw_paypalMe',    'PayPal.me Link',            'text',     cfg.paypalMeLink || '', 'https://paypal.me/yourname');
-      fields += _field('drw_phone',       'Phone Number',              'tel',      cfg.phone     || '', '+1 (555) 000-0000');
-      fields += _qrField(cfg.qrCode || '');
-      fields += _field('drw_instructions','Payment Instructions',      'textarea', cfg.instructions || '', 'Instructions shown to customers…');
-    } else if (type === 'bank') {
-      fields += _field('drw_recipientName','Recipient / Account Name', 'text',     cfg.recipientName || cfg.accountName || '', 'Business Legal Name');
-      fields += _field('drw_email',        'Email Address',            'email',    cfg.email     || '', 'bank@yourdomain.com');
-      fields += _field('drw_phone',        'Phone / Zelle Number',     'tel',      cfg.phone     || '', '+1 (555) 000-0000');
-      fields += _field('drw_bankName',     'Bank Name',                'text',     cfg.bankName  || '', 'Chase, Wells Fargo, etc.');
-      fields += _field('drw_accountNumber','Account Number',           'text',     cfg.accountNumber || '', '000000000000');
-      fields += _field('drw_routingNumber','Routing Number',           'text',     cfg.routingNumber || '', '000000000');
-      fields += _field('drw_swiftCode',    'SWIFT / IBAN (optional)',  'text',     cfg.swiftCode || cfg.iban || '', 'CHASUS33 or GB00XXXX…');
-      fields += _qrField(cfg.qrCode || '');
-      fields += _field('drw_instructions','Payment Instructions',      'textarea', cfg.instructions || '', 'Instructions for customers…');
-    } else if (type === 'crypto') {
-      fields += _field('drw_walletAddress','Wallet Address',           'text',     cfg.walletAddress || '', 'bc1q…, 0x…, T…');
-      fields += _field('drw_network',      'Network / Chain',          'text',     cfg.network   || '', 'Bitcoin Mainnet, Ethereum, TRON…');
-      fields += _field('drw_memo',         'Memo / Tag (if required)', 'text',     cfg.memo      || '', 'Leave blank if not required');
-      fields += _qrField(cfg.qrCode || '');
-      fields += _field('drw_instructions','Payment Instructions',      'textarea', cfg.instructions || '', 'Send the exact amount in ' + (cfg.network || 'this currency') + '…');
-    } else if (type === 'card') {
-      fields += _field('drw_merchantName', 'Merchant Name',            'text',     cfg.merchantName  || '', 'Your Business Name');
-      fields += _field('drw_merchantId',   'Merchant ID / Account',    'text',     cfg.merchantId || cfg.merchantAccount || '', 'MRC-0000000');
-      fields += _field('drw_acceptedNetworks','Accepted Networks',     'text',     cfg.acceptedNetworks || '', 'Visa, Mastercard, Amex, Discover');
-      fields += _field('drw_supportPhone', 'Support Phone',            'tel',      cfg.supportPhone  || cfg.phone || '', '+1 (888) 000-0000');
-      fields += _field('drw_instructions','Payment Instructions',      'textarea', cfg.instructions || '', 'Enter your card details…');
-    } else if (type === 'gift') {
-      fields += _field('drw_instructions','Redemption Instructions',   'textarea', cfg.instructions || '', 'How to purchase and redeem the gift card…');
-      fields += _field('drw_denominations','Accepted Denominations',   'text',     cfg.denominationsAccepted || '', '$25, $50, $100, $200');
-      fields += _field('drw_purchaseLoc',  'Where to Purchase',        'text',     cfg.purchaseLocations || '', 'Apple Store, Amazon, Walmart…');
-    }
-
-    container.innerHTML = fields;
-    _attachToggle();
+  // ── QR upload ──────────────────────────────────────────────────
+  window.handleQrUpload = function (input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      _qrUpload = e.target.result;
+      var preview = $id('drwQrPreview');
+      if (preview) {
+        preview.className = 'pm3-qr-preview';
+        preview.innerHTML = '<img src="' + _qrUpload + '" alt="QR code"><button class="pm3-clear-btn" onclick="clearQrUpload()">Remove</button>';
+      }
+      var fname = $id('drwQrFileName');
+      if (fname) fname.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
   };
 
+  window.clearQrUpload = function () {
+    _qrUpload = '';
+    var preview = $id('drwQrPreview');
+    if (preview) { preview.className = 'pm3-qr-preview pm3-qr-preview--empty'; preview.innerHTML = ''; }
+    var fname = $id('drwQrFileName');
+    if (fname) fname.textContent = 'No file selected';
+    var fileInput = $id('drwQrFile');
+    if (fileInput) fileInput.value = '';
+  };
+
+  // ── Field renderers ────────────────────────────────────────────
   function _field(id, label, type, value, placeholder) {
-    var val = esc(value || '');
-    var ph  = esc(placeholder || '');
+    var v  = esc(value || '');
+    var ph = esc(placeholder || '');
     if (type === 'textarea') {
       return '<div class="pm3-field">' +
         '<label class="pm3-label">' + label + '</label>' +
-        '<textarea class="pm3-input pm3-textarea" id="' + id + '" placeholder="' + ph + '" rows="3">' + val + '</textarea>' +
+        '<textarea class="pm3-input pm3-textarea" id="' + id + '" placeholder="' + ph + '" rows="3">' + v + '</textarea>' +
         '</div>';
     }
     return '<div class="pm3-field">' +
       '<label class="pm3-label">' + label + '</label>' +
-      '<input class="pm3-input" id="' + id + '" type="' + type + '" value="' + val + '" placeholder="' + ph + '" autocomplete="off">' +
+      '<input class="pm3-input" id="' + id + '" type="' + type + '" value="' + v + '" placeholder="' + ph + '" autocomplete="off">' +
       '</div>';
   }
 
@@ -525,88 +715,97 @@
     '</div>';
   }
 
-  function _attachToggle() {
-    // Sync toggle visual state
-    var enabledEl = $id('drw_enabled');
-    var toggleEl = document.querySelector('.pm3-field-toggle');
-    if (enabledEl && toggleEl) {
-      toggleEl.classList.toggle('pm3-field-toggle--on', enabledEl.checked);
-    }
+  function _toggleField(id, label, checked) {
+    return '<div class="pm3-field">' +
+      '<label class="pm3-label pm3-label--toggle">' +
+        '<input type="checkbox" id="' + id + '" ' + (checked ? 'checked' : '') + ' style="display:none">' +
+        '<span class="pm3-field-toggle-wrap">' +
+          '<span class="pm3-field-toggle' + (checked ? ' pm3-field-toggle--on' : '') + '" onclick="var cb=document.getElementById(\'' + id + '\');cb.checked=!cb.checked;this.classList.toggle(\'pm3-field-toggle--on\',cb.checked)"></span>' +
+          label +
+        '</span>' +
+      '</label>' +
+    '</div>';
   }
 
-  window.handleQrUpload = function (input) {
-    if (!input.files || !input.files[0]) return;
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      _qrUpload = e.target.result;
-      var preview = $id('drwQrPreview');
-      if (preview) {
-        preview.innerHTML = '<img src="' + _qrUpload + '" alt="QR preview"><button class="pm3-clear-btn" onclick="clearQrUpload()">Remove</button>';
-        preview.classList.remove('pm3-qr-preview--empty');
+  // ─────────────────────────────────────────────────────────────────
+  // _renderConfigFields — THE CORE FIX
+  // Dispatches on method slug first; falls back to generic type schema.
+  // Called by openDrawer and by updateConfigFields (type dropdown change).
+  // ─────────────────────────────────────────────────────────────────
+  function _renderConfigFields(slug, type, cfg) {
+    var container = $id('drwConfigFields');
+    if (!container) return;
+
+    var schema = _getSchema(slug, type);
+    var html = '';
+
+    schema.fields.forEach(function (fd) {
+      var v = (cfg && cfg[fd.key] != null) ? cfg[fd.key] : (fd.defaultVal != null ? fd.defaultVal : '');
+      if (fd.inputType === 'qr') {
+        html += _qrField(v || '');
+      } else if (fd.inputType === 'toggle') {
+        var isOn = (v === true || v === 'true' || v === 1);
+        if (v === '' || v === undefined || v === null) isOn = (fd.defaultVal !== false);
+        html += _toggleField(fd.id, fd.label, isOn);
+      } else {
+        html += _field(fd.id, fd.label, fd.inputType, v, fd.placeholder || '');
       }
-      var fname = $id('drwQrFileName');
-      if (fname) fname.textContent = input.files[0].name;
-    };
-    reader.readAsDataURL(input.files[0]);
+    });
+
+    container.innerHTML = html;
+  }
+
+  // updateConfigFields — exposed globally for the type dropdown onchange
+  // When building a NEW custom method and the type changes, re-render fields.
+  window.updateConfigFields = function (typeOrSlug, existingConfig) {
+    var cfg = existingConfig || {};
+    // Only re-render if we're editing a custom (non-schema) method or adding new
+    var slug = _editingId;
+    if (slug && METHOD_SCHEMAS[slug]) {
+      // Built-in named method — always use its schema, ignore type dropdown
+      _renderConfigFields(slug, null, cfg);
+    } else {
+      // New or custom method — use type-based generic schema
+      _renderConfigFields(null, typeOrSlug, cfg);
+    }
   };
 
-  window.clearQrUpload = function () {
-    _qrUpload = '';
-    var preview = $id('drwQrPreview');
-    if (preview) { preview.innerHTML = ''; preview.classList.add('pm3-qr-preview--empty'); }
-    var fname = $id('drwQrFileName');
-    if (fname) fname.textContent = 'No file selected';
-    var fileInput = $id('drwQrFile');
-    if (fileInput) fileInput.value = '';
-  };
-
-  // ── Helper ────────────────────────────────────────────────────
-  function _setVal(id, v) { var e = $id(id); if (e) { if (e.tagName === 'TEXTAREA' || e.tagName === 'INPUT' || e.tagName === 'SELECT') e.value = v || ''; } }
-
-  // ── Save handler ───────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
+  // _pmSave — collects config by method slug (the second part of fix)
+  // ─────────────────────────────────────────────────────────────────
   window._pmSave = function () {
     var isNew = !_editingId;
     var name  = (val('drw_name') || '').trim();
     if (!name) { showToast('Method name is required', 'error'); $id('drw_name').focus(); return; }
 
-    var type  = val('drw_type') || 'wallet';
-    var id    = (val('drw_id') || '').trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    var type = val('drw_type') || 'wallet';
+    var id   = (val('drw_id') || '').trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
     if (isNew && PM.get(id)) { showToast('A method with ID "' + id + '" already exists', 'error'); return; }
 
-    // Build config from type-specific fields
+    // Determine the effective slug for schema lookup
+    var slug   = isNew ? id : _editingId;
+    var schema = _getSchema(slug, type);
+
+    // Collect config from the rendered fields using the schema
     var config = {};
-    if (type === 'wallet') {
-      config.email        = val('drw_email').trim();
-      config.cashtag      = val('drw_cashtag').trim();
-      config.accountName  = val('drw_accountName').trim();
-      config.paypalMeLink = val('drw_paypalMe').trim();
-      config.phone        = val('drw_phone').trim();
-      config.instructions = val('drw_instructions').trim();
-    } else if (type === 'bank') {
-      config.recipientName  = val('drw_recipientName').trim();
-      config.email          = val('drw_email').trim();
-      config.phone          = val('drw_phone').trim();
-      config.bankName       = val('drw_bankName').trim();
-      config.accountNumber  = val('drw_accountNumber').trim();
-      config.routingNumber  = val('drw_routingNumber').trim();
-      config.swiftCode      = val('drw_swiftCode').trim();
-      config.instructions   = val('drw_instructions').trim();
-    } else if (type === 'crypto') {
-      config.walletAddress = val('drw_walletAddress').trim();
-      config.network       = val('drw_network').trim();
-      config.memo          = val('drw_memo').trim();
-      config.instructions  = val('drw_instructions').trim();
-    } else if (type === 'card') {
-      config.merchantName     = val('drw_merchantName').trim();
-      config.merchantId       = val('drw_merchantId').trim();
-      config.acceptedNetworks = val('drw_acceptedNetworks').trim();
-      config.supportPhone     = val('drw_supportPhone').trim();
-      config.instructions     = val('drw_instructions').trim();
-    } else if (type === 'gift') {
-      config.instructions         = val('drw_instructions').trim();
-      config.denominationsAccepted= val('drw_denominations').trim();
-      config.purchaseLocations    = val('drw_purchaseLoc').trim();
+    schema.fields.forEach(function (fd) {
+      if (fd.inputType === 'qr') {
+        // handled separately below
+      } else if (fd.inputType === 'toggle') {
+        var el = $id(fd.id);
+        config[fd.key] = el ? el.checked : (fd.defaultVal !== false);
+      } else {
+        var elVal = val(fd.id);
+        if (elVal !== null && elVal !== undefined) {
+          config[fd.key] = elVal.trim();
+        }
+      }
+    });
+
+    // Preserve the named method type if it has a dedicated schema
+    if (METHOD_SCHEMAS[slug]) {
+      type = METHOD_SCHEMAS[slug].type || type;
     }
 
     // QR upload
@@ -640,7 +839,6 @@
     };
     if (!isNaN(order) && order > 0) payload.displayOrder = order;
 
-    // Disable save button during async push
     var saveBtn = document.querySelector('.pm3-btn-save');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
 
@@ -655,7 +853,6 @@
     renderPaymentMethods();
     showToast('Payment method ' + (isNew ? 'added' : 'saved') + ' successfully');
 
-    // Re-sync from API after a short delay to confirm DB state
     setTimeout(function () {
       if (PM && PM.syncFromApi) {
         PM.syncFromApi('admin', function () {
@@ -667,8 +864,6 @@
 
   // ── Backward-compat aliases ────────────────────────────────────
   window.savePaymentMethod = window._pmSave;
-
-  // Expose renderPaymentMethods globally for search/filter handlers
   window.renderPaymentMethods = renderPaymentMethods;
 
 }());
