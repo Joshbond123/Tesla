@@ -715,7 +715,7 @@
 
     // Vehicle
     var carId = String(sc.id || sc.model || sc.name || '').toLowerCase().replace(/\s/g,'');
-    var imgKey = Object.keys(carImgMap).find(function(k){ return carId.indexOf(k) !== -1 || k.indexOf(carId) !== -1; }) || 'models';
+    var imgKey = carId ? (Object.keys(carImgMap).find(function(k){ return carId.indexOf(k) !== -1; }) || 'models') : 'models';
     var imgEl = el('vehicleImg');
     if (imgEl) imgEl.src = carImgMap[imgKey] || carImgMap.models;
     setText('vehicleName',  'Tesla ' + (sc.name || sc.model || 'Model S'));

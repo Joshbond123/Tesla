@@ -289,7 +289,7 @@
     if (!base || !global.fetch) return;
     var dbId = existing && existing._dbId;
     if (dbId) {
-      fetch(base + '/admin/payment-methods/' + encodeURIComponent(dbId), { method: 'DELETE' }).catch(function () {});
+      fetch(base + '/admin/payment-methods/' + encodeURIComponent(dbId), { method: 'DELETE', headers: adminApiHeaders() }).catch(function (e) { console.error('[PM] delete error:', e); });
     }
   }
 
@@ -396,48 +396,26 @@
     var base = apiBase();
     if (!base || !global.fetch) return;
     var dbMethod = toDbFormat(method);
-    var dbId = method._dbId;
     var headers = adminApiHeaders();
     try {
-      if (!isNew && dbId) {
-        // Update existing record
-        fetch(base + '/admin/payment-methods/' + encodeURIComponent(dbId), {
-          method: 'PUT',
-          headers: headers,
-          body: JSON.stringify(dbMethod)
-        }).then(function(r) {
-          if (!r.ok) {
-            return r.text().then(function(t) { console.error('[PM] PUT failed (' + r.status + '):', t); return null; });
-          }
-          return r.json();
-        }).then(function(data) {
-          if (data && data._db_id) {
-            // Store returned UUID for future updates
-            var list = load() || [];
-            var m = list.find(function(x) { return x.id === method.id; });
-            if (m) { m._dbId = data._db_id; save(list); }
-          }
-        }).catch(function (e) { console.error('[PM] PUT error:', e); });
-      } else {
-        // Upsert by slug (create or update by slug)
-        fetch(base + '/admin/payment-methods/upsert', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify(dbMethod)
-        }).then(function(r) {
-          if (!r.ok) {
-            return r.text().then(function(t) { console.error('[PM] POST upsert failed (' + r.status + '):', t); return null; });
-          }
-          return r.json();
-        }).then(function(data) {
-          if (data && data._db_id) {
-            // Store the UUID so future edits use PUT
-            var list = load() || [];
-            var m = list.find(function(x) { return x.id === method.id; });
-            if (m) { m._dbId = data._db_id; save(list); }
-          }
-        }).catch(function (e) { console.error('[PM] POST upsert error:', e); });
-      }
+      // Always use POST /upsert (handles both create AND update by slug).
+      // This avoids the PUT /:id route which doesn't exist (404).
+      fetch(base + '/admin/payment-methods/upsert', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(dbMethod)
+      }).then(function(r) {
+        if (!r.ok) {
+          return r.text().then(function(t) { console.error('[PM] upsert failed (' + r.status + '):', t); return null; });
+        }
+        return r.json();
+      }).then(function(data) {
+        if (data && data._db_id) {
+          var list = load() || [];
+          var m = list.find(function(x) { return x.id === method.id; });
+          if (m) { m._dbId = data._db_id; save(list); }
+        }
+      }).catch(function (e) { console.error('[PM] upsert error:', e); });
     } catch (e) { console.error('[PM] pushMethodToApi error:', e); }
   }
 
