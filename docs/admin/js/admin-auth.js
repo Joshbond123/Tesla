@@ -19,25 +19,42 @@ function doLogin() {
   var input = document.getElementById("loginInput"); var pwd = input ? input.value : "";
   var err = document.getElementById("loginError");
   if (!pwd) { if (err) err.style.display = "block"; return; }
-  // Authenticate against the server (verifies the password hash server-side).
+
+  // Helper: complete the login flow once password is verified
+  function loginSuccess(token) {
+    try { if (token) localStorage.setItem("tesla_admin_token", token); } catch (e) {}
+    sessionStorage.setItem("tesla_admin_authenticated", "true");
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("app").classList.add("active");
+    if (err) err.style.display = "none";
+    if (input) input.value = "";
+    try { refreshAll(); } catch(e) {}
+  }
+
+  // Helper: fall back to local password check (works offline / no backend)
+  function tryLocalAuth() {
+    var localPwd = currentAdminPassword();
+    if (pwd === localPwd) {
+      loginSuccess(null);
+    } else {
+      if (err) err.style.display = "block";
+      if (input) { input.value = ""; if (input.focus) input.focus(); }
+    }
+  }
+
+  // Try the server first; fall back to local check on any failure
   api("POST", "/admin/auth", { password: pwd })
     .then(function(r) {
       if (r && r.token) {
-        try { localStorage.setItem("tesla_admin_token", r.token); } catch (e) {}
-        sessionStorage.setItem("tesla_admin_authenticated", "true");
-        document.getElementById("loginScreen").classList.add("hidden");
-        document.getElementById("app").classList.add("active");
-        if (err) err.style.display = "none";
-        if (input) input.value = "";
-        refreshAll();
+        loginSuccess(r.token);
       } else {
-        if (err) err.style.display = "block";
-        if (input) { input.value = ""; if (input.focus) input.focus(); }
+        // Server responded but rejected the password — try local as fallback
+        tryLocalAuth();
       }
     })
     .catch(function() {
-      if (err) err.style.display = "block";
-      if (input) { input.value = ""; if (input.focus) input.focus(); }
+      // Network error / no backend — fall back to local password
+      tryLocalAuth();
     });
 }
 

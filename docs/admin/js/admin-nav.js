@@ -4,7 +4,9 @@
 
 // ---- TAB SWITCHING ----
 function switchTab(tab) {
-  if (!document.getElementById("app").classList.contains("active")) return;
+  // Guard: don't navigate if the login screen is still visible
+  var loginScreen = document.getElementById("loginScreen");
+  if (loginScreen && !loginScreen.classList.contains("hidden") && loginScreen.style.display !== "none") return;
 
   // Normalize alias tabs to their backing panel
   var aliasMap = { delivery: "settings", support: "social" };
