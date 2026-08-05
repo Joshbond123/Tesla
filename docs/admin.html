@@ -42,47 +42,111 @@
 <!-- APP -->
 <div id="app">
   <aside class="sidebar" id="sidebar">
+    <!-- SIDEBAR HEADER -->
     <div class="sidebar-header">
-      <div class="brand-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
-      <div class="brand-text">Tesla Award<span>Administration Panel</span></div>
+      <div class="sb-brand">
+        <div class="sb-logo-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="sb-brand-info">
+          <span class="sb-brand-name">Tesla Award</span>
+          <span class="sb-brand-sub">Admin Panel</span>
+        </div>
+      </div>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Main</div>
-      <button class="nav-item active" data-tab="dashboard">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span> Dashboard
-      </button>
-      <button class="nav-item" data-tab="users">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Users
-        <span class="nav-badge" id="usersNavBadge">0</span>
-      </button>
-      <button class="nav-item" data-tab="orders">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span> Orders
-      </button>
-      <div class="nav-section-label">Management</div>
-      <button class="nav-item" data-tab="payments">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><path d="M7 15h4"/><path d="M15 15h2"/></svg></span> Payment Methods
-      </button>
-      <button class="nav-item" data-tab="proofs">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg></span> Payment Proofs
-        <span class="nav-badge" id="proofsNavBadge" style="display:none;">0</span>
-      </button>
-      <button class="nav-item" data-tab="social">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Support & Social
-      </button>
-      <div class="nav-section-label">System</div>
-      <button class="nav-item" data-tab="settings">
-        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg></span> Settings
-      </button>
-    </nav>
-    <div class="sidebar-footer">
-      <button onclick="window.open('index.html','_blank')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        View Website
-      </button>
-      <button class="danger-btn" onclick="doLogout()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Sign Out
-      </button>
+
+    <!-- NAVIGATION -->
+    <div class="sb-nav-scroll">
+      <nav class="sb-nav">
+
+        <!-- Group: Overview -->
+        <div class="sb-group">
+          <div class="sb-group-label">Overview</div>
+          <button class="nav-item active" data-tab="dashboard">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+            <span class="nav-label">Dashboard</span>
+          </button>
+          <button class="nav-item" data-tab="users">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            <span class="nav-label">Users</span>
+            <span class="nav-chip" id="usersNavBadge" style="display:none">0</span>
+          </button>
+          <button class="nav-item" data-tab="orders">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+            <span class="nav-label">Orders</span>
+          </button>
+        </div>
+
+        <!-- Group: Commerce -->
+        <div class="sb-group">
+          <div class="sb-group-label">Commerce</div>
+          <button class="nav-item" data-tab="payments">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+            <span class="nav-label">Payment Methods</span>
+          </button>
+          <button class="nav-item" data-tab="proofs">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg></span>
+            <span class="nav-label">Payment Proofs</span>
+            <span class="nav-chip" id="proofsNavBadge" style="display:none">0</span>
+          </button>
+        </div>
+
+        <!-- Group: Configuration -->
+        <div class="sb-group">
+          <div class="sb-group-label">Configuration</div>
+          <button class="nav-item" data-tab="delivery">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+            <span class="nav-label">Delivery Fees</span>
+          </button>
+          <button class="nav-item" data-tab="social">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>
+            <span class="nav-label">Social Media</span>
+          </button>
+          <button class="nav-item" data-tab="notifications">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+            <span class="nav-label">Notifications</span>
+          </button>
+          <button class="nav-item" data-tab="website">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            <span class="nav-label">Website Settings</span>
+          </button>
+          <button class="nav-item" data-tab="support">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            <span class="nav-label">Support</span>
+          </button>
+        </div>
+
+        <!-- Group: System -->
+        <div class="sb-group">
+          <div class="sb-group-label">System</div>
+          <button class="nav-item" data-tab="settings">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+            <span class="nav-label">Settings</span>
+          </button>
+        </div>
+
+      </nav>
+    </div>
+
+    <!-- PROFILE FOOTER -->
+    <div class="sb-footer">
+      <div class="sb-profile-card">
+        <div class="sb-avatar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="sb-profile-meta">
+          <span class="sb-profile-name">Administrator</span>
+          <span class="sb-profile-role">Super Admin</span>
+        </div>
+        <div class="sb-profile-actions">
+          <button class="sb-action-btn" onclick="window.open('index.html','_blank')" title="View Website">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+          <button class="sb-action-btn sb-logout-btn" onclick="doLogout()" title="Sign Out">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -609,6 +673,52 @@
     </div>
   </div>
 </div>
+
+      <!-- TAB: NOTIFICATIONS -->
+      <div class="tab-panel" id="panelNotifications">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Notification Settings</h3>
+          </div>
+          <div style="padding:8px 24px 24px;">
+            <p style="font-size:13px;color:var(--text-3);margin:0 0 20px;">Control which events trigger admin notifications.</p>
+            <div class="notif-list">
+              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">New User Registration</div><div class="notif-row-desc">Alert when a new user registers on the platform</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
+              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">New Order Placed</div><div class="notif-row-desc">Alert when a new order is submitted</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
+              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">Payment Proof Submitted</div><div class="notif-row-desc">Alert when a payment proof is uploaded and awaiting review</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
+              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">Order Status Changed</div><div class="notif-row-desc">Alert when an order status is updated</div></div><label class="notif-toggle"><input type="checkbox" onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
+              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">System Health Alerts</div><div class="notif-row-desc">Alert when the API server goes offline or encounters errors</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
+              <div class="notif-row" style="border:none;"><div class="notif-row-info"><div class="notif-row-title">Daily Summary Report</div><div class="notif-row-desc">Daily digest of registrations, orders, and payment activity</div></div><label class="notif-toggle"><input type="checkbox" onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: WEBSITE SETTINGS -->
+      <div class="tab-panel" id="panelWebsite">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website Settings</h3>
+          </div>
+          <div style="padding:8px 24px 24px;">
+            <div class="ws-grid">
+              <div class="ws-section">
+                <div class="sg-header"><div class="sg-icon blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><p class="sg-title">General</p><p class="sg-desc">Basic branding and contact information</p></div></div>
+                <label class="ws-label">Site Title</label><input type="text" class="ws-input" value="Tesla Award Program">
+                <label class="ws-label" style="margin-top:12px;">Tagline</label><input type="text" class="ws-input" value="Exclusive Tesla Vehicle Giveaway">
+                <label class="ws-label" style="margin-top:12px;">Contact Email</label><input type="email" class="ws-input" placeholder="admin@example.com">
+              </div>
+              <div class="ws-section">
+                <div class="sg-header"><div class="sg-icon gray"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><p class="sg-title">Visibility &amp; Access</p><p class="sg-desc">Control site availability and features</p></div></div>
+                <div class="ws-toggle-row"><div><div class="notif-row-title">Maintenance Mode</div><div class="notif-row-desc">Show a maintenance page to visitors</div></div><label class="notif-toggle"><input type="checkbox" onchange="showToast('Setting updated')"><span class="notif-slider"></span></label></div>
+                <div class="ws-toggle-row"><div><div class="notif-row-title">Allow New Registrations</div><div class="notif-row-desc">Enable or disable new user sign-ups</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><span class="notif-slider"></span></label></div>
+                <div class="ws-toggle-row" style="border:none;"><div><div class="notif-row-title">Show Testimonials Video</div><div class="notif-row-desc">Display the testimonials video section</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><span class="notif-slider"></span></label></div>
+              </div>
+            </div>
+            <div style="margin-top:20px;display:flex;justify-content:flex-end;"><button class="btn btn-primary" onclick="showToast('Website settings saved')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg> Save Settings</button></div>
+          </div>
+        </div>
+      </div>
 
 <div class="toast-container" id="toastContainer"></div>
 

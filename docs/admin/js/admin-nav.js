@@ -5,41 +5,79 @@
 // ---- TAB SWITCHING ----
 function switchTab(tab) {
   if (!document.getElementById("app").classList.contains("active")) return;
+
+  // Normalize alias tabs to their backing panel
+  var aliasMap = { delivery: "settings", support: "social" };
+  var resolvedTab = aliasMap[tab] || tab;
+
+  // Mark the clicked nav item active (by original tab name)
   document.querySelectorAll(".nav-item").forEach(function(b) { b.classList.remove("active"); });
-  var navBtn = document.querySelector(".nav-item[data-tab=\"" + tab + "\"]");
+  var navBtn = document.querySelector('.nav-item[data-tab="' + tab + '"]');
   if (navBtn) navBtn.classList.add("active");
+
+  // Show the matching panel (by resolved tab name)
   document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
-  var panelId = "panel" + tab.charAt(0).toUpperCase() + tab.slice(1);
+  var panelId = "panel" + resolvedTab.charAt(0).toUpperCase() + resolvedTab.slice(1);
   var panel = document.getElementById(panelId);
   if (panel) panel.classList.add("active");
-  var titleMap = { dashboard: "Dashboard", users: "Users", orders: "Orders", vehicles: "Vehicles", payments: "Payment Methods", proofs: "Payment Proofs", social: "Support & Social", settings: "Settings" };
-  document.getElementById("pageTitle").textContent = titleMap[tab] || tab;
-  document.getElementById("pageBreadcrumb").textContent = "Admin / " + (titleMap[tab] || tab);
+
+  // Update topbar breadcrumb
+  var titleMap = {
+    dashboard:     "Dashboard",
+    users:         "Users",
+    orders:        "Orders",
+    vehicles:      "Vehicles",
+    payments:      "Payment Methods",
+    proofs:        "Payment Proofs",
+    social:        "Social Media Settings",
+    settings:      "System Settings",
+    delivery:      "Delivery Fee Settings",
+    support:       "Support",
+    notifications: "Notifications",
+    website:       "Website Settings"
+  };
+  var title = titleMap[tab] || tab;
+  var pageTitleEl = document.getElementById("pageTitle");
+  var breadcrumbEl = document.getElementById("pageBreadcrumb");
+  if (pageTitleEl) pageTitleEl.textContent = title;
+  if (breadcrumbEl) breadcrumbEl.textContent = "Admin / " + title;
+
+  // Close mobile sidebar
   if (window.innerWidth <= 768) toggleSidebar("close");
-  if (tab === "dashboard") { loadDashboard(); }
-  if (tab === "users") { renderUsers(); }
-  if (tab === "orders") { loadOrders(); }
-  if (tab === "vehicles") { renderVehicles(); }
-  if (tab === "payments") { loadPaymentMethods(); }
-  if (tab === "proofs") { loadProofs(); }
-  if (tab === "social") { loadSocialSettings(); }
-  if (tab === "settings") {
-    if (typeof window.loadDeliveryFees === "function") {
-      window.loadDeliveryFees();
-    } else if (typeof loadDeliveryFees === "function") {
-      loadDeliveryFees();
-    } else {
-      var sfi = document.getElementById("standardFeeInput");
-      var efi = document.getElementById("expressFeeInput");
-      if (sfi) sfi.value = standardFee;
-      if (efi) efi.value = expressFee;
-    }
+
+  // Trigger data loading for the resolved panel
+  if (resolvedTab === "dashboard")  { try { loadDashboard(); } catch(e) {} }
+  if (resolvedTab === "users")      { try { renderUsers(); } catch(e) {} }
+  if (resolvedTab === "orders")     { try { loadOrders(); } catch(e) {} }
+  if (resolvedTab === "vehicles")   { try { renderVehicles(); } catch(e) {} }
+  if (resolvedTab === "payments")   { try { loadPaymentMethods(); } catch(e) {} }
+  if (resolvedTab === "proofs")     { try { loadProofs(); } catch(e) {} }
+  if (resolvedTab === "social")     { try { loadSocialSettings(); } catch(e) {} }
+  if (resolvedTab === "settings") {
+    try {
+      if (typeof window.loadDeliveryFees === "function") {
+        window.loadDeliveryFees();
+      } else if (typeof loadDeliveryFees === "function") {
+        loadDeliveryFees();
+      } else {
+        var sfi = document.getElementById("standardFeeInput");
+        var efi = document.getElementById("expressFeeInput");
+        if (sfi) sfi.value = standardFee;
+        if (efi) efi.value = expressFee;
+      }
+    } catch(e) {}
   }
 }
 
 function toggleSidebar(force) {
-  var sidebar = document.getElementById("sidebar"); var overlay = document.getElementById("sidebarOverlay");
+  var sidebar = document.getElementById("sidebar");
+  var overlay = document.getElementById("sidebarOverlay");
   if (!sidebar || !overlay) return;
-  if (force === "close") { sidebar.classList.remove("open"); overlay.classList.remove("open"); }
-  else { sidebar.classList.toggle("open"); overlay.classList.toggle("open"); }
+  if (force === "close") {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("open");
+  } else {
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("open");
+  }
 }
