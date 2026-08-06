@@ -1853,6 +1853,14 @@ async function handleSaveWhatsAppSettings(req: Request) {
   return json({ success: true, ...value });
 }
 
+
+// Public WhatsApp settings (for the floating button on customer-facing pages)
+async function handlePublicWhatsAppSettings() {
+  const row = await dbGet1("admin_settings", "value", { key: "eq.whatsapp_settings" });
+  const v = (row.data?.value as any) || {};
+  return json({ enabled: v.enabled !== false, phone: v.phone || "", message: v.message || "" });
+}
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -1880,6 +1888,7 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/users" && req.method === "GET") return await adminGuard(req, () => handleAdminUsers(req));
     if (route === "/api/admin/users/delete" && req.method === "POST") return await adminGuard(req, () => handleAdminDeleteUser(req));
     // Public delivery-fee settings for customer-facing pages (no auth required)
+        if (route === "/api/whatsapp-settings" && req.method === "GET") return await handlePublicWhatsAppSettings();
     if (route === "/api/delivery-fees" && req.method === "GET") return await handlePublicDeliveryFees();
     if (route === "/api/admin/settings" && req.method === "GET") return await adminGuard(req, () => handleAdminGetSettings());
         if (route === "/api/admin/settings/whatsapp" && req.method === "GET") return await adminGuard(req, () => handleGetWhatsAppSettings());

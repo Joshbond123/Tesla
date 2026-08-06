@@ -501,3 +501,38 @@ if (document.readyState === 'loading') {
       .catch(function() { /* ignore network errors — guard is best-effort */ });
   }
 })();
+
+// ── WhatsApp Floating Button (DB-driven show/hide) ─────────────────────────
+function initWhatsAppFloat() {
+  var base = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+    ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
+  if (!base) return;
+  fetch(base + '/whatsapp-settings')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data) return;
+      var floats = document.querySelectorAll('.whatsapp-float');
+      floats.forEach(function(el) {
+        if (!data.enabled) {
+          el.style.display = 'none';
+        } else {
+          el.style.display = '';
+          var link = el.querySelector('a');
+          if (link) {
+            var phone = String(data.phone || '').replace(/\D/g, '');
+            var msg = encodeURIComponent(data.message || '');
+            link.href = 'https://wa.me/' + phone + (msg ? '?text=' + msg : '');
+          }
+        }
+      });
+    })
+    .catch(function() { /* network error — keep default */ });
+}
+
+// Auto-init on DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initWhatsAppFloat);
+} else {
+  initWhatsAppFloat();
+}
+
