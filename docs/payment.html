@@ -1044,7 +1044,9 @@
     }
 
     // Fetch from API server — normalised format with config objects
-    fetch(API_BASE_PM + '/payment-methods')
+    var _pmCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var _pmTimer = setTimeout(function() { if (_pmCtrl) _pmCtrl.abort(); }, 12000);
+    fetch(API_BASE_PM + '/payment-methods', _pmCtrl ? { signal: _pmCtrl.signal } : undefined)
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         var list = data && (data.methods || data);
@@ -1056,7 +1058,9 @@
         renderPaymentMethods();
         renderOrderSummary();
       })
+      .then(function() { clearTimeout(_pmTimer); })
       .catch(function(e) {
+        clearTimeout(_pmTimer);
         console.warn('Payment methods API fetch failed:', e);
         var pmDefaults = (window.TeslaPaymentMethods && window.TeslaPaymentMethods.getEnabled)
           ? window.TeslaPaymentMethods.getEnabled() : [];

@@ -174,4 +174,42 @@ function clearLocalData() {
   showToast("Local cache cleared");
 }
 
+
+// ── WhatsApp Floating Button Settings ────────────────────────────────────────
+function loadWhatsAppSetting() {
+  if (typeof API_BASE === 'undefined' || !API_BASE) return;
+  api('GET', '/admin/settings/whatsapp')
+    .then(function(r) {
+      var enabled = document.getElementById('waEnabled');
+      var phone = document.getElementById('waPhone');
+      var msg = document.getElementById('waMessage');
+      if (enabled) enabled.checked = r.enabled === true;
+      if (phone) phone.value = r.phone || '';
+      if (msg) msg.value = r.message || '';
+    })
+    .catch(function() {});
+}
+
+function saveWhatsAppSetting() {
+  if (typeof API_BASE === 'undefined' || !API_BASE) return;
+  var enabled = document.getElementById('waEnabled');
+  var phone = document.getElementById('waPhone');
+  var msg = document.getElementById('waMessage');
+  var status = document.getElementById('waStatus');
+  api('POST', '/admin/settings/whatsapp', {
+    enabled: enabled ? enabled.checked : false,
+    phone: phone ? phone.value.trim() : '',
+    message: msg ? msg.value.trim() : ''
+  }).then(function() {
+    if (status) { status.textContent = 'Saved ✓'; status.style.color = 'var(--success)'; setTimeout(function(){ status.textContent=''; }, 3000); }
+    if (typeof showToast === 'function') showToast('WhatsApp settings saved');
+  }).catch(function(e) {
+    if (status) { status.textContent = 'Failed: ' + (e.message || 'error'); status.style.color = 'var(--danger)'; }
+  });
+}
+
+window.loadWhatsAppSetting = loadWhatsAppSetting;
+window.saveWhatsAppSetting = saveWhatsAppSetting;
+
 window.loadDeliveryFees = loadDeliveryFees;
+window.loadWhatsAppSetting = loadWhatsAppSetting;

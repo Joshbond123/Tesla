@@ -57,7 +57,8 @@ function switchTab(tab) {
   if (resolvedTab === "social")     { try { loadSocialSettings(); } catch(e) {} }
   if (resolvedTab === "settings") {
     try {
-      if (typeof window.loadDeliveryFees === "function") {
+      if (typeof window.loadWhatsAppSetting === "function") { window.loadWhatsAppSetting(); }
+    if (typeof window.loadDeliveryFees === "function") {
         window.loadDeliveryFees();
       } else if (typeof loadDeliveryFees === "function") {
         loadDeliveryFees();

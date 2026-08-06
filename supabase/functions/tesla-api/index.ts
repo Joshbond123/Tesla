@@ -1832,6 +1832,27 @@ async function handlePaymentSubmit(req: Request) {
   return json({ success: true, orderId, status: "pending" });
 }
 
+
+// ── WhatsApp Floating Button Settings ─────────────────────────────────────────
+async function handleGetWhatsAppSettings(_req: Request) {
+  const row = await dbGet1("admin_settings", "value", { key: "eq.whatsapp_settings" });
+  const v = (row.data?.value as any) || {};
+  return json({ enabled: v.enabled !== false, phone: v.phone || "", message: v.message || "" });
+}
+
+async function handleSaveWhatsAppSettings(req: Request) {
+  let body: any;
+  try { body = await req.json(); } catch { return json({ error: "Invalid request." }, 400); }
+  const value = {
+    enabled: body.enabled === true,
+    phone: String(body.phone || "").trim(),
+    message: String(body.message || "").trim(),
+  };
+  const r = await upsertAdminSetting("whatsapp_settings", value);
+  if (!r.ok) return json({ error: "Failed to save WhatsApp settings." }, 500);
+  return json({ success: true, ...value });
+}
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -1861,6 +1882,8 @@ Deno.serve(async (req) => {
     // Public delivery-fee settings for customer-facing pages (no auth required)
     if (route === "/api/delivery-fees" && req.method === "GET") return await handlePublicDeliveryFees();
     if (route === "/api/admin/settings" && req.method === "GET") return await adminGuard(req, () => handleAdminGetSettings());
+        if (route === "/api/admin/settings/whatsapp" && req.method === "GET") return await adminGuard(req, () => handleGetWhatsAppSettings());
+    if (route === "/api/admin/settings/whatsapp" && req.method === "POST") return await adminGuard(req, () => handleSaveWhatsAppSettings(req));
     if (route === "/api/admin/settings" && req.method === "POST") return await adminGuard(req, () => handleAdminSaveSettings(req));
     if (route === "/api/admin/orders" && req.method === "GET") return await adminGuard(req, () => handleAdminOrders(req));
     const adminOrderStatusMatch = route.match(/^\/api\/admin\/orders\/([^/]+)\/status$/);

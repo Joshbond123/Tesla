@@ -98,22 +98,6 @@
             <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
             <span class="nav-label">Delivery Fees</span>
           </button>
-          <button class="nav-item" data-tab="social" onclick="switchTab('social')">
-            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>
-            <span class="nav-label">Social Media</span>
-          </button>
-          <button class="nav-item" data-tab="notifications" onclick="switchTab('notifications')">
-            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
-            <span class="nav-label">Notifications</span>
-          </button>
-          <button class="nav-item" data-tab="website" onclick="switchTab('website')">
-            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
-            <span class="nav-label">Website Settings</span>
-          </button>
-          <button class="nav-item" data-tab="support" onclick="switchTab('support')">
-            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-            <span class="nav-label">Support</span>
-          </button>
         </div>
 
         <!-- Group: System -->
@@ -593,6 +577,66 @@
               </div>
             </div>
 
+            
+          <!-- ── Admin Password Management ── -->
+          <div class="setting-group">
+            <div class="sg-header">
+              <div class="sg-icon gray">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div>
+                <p class="sg-title">Admin Password</p>
+                <p class="sg-desc">Change the admin panel access password. Must be at least 8 characters.</p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;max-width:340px;">
+              <div>
+                <label class="form-label" for="setCurrentPwd">Current Password</label>
+                <input type="password" class="form-input" id="setCurrentPwd" placeholder="Enter current password">
+              </div>
+              <div>
+                <label class="form-label" for="setNewPwd">New Password</label>
+                <input type="password" class="form-input" id="setNewPwd" placeholder="Enter new password (min 8 chars)">
+              </div>
+              <div>
+                <label class="form-label" for="setConfirmPwd">Confirm New Password</label>
+                <input type="password" class="form-input" id="setConfirmPwd" placeholder="Confirm new password">
+              </div>
+              <button class="btn btn-primary" onclick="changePassword()" style="margin-top:4px;">Update Password</button>
+            </div>
+          </div>
+
+          <!-- ── WhatsApp Floating Button ── -->
+          <div class="setting-group">
+            <div class="sg-header">
+              <div class="sg-icon" style="background:rgba(37,211,102,.1);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:#25D366;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+              </div>
+              <div>
+                <p class="sg-title">WhatsApp Floating Button</p>
+                <p class="sg-desc">Manage the floating WhatsApp button on the public website.</p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div class="setting-row">
+                <span style="font-size:13px;font-weight:600;">Enable floating button</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="waEnabled" onchange="saveWhatsAppSetting()">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div>
+                <label class="form-label">WhatsApp Phone Number</label>
+                <input type="text" class="form-input" id="waPhone" placeholder="+1 234 567 890" onblur="saveWhatsAppSetting()">
+              </div>
+              <div>
+                <label class="form-label">Default Pre-filled Message</label>
+                <textarea class="form-input" id="waMessage" placeholder="Hello, I have a question about the Tesla Award Program." rows="2" onblur="saveWhatsAppSetting()"></textarea>
+              </div>
+              <p id="waStatus" style="font-size:12px;color:var(--admin-text-muted);margin:0;"></p>
+            </div>
+          </div>
+
             <div class="fee-actions">
               <button class="btn btn-primary" onclick="saveDeliveryFee()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -605,21 +649,6 @@
               <span class="fee-status" id="feeStatus"></span>
             </div>
           </div>
-
-          <!-- ── Change Password ── -->
-          <div class="setting-group">
-            <div class="sg-header">
-              <div class="sg-icon gray">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </div>
-              <div>
-                <p class="sg-title">Change Admin Password</p>
-                <p class="sg-desc">Update the admin panel access password. Must be at least 8 characters.</p>
-              </div>
-            </div>
             <div style="display:flex;flex-direction:column;gap:10px;max-width:340px;">
               <div>
                 <label class="form-label" for="currentPwd">Current Password</label>
