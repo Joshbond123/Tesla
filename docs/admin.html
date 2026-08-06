@@ -538,7 +538,35 @@
                 Save Settings
               </button>
               <span class="fee-status" id="feeStatus"></span>
-            </div></div>
+            </div>
+          <div class="fee-currency">
+              <label class="fee-field-label" for="currencySelect">Display Currency</label>
+              <select id="currencySelect" class="fee-select" style="width:100%;max-width:280px;padding:11px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;font-size:14px;color:#171a20;cursor:pointer;"></select>
+              <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">This currency is used wherever delivery fees are shown.</p>
+            </div>
+
+          <div class="fee-grid">
+              <!-- Standard -->
+              <div class="fee-card">
+                <div class="fee-card-head">
+                  <div class="fee-card-ico std">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 8h14M5 8a2 2 0 1 0-4 0v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8m-14 0V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="fee-card-name">Standard Delivery</div>
+                    <div class="fee-card-sub">7–12 business days · insured</div>
+                  </div>
+                </div>
+                <label class="fee-field-label" for="standardFeeInput">Standard Delivery Fee (USD)</label>
+                <div class="fee-input-row">
+                  <span class="fee-symbol">$</span>
+                  <input type="number" class="fee-number" id="standardFeeInput"
+                         placeholder="299" min="0" step="1" autocomplete="off">
+                </div>
+              </div>
+        </div>
       </div>
 
       <div class="tab-panel" id="panelSettings">
