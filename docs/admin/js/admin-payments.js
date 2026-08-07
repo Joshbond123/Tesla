@@ -862,8 +862,38 @@
     }, 1200);
   };
 
+
+  // ── Load payment methods from database (source of truth) ────────
+  function loadPaymentMethods() {
+    var grid = $id('paymentMethodsGrid');
+    if (grid) grid.innerHTML = _loadingHtml();
+
+    if (!PM) {
+      console.error('[PM] TeslaPaymentMethods store not available');
+      if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--admin-text-muted);">Payment methods store failed to load.</div>';
+      return;
+    }
+
+    // Always sync from API when available; never rely on localStorage or hard-coded defaults
+    if (typeof PM.syncFromApi === 'function') {
+      PM.syncFromApi('admin', function (ok) {
+        renderPaymentMethods();
+        if (!ok && PM.getAll().length === 0) {
+          // API failed and nothing in memory — show empty state, not mock data
+          var empty = $id('paymentMethodsEmpty');
+          if (empty) empty.style.display = 'block';
+        }
+      });
+    } else {
+      renderPaymentMethods();
+    }
+  }
+
+  window.loadPaymentMethods = loadPaymentMethods;
+
   // ── Backward-compat aliases ────────────────────────────────────
   window.savePaymentMethod = window._pmSave;
   window.renderPaymentMethods = renderPaymentMethods;
+  window.loadPaymentMethods = loadPaymentMethods;
 
 }());

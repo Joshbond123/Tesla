@@ -8,8 +8,9 @@ function switchTab(tab) {
   var loginScreen = document.getElementById("loginScreen");
   if (loginScreen && !loginScreen.classList.contains("hidden") && loginScreen.style.display !== "none") return;
 
-  // Normalize alias tabs to their backing panel
-  var aliasMap = { delivery: "settings", support: "social" };
+  // Normalize alias tabs to their backing panel (support → social only)
+  // Delivery has its own panel (panelDelivery); do NOT alias it to settings.
+  var aliasMap = { support: "social" };
   var resolvedTab = aliasMap[tab] || tab;
 
   // Mark the clicked nav item active (by original tab name)
@@ -55,18 +56,28 @@ function switchTab(tab) {
   if (resolvedTab === "payments")   { try { loadPaymentMethods(); } catch(e) {} }
   if (resolvedTab === "proofs")     { try { loadProofs(); } catch(e) {} }
   if (resolvedTab === "social")     { try { loadSocialSettings(); } catch(e) {} }
-  if (resolvedTab === "settings") {
+
+  // Delivery Fee Settings — only load delivery fees
+  if (resolvedTab === "delivery") {
     try {
-      if (typeof window.loadWhatsAppSetting === "function") { window.loadWhatsAppSetting(); }
-    if (typeof window.loadDeliveryFees === "function") {
+      if (typeof window.loadDeliveryFees === "function") {
         window.loadDeliveryFees();
       } else if (typeof loadDeliveryFees === "function") {
         loadDeliveryFees();
       } else {
         var sfi = document.getElementById("standardFeeInput");
         var efi = document.getElementById("expressFeeInput");
-        if (sfi) sfi.value = standardFee;
-        if (efi) efi.value = expressFee;
+        if (sfi) sfi.value = typeof standardFee !== "undefined" ? standardFee : 299;
+        if (efi) efi.value = typeof expressFee !== "undefined" ? expressFee : 399;
+      }
+    } catch(e) {}
+  }
+
+  // System Settings — only load WhatsApp (password form is static)
+  if (resolvedTab === "settings") {
+    try {
+      if (typeof window.loadWhatsAppSetting === "function") {
+        window.loadWhatsAppSetting();
       }
     } catch(e) {}
   }
