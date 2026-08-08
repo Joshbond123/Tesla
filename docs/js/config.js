@@ -57,4 +57,47 @@
     }
     return code || "$";
   };
+
+  // ── PAYMENT CONFIRMATION VEHICLE IMAGE FIX ────────────────────────────────
+  // payment-confirmation.html historically used a separate Tesla CDN image map.
+  // Keep the displayed vehicle image tied to the model name rendered from the
+  // actual order, so a stale/wrong CDN mapping cannot show another Tesla model.
+  if (/payment-confirmation\.html$/i.test(global.location.pathname)) {
+    var vehicleImages = {
+      cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
+      modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
+      models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
+      model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
+      modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+    };
+
+    function syncPaymentVehicleImage() {
+      var image = document.getElementById('vehicleImg');
+      var nameEl = document.getElementById('vehicleName');
+      if (!image || !nameEl) return;
+
+      var key = String(nameEl.textContent || '')
+        .toLowerCase()
+        .replace(/^tesla\s+/, '')
+        .replace(/\s+/g, '');
+      var expected = vehicleImages[key];
+      if (expected && image.src !== expected) image.src = expected;
+    }
+
+    function observePaymentVehicleImage() {
+      syncPaymentVehicleImage();
+      var root = document.body || document.documentElement;
+      if (!root || !global.MutationObserver) return;
+      var observer = new MutationObserver(function () {
+        syncPaymentVehicleImage();
+      });
+      observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['src'] });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', observePaymentVehicleImage, { once: true });
+    } else {
+      observePaymentVehicleImage();
+    }
+  }
 })(window);
