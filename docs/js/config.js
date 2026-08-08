@@ -26,7 +26,6 @@
 
   if (!/payment-confirmation\.html$/i.test(global.location.pathname)) return;
 
-  // Hide the old placeholder/controls before the page's other scripts finish rendering.
   var earlyStyle = document.createElement('style');
   earlyStyle.id = 'payment-confirmation-authoritative-style';
   earlyStyle.textContent = '#vehicleImg{visibility:hidden!important;} .pc-nav-label{display:none!important;} #trackBtn{display:none!important;}';
@@ -84,7 +83,7 @@
 
   function renderOrder(order,user){
     if(!order) return;
-    var dd=order.deliveryDetails||order.delivery||{}, pm=order.paymentMethod||order.payment||{}, dm=order.deliveryMethod||order.deliveryOption||{}, u=user||order.user||{};
+    var dd=order.deliveryDetails||order.delivery||{}, pm=order.paymentMethod||order.payment||{}, dm=order.deliveryMethod||order.deliveryOption||{}, u=user||order.user||{}, proof=order.paymentProof||order.payment_proof||order.proof||{};
     set('orderId',first(order,['orderId','id','order_id']));
     set('trackingNum',first(order,['trackingNumber','tracking_number','tracking']));
     var od=first(order,['orderDate','order_date','createdAt','created_at']);
@@ -93,14 +92,23 @@
     set('paymentMethod',first(pm,['name','label','type','method']));
     set('deliveryMethod',first(dm,['name','label','type','method']));
     var fullName=first(u,['fullName','name']) || [first(u,['firstName','first_name']),first(u,['lastName','last_name'])].filter(Boolean).join(' ');
-    set('custName',fullName);
-    set('custEmail',first(u,['email'])||first(order,['customerEmail','customer_email']));
+    set('custName',fullName || first(dd,['fullName','name']));
+    set('custEmail',first(u,['email'])||first(order,['customerEmail','customer_email','email'])||first(dd,['email']));
     set('custPhone',first(u,['phone','phoneNumber','phone_number'])||first(dd,['phone','phoneNumber','phone_number']));
     set('delName',first(dd,['fullName','name','recipientName','recipient_name']));
     set('delAddr',first(dd,['address','street','streetAddress','street_address']));
     set('delCity',first(dd,['city']));
     set('delStateZip',[first(dd,['state','province']),first(dd,['zipCode','zip','postalCode','postal_code'])].filter(Boolean).join(' '));
     set('delCountry',first(dd,['country','countryName','country_name']));
+    // Keep payment details populated even if the payment_proofs request is unavailable.
+    var localStatus=first(proof,['status','payment_status','proof_status'])||first(order,['paymentStatus','payment_status','proofStatus','proof_status'])||first(pm,['status','paymentStatus']);
+    var localDate=first(proof,['created_at','submitted_at','payment_submitted_at','paymentSubmittedAt'])||first(order,['paymentSubmittedAt','payment_submitted_at']);
+    var localMethod=first(proof,['payment_method','paymentMethod','method'])||first(pm,['name','label','type','method']);
+    var localProof=first(proof,['proof_url','payment_proof_url','paymentProofUrl','receipt_url']);
+    set('proofStatus',localStatus ? String(localStatus).replace(/^./,function(c){return c.toUpperCase();}) : 'Pending');
+    if(localDate){var pd=new Date(localDate);set('proofDate',isNaN(pd.getTime())?localDate:pd.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}));}
+    set('proofMethod',localMethod);
+    if(localProof){var pw=el('proofImgWrap'),pi=el('proofImg');if(pw&&pi){pi.src=localProof;pw.style.display='block';}}
     renderVehicle(order);
     renderRouteMap(dd);
   }
@@ -125,10 +133,13 @@
   }
 
   function clearMap(){
-    var node=el('confMap');
-    if(!node) return null;
-    node.innerHTML='';
-    node.removeAttribute('style');
+    var old=el('confMap');
+    if(!old) return null;
+    var node=document.createElement('div');
+    node.id='confMap';
+    node.className=old.className;
+    node.style.cssText=old.getAttribute('style')||'';
+    old.parentNode.replaceChild(node,old);
     return node;
   }
   function renderRouteMap(dd){
@@ -163,12 +174,11 @@
       var order=data&&data.valid&&data.order?data.order:local;
       var user=data&&data.valid?data.user:(local&&local.user)||{};
       if(order) renderOrder(order,user);
-      var email=first(user,['email'])||first(order||{},['customerEmail','customer_email','email']);
+      var email=first(user,['email'])||first(order||{},['customerEmail','customer_email','email'])||first(order&&order.deliveryDetails||{},['email']);
       return fetchProof(email);
     }).then(function(){removeHeader();removeTrack();});
   }
   function start(){
-    // The page's legacy script may run first. This is the single authoritative reconciliation pass.
     setTimeout(loadAuthoritative,0);
     setTimeout(loadAuthoritative,1000);
     setTimeout(function(){removeHeader();removeTrack();},2500);
