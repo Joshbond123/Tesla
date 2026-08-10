@@ -447,9 +447,7 @@ async function handleLogin(req: Request) {
       if (Array.isArray(rows) && rows.length > 0) {
         hasOrder = true;
         const o = rows[0];
-        const car = Array.isArray(o.selected_cars) ? o.selected_cars[0] : o.selected_cars;
-        const delivery = Array.isArray(o.delivery_details) ? o.delivery_details[0] : o.delivery_details;
-        const tracking = ((o.tracking_data ?? [])).sort((a,b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((o.tracking_data ?? [])).sort((a: any,b: any) => a.stage_order - b.stage_order).map((t: any) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: o.order_id,
           trackingNumber: o.tracking_number,
@@ -458,8 +456,8 @@ async function handleLogin(req: Request) {
           estimatedDelivery: o.estimated_delivery,
           deliveryMethod: o.delivery_method || {},
           paymentMethod: o.payment_method || {},
-          selectedCar: car?.data || {},
-          deliveryDetails: delivery?.data || {},
+          selectedCar: extractRelationData(o.selected_cars),
+          deliveryDetails: extractRelationData(o.delivery_details),
           timeline: tracking
         };
       }
@@ -497,6 +495,18 @@ async function getSessionUser(sessionToken: string) {
   return user ? { ...user, entryId: data.user_id } : null;
 }
 
+
+/** Normalize PostgREST embedded relation → plain object with .data unwrapped */
+function extractRelationData(rel: any): Record<string, unknown> {
+  if (!rel) return {};
+  const row = Array.isArray(rel) ? rel[0] : rel;
+  if (!row) return {};
+  if (row.data && typeof row.data === "object") return row.data as Record<string, unknown>;
+  // Already a plain vehicle/details object
+  if (row.id || row.name || row.model || row.img) return row as Record<string, unknown>;
+  return {};
+}
+
 async function handleSession(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -513,9 +523,7 @@ async function handleSession(req: Request) {
       if (Array.isArray(rows) && rows.length > 0) {
         hasOrder = true;
         const o = rows[0];
-        const car = Array.isArray(o.selected_cars) ? o.selected_cars[0] : o.selected_cars;
-        const delivery = Array.isArray(o.delivery_details) ? o.delivery_details[0] : o.delivery_details;
-        const tracking = ((o.tracking_data ?? [])).sort((a,b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((o.tracking_data ?? [])).sort((a: any,b: any) => a.stage_order - b.stage_order).map((t: any) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         orderData = {
           orderId: o.order_id,
           trackingNumber: o.tracking_number,
@@ -524,8 +532,8 @@ async function handleSession(req: Request) {
           estimatedDelivery: o.estimated_delivery,
           deliveryMethod: o.delivery_method || {},
           paymentMethod: o.payment_method || {},
-          selectedCar: car?.data || {},
-          deliveryDetails: delivery?.data || {},
+          selectedCar: extractRelationData(o.selected_cars),
+          deliveryDetails: extractRelationData(o.delivery_details),
           timeline: tracking
         };
       }
@@ -537,35 +545,96 @@ async function handleSession(req: Request) {
   // DB-driven: has the customer uploaded a payment proof?
   // Match by customer_email OR user_id so proofs uploaded without email still resolve.
   let hasPaymentProof = false;
+  let paymentProof: Record<string, unknown> | null = null;
   try {
     const ppR = await fetch(
-      REST + "/payment_proofs?select=id&or=(customer_email.eq." + encodeURIComponent(user.email) + ",user_id.eq." + user.id + ")&limit=1",
+      REST + "/payment_proofs?select=id,status,proof_url,proof_back_url,created_at,payment_method,amount,order_id,delivery_method,car_model&or=(customer_email.eq." + encodeURIComponent(user.email) + ",user_id.eq." + user.id + ")&order=created_at.desc&limit=1",
       { headers: SB_HEADERS }
     );
-    if (ppR.ok) { const ppRows = await ppR.json(); hasPaymentProof = Array.isArray(ppRows) && ppRows.length > 0; }
+    if (ppR.ok) {
+      const ppRows = await ppR.json();
+      if (Array.isArray(ppRows) && ppRows.length > 0) {
+        hasPaymentProof = true;
+        const p = ppRows[0];
+        paymentProof = {
+          id: p.id,
+          status: p.status || "pending",
+          proof_url: p.proof_url || "",
+          created_at: p.created_at,
+          payment_method: p.payment_method || "",
+          amount: p.amount || "",
+          order_id: p.order_id || "",
+          delivery_method: p.delivery_method || null,
+          car_model: p.car_model || "",
+        };
+        // Enrich order payment/delivery from proof when order still has placeholders
+        if (orderData) {
+          const pm = orderData.paymentMethod as any;
+          const pmName = (pm && (pm.name || pm.label)) || (typeof pm === "string" ? pm : "");
+          if (!pmName || pmName === "Not specified" || pmName === "Unknown") {
+            if (p.payment_method) {
+              orderData.paymentMethod = { id: String(p.payment_method).toLowerCase().replace(/\s+/g, "-"), name: p.payment_method };
+            }
+          }
+          const dm = orderData.deliveryMethod as any;
+          const dmName = (dm && (dm.name || dm.label)) || (typeof dm === "string" ? dm : "");
+          if ((!dmName || dmName === "_" || dmName === "-") && p.delivery_method) {
+            orderData.deliveryMethod = typeof p.delivery_method === "object" ? p.delivery_method : { name: String(p.delivery_method) };
+          }
+        }
+      }
+    }
   } catch { /* ignore */ }
 
-  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, hasPaymentProof, order: orderData });
+  return json({ valid: true, user: { email: user.email, firstName: user.first_name || "", lastName: user.last_name || "", entryId: user.entryId, phone: user.phone || "" }, hasOrder, hasPaymentProof, paymentProof, order: orderData });
 }
 
 async function handleOrder(req: Request) {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body." }, 400); }
-  const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod } = body;
+  const { sessionToken, selectedCar, deliveryDetails, deliveryMethod, paymentMethod, updateOnly } = body;
   // Allow orders without session validation — create guest context from delivery details
   let user = await getSessionUser(sessionToken || "");
-  // If user already has an existing order, return it instead of blocking
+  // If user already has an existing order, optionally update delivery/payment then return it
   if (user) {
-    const orderR = await fetch(REST + "/orders?select=order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)&user_id=eq." + user.id + "&order=order_date.desc&limit=1", { headers: SB_HEADERS });
+    const orderR = await fetch(REST + "/orders?select=id,order_id,tracking_number,status,order_date,estimated_delivery,delivery_method,payment_method,selected_cars(data),delivery_details(data),tracking_data(stage,stage_order,timestamp,completed)&user_id=eq." + user.id + "&order=order_date.desc&limit=1", { headers: SB_HEADERS });
     if (orderR.ok) {
       const rows = await orderR.json();
       if (rows.length > 0) {
         const o = rows[0];
-        const sc = (o.selected_cars && o.selected_cars.data) ? o.selected_cars.data : {};
-        const dd = (o.delivery_details && o.delivery_details.data) ? o.delivery_details.data : {};
+        // Update delivery/payment methods when provided (e.g. after delivery-method selection)
+        const patch: Record<string, unknown> = {};
+        if (deliveryMethod && typeof deliveryMethod === "object") {
+          patch.delivery_method = deliveryMethod;
+          if (deliveryMethod.id === "express") {
+            patch.estimated_delivery = new Date(Date.now() + 2 * 86400000).toISOString().split("T")[0];
+          } else if (deliveryMethod.id === "standard") {
+            patch.estimated_delivery = new Date(Date.now() + 10 * 86400000).toISOString().split("T")[0];
+          }
+        }
+        if (paymentMethod && typeof paymentMethod === "object" && paymentMethod.name && paymentMethod.name !== "Not specified") {
+          patch.payment_method = paymentMethod;
+        }
+        if (Object.keys(patch).length > 0) {
+          const pr = await fetch(REST + "/orders?id=eq." + o.id, {
+            method: "PATCH",
+            headers: { ...SB_HEADERS, Prefer: "return=representation" },
+            body: JSON.stringify(patch),
+          });
+          if (pr.ok) {
+            const updated = await pr.json();
+            if (Array.isArray(updated) && updated[0]) {
+              Object.assign(o, updated[0]);
+            }
+          } else {
+            console.error("Order update patch failed:", await pr.text());
+          }
+        }
+        const sc = extractRelationData(o.selected_cars);
+        const dd = extractRelationData(o.delivery_details);
         const pm = (o.payment_method) ? o.payment_method : {};
         const dm = (o.delivery_method) ? o.delivery_method : null;
-        const tracking = ((o.tracking_data ?? [])).sort((a,b) => a.stage_order - b.stage_order).map(t => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
+        const tracking = ((o.tracking_data ?? [])).sort((a: any,b: any) => a.stage_order - b.stage_order).map((t: any) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
         const existing = {
           orderId: o.order_id, trackingNumber: o.tracking_number, status: o.status, orderDate: o.order_date,
           estimatedDelivery: o.estimated_delivery, deliveryMethod: dm, paymentMethod: pm, selectedCar: sc,
@@ -672,7 +741,7 @@ async function loadOrderBy(column: string, value: string) {
   const car = Array.isArray(data.selected_cars) ? data.selected_cars[0] : data.selected_cars;
   const delivery = Array.isArray(data.delivery_details) ? data.delivery_details[0] : data.delivery_details;
   const tracking = ((data.tracking_data ?? []).sort((a: any, b: any) => a.stage_order - b.stage_order)).map((t: any) => ({ stage: t.stage, timestamp: t.timestamp, completed: t.completed }));
-  return { orderId: data.order_id, trackingNumber: data.tracking_number, email: user?.email ?? "", entryId: user?.id ?? "", selectedCar: car?.data ?? {}, deliveryDetails: delivery?.data ?? {}, deliveryMethod: data.delivery_method ?? {}, paymentMethod: data.payment_method ?? {}, status: data.status, orderDate: data.order_date, estimatedDelivery: data.estimated_delivery, timeline: tracking };
+  return { orderId: data.order_id, trackingNumber: data.tracking_number, email: user?.email ?? "", entryId: user?.id ?? "", selectedCar: extractRelationData(data.selected_cars), deliveryDetails: extractRelationData(data.delivery_details), deliveryMethod: data.delivery_method ?? {}, paymentMethod: data.payment_method ?? {}, status: data.status, orderDate: data.order_date, estimatedDelivery: data.estimated_delivery, timeline: tracking };
 }
 
 // ── EMAIL TEMPLATES ───────────────────────────────────────────────────────────
@@ -1112,7 +1181,7 @@ async function handleAdminOrders(_req: Request) {
       orderDate: row.order_date,
       deliveryMethod: row.delivery_method ?? {},
       paymentMethod: row.payment_method ?? {},
-      selectedCar: car?.data ?? {}
+      selectedCar: extractRelationData(row.selected_cars)
     };
   });
   return json({ orders });
@@ -1801,6 +1870,20 @@ async function handlePaymentSubmit(req: Request) {
   };
   if (finalUrls.length > 1) proof.proof_back_url = finalUrls[finalUrls.length - 1];
   
+  // Enrich proof with delivery method + car model from nested orderData when present
+  const orderData = (body.orderData && typeof body.orderData === "object") ? body.orderData as Record<string, any> : {};
+  const deliveryMethodObj = orderData.deliveryMethod || body.deliveryMethod || null;
+  const carObj = orderData.car || orderData.selectedCar || body.selectedCar || null;
+  if (deliveryMethodObj) {
+    proof.delivery_method = typeof deliveryMethodObj === "object"
+      ? (deliveryMethodObj.name || deliveryMethodObj.id || JSON.stringify(deliveryMethodObj))
+      : String(deliveryMethodObj);
+  }
+  if (carObj && typeof carObj === "object") {
+    const carName = carObj.name || carObj.model || "";
+    if (carName) proof.car_model = String(carName).startsWith("Tesla") ? String(carName) : ("Tesla " + carName);
+  }
+
   // Store in payment_proofs table if it exists
   const { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
   if (error) {
@@ -1828,7 +1911,39 @@ async function handlePaymentSubmit(req: Request) {
       if (!insR.ok) return json({ error: "Failed to save payment proof" }, 500);
     }
   }
-  
+
+  // Permanently update the linked order with payment + delivery methods so confirmation
+  // and session APIs return real data (not the "Not specified" placeholder).
+  try {
+    const pmObj = {
+      id: String(body.paymentMethodId || body.payment_method_id || paymentMethod).toLowerCase().replace(/\s+/g, "-"),
+      name: paymentMethod,
+      type: String(body.paymentMethodType || (orderData as any)?.paymentType || ""),
+    };
+    const patch: Record<string, unknown> = { payment_method: pmObj };
+    if (deliveryMethodObj && typeof deliveryMethodObj === "object") {
+      patch.delivery_method = deliveryMethodObj;
+      if (deliveryMethodObj.id === "express") {
+        patch.estimated_delivery = new Date(Date.now() + 2 * 86400000).toISOString().split("T")[0];
+      } else if (deliveryMethodObj.id === "standard") {
+        patch.estimated_delivery = new Date(Date.now() + 10 * 86400000).toISOString().split("T")[0];
+      }
+    }
+    const patchR = await fetch(
+      REST + "/orders?order_id=eq." + encodeURIComponent(orderId),
+      {
+        method: "PATCH",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify(patch),
+      }
+    );
+    if (!patchR.ok) {
+      console.error("Payment submit: order patch failed:", await patchR.text());
+    }
+  } catch (e) {
+    console.error("Payment submit: order patch error:", e);
+  }
+
   return json({ success: true, orderId, status: "pending" });
 }
 

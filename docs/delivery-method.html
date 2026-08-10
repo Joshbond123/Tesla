@@ -578,14 +578,49 @@ function continueToPayment() {
     return;
   }
   var price = selectedMethod === 'express' ? expressFeeAmt : standardFeeAmt;
-  localStorage.setItem('tesla_delivery_method', JSON.stringify({
+  var deliveryMethod = {
     id:           selectedMethod,
     name:         selectedMethod === 'express' ? 'Express Delivery' : 'Standard Delivery',
     price:        price,
     priceDisplay: feeSymbol() + price,
     currency:     currentCurrency,
     days:         selectedMethod === 'express' ? '1–3 days' : '7–12 days'
-  }));
+  };
+  localStorage.setItem('tesla_delivery_method', JSON.stringify(deliveryMethod));
+
+  // Persist delivery method onto the existing order in the database
+  try {
+    var lastOrder = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+    if (lastOrder) {
+      lastOrder.deliveryMethod = deliveryMethod;
+      lastOrder.estimatedDelivery = selectedMethod === 'express' ? '1–3 business days' : '7–12 business days';
+      localStorage.setItem('tesla_last_order', JSON.stringify(lastOrder));
+    }
+    var orderId = (lastOrder && (lastOrder.orderId || lastOrder.order_id)) || '';
+    var sessionToken = (typeof getSession === 'function' ? getSession() : null)
+      || localStorage.getItem('tesla_session_token')
+      || localStorage.getItem('tesla_session')
+      || '';
+    var API_BASE = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+      ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
+    if (API_BASE && orderId) {
+      // Fire-and-forget order update so confirmation page reads real DB values
+      fetch(API_BASE + '/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken: sessionToken,
+          orderId: orderId,
+          updateOnly: true,
+          deliveryMethod: deliveryMethod,
+          selectedCar: lastOrder && (lastOrder.selectedCar || lastOrder.car) || null,
+          deliveryDetails: lastOrder && lastOrder.deliveryDetails || null,
+          paymentMethod: lastOrder && lastOrder.paymentMethod || null
+        })
+      }).catch(function(){});
+    }
+  } catch (e) {}
+
   window.location.href = 'payment.html';
 }
 </script>

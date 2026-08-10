@@ -609,6 +609,7 @@
 </div>
 
 <script src="js/config.js"></script>
+<script src="js/vehicle-data.js"></script>
 <script src="js/app.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -706,38 +707,97 @@
     }
   }
 
+  function labelOf(obj, fallback) {
+    if (!obj) return fallback || '—';
+    if (typeof obj === 'string') {
+      var s = obj.trim();
+      if (!s || s === '_' || s === '-' || s === '—' || s.toLowerCase() === 'not specified' || s.toLowerCase() === 'unknown') return fallback || '—';
+      return s;
+    }
+    var name = obj.name || obj.label || obj.display_name || obj.title || '';
+    if (typeof name === 'string') name = name.trim();
+    if (!name || name === '_' || name === '-' || name.toLowerCase() === 'not specified' || name.toLowerCase() === 'unknown') {
+      return fallback || '—';
+    }
+    return name;
+  }
+
+  function resolveVehicle(order) {
+    var sc = order.selectedCar || order.car || order.selected_car || {};
+    if (typeof sc === 'string') {
+      try { sc = JSON.parse(sc); } catch(e) { sc = { name: sc }; }
+    }
+    var id = String(sc.id || sc.model || sc.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    var catalog = (typeof VEHICLE_DATA !== 'undefined' && VEHICLE_DATA) ? VEHICLE_DATA : {};
+    var fromCatalog = null;
+    if (id) {
+      Object.keys(catalog).forEach(function(k) {
+        if (!fromCatalog && (id === k || id.indexOf(k) !== -1 || k.indexOf(id) !== -1)) fromCatalog = catalog[k];
+      });
+    }
+    if (!fromCatalog && sc.name) {
+      var n = String(sc.name).toLowerCase().replace(/[^a-z0-9]/g, '');
+      Object.keys(catalog).forEach(function(k) {
+        if (!fromCatalog && (n.indexOf(k) !== -1 || k.indexOf(n) !== -1)) fromCatalog = catalog[k];
+      });
+    }
+    var img = sc.img || sc.image || sc.imageUrl || (fromCatalog && fromCatalog.img) || '';
+    if (!img && id) {
+      var key = Object.keys(carImgMap).find(function(k){ return id.indexOf(k) !== -1; });
+      if (key) img = carImgMap[key];
+    }
+    if (!img && fromCatalog) img = fromCatalog.img;
+    if (!img) img = carImgMap.models;
+    return {
+      id: (fromCatalog && fromCatalog.id) || sc.id || id || 'models',
+      name: sc.name || sc.model || (fromCatalog && fromCatalog.name) || 'Model S',
+      price: sc.price || (fromCatalog && fromCatalog.price) || '—',
+      img: img
+    };
+  }
+
   function populateOrder(order) {
     if (!order) return;
-    var sc = order.selectedCar    || {};
-    var dd = order.deliveryDetails || {};
-    var dm = order.deliveryMethod  || {};
-    var pm = order.paymentMethod   || {};
+    var sc = resolveVehicle(order);
+    var dd = order.deliveryDetails || order.delivery_details || order.delivery || {};
+    if (typeof dd === 'string') { try { dd = JSON.parse(dd); } catch(e) { dd = {}; } }
+    var dm = order.deliveryMethod || order.delivery_method || {};
+    var pm = order.paymentMethod || order.payment_method || {};
 
-    // Vehicle
-    var carId = String(sc.id || sc.model || sc.name || '').toLowerCase().replace(/\s/g,'');
-    var imgKey = carId ? (Object.keys(carImgMap).find(function(k){ return carId.indexOf(k) !== -1; }) || 'models') : 'models';
+    // Vehicle image + name (from order DB / catalog — not hard-coded model)
     var imgEl = el('vehicleImg');
-    if (imgEl) imgEl.src = carImgMap[imgKey] || carImgMap.models;
-    setText('vehicleName',  'Tesla ' + (sc.name || sc.model || 'Model S'));
-    setText('vehiclePrice', sc.price || '—');
+    if (imgEl) {
+      imgEl.src = sc.img;
+      imgEl.alt = 'Tesla ' + sc.name;
+      imgEl.onerror = function() {
+        // Fallback to catalog if remote URL fails
+        try {
+          if (typeof VEHICLE_DATA !== 'undefined' && VEHICLE_DATA[sc.id] && VEHICLE_DATA[sc.id].img) {
+            imgEl.src = VEHICLE_DATA[sc.id].img;
+          }
+        } catch(e) {}
+      };
+    }
+    setText('vehicleName',  'Tesla ' + sc.name);
+    setText('vehiclePrice', sc.price);
 
     // Order summary
-    setText('orderId',        order.orderId);
-    setText('trackingNum',    order.trackingNumber);
-    setText('orderDate',      fmt(order.orderDate));
-    setText('estDelivery',    order.estimatedDelivery || '—');
-    setText('paymentMethod',  pm.name || pm.label || pm.type || '—');
-    setText('deliveryMethod', dm.name || dm.label || '—');
+    setText('orderId',        order.orderId || order.order_id || '—');
+    setText('trackingNum',    order.trackingNumber || order.tracking_number || '—');
+    setText('orderDate',      fmt(order.orderDate || order.order_date));
+    setText('estDelivery',    order.estimatedDelivery || order.estimated_delivery || '—');
+    setText('paymentMethod',  labelOf(pm, '—'));
+    setText('deliveryMethod', labelOf(dm, '—'));
 
     // Customer
     var user = window._userData || {};
     var fullName = [(user.firstName||''), (user.lastName||'')].filter(Boolean).join(' ');
-    setText('custName',  fullName || '—');
-    setText('custEmail', user.email || '—');
+    setText('custName',  fullName || dd.fullName || dd.name || '—');
+    setText('custEmail', user.email || dd.email || '—');
     setText('custPhone', user.phone || dd.phone || '—');
 
-    // Delivery
-    setText('delName',     dd.fullName || dd.name || '—');
+    // Delivery address
+    setText('delName',     dd.fullName || dd.name || fullName || '—');
     setText('delAddr',     dd.address  || dd.street || '—');
     setText('delCity',     dd.city     || '—');
     setText('delStateZip', [dd.state, dd.zipCode || dd.zip].filter(Boolean).join(' ') || '—');
@@ -745,15 +805,50 @@
 
     // Track link
     var tb = el('trackBtn');
-    if (tb && order.orderId)
-      tb.href = 'track.html?order=' + encodeURIComponent(order.orderId) + '&tracking=' + encodeURIComponent(order.trackingNumber || '');
+    var oid = order.orderId || order.order_id;
+    if (tb && oid)
+      tb.href = 'track.html?order=' + encodeURIComponent(oid) + '&tracking=' + encodeURIComponent(order.trackingNumber || order.tracking_number || '');
 
     // Timeline & map
     renderTimeline(order.timeline || [], order.status || 'confirmed');
-    setTimeout(function(){ initMap(dd); }, 500);
+    try {
+      initMap(dd.city || '', dd.state || '', dd.country || '');
+    } catch(e) {}
   }
 
-  function renderTimeline(timeline, status) {
+  function applyPaymentProof(proof) {
+    if (!proof) return;
+    var status = proof.status || 'pending';
+    setStatus(status);
+    setText('proofDate', proof.created_at ? fmtDT(proof.created_at) : '—');
+    var methodLabel = labelOf(proof.payment_method || proof.paymentMethod, '—');
+    setText('proofMethod', methodLabel);
+    // Also fill order summary payment if still empty / placeholder
+    var pmEl = el('paymentMethod');
+    if (pmEl) {
+      var cur = (pmEl.textContent || '').trim();
+      if (!cur || cur === '—' || cur === '_' || cur.toLowerCase() === 'not specified') {
+        setText('paymentMethod', methodLabel);
+      }
+    }
+    // Delivery from proof if needed
+    if (proof.delivery_method) {
+      var dmEl = el('deliveryMethod');
+      if (dmEl) {
+        var dcur = (dmEl.textContent || '').trim();
+        if (!dcur || dcur === '—' || dcur === '_') {
+          setText('deliveryMethod', labelOf(proof.delivery_method, '—'));
+        }
+      }
+    }
+    if (proof.proof_url && !String(proof.proof_url).startsWith('data:')) {
+      var wrap = el('proofImgWrap'); var img = el('proofImg');
+      if (wrap) wrap.style.display = 'block';
+      if (img) img.src = proof.proof_url;
+    }
+  }
+
+  function renderTimeline  function renderTimeline(timeline, status) {
     var steps = el('tlSteps');
     var fill  = el('progressFill');
     var pctEl = el('progressPct');
@@ -834,38 +929,36 @@
   // Fetch proof status by customer email (the real link between proofs and orders)
   function fetchProofByEmail(email) {
     if (!email) return;
-    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method&customer_email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=1', {
+    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method,delivery_method,amount,order_id&customer_email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=1', {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
     }).then(function(r){ return r.ok ? r.json() : null; })
     .then(function(rows){
       if (rows && rows.length > 0) {
-        var row = rows[0];
-        setStatus(row.status || 'pending');
-        setText('proofDate',   row.created_at ? fmtDT(row.created_at) : '—');
-        setText('proofMethod', row.payment_method || '—');
-        if (row.proof_url && !row.proof_url.startsWith('data:')) {
-          var wrap = el('proofImgWrap'); var img = el('proofImg');
-          if (wrap) wrap.style.display = 'block';
-          if (img) img.src = row.proof_url;
-        }
+        applyPaymentProof(rows[0]);
       }
     }).catch(function(){});
   }
 
+  function applySessionPayload(data) {
+    if (!data || !data.valid) return false;
+    window._userData = data.user || window._userData;
+    if (data.order) populateOrder(data.order);
+    if (data.paymentProof) {
+      applyPaymentProof(data.paymentProof);
+    } else if (data.user && data.user.email) {
+      fetchProofByEmail(data.user.email);
+    }
+    return true;
+  }
+
   function loadFromDB(orderId) {
-    if (!orderId) return;
     var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
     if (session) {
       apiCall('/session?token=' + encodeURIComponent(session))
         .then(function(data){
-          if (data.valid && data.order) {
-            window._userData = data.user;
-            populateOrder(data.order);
-          }
+          applySessionPayload(data);
         }).catch(function(){});
     }
-
-    // Proof lookup is handled inside the session callback below (by email).
 
     setInterval(function(){
       var s = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
@@ -875,6 +968,7 @@
           if (data.valid && data.order) {
             renderTimeline(data.order.timeline || [], data.order.status || 'confirmed');
           }
+          if (data.valid && data.paymentProof) applyPaymentProof(data.paymentProof);
         }).catch(function(){});
     }, 30000);
   }
@@ -882,10 +976,14 @@
   function loadFromLocalStorage(oi) {
     try {
       var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
-      if (stored) { populateOrder(stored); oi = oi || stored.orderId; }
+      if (stored) {
+        // Normalize legacy key: car → selectedCar
+        if (!stored.selectedCar && stored.car) stored.selectedCar = stored.car;
+        populateOrder(stored);
+        oi = oi || stored.orderId || stored.order_id;
+      }
     } catch(e) {}
-    if (oi) loadFromDB(oi);
-    // Proof status is fetched by email inside loadFromDB's session handler.
+    loadFromDB(oi);
     renderTimeline([], 'confirmed');
   }
 
@@ -896,10 +994,9 @@
     if (session) {
       apiCall('/session?token=' + encodeURIComponent(session))
         .then(function(data){
-          if (data.valid) {
-            window._userData = data.user;
-            if (data.order) { oi = data.order.orderId || oi; populateOrder(data.order); }
-            if (oi) loadFromDB(oi);
+          if (applySessionPayload(data)) {
+            if (data.order) oi = data.order.orderId || oi;
+            loadFromDB(oi);
           } else {
             loadFromLocalStorage(oi);
           }
