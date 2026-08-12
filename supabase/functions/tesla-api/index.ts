@@ -543,43 +543,55 @@ async function handleSession(req: Request) {
   }
 
   // DB-driven: has the customer uploaded a payment proof?
-  // Match by customer_email OR user_id so proofs uploaded without email still resolve.
+  // Match by customer_email, user_id, OR linked order_id so confirmation always gets status/date/method.
   let hasPaymentProof = false;
   let paymentProof: Record<string, unknown> | null = null;
   try {
-    const ppR = await fetch(
-      REST + "/payment_proofs?select=id,status,proof_url,proof_back_url,created_at,payment_method,amount,order_id,delivery_method,car_model&or=(customer_email.eq." + encodeURIComponent(user.email) + ",user_id.eq." + user.id + ")&order=created_at.desc&limit=1",
-      { headers: SB_HEADERS }
-    );
-    if (ppR.ok) {
-      const ppRows = await ppR.json();
-      if (Array.isArray(ppRows) && ppRows.length > 0) {
-        hasPaymentProof = true;
-        const p = ppRows[0];
-        paymentProof = {
-          id: p.id,
-          status: p.status || "pending",
-          proof_url: p.proof_url || "",
-          created_at: p.created_at,
-          payment_method: p.payment_method || "",
-          amount: p.amount || "",
-          order_id: p.order_id || "",
-          delivery_method: p.delivery_method || null,
-          car_model: p.car_model || "",
-        };
-        // Enrich order payment/delivery from proof when order still has placeholders
-        if (orderData) {
-          const pm = orderData.paymentMethod as any;
-          const pmName = (pm && (pm.name || pm.label)) || (typeof pm === "string" ? pm : "");
-          if (!pmName || pmName === "Not specified" || pmName === "Unknown") {
-            if (p.payment_method) {
-              orderData.paymentMethod = { id: String(p.payment_method).toLowerCase().replace(/\s+/g, "-"), name: p.payment_method };
+    const uid = user.id || user.entryId || "";
+    const email = (user.email || "").trim();
+    const orderIdForProof = orderData && (orderData as any).orderId ? String((orderData as any).orderId) : "";
+    const orParts: string[] = [];
+    if (email) orParts.push("customer_email.eq." + encodeURIComponent(email));
+    if (uid) orParts.push("user_id.eq." + uid);
+    if (orderIdForProof) orParts.push("order_id.eq." + encodeURIComponent(orderIdForProof));
+    const filter = orParts.length
+      ? "or=(" + orParts.join(",") + ")"
+      : (orderIdForProof ? "order_id=eq." + encodeURIComponent(orderIdForProof) : "");
+    if (filter) {
+      const ppR = await fetch(
+        REST + "/payment_proofs?select=id,status,proof_url,proof_back_url,created_at,payment_method,amount,order_id,delivery_method,car_model&" + filter + "&order=created_at.desc&limit=1",
+        { headers: SB_HEADERS }
+      );
+      if (ppR.ok) {
+        const ppRows = await ppR.json();
+        if (Array.isArray(ppRows) && ppRows.length > 0) {
+          hasPaymentProof = true;
+          const p = ppRows[0];
+          paymentProof = {
+            id: p.id,
+            status: p.status || "pending",
+            proof_url: p.proof_url || "",
+            created_at: p.created_at,
+            payment_method: p.payment_method || "",
+            amount: p.amount || "",
+            order_id: p.order_id || "",
+            delivery_method: p.delivery_method || null,
+            car_model: p.car_model || "",
+          };
+          // Enrich order payment/delivery from proof when order still has placeholders
+          if (orderData) {
+            const pm = orderData.paymentMethod as any;
+            const pmName = (pm && (pm.name || pm.label)) || (typeof pm === "string" ? pm : "");
+            if (!pmName || pmName === "Not specified" || pmName === "Unknown") {
+              if (p.payment_method) {
+                orderData.paymentMethod = { id: String(p.payment_method).toLowerCase().replace(/\s+/g, "-"), name: p.payment_method };
+              }
             }
-          }
-          const dm = orderData.deliveryMethod as any;
-          const dmName = (dm && (dm.name || dm.label)) || (typeof dm === "string" ? dm : "");
-          if ((!dmName || dmName === "_" || dmName === "-") && p.delivery_method) {
-            orderData.deliveryMethod = typeof p.delivery_method === "object" ? p.delivery_method : { name: String(p.delivery_method) };
+            const dm = orderData.deliveryMethod as any;
+            const dmName = (dm && (dm.name || dm.label)) || (typeof dm === "string" ? dm : "");
+            if ((!dmName || dmName === "_" || dmName === "-") && p.delivery_method) {
+              orderData.deliveryMethod = typeof p.delivery_method === "object" ? p.delivery_method : { name: String(p.delivery_method) };
+            }
           }
         }
       }
@@ -1760,22 +1772,46 @@ async function handleAdminDeleteProof(req: Request) {
 
 async function handleGetPaymentStatus(req: Request) {
   const url = new URL(req.url);
-  const orderId = url.searchParams.get("order_id");
-  const sessionToken = url.searchParams.get("session");
-  
-  if (!orderId && !sessionToken) {
-    // Try session-based lookup
-    const user = await getSessionUser(sessionToken || "");
-    if (!user) return json({ error: "Missing order_id or session" }, 400);
-    // Find latest proof for this user's orders
-    const r = await fetch(REST + "/payment_proofs?select=*&order_id=like.TSLA-%25&order=created_at.desc&limit=1", { headers: SB_HEADERS });
-    if (!r.ok) return json({ proofs: [] });
-    return json({ proofs: await r.json() });
+  const orderId = url.searchParams.get("order_id") || url.searchParams.get("order") || "";
+  const sessionToken = url.searchParams.get("session") || url.searchParams.get("token") || "";
+
+  const select = "id,status,proof_url,proof_back_url,created_at,payment_method,amount,order_id,delivery_method,car_model,customer_email,user_id";
+
+  // Prefer order_id when provided
+  if (orderId) {
+    const r = await fetch(
+      REST + "/payment_proofs?select=" + select + "&order_id=eq." + encodeURIComponent(orderId) + "&order=created_at.desc&limit=5",
+      { headers: SB_HEADERS }
+    );
+    if (r.ok) {
+      const rows = await r.json();
+      if (Array.isArray(rows) && rows.length > 0) return json({ proofs: rows, proof: rows[0] });
+    }
   }
-  
-  const r = await fetch(REST + "/payment_proofs?select=*&order_id=eq." + orderId + "&order=created_at.desc&limit=5", { headers: SB_HEADERS });
-  if (!r.ok) return json({ proofs: [] });
-  return json({ proofs: await r.json() });
+
+  // Session-based: match by email / user_id
+  if (sessionToken) {
+    const user = await getSessionUser(sessionToken);
+    if (user) {
+      const uid = user.id || user.entryId || "";
+      const email = (user.email || "").trim();
+      const orParts: string[] = [];
+      if (email) orParts.push("customer_email.eq." + encodeURIComponent(email));
+      if (uid) orParts.push("user_id.eq." + uid);
+      if (orParts.length) {
+        const r = await fetch(
+          REST + "/payment_proofs?select=" + select + "&or=(" + orParts.join(",") + ")&order=created_at.desc&limit=5",
+          { headers: SB_HEADERS }
+        );
+        if (r.ok) {
+          const rows = await r.json();
+          if (Array.isArray(rows) && rows.length > 0) return json({ proofs: rows, proof: rows[0] });
+        }
+      }
+    }
+  }
+
+  return json({ proofs: [], proof: null });
 }
 
 async function handlePaymentSubmit(req: Request) {

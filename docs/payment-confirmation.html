@@ -820,21 +820,22 @@
 
   function applyPaymentProof(proof) {
     if (!proof) return;
-    var status = proof.status || 'pending';
+    var status = String(proof.status || 'pending').toLowerCase();
+    if (status !== 'approved' && status !== 'rejected') status = 'pending';
     setStatus(status);
     var submittedAt = proof.created_at || proof.createdAt || proof.submitted_at || proof.timestamp || '';
-    setText('proofDate', submittedAt ? fmtDT(submittedAt) : '—');
-    var methodLabel = labelOf(proof.payment_method || proof.paymentMethod, '—');
-    setText('proofMethod', methodLabel);
-    // Also fill order summary payment if still empty / placeholder
-    var pmEl = el('paymentMethod');
-    if (pmEl) {
-      var cur = (pmEl.textContent || '').trim();
-      if (!cur || cur === '—' || cur === '_' || cur.toLowerCase() === 'not specified') {
-        setText('paymentMethod', methodLabel);
+    if (submittedAt) setText('proofDate', fmtDT(submittedAt));
+    var methodLabel = labelOf(proof.payment_method || proof.paymentMethod, '');
+    if (methodLabel && methodLabel !== '—') {
+      setText('proofMethod', methodLabel);
+      var pmEl = el('paymentMethod');
+      if (pmEl) {
+        var cur = (pmEl.textContent || '').trim();
+        if (!cur || cur === '—' || cur === '_' || cur.toLowerCase() === 'not specified') {
+          setText('paymentMethod', methodLabel);
+        }
       }
     }
-    // Delivery from proof if needed
     if (proof.delivery_method) {
       var dmEl = el('deliveryMethod');
       if (dmEl) {
@@ -848,6 +849,20 @@
       var wrap = el('proofImgWrap'); var img = el('proofImg');
       if (wrap) wrap.style.display = 'block';
       if (img) img.src = proof.proof_url;
+    }
+  }
+
+  /** Fill Payment Details Method from order when proof has no method yet */
+  function applyOrderPaymentFallback(order) {
+    if (!order) return;
+    var pm = order.paymentMethod || order.payment_method || {};
+    var methodLabel = labelOf(pm, '');
+    if (methodLabel && methodLabel !== '—') {
+      var proofMethodEl = el('proofMethod');
+      if (proofMethodEl) {
+        var cur = (proofMethodEl.textContent || '').trim();
+        if (!cur || cur === '—' || cur === '_') setText('proofMethod', methodLabel);
+      }
     }
   }
 
@@ -953,58 +968,83 @@
   }
 
 
-  // Fetch proof status by customer email (the real link between proofs and orders)
-  function fetchProofByEmail(email) {
-    // Prefer session API (service role) — direct Rest with anon key is blocked/invalid
-    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+  function getSessionToken() {
+    try {
+      if (typeof getSession === 'function') {
+        var t = getSession();
+        if (t) return t;
+      }
+    } catch (e) {}
+    return localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token') || '';
+  }
+
+  /** Load payment proof via backend session + /payment/status (never rely on broken anon REST) */
+  function loadPaymentDetails(orderId, email) {
+    var session = getSessionToken();
+    var tasks = [];
+
     if (session && typeof apiCall === 'function') {
-      apiCall('/session?token=' + encodeURIComponent(session))
-        .then(function(data){
-          if (data && data.valid && data.paymentProof) applyPaymentProof(data.paymentProof);
-        }).catch(function(){});
-      return;
+      tasks.push(
+        apiCall('/session?token=' + encodeURIComponent(session))
+          .then(function(data) {
+            if (data && data.valid) {
+              window._userData = data.user || window._userData;
+              if (data.order) {
+                populateOrder(data.order);
+                applyOrderPaymentFallback(data.order);
+                orderId = orderId || data.order.orderId || data.order.order_id || '';
+              }
+              if (data.paymentProof) applyPaymentProof(data.paymentProof);
+              return data;
+            }
+            return null;
+          })
+          .catch(function() { return null; })
+      );
     }
-    // Last resort: try REST only if a real anon key was injected
-    if (!email || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.indexOf('puebwzumwqizgbmksrpq') === -1) return;
-    fetch(SUPABASE_URL + '/rest/v1/payment_proofs?select=status,proof_url,created_at,payment_method,delivery_method,amount,order_id&customer_email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=1', {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
-    }).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(rows){
-      if (rows && rows.length > 0) applyPaymentProof(rows[0]);
-    }).catch(function(){});
+
+    // Dedicated proof lookup by order_id and/or session
+    if (typeof apiCall === 'function' && (orderId || session)) {
+      var qs = [];
+      if (orderId) qs.push('order_id=' + encodeURIComponent(orderId));
+      if (session) qs.push('session=' + encodeURIComponent(session));
+      tasks.push(
+        apiCall('/payment/status?' + qs.join('&'))
+          .then(function(res) {
+            var proof = (res && res.proof) || (res && res.proofs && res.proofs[0]) || null;
+            if (proof) applyPaymentProof(proof);
+            return res;
+          })
+          .catch(function() { return null; })
+      );
+    }
+
+    return Promise.all(tasks);
   }
 
   function applySessionPayload(data) {
     if (!data || !data.valid) return false;
     window._userData = data.user || window._userData;
-    if (data.order) populateOrder(data.order);
+    if (data.order) {
+      populateOrder(data.order);
+      applyOrderPaymentFallback(data.order);
+    }
     if (data.paymentProof) {
       applyPaymentProof(data.paymentProof);
-    } else if (data.user && data.user.email) {
-      fetchProofByEmail(data.user.email);
+    } else if (data.hasPaymentProof) {
+      // Proof exists but details missing — show pending until status endpoint fills in
+      setStatus('pending');
     }
     return true;
   }
 
   function loadFromDB(orderId) {
-    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
-    if (session) {
-      apiCall('/session?token=' + encodeURIComponent(session))
-        .then(function(data){
-          applySessionPayload(data);
-        }).catch(function(){});
-    }
+    loadPaymentDetails(orderId);
 
-    setInterval(function(){
-      var s = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+    setInterval(function() {
+      var s = getSessionToken();
       if (!s) return;
-      apiCall('/session?token=' + encodeURIComponent(s))
-        .then(function(data){
-          if (data.valid && data.order) {
-            renderTimeline(data.order.timeline || [], data.order.status || 'confirmed');
-          }
-          if (data.valid && data.paymentProof) applyPaymentProof(data.paymentProof);
-        }).catch(function(){});
+      loadPaymentDetails(orderId);
     }, 30000);
   }
 
@@ -1012,30 +1052,67 @@
     try {
       var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
       if (stored) {
-        // Normalize legacy key: car → selectedCar
         if (!stored.selectedCar && stored.car) stored.selectedCar = stored.car;
         populateOrder(stored);
+        applyOrderPaymentFallback(stored);
         oi = oi || stored.orderId || stored.order_id;
+        // Local order may already know payment method from checkout
+        if (stored.paymentMethod) {
+          var m = labelOf(stored.paymentMethod, '');
+          if (m && m !== '—') {
+            var cur = (el('proofMethod') && el('proofMethod').textContent || '').trim();
+            if (!cur || cur === '—') setText('proofMethod', m);
+          }
+        }
+        if (stored.orderDate || stored.paymentSubmittedAt) {
+          var dt = stored.paymentSubmittedAt || stored.orderDate;
+          var pd = (el('proofDate') && el('proofDate').textContent || '').trim();
+          if (!pd || pd === '—') setText('proofDate', fmtDT(dt));
+          var ps = (el('proofStatus') && el('proofStatus').textContent || '').trim();
+          if (!ps || ps === '—') setStatus(stored.paymentStatus || stored.status || 'pending');
+        }
       }
-    } catch(e) {}
+    } catch (e) {}
     loadFromDB(oi);
     renderTimeline([], 'confirmed');
   }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    var session = (typeof getSession === 'function') ? getSession() : (localStorage.getItem('tesla_session') || localStorage.getItem('tesla_session_token'));
+  document.addEventListener('DOMContentLoaded', function() {
+    var session = getSessionToken();
     var oi = urlOrderId;
+
+    // Prefer local order snapshot immediately so UI is not empty while API loads
+    try {
+      var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+      if (stored) {
+        if (!stored.selectedCar && stored.car) stored.selectedCar = stored.car;
+        populateOrder(stored);
+        applyOrderPaymentFallback(stored);
+        oi = oi || stored.orderId || stored.order_id || '';
+        if (stored.paymentMethod) {
+          var m = labelOf(stored.paymentMethod, '');
+          if (m && m !== '—') setText('proofMethod', m);
+        }
+        if (stored.paymentSubmittedAt || stored.orderDate) {
+          setText('proofDate', fmtDT(stored.paymentSubmittedAt || stored.orderDate));
+          setStatus(stored.paymentStatus || 'pending');
+        }
+      }
+    } catch (e) {}
 
     if (session) {
       apiCall('/session?token=' + encodeURIComponent(session))
-        .then(function(data){
+        .then(function(data) {
           if (applySessionPayload(data)) {
             if (data.order) oi = data.order.orderId || oi;
-            loadFromDB(oi);
+            loadPaymentDetails(oi);
+            // Poll for updates
+            setInterval(function() { loadPaymentDetails(oi); }, 30000);
           } else {
             loadFromLocalStorage(oi);
           }
-        }).catch(function(){ loadFromLocalStorage(oi); });
+        })
+        .catch(function() { loadFromLocalStorage(oi); });
     } else {
       loadFromLocalStorage(oi);
     }
