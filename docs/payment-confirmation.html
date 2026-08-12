@@ -368,7 +368,7 @@
     }
     #confMap {
       height: 320px;
-      border-radius: var(--radius-sm);
+      border-radius: 14px;
       overflow: hidden;
     }
 
@@ -570,11 +570,15 @@
 
   <!-- Delivery Map -->
   <div class="map-card anim-5" id="mapCard">
-    <div class="section-label" style="margin-bottom:18px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      Live Delivery Tracking
-    </div>
+    <h3 style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin:0 0 16px;display:flex;align-items:center;gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Delivery Route
+    </h3>
     <div id="confMap"></div>
+    <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#888;">
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#E31937;border-radius:50%;display:inline-block;"></span> Origin: Tesla Factory, Fremont CA</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#00A550;border-radius:50%;display:inline-block;"></span> Destination: <span id="mapDestLabel">—</span></span>
+    </div>
   </div>
 
   <!-- Action Bar -->
@@ -583,10 +587,6 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       Refresh Status
     </button>
-    <a class="btn-pc-outline" href="track.html" id="trackBtn">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16 10,8"/></svg>
-      Track Order
-    </a>
   </div>
 
 </div>
@@ -809,11 +809,7 @@
     setText('delStateZip', [dd.state, dd.zipCode || dd.zip].filter(Boolean).join(' ') || '—');
     setText('delCountry',  dd.country  || '—');
 
-    // Track link
-    var tb = el('trackBtn');
-    var oid = order.orderId || order.order_id;
-    if (tb && oid)
-      tb.href = 'track.html?order=' + encodeURIComponent(oid) + '&tracking=' + encodeURIComponent(order.trackingNumber || order.tracking_number || '');
+    // Track Order CTA removed from this page (Refresh Status retained)
 
     // Timeline & map
     renderTimeline(order.timeline || [], order.status || 'confirmed');
@@ -907,49 +903,55 @@
   function initMap(dd) {
     if (mapInited || !window.L) return;
     mapInited = true;
+    dd = dd || {};
     var origin = [37.4936, -121.9448];
-    var dest   = [40.7128, -74.0060];
-    var city    = dd.city    || '';
-    var state   = dd.state   || '';
+    var street = dd.address || dd.street || '';
+    var city = dd.city || '';
+    var state = dd.state || '';
+    var zip = dd.zipCode || dd.zip || '';
     var country = dd.country || '';
+    var destLabel = [street, city, [state, zip].filter(Boolean).join(' '), country].filter(Boolean).join(', ') || 'Delivery address';
+    var destEl = document.getElementById('mapDestLabel');
+    if (destEl) destEl.textContent = destLabel;
 
+    var dest = [40.7128, -74.0060];
+    // Same map implementation as Order Placed page
+    // Attribution kept — required by OpenStreetMap / CARTO tile usage terms
     var map = L.map('confMap').setView([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], 4);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 19
+      attribution: '© OpenStreetMap © CARTO', maxZoom: 19
     }).addTo(map);
 
     var rI = L.divIcon({ html: '<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>', className: '', iconSize: [14,14], iconAnchor: [7,7] });
     var gI = L.divIcon({ html: '<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>', className: '', iconSize: [14,14], iconAnchor: [7,7] });
-    var tI = L.divIcon({ html: '<div style="font-size:22px;line-height:1;">🚚</div>', className: '', iconSize: [24,24], iconAnchor: [12,12] });
+    var tI = L.divIcon({ html: '<div style="font-size:20px;line-height:1;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>', className: '', iconSize: [24,24], iconAnchor: [12,12] });
 
     L.marker(origin, { icon: rI }).addTo(map).bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
-    var destMk  = L.marker(dest,   { icon: gI }).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>' + (city || '') + (country ? ', ' + country : ''));
-    var truckMk = L.marker([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2], { icon: tI }).addTo(map).bindPopup('<strong>Your Tesla</strong><br>🚚 En Route');
-    var line    = L.polyline([origin, dest], { color: '#E31937', weight: 2.5, opacity: .5, dashArray: '8,8' }).addTo(map);
-    map.fitBounds(L.latLngBounds([origin, dest]), { padding: [50, 50] });
 
-    if (city || country) {
-      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent([city, state, country].filter(Boolean).join(', ')))
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if (d && d.length) {
-            dest = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
-            destMk.setLatLng(dest).bindPopup('<strong>Delivery Destination</strong><br>' + (city || '') + (country ? ', ' + country : ''));
-            line.setLatLngs([origin, dest]);
-            map.fitBounds(L.latLngBounds([origin, dest]), { padding: [50, 50] });
-          }
-        }).catch(function(){});
-    }
-
-    var p = 0.3;
-    setInterval(function(){
-      p = (p + 0.003) % 1;
-      truckMk.setLatLng([
-        origin[0] + (dest[0]-origin[0])*p + Math.sin(p*12)*.05,
-        origin[1] + (dest[1]-origin[1])*p + Math.cos(p*12)*.05
-      ]);
-    }, 80);
+    var query = [street, city, state, zip, country].filter(Boolean).join(', ');
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query || [city, state, country].filter(Boolean).join(', ')))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.length) {
+          dest = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+          L.marker(dest, { icon: gI }).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>' + String(destLabel).replace(/</g, '&lt;'));
+          var mid = [(origin[0]+dest[0])/2, (origin[1]+dest[1])/2];
+          var truckMk = L.marker(mid, { icon: tI }).addTo(map);
+          truckMk.bindPopup('<strong>Your Tesla</strong><br>En Route');
+          L.polyline([origin, dest], { color: '#E31937', weight: 2.5, opacity: .55, dashArray: '8,8' }).addTo(map);
+          map.fitBounds(L.latLngBounds([origin, dest]), { padding: [40, 40] });
+          var p = 0;
+          setInterval(function(){
+            p = (p + 0.003) % 1;
+            truckMk.setLatLng([
+              origin[0] + (dest[0]-origin[0])*p + Math.sin(p*12)*.05,
+              origin[1] + (dest[1]-origin[1])*p + Math.cos(p*12)*.05
+            ]);
+          }, 80);
+        }
+      }).catch(function(){});
   }
+
 
   // Fetch proof status by customer email (the real link between proofs and orders)
   function fetchProofByEmail(email) {
