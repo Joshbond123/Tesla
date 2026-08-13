@@ -458,8 +458,10 @@ if (document.readyState === 'loading') {
 // hasOrder && !hasPaymentProof → order-placed.html
 // Never uses localStorage/cookies for the decision — session API only.
 (function orderPaymentRedirectGuard() {
-  var p = (window.location.pathname || '').toLowerCase();
-  var file = p.split('/').pop() || '';
+  // Keep original pathname casing — GitHub Pages paths are case-sensitive (/Tesla/ ≠ /tesla/)
+  var pathname = window.location.pathname || '/';
+  var pathLower = pathname.toLowerCase();
+  var file = (pathname.split('/').pop() || '').toLowerCase();
 
   // Pages that must never be interrupted by this guard
   var skip = [
@@ -474,16 +476,16 @@ if (document.readyState === 'loading') {
     'entry.html'
   ];
   for (var i = 0; i < skip.length; i++) {
-    if (file === skip[i] || p.indexOf('/admin') !== -1) return;
+    if (file === skip[i] || pathLower.indexOf('/admin') !== -1) return;
   }
 
-  var BASE = p.replace(/\/[^/]*$/, '/');
-  if (!BASE || BASE === '/') BASE = '/Tesla/';
-
+  // Prefer relative redirects so we always stay under the current project base
+  // (e.g. /Tesla/ on GitHub Pages). Avoid absolute roots like /order-placed.html.
   function go(page, orderId) {
-    var dest = BASE + page;
+    var dest = page;
     if (orderId) dest += (dest.indexOf('?') === -1 ? '?' : '&') + 'order=' + encodeURIComponent(orderId);
-    if (window.location.href.indexOf(page) === -1) {
+    // Only redirect if we are not already on the target page
+    if (pathLower.indexOf(page.toLowerCase()) === -1) {
       window.location.replace(dest);
     }
   }
