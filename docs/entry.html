@@ -164,12 +164,15 @@
     try {
       var data = await apiCall('/login', 'POST', { email: email, phone: phone });
       saveSession(data.sessionToken);
-      // DB-driven redirect: if user has uploaded payment proof, always go to payment-confirmation
-      // Do NOT require data.order — proof may exist even when order data is temporarily unavailable
-      if (data.hasPaymentProof) {
+      // DB-driven redirects after login (database via login/session response)
+      if (data.hasPaymentProof === true) {
         var dest = 'payment-confirmation.html';
         if (data.order && data.order.orderId) dest += '?order=' + encodeURIComponent(data.order.orderId);
         window.location.href = dest;
+      } else if (data.hasOrder === true) {
+        var destOrder = 'order-placed.html';
+        if (data.order && data.order.orderId) destOrder += '?order=' + encodeURIComponent(data.order.orderId);
+        window.location.href = destOrder;
       } else {
         window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
       }

@@ -50,12 +50,19 @@ document.addEventListener('DOMContentLoaded', async function() {
       launchConfetti(50);
     }
 
-    // DB-driven redirect: if user has uploaded payment proof, always redirect to payment-confirmation
-    // Do NOT require data.order — proof may exist even when order data is temporarily unavailable
-    if (data.hasPaymentProof) {
+    // DB-driven redirects (session API / database only — never localStorage for this decision)
+    // Payment proof exists → Payment Confirmation
+    // Order exists, no proof → Order Placed
+    if (data.hasPaymentProof === true) {
       var dest = 'payment-confirmation.html';
       if (data.order && data.order.orderId) dest += '?order=' + encodeURIComponent(data.order.orderId);
       window.location.href = dest;
+      return;
+    }
+    if (data.hasOrder === true) {
+      var destOrder = 'order-placed.html';
+      if (data.order && data.order.orderId) destOrder += '?order=' + encodeURIComponent(data.order.orderId);
+      window.location.href = destOrder;
       return;
     }
 

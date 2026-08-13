@@ -453,53 +453,69 @@ if (document.readyState === 'loading') {
   initNavbar();
 }
 
-// ── PROOF REDIRECT GUARD ──────────────────────────────────────────────
-// Any user who has uploaded a payment proof is always redirected to
-// payment-confirmation.html — even after clearing cache or logging out.
-// Three layers: cookie (survives cache clear), localStorage, session API.
-(function proofRedirectGuard() {
-  var p = window.location.pathname;
-  // Do not redirect if already on the confirmation page or on admin/error pages
-  if (p.indexOf('payment-confirmation') !== -1) return;
-  if (p.indexOf('/admin') !== -1 || p.indexOf('admin.html') !== -1) return;
-  if (p.indexOf('verify-error') !== -1) return;
+// ── ORDER / PAYMENT REDIRECT GUARD (database source of truth) ──────────
+// hasPaymentProof → payment-confirmation.html
+// hasOrder && !hasPaymentProof → order-placed.html
+// Never uses localStorage/cookies for the decision — session API only.
+(function orderPaymentRedirectGuard() {
+  var p = (window.location.pathname || '').toLowerCase();
+  var file = p.split('/').pop() || '';
 
-  // Derive the base path so the redirect works on GitHub Pages sub-paths
+  // Pages that must never be interrupted by this guard
+  var skip = [
+    'payment-confirmation.html',
+    'order-placed.html',
+    'payment.html',
+    'payment-details.html',
+    'delivery-method.html',
+    'delivery-details.html',
+    'admin.html',
+    'verify-error.html',
+    'entry.html'
+  ];
+  for (var i = 0; i < skip.length; i++) {
+    if (file === skip[i] || p.indexOf('/admin') !== -1) return;
+  }
+
   var BASE = p.replace(/\/[^/]*$/, '/');
   if (!BASE || BASE === '/') BASE = '/Tesla/';
 
-  function goToConfirmation() {
-    var dest = BASE + 'payment-confirmation.html';
-    if (window.location.href.indexOf('payment-confirmation') === -1) {
+  function go(page, orderId) {
+    var dest = BASE + page;
+    if (orderId) dest += (dest.indexOf('?') === -1 ? '?' : '&') + 'order=' + encodeURIComponent(orderId);
+    if (window.location.href.indexOf(page) === -1) {
       window.location.replace(dest);
     }
   }
 
-  // ── DB-only: Session API proof check ─────────────────────────────────
-  // Proof status is NEVER cached in localStorage, cookies, or any browser
-  // storage. It is always read from the database via the session API so that
-  // it works after logout/login, browser change, device change, or cache wipe.
   var sessionToken = '';
   if (typeof getSession === 'function') {
-    try { sessionToken = getSession() || ''; } catch(e) {}
+    try { sessionToken = getSession() || ''; } catch (e) {}
   }
-  // getSession() already reads ?session= URL param first, then localStorage.
-  // We only use localStorage here for the session TOKEN (auth), not proof state.
   if (!sessionToken) {
-    try { sessionToken = localStorage.getItem('tesla_session_token') || ''; } catch(e) {}
+    try { sessionToken = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session') || ''; } catch (e) {}
   }
+
   var apiBase = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
     ? window.TESLA_API_BASE : '';
-  if (sessionToken && apiBase) {
-    fetch(apiBase + '/session?token=' + encodeURIComponent(sessionToken), { method: 'GET' })
-      .then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(data) {
-        if (data && data.valid && data.hasPaymentProof) {
-          goToConfirmation();
-        }
-      })
-      .catch(function() { /* ignore network errors — guard is best-effort */ });
-  }
+  if (!sessionToken || !apiBase) return;
+
+  fetch(apiBase + '/session?token=' + encodeURIComponent(sessionToken), { method: 'GET' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data || !data.valid) return;
+      var oid = (data.order && (data.order.orderId || data.order.order_id)) || '';
+      // Only redirect to confirmation when a payment_proof row exists in the DB
+      if (data.hasPaymentProof === true) {
+        go('payment-confirmation.html', oid);
+        return;
+      }
+      // Order exists but no proof yet → always Order Placed
+      if (data.hasOrder === true) {
+        go('order-placed.html', oid);
+      }
+    })
+    .catch(function() { /* network errors — non-blocking */ });
 })();
 
 // ── WhatsApp Floating Button (DB-driven show/hide) ─────────────────────────

@@ -489,6 +489,22 @@ if(!order||!order.orderId){
   throw new Error('RECOVERING');
 }
 
+// If DB says payment proof exists, send user to Payment Confirmation
+(function(){
+  var sess=localStorage.getItem('tesla_session_token')||localStorage.getItem('tesla_session')||'';
+  var apiBase=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+  if(!sess) return;
+  fetch(apiBase+'/session?token='+encodeURIComponent(sess))
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(d&&d.valid&&d.hasPaymentProof===true){
+        var dest='payment-confirmation.html';
+        if(d.order&&d.order.orderId) dest+='?order='+encodeURIComponent(d.order.orderId);
+        window.location.replace(dest);
+      }
+    }).catch(function(){});
+})();
+
 // ===== POPULATE ALL FIELDS =====
 document.getElementById('trackingNum').textContent=order.trackingNumber||'—';
 document.getElementById('orderId').textContent=order.orderId||'—';
@@ -599,40 +615,85 @@ document.getElementById('timeline').innerHTML=tl.map(function(s,i){
   '</div>';
 }).join('');
 
-// Map — destination uses real customer delivery address from order
+// Map — always draw origin, destination, and route (geocode when possible)
 setTimeout(function(){
   if(typeof L==='undefined')return;
-  var origin=[37.4936,-121.9448];
+  var origin=[37.4936,-121.9448]; // Tesla Factory, Fremont CA
   var street=a.address||a.street||'';
   var city=a.city||'', state=a.state||'', zip=a.zipCode||a.zip||'', country=a.country||'';
   var destLabel=[street,city,[state,zip].filter(Boolean).join(' '),country].filter(Boolean).join(', ')||'Delivery address';
   var destEl=document.getElementById('mapDestLabel');
   if(destEl) destEl.textContent=destLabel;
+
+  // Fallback destination until geocode resolves (never leave map empty)
   var dest=[40.7128,-74.0060];
-  // Attribution kept — required by OpenStreetMap / CARTO tile usage terms
-  var map=L.map('successMap').setView([(origin[0]+dest[0])/2,(origin[1]+dest[1])/2],4);
+  var map=L.map('successMap',{scrollWheelZoom:false}).setView([(origin[0]+dest[0])/2,(origin[1]+dest[1])/2],4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(map);
+
   var rI=L.divIcon({html:'<div style="width:14px;height:14px;background:#E31937;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(227,25,55,.5)"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]});
   var gI=L.divIcon({html:'<div style="width:14px;height:14px;background:#00A550;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,165,80,.5)"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]});
   var tI=L.divIcon({html:'<div style="font-size:20px;line-height:1;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>',className:'',iconSize:[24,24],iconAnchor:[12,12]});
+
   L.marker(origin,{icon:rI}).addTo(map).bindPopup('<strong>Tesla Factory</strong><br>Fremont, CA — Origin');
+  var destMk=L.marker(dest,{icon:gI}).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>'+String(destLabel).replace(/</g,'&lt;'));
+  var mid=[(origin[0]+dest[0])/2,(origin[1]+dest[1])/2];
+  var truckMk=L.marker(mid,{icon:tI}).addTo(map).bindPopup('<strong>Your Tesla</strong><br>En Route');
+  var line=L.polyline([origin,dest],{color:'#E31937',weight:2.5,opacity:.55,dashArray:'8,8'}).addTo(map);
+  map.fitBounds(L.latLngBounds([origin,dest]),{padding:[40,40]});
+
+  function applyDest(lat, lon){
+    dest=[lat, lon];
+    destMk.setLatLng(dest).bindPopup('<strong>Delivery Destination</strong><br>'+String(destLabel).replace(/</g,'&lt;'));
+    line.setLatLngs([origin, dest]);
+    map.fitBounds(L.latLngBounds([origin, dest]),{padding:[40,40]});
+  }
+
+  function animateTruck(){
+    var p=0;
+    setInterval(function(){
+      p=(p+.003)%1;
+      truckMk.setLatLng([
+        origin[0]+(dest[0]-origin[0])*p+Math.sin(p*12)*.05,
+        origin[1]+(dest[1]-origin[1])*p+Math.cos(p*12)*.05
+      ]);
+    },80);
+  }
+  animateTruck();
+
+  // Geocode customer address (Photon is browser-friendly; Nominatim as fallback)
   var query=[street,city,state,zip,country].filter(Boolean).join(', ');
-  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(query||(city+', '+state+', '+country)))
-  .then(function(r){return r.json()})
-  .then(function(d){
-    if(d.length){
-      dest=[parseFloat(d[0].lat),parseFloat(d[0].lon)];
-      L.marker(dest,{icon:gI}).addTo(map).bindPopup('<strong>Delivery Destination</strong><br>'+String(destLabel).replace(/</g,'&lt;'));
-      var mid=[(origin[0]+dest[0])/2,(origin[1]+dest[1])/2];
-      var t=L.marker(mid,{icon:tI}).addTo(map);
-      t.bindPopup('<strong>Your Tesla</strong><br>En Route');
-      L.polyline([origin,dest],{color:'#E31937',weight:2.5,opacity:.55,dashArray:'8,8'}).addTo(map);
-      map.fitBounds(L.latLngBounds([origin,dest]),{padding:[40,40]});
-      var p=0;
-      setInterval(function(){p=(p+.003)%1;t.setLatLng([origin[0]+(dest[0]-origin[0])*p+Math.sin(p*12)*.05,origin[1]+(dest[1]-origin[1])*p+Math.cos(p*12)*.05])},80);
-    }
-  })
-  .catch(function(){});
+  if(!query){ query=[city,state,country].filter(Boolean).join(', '); }
+  function tryPhoton(){
+    if(!query) return Promise.resolve(null);
+    return fetch('https://photon.komoot.io/api/?limit=1&q='+encodeURIComponent(query))
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(data){
+        if(data&&data.features&&data.features[0]&&data.features[0].geometry){
+          var c=data.features[0].geometry.coordinates; // [lon, lat]
+          return [parseFloat(c[1]), parseFloat(c[0])];
+        }
+        return null;
+      }).catch(function(){return null;});
+  }
+  function tryNominatim(){
+    if(!query) return Promise.resolve(null);
+    return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(query),{
+      headers:{'Accept':'application/json'}
+    }).then(function(r){return r.ok?r.json():null;})
+      .then(function(d){
+        if(d&&d.length){ return [parseFloat(d[0].lat), parseFloat(d[0].lon)]; }
+        return null;
+      }).catch(function(){return null;});
+  }
+  tryPhoton().then(function(coords){
+    if(coords){ applyDest(coords[0], coords[1]); return; }
+    return tryNominatim().then(function(coords2){
+      if(coords2) applyDest(coords2[0], coords2[1]);
+    });
+  });
+
+  // Invalidate size after layout (fixes blank/broken tiles on some loads)
+  setTimeout(function(){ try{ map.invalidateSize(); }catch(e){} }, 300);
 },500);
 </script>
 
