@@ -1012,21 +1012,87 @@ async function handleAdminDeleteUser(req: Request) {
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
   const { id, email } = body;
   if (!id && !email) return json({ error: "User ID or email required" }, 400);
-  
-  const filter = id ? { id: "eq." + id } : { email: "eq." + (email || "") };
-  const qs = buildQs("id,auth_user_id", filter, "limit=1");
-  const lookup = await fetch(REST + "/giveaway_users?" + qs, { headers: SB_HEADERS });
-  if (!lookup.ok) return json({ error: "User not found" }, 404);
-  const rows = await lookup.json();
-  const user = rows[0];
-  if (!user) return json({ error: "User not found" }, 404);
-  
-  if (user.auth_user_id) {
-    await fetch(AUTH + "/admin/users/" + user.auth_user_id, { method: "DELETE", headers: SB_HEADERS });
+
+  // Resolve the user (by id preferred, else email)
+  let user: any = null;
+  if (id) {
+    const r = await fetch(REST + "/giveaway_users?select=id,email,auth_user_id&id=eq." + encodeURIComponent(id) + "&limit=1", { headers: SB_HEADERS });
+    if (r.ok) { const rows = await r.json(); user = rows[0] || null; }
   }
-  const delR = await fetch(REST + "/giveaway_users?id=eq." + user.id, { method: "DELETE", headers: SB_HEADERS });
-  if (!delR.ok) return json({ error: "Failed to delete user" }, 500);
-  return json({ success: true });
+  if (!user && email) {
+    const r = await fetch(REST + "/giveaway_users?select=id,email,auth_user_id&email=eq." + encodeURIComponent(email.toLowerCase().trim()) + "&limit=1", { headers: SB_HEADERS });
+    if (r.ok) { const rows = await r.json(); user = rows[0] || null; }
+  }
+  if (!user) return json({ error: "User not found" }, 404);
+
+  const uid = user.id;
+  const userEmail = (user.email || email || "").toLowerCase().trim();
+  const delHeaders = { ...SB_HEADERS, Prefer: "return=minimal" };
+
+  // 1) Collect order IDs for this user (needed to wipe tracking rows)
+  let orderDbIds: string[] = [];
+  try {
+    const or = await fetch(REST + "/orders?select=id,order_id&user_id=eq." + encodeURIComponent(uid), { headers: SB_HEADERS });
+    if (or.ok) {
+      const rows = await or.json();
+      if (Array.isArray(rows)) orderDbIds = rows.map((o: any) => o.id).filter(Boolean);
+    }
+  } catch { /* continue wipe */ }
+
+  // 2) Tracking timeline rows tied to orders
+  for (const oid of orderDbIds) {
+    try {
+      await fetch(REST + "/tracking_data?order_id=eq." + encodeURIComponent(oid), { method: "DELETE", headers: delHeaders });
+    } catch { /* best-effort */ }
+  }
+
+  // 3) Orders
+  try {
+    await fetch(REST + "/orders?user_id=eq." + encodeURIComponent(uid), { method: "DELETE", headers: delHeaders });
+  } catch { /* best-effort */ }
+
+  // 4) Selected cars + delivery details
+  try {
+    await fetch(REST + "/selected_cars?user_id=eq." + encodeURIComponent(uid), { method: "DELETE", headers: delHeaders });
+  } catch { /* best-effort */ }
+  try {
+    await fetch(REST + "/delivery_details?user_id=eq." + encodeURIComponent(uid), { method: "DELETE", headers: delHeaders });
+  } catch { /* best-effort */ }
+
+  // 5) Payment proofs (by user_id AND by customer_email so no orphan remains)
+  try {
+    await fetch(REST + "/payment_proofs?user_id=eq." + encodeURIComponent(uid), { method: "DELETE", headers: delHeaders });
+  } catch { /* best-effort */ }
+  if (userEmail) {
+    try {
+      await fetch(REST + "/payment_proofs?customer_email=eq." + encodeURIComponent(userEmail), { method: "DELETE", headers: delHeaders });
+    } catch { /* best-effort */ }
+  }
+
+  // 6) Sessions — so old tokens cannot reopen deleted accounts
+  try {
+    await fetch(REST + "/user_sessions?user_id=eq." + encodeURIComponent(uid), { method: "DELETE", headers: delHeaders });
+  } catch { /* best-effort */ }
+
+  // 7) Auth user (if linked)
+  if (user.auth_user_id) {
+    try {
+      await fetch(AUTH + "/admin/users/" + user.auth_user_id, { method: "DELETE", headers: SB_HEADERS });
+    } catch { /* best-effort */ }
+  }
+
+  // 8) Primary user record
+  const delR = await fetch(REST + "/giveaway_users?id=eq." + encodeURIComponent(uid), {
+    method: "DELETE",
+    headers: delHeaders,
+  });
+  if (!delR.ok) {
+    const errText = await delR.text().catch(() => "");
+    console.error("Admin delete user failed:", errText);
+    return json({ error: "Failed to delete user record. Related data may still have been removed." }, 500);
+  }
+
+  return json({ success: true, deletedUserId: uid, email: userEmail });
 }
 
 // ── DELIVERY FEE SETTINGS ─────────────────────────────────────────────────────

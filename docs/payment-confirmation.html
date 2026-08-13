@@ -946,13 +946,38 @@
     var mid = [(origin[0]+dest[0])/2, (origin[1]+dest[1])/2];
     var truckMk = L.marker(mid, { icon: tI }).addTo(map).bindPopup('<strong>Your Tesla</strong><br>En Route');
     var line = L.polyline([origin, dest], { color: '#E31937', weight: 2.5, opacity: .55, dashArray: '8,8' }).addTo(map);
-    map.fitBounds(L.latLngBounds([origin, dest]), { padding: [40, 40] });
+
+    function fitRouteInView() {
+      try {
+        map.invalidateSize(true);
+        var bounds = L.latLngBounds([origin, dest]).pad(0.18);
+        map.fitBounds(bounds, {
+          paddingTopLeft: [48, 48],
+          paddingBottomRight: [48, 48],
+          maxZoom: 5,
+          animate: false
+        });
+        setTimeout(function () {
+          try {
+            map.invalidateSize(true);
+            map.fitBounds(L.latLngBounds([origin, dest]).pad(0.18), {
+              paddingTopLeft: [48, 48],
+              paddingBottomRight: [48, 48],
+              maxZoom: 5,
+              animate: false
+            });
+          } catch (e) {}
+        }, 250);
+      } catch (e) {}
+    }
+    fitRouteInView();
 
     function applyDest(lat, lon) {
       dest = [lat, lon];
       destMk.setLatLng(dest).bindPopup('<strong>Delivery Destination</strong><br>' + String(destLabel).replace(/</g, '&lt;'));
       line.setLatLngs([origin, dest]);
-      map.fitBounds(L.latLngBounds([origin, dest]), { padding: [40, 40] });
+      truckMk.setLatLng([(origin[0]+dest[0])/2, (origin[1]+dest[1])/2]);
+      fitRouteInView();
     }
 
     var p = 0;
@@ -997,7 +1022,7 @@
       });
     });
 
-    setTimeout(function() { try { map.invalidateSize(); } catch (e) {} }, 300);
+    setTimeout(function () { fitRouteInView(); }, 400);
   }
 
 
