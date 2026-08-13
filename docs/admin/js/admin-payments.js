@@ -436,9 +436,12 @@
     _editingId   = method ? method.id : null;
     _logoUpload  = null;
     _qrUpload    = null;
+    _pmSaving    = false;
 
     var drw = $id('pmDrawer');
     if (!drw) { buildDrawerHtml(); drw = $id('pmDrawer'); }
+    // Ensure Save is interactive every time the modal opens
+    resetSaveButton();
 
     var isNew = !method;
     setText('drwTitle', isNew ? 'Add Payment Method' : 'Edit — ' + (method.name || 'Payment Method'));
@@ -506,16 +509,53 @@
     setTimeout(function () { var n = $id('drw_name'); if (n) n.focus(); }, 200);
   }
 
+  var _pmSaving = false;
+
+  var SAVE_BTN_HTML =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>' +
+      '<polyline points="17 21 17 13 7 13 7 21"/>' +
+      '<polyline points="7 3 7 8 15 8"/>' +
+    '</svg>' +
+    '<span class="pm3-btn-label">Save Changes</span>';
+
+  var SAVE_BTN_LOADING_HTML =
+    '<svg class="pm3-btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+      '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>' +
+    '</svg>' +
+    '<span class="pm3-btn-label">Saving…</span>';
+
+  function resetSaveButton() {
+    _pmSaving = false;
+    var saveBtn = document.querySelector('.pm3-btn-save');
+    if (!saveBtn) return;
+    saveBtn.disabled = false;
+    saveBtn.classList.remove('is-loading');
+    saveBtn.innerHTML = SAVE_BTN_HTML;
+  }
+
+  function setSaveButtonLoading() {
+    _pmSaving = true;
+    var saveBtn = document.querySelector('.pm3-btn-save');
+    if (!saveBtn) return;
+    saveBtn.disabled = true;
+    saveBtn.classList.add('is-loading');
+    saveBtn.innerHTML = SAVE_BTN_LOADING_HTML;
+  }
+
   function closeDrawer() {
     var panel = $id('pmDrawerPanel');
     if (panel) panel.classList.remove('pm3-drw-panel-open');
     setTimeout(function () {
       var overlay = $id('pmDrawerOverlay');
       if (overlay) overlay.classList.remove('pm3-drw-open');
-    }, 300);
+      // Always restore CTA after close so next open is not stuck
+      resetSaveButton();
+    }, 280);
     _editingId  = null;
     _logoUpload = null;
     _qrUpload   = null;
+    _pmSaving   = false;
   }
 
   window.closePaymentDrawer = closeDrawer;
@@ -613,10 +653,17 @@
             '</div>' +
           '</div>' +
           '<div class="pm3-drw-footer">' +
-            '<button class="pm3-btn-cancel" onclick="closePaymentDrawer()">Cancel</button>' +
-            '<button class="pm3-btn-save pm3-btn pm3-btn--primary" onclick="window._pmSave()">' +
-              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13"/><polyline points="7,3 7,8 15,8"/></svg>' +
-              'Save Changes' +
+            '<button type="button" class="pm3-btn-cancel" onclick="closePaymentDrawer()">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+              '<span class="pm3-btn-label">Cancel</span>' +
+            '</button>' +
+            '<button type="button" class="pm3-btn-save" onclick="window._pmSave()">' +
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>' +
+                '<polyline points="17 21 17 13 7 13 7 21"/>' +
+                '<polyline points="7 3 7 8 15 8"/>' +
+              '</svg>' +
+              '<span class="pm3-btn-label">Save Changes</span>' +
             '</button>' +
           '</div>' +
         '</div>' +
@@ -774,41 +821,49 @@
   // _pmSave — collects config by method slug (the second part of fix)
   // ─────────────────────────────────────────────────────────────────
   window._pmSave = function () {
+    if (_pmSaving) return; // prevent double-submit while request is in flight
+
     var isNew = !_editingId;
     var name  = (val('drw_name') || '').trim();
-    if (!name) { showToast('Method name is required', 'error'); $id('drw_name').focus(); return; }
+    if (!name) { showToast('Method name is required', 'error'); var n = $id('drw_name'); if (n) n.focus(); return; }
 
     var type = val('drw_type') || 'wallet';
     var id   = (val('drw_id') || '').trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
     if (isNew && PM.get(id)) { showToast('A method with ID "' + id + '" already exists', 'error'); return; }
 
-    // Determine the effective slug for schema lookup
     var slug   = isNew ? id : _editingId;
     var schema = _getSchema(slug, type);
+    if (!schema || !schema.fields) {
+      showToast('Could not load method fields. Please close and try again.', 'error');
+      return;
+    }
 
-    // Collect config from the rendered fields using the schema
     var config = {};
-    schema.fields.forEach(function (fd) {
-      if (fd.inputType === 'qr') {
-        // handled separately below
-      } else if (fd.inputType === 'toggle') {
-        var el = $id(fd.id);
-        config[fd.key] = el ? el.checked : (fd.defaultVal !== false);
-      } else {
-        var elVal = val(fd.id);
-        if (elVal !== null && elVal !== undefined) {
-          config[fd.key] = elVal.trim();
+    try {
+      schema.fields.forEach(function (fd) {
+        if (fd.inputType === 'qr') {
+          // handled separately below
+        } else if (fd.inputType === 'toggle') {
+          var el = $id(fd.id);
+          config[fd.key] = el ? el.checked : (fd.defaultVal !== false);
+        } else {
+          var elVal = val(fd.id);
+          if (elVal !== null && elVal !== undefined) {
+            config[fd.key] = String(elVal).trim();
+          }
         }
-      }
-    });
+      });
+    } catch (err) {
+      console.error('[PM] config collect error:', err);
+      showToast('Failed to read form fields', 'error');
+      return;
+    }
 
-    // Preserve the named method type if it has a dedicated schema
     if (METHOD_SCHEMAS[slug]) {
       type = METHOD_SCHEMAS[slug].type || type;
     }
 
-    // QR upload
     if (_qrUpload !== null) {
       config.qrCode = _qrUpload;
     } else if (!isNew) {
@@ -816,7 +871,6 @@
       config.qrCode = (existingM && existingM.config && existingM.config.qrCode) || '';
     }
 
-    // Logo
     var logo;
     if (_logoUpload) {
       logo = _logoUpload;
@@ -839,27 +893,32 @@
     };
     if (!isNaN(order) && order > 0) payload.displayOrder = order;
 
-    var saveBtn = document.querySelector('.pm3-btn-save');
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+    setSaveButtonLoading();
 
-    if (isNew) {
-      payload.id = id;
-      PM.add(payload);
-    } else {
-      PM.update(_editingId, payload);
-    }
-
-    closeDrawer();
-    renderPaymentMethods();
-    showToast('Payment method ' + (isNew ? 'added' : 'saved') + ' successfully');
-
-    setTimeout(function () {
-      if (PM && PM.syncFromApi) {
-        PM.syncFromApi('admin', function () {
-          renderPaymentMethods();
-        });
+    try {
+      if (isNew) {
+        payload.id = id;
+        PM.add(payload);
+      } else {
+        PM.update(_editingId, payload);
       }
-    }, 1200);
+
+      closeDrawer();
+      renderPaymentMethods();
+      showToast('Payment method ' + (isNew ? 'added' : 'saved') + ' successfully');
+
+      setTimeout(function () {
+        if (PM && PM.syncFromApi) {
+          PM.syncFromApi('admin', function () {
+            renderPaymentMethods();
+          });
+        }
+      }, 1200);
+    } catch (err) {
+      console.error('[PM] save error:', err);
+      showToast('Save failed. Please try again.', 'error');
+      resetSaveButton();
+    }
   };
 
 
