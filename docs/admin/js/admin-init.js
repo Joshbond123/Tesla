@@ -32,11 +32,21 @@ function init() {
 
   // ── Auth check & initial data load ───────────────────────────────────
   try {
-    if (sessionStorage.getItem("tesla_admin_authenticated") === "true") {
+    var authed = sessionStorage.getItem("tesla_admin_authenticated") === "true";
+    var token = "";
+    try { token = localStorage.getItem("tesla_admin_token") || ""; } catch (e0) {}
+    // Must have a real API session token — flag-only auth cannot load database data
+    if (authed && token && API_BASE) {
       document.getElementById("loginScreen").classList.add("hidden");
       document.getElementById("app").classList.add("active");
       refreshAll();
     } else {
+      try {
+        sessionStorage.removeItem("tesla_admin_authenticated");
+        if (!token) localStorage.removeItem("tesla_admin_token");
+      } catch (e1) {}
+      document.getElementById("app").classList.remove("active");
+      document.getElementById("loginScreen").classList.remove("hidden");
       var li = document.getElementById("loginInput");
       if (li) li.focus();
     }

@@ -16,45 +16,66 @@ function currentAdminPassword() {
 }
 
 function doLogin() {
-  var input = document.getElementById("loginInput"); var pwd = input ? input.value : "";
+  var input = document.getElementById("loginInput");
+  var pwd = input ? input.value : "";
   var err = document.getElementById("loginError");
-  if (!pwd) { if (err) err.style.display = "block"; return; }
+  if (!pwd) { if (err) { err.style.display = "block"; err.textContent = "Enter the admin password."; } return; }
 
-  // Helper: complete the login flow once password is verified
   function loginSuccess(token) {
-    try { if (token) localStorage.setItem("tesla_admin_token", token); } catch (e) {}
+    if (!token) {
+      if (err) {
+        err.style.display = "block";
+        err.textContent = "Login succeeded but no session token was returned. Check API configuration.";
+      }
+      return;
+    }
+    try { localStorage.setItem("tesla_admin_token", token); } catch (e) {}
     sessionStorage.setItem("tesla_admin_authenticated", "true");
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("app").classList.add("active");
     if (err) err.style.display = "none";
     if (input) input.value = "";
-    try { refreshAll(); } catch(e) {}
+    setApiStatus(true);
+    try { refreshAll(); } catch (e) { console.error(e); }
   }
 
-  // Helper: fall back to local password check (works offline / no backend)
-  function tryLocalAuth() {
-    var localPwd = currentAdminPassword();
-    if (pwd === localPwd) {
-      loginSuccess(null);
-    } else {
-      if (err) err.style.display = "block";
-      if (input) { input.value = ""; if (input.focus) input.focus(); }
+  // Database-backed auth only — local password alone cannot load admin data
+  if (!API_BASE) {
+    if (err) {
+      err.style.display = "block";
+      err.textContent = "API is not configured. Cannot connect to the database.";
     }
+    setApiStatus(false);
+    return;
   }
 
-  // Try the server first; fall back to local check on any failure
+  var loginBtn = document.querySelector("#loginScreen button, #loginScreen .btn-primary, button[onclick*=\"doLogin\"]");
+  if (loginBtn) { loginBtn.disabled = true; }
+
   api("POST", "/admin/auth", { password: pwd })
-    .then(function(r) {
+    .then(function (r) {
       if (r && r.token) {
         loginSuccess(r.token);
       } else {
-        // Server responded but rejected the password — try local as fallback
-        tryLocalAuth();
+        if (err) {
+          err.style.display = "block";
+          err.textContent = "Invalid response from server. Please try again.";
+        }
       }
     })
-    .catch(function() {
-      // Network error / no backend — fall back to local password
-      tryLocalAuth();
+    .catch(function (e) {
+      var msg = (e && e.message) ? e.message : "Login failed";
+      if (err) {
+        err.style.display = "block";
+        err.textContent = msg.indexOf("Invalid password") !== -1
+          ? "Invalid password. Use the current admin password (changed passwords are stored in the database)."
+          : msg;
+      }
+      if (input) { input.value = ""; if (input.focus) input.focus(); }
+      setApiStatus(false);
+    })
+    .then(function () {
+      if (loginBtn) loginBtn.disabled = false;
     });
 }
 

@@ -26,14 +26,42 @@ function api(method, path, body) {
   if (!API_BASE) return Promise.reject(new Error("API not configured"));
   var url = API_BASE + path;
   var headers = { "Content-Type": "application/json" };
-  // Attach the admin session token (if present) so protected routes authorize.
+  // Attach the admin session token so protected routes authorize.
   try {
     var token = localStorage.getItem("tesla_admin_token");
-    if (token) headers["Authorization"] = "Bearer " + token;
+    if (token) {
+      headers["Authorization"] = "Bearer " + token;
+      headers["X-Admin-Token"] = token;
+    }
   } catch (e) {}
   var opts = { method: method, headers: headers };
   if (body) opts.body = JSON.stringify(body);
-  return fetch(url, opts).then(function(r) { return r.json().then(function(d) { if (!r.ok) throw new Error(d.error || "Request failed (" + r.status + ")"); return d; }); });
+
+  return fetch(url, opts).then(function (r) {
+    return r.text().then(function (text) {
+      var d = {};
+      try { d = text ? JSON.parse(text) : {}; } catch (e) { d = { error: text || "Invalid JSON response" }; }
+      if (!r.ok) {
+        // Session expired / missing — force re-login so UI stops showing empty local data
+        if (r.status === 401 && path.indexOf("/admin/auth") === -1) {
+          try {
+            sessionStorage.removeItem("tesla_admin_authenticated");
+            localStorage.removeItem("tesla_admin_token");
+          } catch (e2) {}
+          var app = document.getElementById("app");
+          var login = document.getElementById("loginScreen");
+          if (app) app.classList.remove("active");
+          if (login) login.classList.remove("hidden");
+          setApiStatus(false);
+        }
+        var err = new Error((d && (d.error || d.message)) || ("Request failed (" + r.status + ")"));
+        err.status = r.status;
+        err.payload = d;
+        throw err;
+      }
+      return d;
+    });
+  });
 }
 
 function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }

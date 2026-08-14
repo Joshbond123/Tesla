@@ -4,11 +4,24 @@
 
 // ---- DATA LOADING ----
 function loadUsers(cb) {
-  if (!API_BASE) { loadUsersLocal(cb); return; }
+  if (!API_BASE) {
+    allUsers = [];
+    setApiStatus(false);
+    if (typeof showToast === "function") showToast("API not configured — cannot load users from database", "error");
+    if (cb) cb();
+    return;
+  }
   api("GET", "/admin/users").then(function(r) {
     allUsers = (r.users || []).sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
-    setApiStatus(true); if (cb) cb();
-  }).catch(function(e) { console.warn(e.message); setApiStatus(false); loadUsersLocal(cb); });
+    setApiStatus(true);
+    if (cb) cb();
+  }).catch(function(e) {
+    console.warn("[Admin] loadUsers:", e && e.message);
+    setApiStatus(false);
+    allUsers = [];
+    if (typeof showToast === "function") showToast("Failed to load users: " + ((e && e.message) || "unknown error"), "error");
+    if (cb) cb();
+  });
 }
 function loadUsersLocal(cb) {
   try { var local = JSON.parse(localStorage.getItem("tesla_registered_users") || "[]"); if (local.length === 0) local = JSON.parse(localStorage.getItem("tesla_entry_users") || "[]"); allUsers = (local || []).sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); }); } catch(ex) { allUsers = []; }

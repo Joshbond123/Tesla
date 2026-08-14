@@ -13,8 +13,8 @@ const SELF_BASE = SUPABASE_URL + "/functions/v1/tesla-api";
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Token, apikey, x-client-info",
 };
 
 function json(data: unknown, status = 200) {

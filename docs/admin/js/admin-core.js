@@ -21,7 +21,14 @@ var adminPassword = localStorage.getItem("tesla_admin_pwd") || "admin123";
 var selectedCCNetworks = ["visa", "mastercard", "amex", "discover"];
 var feeMode = "standard";
 
-var API_BASE = (typeof window.TESLA_API_BASE !== "undefined" && window.TESLA_API_BASE) ? window.TESLA_API_BASE.replace(/\/+$/, "") : "";
+var API_BASE = (function () {
+  var fromWindow = (typeof window.TESLA_API_BASE !== "undefined" && window.TESLA_API_BASE)
+    ? String(window.TESLA_API_BASE).replace(/\/+$/, "")
+    : "";
+  if (fromWindow) return fromWindow;
+  // Hard fallback so the admin panel never runs "offline" when config.js is cached empty
+  return "https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api";
+})();
 
 var vehicleData = [
   { id: "model3", name: "Model 3", color: "Pearl White", price: "$38,990", badge: "Most Popular", img: "https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png", specs: ["3.1s 0-60", "333mi Range", "AWD Dual Motor"] },
