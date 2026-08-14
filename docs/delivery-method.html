@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (btn) btn.disabled = true;
 });
 
-// ── Restore session data ─────────────────────────────────────────────────────
+// ── Restore session data (local cache first, then database via session API) ──
 var savedCar = null, savedDelivery = null;
 try { savedCar      = JSON.parse(localStorage.getItem('tesla_selected_car')     || 'null'); } catch(_) {}
 try { savedDelivery = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null'); } catch(_) {}
@@ -507,18 +507,99 @@ if (!savedCar)      try { savedCar      = JSON.parse(sessionStorage.getItem('tes
 if (!savedDelivery) try { savedDelivery = JSON.parse(sessionStorage.getItem('tesla_delivery_details') || 'null'); } catch(_) {}
 if (!savedCar)      try { savedCar      = JSON.parse(localStorage.getItem('selectedCar'));     } catch(_) {}
 if (!savedDelivery) try { savedDelivery = JSON.parse(localStorage.getItem('deliveryDetails')); } catch(_) {}
-if (!savedCar || !savedDelivery) { window.location.href = 'dashboard.html'; }
+// Also recover from cached last order if present
+if (!savedCar || !savedDelivery) {
+  try {
+    var lastOrd = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+    if (lastOrd) {
+      if (!savedCar && lastOrd.selectedCar) savedCar = lastOrd.selectedCar;
+      if (!savedDelivery && lastOrd.deliveryDetails) savedDelivery = lastOrd.deliveryDetails;
+    }
+  } catch(_) {}
+}
 
-// Populate summary
-var vehicleText = savedCar
-  ? ('Tesla ' + (savedCar.name || '') + (savedCar.color ? ' (' + savedCar.color + ')' : '')).trim()
-  : '—';
-var addressText = savedDelivery
-  ? (((savedDelivery.city || '') + ', ' + (savedDelivery.country || ''))
-      .replace(/^,\s*|,\s*$/g, '') || '—')
-  : '—';
-document.getElementById('summaryVehicle').textContent = vehicleText;
-document.getElementById('summaryAddress').textContent = addressText;
+function populateDeliverySummary() {
+  var vehicleText = savedCar
+    ? ('Tesla ' + (savedCar.name || '') + (savedCar.color ? ' (' + savedCar.color + ')' : '')).trim()
+    : '—';
+  var addressText = savedDelivery
+    ? (((savedDelivery.city || '') + ', ' + (savedDelivery.country || ''))
+        .replace(/^,\s*|,\s*$/g, '') || '—')
+    : '—';
+  var sv = document.getElementById('summaryVehicle');
+  var sa = document.getElementById('summaryAddress');
+  if (sv) sv.textContent = vehicleText;
+  if (sa) sa.textContent = addressText;
+}
+
+function recoverFromDatabaseThenContinue() {
+  var sess = '';
+  try {
+    if (typeof getSession === 'function') sess = getSession() || '';
+  } catch (e) {}
+  if (!sess) {
+    try { sess = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session') || ''; } catch (e) {}
+  }
+  var base = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+    ? String(window.TESLA_API_BASE).replace(/\/+$/, '')
+    : 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+
+  if (!sess) {
+    // No session and no local data — cannot choose a method
+    window.location.href = 'entry.html';
+    return;
+  }
+
+  // Show loading state while we recover from DB (do NOT bounce to dashboard/order-placed)
+  var sv = document.getElementById('summaryVehicle');
+  var sa = document.getElementById('summaryAddress');
+  if (sv) sv.textContent = 'Loading…';
+  if (sa) sa.textContent = 'Loading…';
+
+  fetch(base + '/session?token=' + encodeURIComponent(sess))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || !d.valid) {
+        window.location.href = 'entry.html';
+        return;
+      }
+      // If payment proof already uploaded, go to confirmation — not delivery method
+      if (d.hasPaymentProof === true) {
+        var dest = 'payment-confirmation.html';
+        if (d.order && d.order.orderId) dest += '?order=' + encodeURIComponent(d.order.orderId);
+        window.location.replace(dest);
+        return;
+      }
+      if (d.order) {
+        if (!savedCar && d.order.selectedCar) savedCar = d.order.selectedCar;
+        if (!savedDelivery && d.order.deliveryDetails) savedDelivery = d.order.deliveryDetails;
+        try {
+          if (d.order.selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(d.order.selectedCar));
+          if (d.order.deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(d.order.deliveryDetails));
+          localStorage.setItem('tesla_last_order', JSON.stringify(d.order));
+        } catch (e) {}
+      }
+      if (!savedCar || !savedDelivery) {
+        // Order exists but missing car/address — send to dashboard to re-select, not order-placed loop
+        window.location.href = 'dashboard.html';
+        return;
+      }
+      populateDeliverySummary();
+    })
+    .catch(function () {
+      if (!savedCar || !savedDelivery) {
+        window.location.href = 'dashboard.html';
+      } else {
+        populateDeliverySummary();
+      }
+    });
+}
+
+if (savedCar && savedDelivery) {
+  populateDeliverySummary();
+} else {
+  recoverFromDatabaseThenContinue();
+}
 
 // ── Load delivery fees from database (no localStorage) ──────────────────────
 (function loadFeesFromDB() {

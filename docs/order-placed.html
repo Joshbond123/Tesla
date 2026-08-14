@@ -783,41 +783,29 @@ function initDeliveryMap(){
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
   }
   function maxZoomForRoute(a, b) {
-    var d = routeDistanceKm(a, b);
-    // Higher maxZoom = closer view. Keep full route on screen via fitBounds.
-    if (d < 25) return 12;
-    if (d < 80) return 11;
-    if (d < 200) return 10;
-    if (d < 500) return 9;
-    if (d < 1200) return 8;
-    if (d < 2500) return 7;
-    if (d < 5000) return 6;
-    if (d < 9000) return 5;
-    return 4;
+    // Soft upper cap only — fitBounds chooses the real zoom so the route fills the map
+    return 14;
   }
   function fitRouteInView(){
     try{
       map.invalidateSize(true);
-      var mz = maxZoomForRoute(origin, dest);
-      // Small pad so route fills the map without looking world-scale
-      var bounds = L.latLngBounds([origin, dest]).pad(0.04);
+      var bounds = L.latLngBounds([origin, dest]);
+      // Minimal padding so the route is large and clear, not world-scale
       map.fitBounds(bounds, {
-        paddingTopLeft: [36, 36],
-        paddingBottomRight: [36, 36],
-        maxZoom: mz,
+        padding: [28, 28],
+        maxZoom: 12,
         animate: false
       });
       setTimeout(function(){
         try{
           map.invalidateSize(true);
-          map.fitBounds(L.latLngBounds([origin, dest]).pad(0.04), {
-            paddingTopLeft: [36, 36],
-            paddingBottomRight: [36, 36],
-            maxZoom: maxZoomForRoute(origin, dest),
+          map.fitBounds(L.latLngBounds([origin, dest]), {
+            padding: [28, 28],
+            maxZoom: 12,
             animate: false
           });
         }catch(e){}
-      }, 280);
+      }, 300);
     }catch(e){}
   }
   fitRouteInView();
