@@ -463,161 +463,292 @@
 <script>
 (function(){var c=['#E31937','#171A20','#FFD700','#00A550','#3B82F6'];for(var i=0;i<60;i++){var e=document.createElement('div');e.className='confetti-piece';e.style.cssText='left:'+Math.random()*100+'vw;top:-10px;background:'+c[Math.floor(Math.random()*c.length)]+';width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-duration:'+(2+Math.random()*3)+'s;animation-delay:'+(Math.random()*1.5)+'s;';document.body.appendChild(e);e.addEventListener('animationend',function(){e.remove()})}})();
 
-// ===== LOAD ORDER FROM localStorage =====
-var order=JSON.parse(localStorage.getItem('tesla_last_order')||'null');
-
-// If no order in localStorage, try API recovery
-if(!order||!order.orderId){
-  var sess=localStorage.getItem('tesla_session_token')||localStorage.getItem('tesla_session');
-  if(sess){
-    var apiBase=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-    document.getElementById('trackingNum').textContent='Loading...';
-    fetch(apiBase+'/session?token='+encodeURIComponent(sess))
-    .then(function(r){return r.json()})
-    .then(function(d){
-      if(d.valid&&d.hasOrder&&d.order){
-        localStorage.setItem('tesla_last_order',JSON.stringify(d.order));
-        if(d.order.selectedCar)localStorage.setItem('tesla_selected_car',JSON.stringify(d.order.selectedCar));
-        if(d.order.deliveryDetails)localStorage.setItem('tesla_delivery_details',JSON.stringify(d.order.deliveryDetails));
-        if(d.order.deliveryMethod)localStorage.setItem('tesla_delivery_method',JSON.stringify(d.order.deliveryMethod));
-        window.location.reload();
-      }else{window.location.href='index.html'}
-    })
-    .catch(function(){window.location.href='index.html'});
-  }else{window.location.href='index.html'}
-  // Stop execution — the reload will re-run with populated localStorage
-  throw new Error('RECOVERING');
-}
-
-// If DB says payment proof exists, send user to Payment Confirmation
-(function(){
-  var sess=localStorage.getItem('tesla_session_token')||localStorage.getItem('tesla_session')||'';
-  var apiBase=window.TESLA_API_BASE||'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-  if(!sess) return;
-  fetch(apiBase+'/session?token='+encodeURIComponent(sess))
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      if(d&&d.valid&&d.hasPaymentProof===true){
-        var dest='payment-confirmation.html';
-        if(d.order&&d.order.orderId) dest+='?order='+encodeURIComponent(d.order.orderId);
-        window.location.replace(dest);
-      }
-    }).catch(function(){});
-})();
-
-// ===== POPULATE ALL FIELDS =====
-document.getElementById('trackingNum').textContent=order.trackingNumber||'—';
-document.getElementById('orderId').textContent=order.orderId||'—';
-try{
-  var od=order.orderDate;
-  if(od){var d=new Date(od);if(!isNaN(d.getTime())){document.getElementById('orderDate').textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}else{var p=od.split('T')[0].split('-');if(p.length===3){document.getElementById('orderDate').textContent=new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}else{document.getElementById('orderDate').textContent=od}}
-  }else{document.getElementById('orderDate').textContent='—'}
-}catch(e){document.getElementById('orderDate').textContent=order.orderDate||'—'}
-document.getElementById('estDelivery').textContent=order.estimatedDelivery||'—';
-document.getElementById('orderStatus').textContent=order.status==='confirmed'?'Order Confirmed':(order.status||'Processing');
-
-var a=order.deliveryDetails||{};
-document.getElementById('delivName').textContent=a.fullName||'—';
-document.getElementById('delivPhone').textContent=a.phone||'—';
-document.getElementById('delivEmail').textContent=a.email||'—';
-document.getElementById('delivAddr').textContent=a.address||'—';
-document.getElementById('delivCity').textContent=a.city||'—';
-document.getElementById('delivState').textContent=a.state||'—';
-document.getElementById('delivCountry').textContent=a.country||'—';
-document.getElementById('delivZip').textContent=a.zipCode||'—';
-
-// Map legend destination — customer delivery address from order/DB
-(function(){
-  var parts=[a.address||a.street||'',a.city||'',[a.state,a.zipCode||a.zip].filter(Boolean).join(' '),a.country||''].filter(Boolean);
-  var destEl=document.getElementById('mapDestLabel');
-  if(destEl) destEl.textContent=parts.join(', ')||'—';
-})();
-
-// Delivery Method
-var hasDelivMethod=!!(order.deliveryMethod&&order.deliveryMethod.name);
-document.getElementById('delivMethod').textContent=hasDelivMethod?order.deliveryMethod.name:'Not selected';
-document.getElementById('delivMethod').style.color=hasDelivMethod?'#111':'#E31937';
-document.getElementById('delivMethod').style.fontWeight=hasDelivMethod?'600':'700';
-
-// Payment Method
-document.getElementById('payMethod').textContent=(order.paymentMethod&&order.paymentMethod.name)?order.paymentMethod.name:'Not specified';
-
-// Car
-document.getElementById('carHeroName').textContent=(order.selectedCar&&order.selectedCar.name)?'Tesla '+order.selectedCar.name:'Tesla —';
-document.getElementById('carHeroRetail').textContent=(order.selectedCar&&order.selectedCar.price)?order.selectedCar.price:'—';
-var carId=(order.selectedCar&&order.selectedCar.id)||'';
-var im2=document.getElementById('carHeroImg');
-var vd=(typeof VEHICLE_DATA!=='undefined'?VEHICLE_DATA:null);
-var vi=vd?vd[carId]||null:null;
-var imgMap2={cybertruck:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',modely:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',models:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',model3:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',modelx:'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'};
-if(vi&&vi.img){im2.src=vi.img}else if(order.selectedCar&&order.selectedCar.img){im2.src=order.selectedCar.img}else if(carId){im2.src=imgMap2[carId]||''}
-if(im2.src)im2.style.display='';
-
-// CTA
-var ctaBtn=document.querySelector('#chooseMethodCTA a');
-var ctaNote=document.getElementById('ctaStatusNote');
-if(hasDelivMethod){ctaBtn.textContent='Change Delivery Method';ctaBtn.style.background='linear-gradient(135deg,#171A20,#30333a)';ctaBtn.style.boxShadow='none';ctaNote.textContent='Delivery method selected. You can change your selection at any time.';ctaNote.style.color='#00A550'}else{ctaBtn.textContent='Choose Delivery Method →';ctaBtn.style.background='linear-gradient(135deg,#E31937,#c41030)';ctaNote.textContent='You must select a delivery method before your order can be processed.';ctaNote.style.color='#888'}
-
-// Timeline
-var tl=order.timeline||[];
-var done=tl.filter(function(t){return t.completed}).length;
-var pct=Math.max(10,Math.min((done/Math.max(tl.length,1))*100,100));
-document.getElementById('progressBar').style.width=pct+'%';
-var sl={confirmed:'Order Confirmed',processing:'Processing',shipped:'Shipped',in_transit:'In Transit',out_for_delivery:'Out for Delivery',delivered:'Delivered'};
-document.getElementById('statusLabel').textContent=sl[order.status]||'Processing';
-// SVG icons for each stage
-var stageIcons = {
-  'Order Confirmed': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
-  'Processing': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></svg>',
-  'Shipped': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>',
-  'In Transit': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><circle cx="15" cy="17" r="2"></circle><path d="M13 17h-4"></path><path d="M13 11h-4"></path></svg>',
-  'Out for Delivery': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"/></svg>',
-  'Delivered': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
+// ===== LOAD ORDER (database via session API is source of truth) =====
+var STAGE_LABELS = ['Order Confirmed','Processing','Shipped','In Transit','Out for Delivery','Delivered'];
+var STATUS_TO_INDEX = {
+  confirmed: 0, order_confirmed: 0,
+  processing: 1,
+  shipped: 2,
+  in_transit: 3, 'in-transit': 3, intransit: 3,
+  out_for_delivery: 4, 'out-for-delivery': 4, outfordelivery: 4,
+  delivered: 5
 };
 
-document.getElementById('timeline').innerHTML=tl.map(function(s,i){
-  var cls = s.completed ? 'done' : (i === done ? 'current' : 'upcoming');
-  var icon = stageIcons[s.stage] || '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
-  
-  var timeText;
-  if (s.completed && s.timestamp) {
-    try {
-      var d = new Date(s.timestamp);
-      if (!isNaN(d.getTime())) {
-        timeText = d.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-      } else {
-        timeText = s.timestamp.split('T')[0] || s.timestamp;
-      }
-    } catch(e) { timeText = s.timestamp; }
-  } else if (s.completed) {
-    timeText = 'Completed';
-  } else if (i === done) {
-    timeText = 'In progress';
-  } else {
-    timeText = 'Upcoming';
-  }
-  
-  var statusBadge = '';
-  if (i === done && !s.completed) {
-    statusBadge = ' <span class="active-pulse-badge"><span class="active-pulse-dot"></span> Active</span>';
-  }
-  
-  var timeHtml = '<div class="premium-tl-time">' + 
-    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; margin-right:4px; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' + 
-    timeText + '</div>';
+function getSessionToken() {
+  try {
+    if (typeof getSession === 'function') {
+      var t = getSession();
+      if (t) return t;
+    }
+  } catch (e) {}
+  return localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session') || '';
+}
 
-  return '<div class="premium-tl-item ' + cls + '">' +
-    '<div class="premium-tl-dot">' + icon + '</div>' +
-    '<div class="premium-tl-content">' +
-      '<div class="premium-tl-stage">' + s.stage + statusBadge + '</div>' +
-      timeHtml +
-    '</div>' +
-  '</div>';
-}).join('');
+function apiBase() {
+  return (window.TESLA_API_BASE || 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api').replace(/\/+$/, '');
+}
+
+/** Build a complete 6-stage timeline from DB rows + order status */
+function buildTimeline(order) {
+  var raw = (order && Array.isArray(order.timeline)) ? order.timeline.slice() : [];
+  var byStage = {};
+  raw.forEach(function (t) {
+    if (!t) return;
+    var key = String(t.stage || '').trim();
+    if (key) byStage[key] = t;
+  });
+
+  var statusKey = String((order && order.status) || 'confirmed').toLowerCase().replace(/\s+/g, '_');
+  var activeIdx = STATUS_TO_INDEX[statusKey];
+  if (typeof activeIdx !== 'number') activeIdx = 0;
+
+  var orderDate = (order && (order.orderDate || order.order_date)) || null;
+
+  return STAGE_LABELS.map(function (label, i) {
+    var row = byStage[label] || null;
+    var completed = false;
+    var timestamp = null;
+
+    if (row) {
+      completed = !!row.completed;
+      timestamp = row.timestamp || null;
+    }
+
+    // Ensure stages at/before current status are marked complete when DB rows are sparse
+    if (!completed && i <= activeIdx) {
+      // Only force-complete stages before current; current may be "in progress"
+      if (i < activeIdx) completed = true;
+      if (i === 0 && !timestamp) timestamp = orderDate;
+    }
+    // Always mark Order Confirmed complete when an order exists
+    if (i === 0) {
+      completed = true;
+      if (!timestamp) timestamp = orderDate;
+    }
+    // If DB explicitly completed later stages, keep that
+    if (row && row.completed) completed = true;
+
+    return {
+      stage: label,
+      completed: completed,
+      timestamp: timestamp,
+      stage_order: i
+    };
+  });
+}
+
+function renderOrderPage(order) {
+  if (!order) return;
+  // Normalize nested fields
+  if (!order.selectedCar && order.car) order.selectedCar = order.car;
+  if (!order.deliveryDetails && order.delivery_details) order.deliveryDetails = order.delivery_details;
+  if (!order.deliveryMethod && order.delivery_method) order.deliveryMethod = order.delivery_method;
+  if (!order.paymentMethod && order.payment_method) order.paymentMethod = order.payment_method;
+
+  order.timeline = buildTimeline(order);
+
+  // Header fields
+  document.getElementById('trackingNum').textContent = order.trackingNumber || order.tracking_number || '—';
+  document.getElementById('orderId').textContent = order.orderId || order.order_id || '—';
+  try {
+    var od = order.orderDate || order.order_date;
+    if (od) {
+      var d = new Date(od);
+      if (!isNaN(d.getTime())) {
+        document.getElementById('orderDate').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } else {
+        var p = String(od).split('T')[0].split('-');
+        if (p.length === 3) {
+          document.getElementById('orderDate').textContent = new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } else {
+          document.getElementById('orderDate').textContent = od;
+        }
+      }
+    } else {
+      document.getElementById('orderDate').textContent = '—';
+    }
+  } catch (e) {
+    document.getElementById('orderDate').textContent = order.orderDate || order.order_date || '—';
+  }
+  document.getElementById('estDelivery').textContent = order.estimatedDelivery || order.estimated_delivery || '—';
+  var statusRaw = order.status || 'confirmed';
+  var statusLabels = {
+    confirmed: 'Order Confirmed',
+    processing: 'Processing',
+    shipped: 'Shipped',
+    in_transit: 'In Transit',
+    out_for_delivery: 'Out for Delivery',
+    delivered: 'Delivered'
+  };
+  document.getElementById('orderStatus').textContent = statusLabels[String(statusRaw).toLowerCase().replace(/\s+/g, '_')] || (statusRaw === 'confirmed' ? 'Order Confirmed' : (statusRaw || 'Processing'));
+
+  var a = order.deliveryDetails || {};
+  document.getElementById('delivName').textContent = a.fullName || a.name || '—';
+  document.getElementById('delivPhone').textContent = a.phone || '—';
+  document.getElementById('delivEmail').textContent = a.email || '—';
+  document.getElementById('delivAddr').textContent = a.address || a.street || '—';
+  document.getElementById('delivCity').textContent = a.city || '—';
+  document.getElementById('delivState').textContent = a.state || '—';
+  document.getElementById('delivCountry').textContent = a.country || '—';
+  document.getElementById('delivZip').textContent = a.zipCode || a.zip || '—';
+
+  (function () {
+    var parts = [a.address || a.street || '', a.city || '', [a.state, a.zipCode || a.zip].filter(Boolean).join(' '), a.country || ''].filter(Boolean);
+    var destEl = document.getElementById('mapDestLabel');
+    if (destEl) destEl.textContent = parts.join(', ') || '—';
+  })();
+
+  var hasDelivMethod = !!(order.deliveryMethod && order.deliveryMethod.name);
+  document.getElementById('delivMethod').textContent = hasDelivMethod ? order.deliveryMethod.name : 'Not selected';
+  document.getElementById('delivMethod').style.color = hasDelivMethod ? '#111' : '#E31937';
+  document.getElementById('delivMethod').style.fontWeight = hasDelivMethod ? '600' : '700';
+
+  document.getElementById('payMethod').textContent = (order.paymentMethod && order.paymentMethod.name) ? order.paymentMethod.name : 'Not specified';
+
+  document.getElementById('carHeroName').textContent = (order.selectedCar && order.selectedCar.name) ? ('Tesla ' + order.selectedCar.name) : 'Tesla —';
+  document.getElementById('carHeroRetail').textContent = (order.selectedCar && order.selectedCar.price) ? order.selectedCar.price : '—';
+  var carId = (order.selectedCar && order.selectedCar.id) || '';
+  var im2 = document.getElementById('carHeroImg');
+  var vd = (typeof VEHICLE_DATA !== 'undefined' ? VEHICLE_DATA : null);
+  var vi = vd ? vd[carId] || null : null;
+  var imgMap2 = {
+    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
+    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
+    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
+    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
+    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+  };
+  if (im2) {
+    if (vi && vi.img) im2.src = vi.img;
+    else if (order.selectedCar && order.selectedCar.img) im2.src = order.selectedCar.img;
+    else if (carId) im2.src = imgMap2[carId] || '';
+    if (im2.src) im2.style.display = '';
+  }
+
+  var ctaBtn = document.querySelector('#chooseMethodCTA a');
+  var ctaNote = document.getElementById('ctaStatusNote');
+  if (ctaBtn && ctaNote) {
+    if (hasDelivMethod) {
+      ctaBtn.textContent = 'Change Delivery Method';
+      ctaBtn.style.background = 'linear-gradient(135deg,#171A20,#30333a)';
+      ctaBtn.style.boxShadow = 'none';
+      ctaNote.textContent = 'Delivery method selected. You can change your selection at any time.';
+      ctaNote.style.color = '#00A550';
+    } else {
+      ctaBtn.textContent = 'Choose Delivery Method →';
+      ctaBtn.style.background = 'linear-gradient(135deg,#E31937,#c41030)';
+      ctaNote.textContent = 'You must select a delivery method before your order can be processed.';
+      ctaNote.style.color = '#888';
+    }
+  }
+
+  // ── Delivery Progress (always 6 stages from DB + status) ──
+  var tl = order.timeline;
+  var done = tl.filter(function (t) { return t.completed; }).length;
+  // Current stage index: first incomplete, or last if all done
+  var currentIdx = done < tl.length ? done : tl.length - 1;
+  var pct = Math.max(8, Math.min((done / Math.max(tl.length, 1)) * 100, 100));
+  var bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = pct + '%';
+  var statusLabelEl = document.getElementById('statusLabel');
+  if (statusLabelEl) {
+    statusLabelEl.textContent = statusLabels[String(statusRaw).toLowerCase().replace(/\s+/g, '_')] || tl[currentIdx].stage || 'Processing';
+  }
+
+  var stageIcons = {
+    'Order Confirmed': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+    'Processing': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+    'Shipped': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>',
+    'In Transit': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>',
+    'Out for Delivery': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"/></svg>',
+    'Delivered': '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
+  };
+
+  document.getElementById('timeline').innerHTML = tl.map(function (s, i) {
+    var cls = s.completed ? 'done' : (i === currentIdx ? 'current' : 'upcoming');
+    var icon = stageIcons[s.stage] || '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
+    var timeText;
+    if (s.completed && s.timestamp) {
+      try {
+        var td = new Date(s.timestamp);
+        timeText = !isNaN(td.getTime())
+          ? td.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : (String(s.timestamp).split('T')[0] || s.timestamp);
+      } catch (e) { timeText = s.timestamp; }
+    } else if (s.completed) {
+      timeText = 'Completed';
+    } else if (i === currentIdx) {
+      timeText = 'In progress';
+    } else {
+      timeText = 'Upcoming';
+    }
+    var statusBadge = (i === currentIdx && !s.completed)
+      ? ' <span class="active-pulse-badge"><span class="active-pulse-dot"></span> Active</span>'
+      : '';
+    var timeHtml = '<div class="premium-tl-time">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;margin-right:4px;vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' +
+      timeText + '</div>';
+    return '<div class="premium-tl-item ' + cls + '">' +
+      '<div class="premium-tl-dot">' + icon + '</div>' +
+      '<div class="premium-tl-content">' +
+        '<div class="premium-tl-stage">' + s.stage + statusBadge + '</div>' +
+        timeHtml +
+      '</div></div>';
+  }).join('');
+
+  // Expose delivery details for map init
+  window.__ORDER_PLACED_DELIVERY__ = a;
+  window.__ORDER_PLACED_ORDER__ = order;
+}
+
+function loadOrderFromDatabase() {
+  var sess = getSessionToken();
+  var base = apiBase();
+  if (!sess) {
+    window.location.href = 'index.html';
+    return;
+  }
+  document.getElementById('trackingNum').textContent = 'Loading...';
+  fetch(base + '/session?token=' + encodeURIComponent(sess))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d || !d.valid) {
+        window.location.href = 'index.html';
+        return;
+      }
+      // Payment proof → confirmation page
+      if (d.hasPaymentProof === true) {
+        var dest = 'payment-confirmation.html';
+        if (d.order && d.order.orderId) dest += '?order=' + encodeURIComponent(d.order.orderId);
+        window.location.replace(dest);
+        return;
+      }
+      if (!d.hasOrder || !d.order) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+      // Optional local cache of server payload only (not used as source of truth)
+      try { localStorage.setItem('tesla_last_order', JSON.stringify(d.order)); } catch (e) {}
+      renderOrderPage(d.order);
+      initDeliveryMap();
+    })
+    .catch(function () {
+      window.location.href = 'index.html';
+    });
+}
+
+// Kick off DB load (do not render from localStorage alone)
+loadOrderFromDatabase();
 
 // Map — always draw origin, destination, and route (geocode when possible)
-setTimeout(function(){
-  if(typeof L==='undefined')return;
+function initDeliveryMap(){
+  if(typeof L==='undefined'){
+    setTimeout(initDeliveryMap, 200);
+    return;
+  }
+  if(window.__ORDER_MAP_INITED__) return;
+  window.__ORDER_MAP_INITED__ = true;
+  var a = window.__ORDER_PLACED_DELIVERY__ || {};
   var origin=[37.4936,-121.9448]; // Tesla Factory, Fremont CA
   var street=a.address||a.street||'';
   var city=a.city||'', state=a.state||'', zip=a.zipCode||a.zip||'', country=a.country||'';
@@ -640,28 +771,50 @@ setTimeout(function(){
   var truckMk=L.marker(mid,{icon:tI}).addTo(map).bindPopup('<strong>Your Tesla</strong><br>En Route');
   var line=L.polyline([origin,dest],{color:'#E31937',weight:2.5,opacity:.55,dashArray:'8,8'}).addTo(map);
 
+  function routeDistanceKm(a, b) {
+    var R = 6371;
+    var toRad = function (d) { return d * Math.PI / 180; };
+    var dLat = toRad(b[0] - a[0]);
+    var dLon = toRad(b[1] - a[1]);
+    var lat1 = toRad(a[0]);
+    var lat2 = toRad(b[0]);
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+  function maxZoomForRoute(a, b) {
+    var d = routeDistanceKm(a, b);
+    // Closer routes get higher zoom; long routes stay wider but not extreme
+    if (d < 30) return 11;
+    if (d < 100) return 10;
+    if (d < 300) return 8;
+    if (d < 800) return 7;
+    if (d < 2000) return 6;
+    if (d < 5000) return 5;
+    return 4;
+  }
   function fitRouteInView(){
     try{
       map.invalidateSize(true);
-      var bounds=L.latLngBounds([origin, dest]).pad(0.18);
-      map.fitBounds(bounds,{
-        paddingTopLeft:[48,48],
-        paddingBottomRight:[48,48],
-        maxZoom:5,
-        animate:false
+      var mz = maxZoomForRoute(origin, dest);
+      var bounds = L.latLngBounds([origin, dest]).pad(0.1);
+      map.fitBounds(bounds, {
+        paddingTopLeft: [56, 56],
+        paddingBottomRight: [56, 56],
+        maxZoom: mz,
+        animate: false
       });
-      // Second pass after layout settles so the full route stays centered
       setTimeout(function(){
         try{
           map.invalidateSize(true);
-          map.fitBounds(L.latLngBounds([origin, dest]).pad(0.18),{
-            paddingTopLeft:[48,48],
-            paddingBottomRight:[48,48],
-            maxZoom:5,
-            animate:false
+          map.fitBounds(L.latLngBounds([origin, dest]).pad(0.1), {
+            paddingTopLeft: [56, 56],
+            paddingBottomRight: [56, 56],
+            maxZoom: maxZoomForRoute(origin, dest),
+            animate: false
           });
         }catch(e){}
-      }, 250);
+      }, 280);
     }catch(e){}
   }
   fitRouteInView();
@@ -720,7 +873,7 @@ setTimeout(function(){
 
   // Invalidate size after layout (fixes blank/broken tiles on some loads)
   setTimeout(function(){ fitRouteInView(); }, 400);
-},500);
+}
 </script>
 
 <script>
