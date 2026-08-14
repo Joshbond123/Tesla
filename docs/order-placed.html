@@ -448,7 +448,7 @@
 
 <div class="action-row anim-fade-up" id="actionRow" style="display:flex;flex-direction:column;gap:16px;width:100%;">
   <div id="chooseMethodCTA" style="width:100%;">
-    <a href="delivery-method.html" class="btn btn-primary btn-lg" style="width:100%;text-align:center;padding:18px 32px;font-size:18px;font-weight:800;background:linear-gradient(135deg,#E31937,#c41030);box-shadow:0 8px 32px rgba(227,25,55,.3);border-radius:16px;display:block;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;margin-top:-2px;"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Choose Delivery Method →</a>
+    <a href="delivery-method.html" class="btn btn-primary btn-lg" onclick="try{sessionStorage.setItem('tesla_order_placed_redirect_done','1')}catch(e){}" style="width:100%;text-align:center;padding:18px 32px;font-size:18px;font-weight:800;background:linear-gradient(135deg,#E31937,#c41030);box-shadow:0 8px 32px rgba(227,25,55,.3);border-radius:16px;display:block;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;margin-top:-2px;"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Choose Delivery Method →</a>
     <p id="ctaStatusNote" style="text-align:center;margin-top:12px;font-size:13px;color:#888;">You must select a delivery method before your order can be processed.</p>
   </div>
   <div id="normalActions" style="display:flex;gap:14px;flex-wrap:wrap;width:100%;">
@@ -738,6 +738,7 @@ function loadOrderFromDatabase() {
 }
 
 // Kick off DB load (do not render from localStorage alone)
+try { sessionStorage.setItem('tesla_order_placed_redirect_done', '1'); } catch (e) {}
 loadOrderFromDatabase();
 
 // Map — always draw origin, destination, and route (geocode when possible)

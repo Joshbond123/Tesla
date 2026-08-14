@@ -974,18 +974,34 @@
 (function() {
   'use strict';
 
-  // ── LOAD ORDER DATA ──
+  // ── LOAD ORDER DATA (local cache; recover from DB if incomplete) ──
   var selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
   var deliveryDetails = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
   var deliveryMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
   var sessionToken = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
+  try {
+    if (!selectedCar || !deliveryDetails) {
+      var lastOrd = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+      if (lastOrd) {
+        if (!selectedCar && lastOrd.selectedCar) selectedCar = lastOrd.selectedCar;
+        if (!deliveryDetails && lastOrd.deliveryDetails) deliveryDetails = lastOrd.deliveryDetails;
+        if (!deliveryMethod && lastOrd.deliveryMethod) deliveryMethod = lastOrd.deliveryMethod;
+      }
+    }
+  } catch (e) {}
   // Resolve customer email from delivery details or a stored value so the
   // backend can link the proof to the user record by email.
   var userEmail = (deliveryDetails && deliveryDetails.email) ||
     localStorage.getItem('tesla_user_email') || '';
 
-  if (!selectedCar || !deliveryDetails || !deliveryMethod) {
-    window.location.href = 'dashboard.html';
+  // Never send checkout users back through dashboard → order-placed loop.
+  // If method is missing, return to delivery-method (not dashboard).
+  if (!selectedCar || !deliveryDetails) {
+    window.location.replace('delivery-method.html');
+    return;
+  }
+  if (!deliveryMethod) {
+    window.location.replace('delivery-method.html');
     return;
   }
 

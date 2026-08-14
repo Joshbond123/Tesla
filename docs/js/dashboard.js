@@ -54,16 +54,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Payment proof exists → Payment Confirmation
     // Order exists, no proof → Order Placed
     if (data.hasPaymentProof === true) {
+      try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
       var dest = 'payment-confirmation.html';
       if (data.order && data.order.orderId) dest += '?order=' + encodeURIComponent(data.order.orderId);
       window.location.href = dest;
       return;
     }
+    // Order without proof: send to Order Placed only once per session.
+    // After that, user may open delivery-method / payment without being bounced back.
     if (data.hasOrder === true) {
-      var destOrder = 'order-placed.html';
-      if (data.order && data.order.orderId) destOrder += '?order=' + encodeURIComponent(data.order.orderId);
-      window.location.href = destOrder;
-      return;
+      var already = false;
+      try { already = sessionStorage.getItem('tesla_order_placed_redirect_done') === '1'; } catch (e) {}
+      if (!already) {
+        try { sessionStorage.setItem('tesla_order_placed_redirect_done', '1'); } catch (e) {}
+        var destOrder = 'order-placed.html';
+        if (data.order && data.order.orderId) destOrder += '?order=' + encodeURIComponent(data.order.orderId);
+        window.location.href = destOrder;
+        return;
+      }
+      // Already saw Order Placed this session — stay on dashboard (no loop)
     }
 
     window._userData = data.user;

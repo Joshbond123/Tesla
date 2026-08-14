@@ -166,14 +166,17 @@
       saveSession(data.sessionToken);
       // DB-driven redirects after login (database via login/session response)
       if (data.hasPaymentProof === true) {
+        try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
         var dest = 'payment-confirmation.html';
         if (data.order && data.order.orderId) dest += '?order=' + encodeURIComponent(data.order.orderId);
         window.location.href = dest;
       } else if (data.hasOrder === true) {
+        try { sessionStorage.setItem('tesla_order_placed_redirect_done', '1'); } catch (e) {}
         var destOrder = 'order-placed.html';
         if (data.order && data.order.orderId) destOrder += '?order=' + encodeURIComponent(data.order.orderId);
         window.location.href = destOrder;
       } else {
+        try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
         window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
       }
     } catch (err) {

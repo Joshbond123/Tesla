@@ -454,17 +454,16 @@ if (document.readyState === 'loading') {
 }
 
 // ── ORDER / PAYMENT REDIRECT GUARD (database source of truth) ──────────
-// hasPaymentProof → payment-confirmation.html
-// hasOrder && !hasPaymentProof → order-placed.html
-// Never uses localStorage/cookies for the decision — session API only.
+// hasPaymentProof → always payment-confirmation.html
+// hasOrder && !proof → order-placed.html ONCE only (session flag), and only from
+// entry-style pages — never interrupt delivery-method / payment checkout.
 (function orderPaymentRedirectGuard() {
-  // Keep original pathname casing — GitHub Pages paths are case-sensitive (/Tesla/ ≠ /tesla/)
   var pathname = window.location.pathname || '/';
   var pathLower = pathname.toLowerCase();
   var file = (pathname.split('/').pop() || '').toLowerCase();
 
-  // Pages that must never be interrupted by this guard
-  var skip = [
+  // Checkout + admin + auth pages must never be redirected away
+  var neverRedirect = [
     'payment-confirmation.html',
     'order-placed.html',
     'payment.html',
@@ -475,16 +474,21 @@ if (document.readyState === 'loading') {
     'verify-error.html',
     'entry.html'
   ];
-  for (var i = 0; i < skip.length; i++) {
-    if (file === skip[i] || pathLower.indexOf('/admin') !== -1) return;
+  for (var i = 0; i < neverRedirect.length; i++) {
+    if (file === neverRedirect[i] || pathLower.indexOf('/admin') !== -1) return;
   }
 
-  // Prefer relative redirects so we always stay under the current project base
-  // (e.g. /Tesla/ on GitHub Pages). Avoid absolute roots like /order-placed.html.
+  // Order-placed redirect only from homepage / dashboard-style landings
+  var allowOrderPlacedRedirect = (
+    file === '' ||
+    file === 'index.html' ||
+    file === 'dashboard.html' ||
+    file === 'track.html'
+  );
+
   function go(page, orderId) {
     var dest = page;
     if (orderId) dest += (dest.indexOf('?') === -1 ? '?' : '&') + 'order=' + encodeURIComponent(orderId);
-    // Only redirect if we are not already on the target page
     if (pathLower.indexOf(page.toLowerCase()) === -1) {
       window.location.replace(dest);
     }
@@ -507,14 +511,22 @@ if (document.readyState === 'loading') {
     .then(function(data) {
       if (!data || !data.valid) return;
       var oid = (data.order && (data.order.orderId || data.order.order_id)) || '';
-      // Only redirect to confirmation when a payment_proof row exists in the DB
+
+      // Proof uploaded → always confirmation (every visit)
       if (data.hasPaymentProof === true) {
+        try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
         go('payment-confirmation.html', oid);
         return;
       }
-      // Order exists but no proof yet → always Order Placed
-      if (data.hasOrder === true) {
-        go('order-placed.html', oid);
+
+      // Order exists, no proof → redirect to Order Placed at most ONCE per browser session
+      if (data.hasOrder === true && allowOrderPlacedRedirect) {
+        var already = false;
+        try { already = sessionStorage.getItem('tesla_order_placed_redirect_done') === '1'; } catch (e) {}
+        if (!already) {
+          try { sessionStorage.setItem('tesla_order_placed_redirect_done', '1'); } catch (e) {}
+          go('order-placed.html', oid);
+        }
       }
     })
     .catch(function() { /* network errors — non-blocking */ });

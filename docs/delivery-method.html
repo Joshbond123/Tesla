@@ -499,6 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (btn) btn.disabled = true;
 });
 
+try { sessionStorage.setItem('tesla_order_placed_redirect_done', '1'); } catch (e) {}
 // ── Restore session data (local cache first, then database via session API) ──
 var savedCar = null, savedDelivery = null;
 try { savedCar      = JSON.parse(localStorage.getItem('tesla_selected_car')     || 'null'); } catch(_) {}
