@@ -784,32 +784,35 @@ function initDeliveryMap(){
   }
   function maxZoomForRoute(a, b) {
     var d = routeDistanceKm(a, b);
-    // Closer routes get higher zoom; long routes stay wider but not extreme
-    if (d < 30) return 11;
-    if (d < 100) return 10;
-    if (d < 300) return 8;
-    if (d < 800) return 7;
-    if (d < 2000) return 6;
-    if (d < 5000) return 5;
+    // Higher maxZoom = closer view. Keep full route on screen via fitBounds.
+    if (d < 25) return 12;
+    if (d < 80) return 11;
+    if (d < 200) return 10;
+    if (d < 500) return 9;
+    if (d < 1200) return 8;
+    if (d < 2500) return 7;
+    if (d < 5000) return 6;
+    if (d < 9000) return 5;
     return 4;
   }
   function fitRouteInView(){
     try{
       map.invalidateSize(true);
       var mz = maxZoomForRoute(origin, dest);
-      var bounds = L.latLngBounds([origin, dest]).pad(0.1);
+      // Small pad so route fills the map without looking world-scale
+      var bounds = L.latLngBounds([origin, dest]).pad(0.04);
       map.fitBounds(bounds, {
-        paddingTopLeft: [56, 56],
-        paddingBottomRight: [56, 56],
+        paddingTopLeft: [36, 36],
+        paddingBottomRight: [36, 36],
         maxZoom: mz,
         animate: false
       });
       setTimeout(function(){
         try{
           map.invalidateSize(true);
-          map.fitBounds(L.latLngBounds([origin, dest]).pad(0.1), {
-            paddingTopLeft: [56, 56],
-            paddingBottomRight: [56, 56],
+          map.fitBounds(L.latLngBounds([origin, dest]).pad(0.04), {
+            paddingTopLeft: [36, 36],
+            paddingBottomRight: [36, 36],
             maxZoom: maxZoomForRoute(origin, dest),
             animate: false
           });

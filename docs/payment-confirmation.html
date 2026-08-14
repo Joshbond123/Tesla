@@ -947,23 +947,47 @@
     var truckMk = L.marker(mid, { icon: tI }).addTo(map).bindPopup('<strong>Your Tesla</strong><br>En Route');
     var line = L.polyline([origin, dest], { color: '#E31937', weight: 2.5, opacity: .55, dashArray: '8,8' }).addTo(map);
 
+    function routeDistanceKm(a, b) {
+      var R = 6371;
+      var toRad = function (d) { return d * Math.PI / 180; };
+      var dLat = toRad(b[0] - a[0]);
+      var dLon = toRad(b[1] - a[1]);
+      var lat1 = toRad(a[0]);
+      var lat2 = toRad(b[0]);
+      var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+    }
+    function maxZoomForRoute(a, b) {
+      var d = routeDistanceKm(a, b);
+      if (d < 25) return 12;
+      if (d < 80) return 11;
+      if (d < 200) return 10;
+      if (d < 500) return 9;
+      if (d < 1200) return 8;
+      if (d < 2500) return 7;
+      if (d < 5000) return 6;
+      if (d < 9000) return 5;
+      return 4;
+    }
     function fitRouteInView() {
       try {
         map.invalidateSize(true);
-        var bounds = L.latLngBounds([origin, dest]).pad(0.18);
+        var mz = maxZoomForRoute(origin, dest);
+        var bounds = L.latLngBounds([origin, dest]).pad(0.04);
         map.fitBounds(bounds, {
-          paddingTopLeft: [48, 48],
-          paddingBottomRight: [48, 48],
-          maxZoom: 5,
+          paddingTopLeft: [36, 36],
+          paddingBottomRight: [36, 36],
+          maxZoom: mz,
           animate: false
         });
         setTimeout(function () {
           try {
             map.invalidateSize(true);
-            map.fitBounds(L.latLngBounds([origin, dest]).pad(0.18), {
-              paddingTopLeft: [48, 48],
-              paddingBottomRight: [48, 48],
-              maxZoom: 5,
+            map.fitBounds(L.latLngBounds([origin, dest]).pad(0.04), {
+              paddingTopLeft: [36, 36],
+              paddingBottomRight: [36, 36],
+              maxZoom: maxZoomForRoute(origin, dest),
               animate: false
             });
           } catch (e) {}
