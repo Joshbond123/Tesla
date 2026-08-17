@@ -119,9 +119,10 @@ function renderOrders() {
     var sc = o.selectedCar || {};
     var dm = o.deliveryMethod || {};
     var pp = o.paymentProof || {};
-    var fullName = [o.firstName, o.lastName].filter(Boolean).join(" ") || "—";
+    var fullName = o.customerName || [o.firstName, o.lastName].filter(Boolean).join(" ") || (o.deliveryDetails && (o.deliveryDetails.fullName || o.deliveryDetails.name)) || "—";
     var carName = sc.name || sc.model || "—";
     var delivMethod = dm.name || dm.label || "—";
+    var phone = o.phone || (o.deliveryDetails && o.deliveryDetails.phone) || "—";
     var orderDate = o.orderDate ? new Date(o.orderDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
     var statusBadgeHtml = orderStatusBadge(o.status);
     var proofHtml = proofBadge(o.hasPaymentProof, pp.status);
@@ -141,7 +142,7 @@ function renderOrders() {
           '<div class="order-info-item"><div class="oii-label">Delivery Method</div><div class="oii-val">' + esc(delivMethod) + '</div></div>' +
           '<div class="order-info-item"><div class="oii-label">Est. Delivery</div><div class="oii-val" style="color:#00A550;font-weight:600;">' + esc(o.estimatedDelivery || "—") + '</div></div>' +
           '<div class="order-info-item"><div class="oii-label">Order Date</div><div class="oii-val">' + esc(orderDate) + '</div></div>' +
-          '<div class="order-info-item"><div class="oii-label">Phone</div><div class="oii-val">' + esc(o.phone || "—") + '</div></div>' +
+          '<div class="order-info-item"><div class="oii-label">Phone</div><div class="oii-val">' + esc(phone) + '</div></div>' +
         '</div>' +
       '</div>' +
       '<div class="order-card-footer">' +

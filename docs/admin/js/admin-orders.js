@@ -2,21 +2,26 @@
 // ║  Tesla Award — Admin Panel: Order Details & Status Mgmt
 // ╚══════════════════════════════════════════════════════════╝
 
+"use strict";
+
 var _currentOrderId = null;
 
 var DELIVERY_STAGES = [
-  { key: "confirmed",        label: "Order Confirmed",   icon: "📋" },
-  { key: "processing",       label: "Processing",        icon: "⚙️" },
-  { key: "shipped",          label: "Shipped",           icon: "📦" },
-  { key: "in_transit",       label: "In Transit",        icon: "🚚" },
-  { key: "out_for_delivery", label: "Out for Delivery",  icon: "🏠" },
-  { key: "delivered",        label: "Delivered",         icon: "✅" }
+  { key: "confirmed",        label: "Order Confirmed",   icon: "1" },
+  { key: "processing",       label: "Processing",        icon: "2" },
+  { key: "shipped",          label: "Shipped",           icon: "3" },
+  { key: "in_transit",       label: "In Transit",        icon: "4" },
+  { key: "out_for_delivery", label: "Out for Delivery",  icon: "5" },
+  { key: "delivered",        label: "Delivered",         icon: "6" }
 ];
 
 function viewOrderDetail(orderId) {
   _currentOrderId = orderId;
   var modal = document.getElementById("orderDetailModal");
-  if (!modal) { createOrderDetailModal(); modal = document.getElementById("orderDetailModal"); }
+  if (!modal) {
+    createOrderDetailModal();
+    modal = document.getElementById("orderDetailModal");
+  }
   modal.classList.add("open");
   document.body.style.overflow = "hidden";
   loadOrderDetail(orderId);
@@ -30,150 +35,266 @@ function closeOrderDetail() {
 }
 
 function createOrderDetailModal() {
+  if (document.getElementById("orderDetailModal")) return;
   var overlay = document.createElement("div");
   overlay.id = "orderDetailModal";
-  overlay.style.cssText = "position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;";
   overlay.innerHTML = [
-    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);" onclick="closeOrderDetail()"></div>',
-    '<div id="orderDetailPanel" style="position:relative;width:100%;max-width:760px;background:white;border-radius:20px;box-shadow:0 32px 80px rgba(0,0,0,.25);overflow:hidden;margin:auto;">',
-      '<div style="height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);"></div>',
-      '<div style="padding:28px 32px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,.07);">',
+    '<div class="od-backdrop" onclick="closeOrderDetail()"></div>',
+    '<div id="orderDetailPanel" class="od-panel" role="dialog" aria-modal="true">',
+      '<div class="od-accent"></div>',
+      '<div class="od-header">',
         '<div>',
-          '<h2 id="odTitle" style="margin:0;font-size:20px;font-weight:800;color:#111;">Order Details</h2>',
-          '<p id="odSubtitle" style="margin:4px 0 0;font-size:13px;color:#888;"></p>',
+          '<h2 id="odTitle" class="od-title">Order Details</h2>',
+          '<p id="odSubtitle" class="od-sub"></p>',
         '</div>',
-        '<button onclick="closeOrderDetail()" style="background:rgba(0,0,0,.06);border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#555;">×</button>',
+        '<button type="button" class="od-close" onclick="closeOrderDetail()" aria-label="Close">&times;</button>',
       '</div>',
-      '<div id="odBody" style="padding:28px 32px 32px;max-height:80vh;overflow-y:auto;">',
-        '<div style="text-align:center;padding:40px;color:#aaa;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="animation:spin 1s linear infinite;display:block;margin:0 auto 10px"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Loading order…</div>',
-      '</div>',
+      '<div id="odBody" class="od-body"><div class="od-loading">Loading order from database…</div></div>',
     '</div>'
   ].join("");
   document.body.appendChild(overlay);
-  overlay.addEventListener("keydown", function(e) { if (e.key === "Escape") closeOrderDetail(); });
+  injectModalStyles();
+}
+
+function injectModalStyles() {
+  if (document.getElementById("odStyles")) return;
+  var s = document.createElement("style");
+  s.id = "odStyles";
+  s.textContent = [
+    "#orderDetailModal{display:none;position:fixed;inset:0;z-index:9999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}",
+    "#orderDetailModal.open{display:flex;}",
+    ".od-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);}",
+    ".od-panel{position:relative;width:100%;max-width:800px;background:#fff;border-radius:18px;box-shadow:0 32px 80px rgba(0,0,0,.28);overflow:hidden;margin:auto;}",
+    ".od-accent{height:4px;background:linear-gradient(90deg,#E31937,#ff6b6b);}",
+    ".od-header{padding:22px 28px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,.07);}",
+    ".od-title{margin:0;font-size:20px;font-weight:800;color:#111;letter-spacing:-.02em;}",
+    ".od-sub{margin:4px 0 0;font-size:13px;color:#888;}",
+    ".od-close{background:rgba(0,0,0,.06);border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;font-size:22px;line-height:1;color:#444;}",
+    ".od-close:hover{background:rgba(0,0,0,.1);}",
+    ".od-body{padding:22px 28px 28px;}",
+    ".od-loading{text-align:center;padding:48px 20px;color:#888;font-size:14px;}",
+    ".od-section{margin-bottom:26px;}",
+    ".od-section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,.06);}",
+    ".od-grid{display:grid;gap:10px;}",
+    ".od-grid-2{grid-template-columns:repeat(2,1fr);}",
+    ".od-grid-3{grid-template-columns:repeat(3,1fr);}",
+    "@media(max-width:640px){.od-grid-2,.od-grid-3{grid-template-columns:1fr 1fr;}.od-body{padding:18px;}}",
+    "@media(max-width:420px){.od-grid-2,.od-grid-3{grid-template-columns:1fr;}}",
+    ".od-grid-item{background:#f8f9fb;border-radius:10px;padding:12px 14px;border:1px solid rgba(0,0,0,.05);}",
+    ".od-item-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:5px;}",
+    ".od-item-val{font-size:13px;font-weight:600;color:#111;word-break:break-word;}",
+    ".od-update-section{background:linear-gradient(180deg,rgba(227,25,55,.04),rgba(227,25,55,.02));border:1.5px solid rgba(227,25,55,.12);border-radius:14px;padding:18px;}",
+    ".od-timeline{display:flex;flex-direction:column;}",
+    ".od-tl-step{display:flex;gap:14px;padding:10px 0;position:relative;}",
+    ".od-tl-step:not(:last-child)::after{content:'';position:absolute;left:17px;top:42px;width:2px;bottom:0;background:rgba(0,0,0,.08);}",
+    ".od-tl-step.done::after{background:#00A550;}",
+    ".od-tl-step.current::after{background:linear-gradient(to bottom,#E31937,rgba(0,0,0,.08));}",
+    ".od-tl-dot{width:36px;height:36px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:2px solid rgba(0,0,0,.1);background:#fff;z-index:1;color:#888;}",
+    ".od-tl-step.done .od-tl-dot{background:#00A550;border-color:#00A550;color:#fff;}",
+    ".od-tl-step.current .od-tl-dot{background:#E31937;border-color:#E31937;color:#fff;box-shadow:0 0 0 4px rgba(227,25,55,.15);}",
+    ".od-tl-step.upcoming .od-tl-dot{background:#f5f5f7;border-color:rgba(0,0,0,.08);color:#bbb;}",
+    ".od-tl-info{flex:1;padding-top:6px;}",
+    ".od-tl-label{font-size:14px;font-weight:700;color:#111;}",
+    ".od-tl-step.current .od-tl-label{color:#E31937;}",
+    ".od-tl-step.upcoming .od-tl-label{color:#aaa;}",
+    ".od-tl-ts{font-size:12px;color:#888;margin-top:2px;}",
+    ".od-status-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;}",
+    ".od-field{flex:1;min-width:160px;}",
+    ".od-field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px;}",
+    ".od-field select,.od-field input{width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;background:#fff;}",
+    ".od-save-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#E31937,#c41030);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 6px 16px rgba(227,25,55,.25);}",
+    ".od-save-btn:disabled{opacity:.7;cursor:not-allowed;}",
+    ".od-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;}",
+    ".od-badge-current{background:rgba(227,25,55,.1);color:#E31937;border:1px solid rgba(227,25,55,.2);}"
+  ].join("\n");
+  document.head.appendChild(s);
 }
 
 function loadOrderDetail(orderId) {
-  if (!API_BASE) { document.getElementById("odBody").innerHTML = '<p style="color:#888;text-align:center;padding:40px;">API not configured.</p>'; return; }
+  var body = document.getElementById("odBody");
+  if (body) body.innerHTML = '<div class="od-loading">Loading order from database…</div>';
+  if (!API_BASE) {
+    if (body) body.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">API not configured.</p>';
+    return;
+  }
   api("GET", "/admin/orders/" + encodeURIComponent(orderId))
-    .then(function(r) { renderOrderDetail(r.order); })
-    .catch(function(e) {
-      document.getElementById("odBody").innerHTML = '<p style="color:#EF4444;text-align:center;padding:40px;">Failed to load order: ' + esc(e.message) + '</p>';
+    .then(function (r) {
+      if (!r || !r.order) throw new Error("Order payload missing from API");
+      renderOrderDetail(r.order);
+    })
+    .catch(function (e) {
+      if (body) {
+        body.innerHTML = '<p style="color:#EF4444;text-align:center;padding:40px;">Failed to load order: ' + esc(e.message) + '</p>';
+      }
     });
+}
+
+function valOrDash(v) {
+  if (v == null) return "—";
+  var s = String(v).trim();
+  return s ? s : "—";
+}
+
+function formatDateTime(iso) {
+  if (!iso) return "—";
+  try {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    return String(iso);
+  }
 }
 
 function renderOrderDetail(o) {
   if (!o) return;
+  injectModalStyles();
+
   var title = document.getElementById("odTitle");
-  var sub   = document.getElementById("odSubtitle");
+  var sub = document.getElementById("odSubtitle");
   if (title) title.textContent = "Order " + (o.orderId || "");
-  if (sub)   sub.textContent   = "Placed on " + (o.orderDate ? new Date(o.orderDate).toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
+  if (sub) sub.textContent = "Placed " + formatDateTime(o.orderDate);
 
-  var sc  = o.selectedCar     || {};
-  var dd  = o.deliveryDetails || {};
-  var dm  = o.deliveryMethod  || {};
-  var pm  = o.paymentMethod   || {};
-  var pp  = o.paymentProof    || null;
-  var tl  = o.timeline        || [];
-  var fullName = [o.firstName, o.lastName].filter(Boolean).join(" ") || "—";
+  var sc = o.selectedCar || {};
+  var dd = o.deliveryDetails || {};
+  var dm = o.deliveryMethod || {};
+  var pm = o.paymentMethod || {};
+  var pp = o.paymentProof || null;
+  var tl = Array.isArray(o.timeline) ? o.timeline : [];
 
-  // Current status index
+  // Customer fields — prefer registered user, fall back to delivery form data
+  var fullName = [o.firstName, o.lastName].filter(Boolean).join(" ")
+    || dd.fullName || dd.name || "—";
+  var email = o.email || dd.email || "—";
+  var phone = o.phone || dd.phone || "—";
+  var address = dd.address || dd.street || "—";
+  var city = dd.city || "—";
+  var state = dd.state || "—";
+  var zip = dd.zipCode || dd.zip || "—";
+  var country = dd.country || "—";
+
   var statusMap = { confirmed: 0, processing: 1, shipped: 2, in_transit: 3, out_for_delivery: 4, delivered: 5 };
-  var curIdx = statusMap[o.status] ?? 0;
+  var statusKey = String(o.status || "confirmed").toLowerCase().replace(/\s+/g, "_");
+  var curIdx = statusMap[statusKey];
+  if (typeof curIdx !== "number") curIdx = 0;
 
-  // Proof section
+  var statusLabel = (DELIVERY_STAGES[curIdx] && DELIVERY_STAGES[curIdx].label) || statusKey;
+
+  // Payment proof block
   var proofHtml = "";
   if (pp) {
     var proofStatus = String(pp.status || "pending");
-    var proofColors = { pending: { bg: "#fff7ed", fg: "#9a3412", border: "#fed7aa" }, approved: { bg: "#f0fdf4", fg: "#166534", border: "#bbf7d0" }, rejected: { bg: "#fef2f2", fg: "#991b1b", border: "#fecaca" } };
+    var proofColors = {
+      pending: { bg: "#fff7ed", fg: "#9a3412", border: "#fed7aa" },
+      approved: { bg: "#f0fdf4", fg: "#166534", border: "#bbf7d0" },
+      rejected: { bg: "#fef2f2", fg: "#991b1b", border: "#fecaca" }
+    };
     var pc = proofColors[proofStatus] || proofColors.pending;
-    proofHtml = '<div class="od-section">' +
-      '<div class="od-section-title">Payment Proof</div>' +
-      '<div class="od-grid od-grid-2">' +
-        odItem("Status", '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;background:' + pc.bg + ';color:' + pc.fg + ';border:1px solid ' + pc.border + ';">' + proofStatus.charAt(0).toUpperCase() + proofStatus.slice(1) + '</span>') +
-        odItem("Submitted", pp.created_at ? new Date(pp.created_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—") +
-        odItem("Amount", pp.amount ? "$" + pp.amount : "—") +
-        odItem("Method", pp.payment_method || (typeof pm === "string" ? pm : (pm.name || "—"))) +
-      '</div>' +
-      (pp.proofUrl || pp.proof_url ? '<div style="margin-top:14px;"><img src="' + esc(pp.proofUrl || pp.proof_url) + '" alt="Payment Proof" style="max-width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid rgba(0,0,0,.08);"></div>' : "") +
-    '</div>';
+    var pmProof = pp.payment_method;
+    if (pmProof && typeof pmProof === "object") pmProof = pmProof.name || pmProof.id || "—";
+    proofHtml = [
+      '<div class="od-section">',
+        '<div class="od-section-title">Payment Proof</div>',
+        '<div class="od-grid od-grid-2">',
+          odItem("Status", '<span class="od-badge" style="background:' + pc.bg + ';color:' + pc.fg + ';border:1px solid ' + pc.border + ';">' + esc(proofStatus) + '</span>'),
+          odItem("Submitted", formatDateTime(pp.created_at)),
+          odItem("Amount", pp.amount != null && pp.amount !== "" ? ("$" + pp.amount) : "—"),
+          odItem("Method", valOrDash(pmProof || (typeof pm === "object" ? (pm.name || pm.label) : pm))),
+        '</div>',
+      '</div>'
+    ].join("");
   }
 
-  // Timeline rows
-  var tlHtml = DELIVERY_STAGES.map(function(stage, i) {
-    var row = tl.find(function(t) { return t.stage_order === i || (String(t.stage || "").toLowerCase().replace(/\s/g,"_") === stage.key); }) || {};
-    var isDone = row.completed || curIdx > i;
-    var isCurrent = (curIdx === i);
-    var ts = row.timestamp ? new Date(row.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
-    return '<div class="od-tl-step ' + (isDone ? "done" : isCurrent ? "current" : "upcoming") + '">' +
-      '<div class="od-tl-dot">' + (isDone ? "✓" : stage.icon) + '</div>' +
-      '<div class="od-tl-info"><div class="od-tl-label">' + stage.label + '</div>' +
-        (ts ? '<div class="od-tl-ts">' + ts + '</div>' : (isCurrent ? '<div class="od-tl-ts" style="color:#E31937;">In progress…</div>' : '<div class="od-tl-ts">Upcoming</div>')) +
-      '</div>' +
-    '</div>';
+  // Delivery progress timeline
+  var tlHtml = DELIVERY_STAGES.map(function (stage, i) {
+    var row = tl.find(function (t) {
+      return Number(t.stage_order) === i ||
+        String(t.stage || "").toLowerCase().replace(/\s+/g, "_") === stage.key ||
+        String(t.stage || "").toLowerCase() === stage.label.toLowerCase();
+    }) || {};
+    var isDone = !!row.completed || curIdx > i;
+    var isCurrent = curIdx === i;
+    var cls = isDone && !isCurrent ? "done" : (isCurrent ? "current" : "upcoming");
+    var ts = row.timestamp ? formatDateTime(row.timestamp) : "";
+    var tsHtml;
+    if (ts && ts !== "—") tsHtml = ts;
+    else if (isCurrent) tsHtml = "In progress…";
+    else if (isDone) tsHtml = "Completed";
+    else tsHtml = "Upcoming";
+    return [
+      '<div class="od-tl-step ' + cls + '">',
+        '<div class="od-tl-dot">' + (isDone && !isCurrent ? "✓" : stage.icon) + '</div>',
+        '<div class="od-tl-info">',
+          '<div class="od-tl-label">' + stage.label + (isCurrent ? ' <span class="od-badge od-badge-current">Current</span>' : "") + '</div>',
+          '<div class="od-tl-ts">' + tsHtml + '</div>',
+        '</div>',
+      '</div>'
+    ].join("");
   }).join("");
 
+  var carName = sc.name ? ("Tesla " + sc.name) : "—";
+  var dmName = (dm && (dm.name || dm.label)) || "—";
+  var pmName = typeof pm === "string" ? pm : ((pm && (pm.name || pm.label)) || "—");
+  var payStatus = pp ? String(pp.status || "pending") : (pmName && pmName !== "—" && pmName !== "Not specified" ? "Selected" : "Not submitted");
+
   var body = document.getElementById("odBody");
+  if (!body) return;
   body.innerHTML = [
-    // Customer
     '<div class="od-section">',
       '<div class="od-section-title">Customer Information</div>',
       '<div class="od-grid od-grid-3">',
-        odItem("Full Name", fullName),
-        odItem("Email", o.email || "—"),
-        odItem("Phone", o.phone || "—"),
+        odItem("Customer Name", fullName),
+        odItem("Email", email),
+        odItem("Phone", phone),
       '</div>',
     '</div>',
-    // Vehicle
     '<div class="od-section">',
       '<div class="od-section-title">Vehicle & Order</div>',
       '<div class="od-grid od-grid-3">',
-        odItem("Tesla Model", "Tesla " + (sc.name || sc.model || "—")),
-        odItem("Order ID", '<span style="font-family:monospace;font-size:12px;color:#E31937;font-weight:800;">' + esc(o.orderId || "—") + '</span>'),
-        odItem("Tracking #", '<span style="font-family:monospace;font-size:12px;font-weight:700;">' + esc(o.trackingNumber || "—") + '</span>'),
-        odItem("Order Date", o.orderDate ? new Date(o.orderDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"),
-        odItem("Order Time", o.orderDate ? new Date(o.orderDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—"),
-        odItem("Est. Delivery", '<span style="color:#00A550;font-weight:700;">' + esc(o.estimatedDelivery || "—") + '</span>'),
-        odItem("Delivery Method", (dm.name || dm.label || "—")),
-        odItem("Payment Method", (typeof pm === "string" ? pm : (pm.name || pm.label || "—"))),
+        odItem("Order ID", o.orderId || "—"),
+        odItem("Tracking #", o.trackingNumber || "—"),
+        odItem("Tesla Model", carName),
+        odItem("Order Date", formatDateTime(o.orderDate)),
+        odItem("Est. Delivery", o.estimatedDelivery || "—"),
+        odItem("Current Status", '<span class="od-badge od-badge-current">' + esc(statusLabel) + '</span>'),
+        odItem("Delivery Method", dmName),
+        odItem("Payment Method", pmName),
+        odItem("Payment Status", payStatus),
       '</div>',
     '</div>',
-    // Delivery address
     '<div class="od-section">',
       '<div class="od-section-title">Delivery Address</div>',
       '<div class="od-grid od-grid-3">',
         odItem("Recipient", dd.fullName || dd.name || fullName),
-        odItem("Address", dd.address || dd.street || "—"),
-        odItem("City", dd.city || "—"),
-        odItem("State", dd.state || "—"),
-        odItem("ZIP Code", dd.zipCode || dd.zip || "—"),
-        odItem("Country", dd.country || "—"),
-        odItem("Phone", dd.phone || o.phone || "—"),
+        odItem("Address", address),
+        odItem("City", city),
+        odItem("State", state),
+        odItem("ZIP / Postal", zip),
+        odItem("Country", country),
       '</div>',
     '</div>',
-    // Payment proof
     proofHtml,
-    // Delivery progress timeline
     '<div class="od-section">',
       '<div class="od-section-title">Delivery Progress</div>',
-      '<div class="od-timeline">',
-        tlHtml,
-      '</div>',
+      '<div class="od-timeline">' + tlHtml + '</div>',
     '</div>',
-    // Update status
     '<div class="od-section od-update-section">',
-      '<div class="od-section-title">Update Delivery Status</div>',
-      '<p style="font-size:13px;color:#888;margin:0 0 16px;">Changes are saved to the database immediately and reflected on the customer\'s confirmation page.</p>',
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">',
-        '<select id="odStatusSelect" style="flex:1;min-width:200px;padding:10px 14px;border-radius:12px;border:1.5px solid rgba(0,0,0,.12);font-size:14px;font-weight:600;background:white;cursor:pointer;">',
-          DELIVERY_STAGES.map(function(s) {
-            return '<option value="' + s.key + '"' + (s.key === o.status ? ' selected' : '') + '>' + s.icon + ' ' + s.label + '</option>';
-          }).join(""),
-        '</select>',
-        '<button onclick="saveOrderStatus()" style="background:linear-gradient(135deg,#E31937,#c41030);color:white;border:none;cursor:pointer;padding:10px 22px;border-radius:12px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;">',
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>',
-          'Save Status',
-        '</button>',
+      '<div class="od-section-title">Update Delivery Progress</div>',
+      '<p style="margin:0 0 14px;font-size:13px;color:#666;">Changes save to the database and appear on customer Order Placed and Payment Confirmation pages.</p>',
+      '<div class="od-status-row">',
+        '<div class="od-field">',
+          '<label for="odStatusSelect">Delivery stage</label>',
+          '<select id="odStatusSelect">' +
+            DELIVERY_STAGES.map(function (s) {
+              return '<option value="' + s.key + '"' + (s.key === statusKey ? " selected" : "") + ">" + s.label + "</option>";
+            }).join("") +
+          '</select>',
+        '</div>',
+        '<div class="od-field">',
+          '<label for="odStatusTime">Timestamp (optional)</label>',
+          '<input type="datetime-local" id="odStatusTime">',
+        '</div>',
+        '<button type="button" class="od-save-btn" id="odSaveStatusBtn" onclick="saveOrderStatus()">Save Progress</button>',
       '</div>',
       '<div id="odStatusMsg" style="margin-top:12px;display:none;"></div>',
     '</div>'
@@ -181,7 +302,12 @@ function renderOrderDetail(o) {
 }
 
 function odItem(label, value) {
-  return '<div class="od-grid-item"><div class="od-item-label">' + esc(label) + '</div><div class="od-item-val">' + (value == null ? '—' : value) + '</div></div>';
+  var display = value == null || value === "" ? "—" : value;
+  // Allow trusted HTML only for our own badge spans; escape plain text
+  var isHtml = typeof display === "string" && display.indexOf("<") !== -1;
+  return '<div class="od-grid-item"><div class="od-item-label">' + esc(label) + '</div><div class="od-item-val">' +
+    (isHtml ? display : esc(String(display))) +
+    '</div></div>';
 }
 
 function saveOrderStatus() {
@@ -189,74 +315,52 @@ function saveOrderStatus() {
   var sel = document.getElementById("odStatusSelect");
   if (!sel) return;
   var status = sel.value;
+  var timeEl = document.getElementById("odStatusTime");
+  var payload = { status: status };
+  if (timeEl && timeEl.value) {
+    try {
+      payload.timestamp = new Date(timeEl.value).toISOString();
+    } catch (e) {}
+  }
   var msg = document.getElementById("odStatusMsg");
-  if (msg) { msg.style.display = "none"; }
+  var btn = document.getElementById("odSaveStatusBtn");
+  if (msg) msg.style.display = "none";
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
 
-  api("PUT", "/admin/orders/" + encodeURIComponent(_currentOrderId) + "/status", { status: status })
-    .then(function() {
-      // Update allOrders in memory
-      var idx = allOrders.findIndex(function(o) { return o.orderId === _currentOrderId; });
-      if (idx !== -1) { allOrders[idx].status = status; }
-      showToast("Delivery status updated to: " + DELIVERY_STAGES.find(function(s) { return s.key === status; })?.label, "success");
+  api("PUT", "/admin/orders/" + encodeURIComponent(_currentOrderId) + "/status", payload)
+    .then(function () {
+      var idx = allOrders.findIndex(function (o) { return o.orderId === _currentOrderId; });
+      if (idx !== -1) allOrders[idx].status = status;
+      var label = (DELIVERY_STAGES.find(function (s) { return s.key === status; }) || {}).label || status;
+      showToast("Delivery progress updated: " + label, "success");
       if (msg) {
         msg.style.display = "block";
         msg.style.cssText = "display:block;padding:10px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:13px;font-weight:600;";
-        msg.textContent = "✓ Status updated successfully. Customer page will reflect this change immediately.";
+        msg.textContent = "Saved to database. Customer pages will show this status on next load.";
       }
-      // Re-render the detail panel with updated data
       loadOrderDetail(_currentOrderId);
-      // Refresh the orders list too
-      setTimeout(function() { renderOrders(); }, 300);
+      setTimeout(function () { if (typeof renderOrders === "function") renderOrders(); }, 200);
     })
-    .catch(function(e) {
+    .catch(function (e) {
       showToast("Failed to update status: " + e.message, "error");
       if (msg) {
         msg.style.display = "block";
         msg.style.cssText = "display:block;padding:10px 14px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:13px;font-weight:600;";
-        msg.textContent = "✗ Failed: " + e.message;
+        msg.textContent = "Failed: " + e.message;
       }
+    })
+    .then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = "Save Progress"; }
     });
 }
 
-// ── MODAL CSS ─────────────────────────────────────────────────────────────
-(function injectModalStyles() {
-  if (document.getElementById("odStyles")) return;
-  var s = document.createElement("style");
-  s.id = "odStyles";
-  s.textContent = [
-    "#orderDetailModal { display:none; }",
-    "#orderDetailModal.open { display:flex; }",
-    "@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }",
-    ".od-section { margin-bottom:28px; }",
-    ".od-section-title { font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,.06); }",
-    ".od-grid { display:grid;gap:12px; }",
-    ".od-grid-2 { grid-template-columns:repeat(2,1fr); }",
-    ".od-grid-3 { grid-template-columns:repeat(3,1fr); }",
-    "@media(max-width:600px) { .od-grid-2,.od-grid-3 { grid-template-columns:1fr 1fr; } }",
-    "@media(max-width:400px) { .od-grid-2,.od-grid-3 { grid-template-columns:1fr; } }",
-    ".od-grid-item { background:#f8f9fa;border-radius:10px;padding:12px 14px;border:1px solid rgba(0,0,0,.05); }",
-    ".od-item-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:5px; }",
-    ".od-item-val { font-size:13px;font-weight:600;color:#111;word-break:break-word; }",
-    ".od-update-section { background:rgba(227,25,55,.03);border:1.5px solid rgba(227,25,55,.1);border-radius:14px;padding:20px; }",
-    ".od-timeline { display:flex;flex-direction:column;gap:0; }",
-    ".od-tl-step { display:flex;gap:16px;padding:10px 0;position:relative; }",
-    ".od-tl-step:not(:last-child)::after { content:'';position:absolute;left:19px;top:44px;width:2px;bottom:-2px;background:rgba(0,0,0,.08); }",
-    ".od-tl-step.done::after { background:#00A550; }",
-    ".od-tl-step.current::after { background:linear-gradient(to bottom,#E31937,rgba(0,0,0,.08)); }",
-    ".od-tl-dot { width:38px;height:38px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid rgba(0,0,0,.1);background:white;z-index:1;position:relative; }",
-    ".od-tl-step.done .od-tl-dot { background:#00A550;border-color:#00A550;color:white; }",
-    ".od-tl-step.current .od-tl-dot { background:#E31937;border-color:#E31937;color:white; }",
-    ".od-tl-step.upcoming .od-tl-dot { background:#f5f5f7;border-color:rgba(0,0,0,.08);color:#ccc; }",
-    ".od-tl-info { flex:1;padding-top:6px; }",
-    ".od-tl-label { font-size:14px;font-weight:700;color:#111; }",
-    ".od-tl-step.current .od-tl-label { color:#E31937; }",
-    ".od-tl-step.upcoming .od-tl-label { color:#aaa; }",
-    ".od-tl-ts { font-size:12px;color:#888;margin-top:2px; }"
-  ].join("\n");
-  document.head.appendChild(s);
-})();
+// Auto-inject styles when script loads
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", injectModalStyles);
+} else {
+  injectModalStyles();
+}
 
-// ── EXPORTS ───────────────────────────────────────────────────────────────
-window.viewOrderDetail  = viewOrderDetail;
+window.viewOrderDetail = viewOrderDetail;
 window.closeOrderDetail = closeOrderDetail;
-window.saveOrderStatus  = saveOrderStatus;
+window.saveOrderStatus = saveOrderStatus;
