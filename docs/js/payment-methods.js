@@ -168,21 +168,25 @@
 
   // ── Internal storage ────────────────────────────────────────────
   function load() {
-    if (cache && cache.length) return cache.slice();
-    if (apiBase()) return null;
+    // Prefer in-memory cache (includes empty array after a successful sync)
+    if (cache !== null && Array.isArray(cache)) return cache.slice();
+    // Soft local cache for faster admin paint while revalidating
     try {
       var raw = global.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
-    } catch (e) { return null; }
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          cache = parsed;
+          return parsed.slice();
+        }
+      }
+    } catch (e) {}
+    return null;
   }
 
   function save(list) {
     cache = Array.isArray(list) ? list.slice() : [];
-    if (!apiBase()) {
-      try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify(cache)); } catch (e) {}
-    }
+    try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify(cache)); } catch (e) {}
   }
 
   function sortByOrder(a, b) {
@@ -243,11 +247,9 @@
   // ── Public API ──────────────────────────────────────────────────
   function getAll() {
     var stored = load();
-    // When the API is configured, never fall back to hard-coded DEFAULTS —
-    // the database is the source of truth. Return an empty array until
-    // syncFromApi completes so the admin sees a loading state, not mock data.
-    if (!stored) return apiBase() ? [] : DEFAULTS.slice().sort(sortByOrder);
-    return stored.slice().sort(sortByOrder);
+    if (stored) return stored.slice().sort(sortByOrder);
+    // No cache yet — empty until syncFromApi fills it (never inject DEFAULTS when API is on)
+    return [];
   }
 
   function getEnabled() {
@@ -449,39 +451,56 @@
     });
   }
 
-  // Pull from API and merge into localStorage
+  // Pull from API into in-memory cache (database is source of truth)
   function syncFromApi(scope, cb) {
     var base = apiBase();
     if (!base || !global.fetch) { if (cb) cb(false); return; }
     var path = scope === 'admin' ? '/admin/payment-methods' : '/payment-methods';
     var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
-    var syncHeaders = {};
+    var timer = setTimeout(function () { if (ctrl) try { ctrl.abort(); } catch (e) {} }, 6000);
+    var syncHeaders = { 'Accept': 'application/json' };
     if (scope === 'admin') {
       try {
-        var adminTok = global.localStorage && global.localStorage.getItem('tesla_admin_token');
+        var adminTok = (global.localStorage && global.localStorage.getItem('tesla_admin_token')) || '';
         if (adminTok) syncHeaders['Authorization'] = 'Bearer ' + adminTok;
       } catch (_) {}
     }
-    var syncOpts = ctrl
-      ? Object.assign({ signal: ctrl.signal }, syncHeaders['Authorization'] ? { headers: syncHeaders } : {})
-      : (syncHeaders['Authorization'] ? { headers: syncHeaders } : undefined);
+    var syncOpts = { headers: syncHeaders };
+    if (ctrl) syncOpts.signal = ctrl.signal;
+
     fetch(base + path, syncOpts)
-      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (r) {
+        if (!r.ok) {
+          console.warn('[PM] syncFromApi HTTP', r.status);
+          return null;
+        }
+        return r.json();
+      })
       .then(function (data) {
         var list = data && (data.methods || data.payment_methods || data);
         if (Array.isArray(list) && list.length > 0) {
           var norm = normalizeList(list);
           if (norm && norm.length > 0) {
-            // No DEFAULTS merging — admin sees exactly what's in the DB.
-            save(norm);
-            try { global.localStorage.removeItem(STORAGE_KEY); global.localStorage.removeItem('tesla_pm_v2'); } catch (e) {}
+            save(norm); // in-memory cache — do NOT clear it
+            // Keep a soft local cache for faster next paint
+            try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify(norm)); } catch (e) {}
             if (cb) cb(true);
-          } else { if (cb) cb(false); }
-        } else { if (cb) cb(false); }
+            return;
+          }
+        }
+        // Empty array from API is a valid success (zero methods configured)
+        if (data && Array.isArray(list) && list.length === 0) {
+          save([]);
+          if (cb) cb(true);
+          return;
+        }
+        if (cb) cb(false);
       })
-      .catch(function () { if (cb) cb(false); })
-      .then(function () { clearTimeout(t); });
+      .catch(function (err) {
+        console.warn('[PM] syncFromApi error', err && err.message);
+        if (cb) cb(false);
+      })
+      .then(function () { clearTimeout(timer); });
   }
 
   global.TeslaPaymentMethods = {

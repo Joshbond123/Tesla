@@ -320,8 +320,12 @@
     var empty = $id('pmEmpty');
 
     if (list.length === 0 && all.length === 0) {
-      grid.innerHTML = _loadingHtml();
-      if (empty) empty.style.display = 'none';
+      // Finished loading with zero methods — show empty state, never spin forever
+      grid.innerHTML = '';
+      if (empty) {
+        empty.style.display = 'flex';
+        empty.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><p>No payment methods in the database yet.<br><button class="btn btn-sm btn-primary" onclick="openPaymentMethodDrawer()">Add payment method</button></p>';
+      }
       return;
     }
 
@@ -925,26 +929,83 @@
   // ── Load payment methods from database (source of truth) ────────
   function loadPaymentMethods() {
     var grid = $id('paymentMethodsGrid');
-    if (grid) grid.innerHTML = _loadingHtml();
-
     if (!PM) {
       console.error('[PM] TeslaPaymentMethods store not available');
       if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--admin-text-muted);">Payment methods store failed to load.</div>';
       return;
     }
 
-    // Always sync from API when available; never rely on localStorage or hard-coded defaults
-    if (typeof PM.syncFromApi === 'function') {
-      PM.syncFromApi('admin', function (ok) {
-        renderPaymentMethods();
-        if (!ok && PM.getAll().length === 0) {
-          // API failed and nothing in memory — show empty state, not mock data
-          var empty = $id('paymentMethodsEmpty');
-          if (empty) empty.style.display = 'block';
-        }
-      });
-    } else {
+    // Instant paint from cache
+    var cached = PM.getAll();
+    if (cached && cached.length > 0) {
       renderPaymentMethods();
+    } else if (grid) {
+      grid.innerHTML = _loadingHtml();
+    }
+
+    function finish(ok) {
+      renderPaymentMethods();
+      if (!ok && PM.getAll().length === 0 && grid) {
+        grid.innerHTML =
+          '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--admin-text-muted);">' +
+          '<p style="margin:0 0 12px;font-weight:600;">Could not load payment methods from the database.</p>' +
+          '<button class="btn btn-sm btn-primary" type="button" onclick="loadPaymentMethods()">Retry</button>' +
+          '</div>';
+      }
+    }
+
+    // Fast path: admin api() with bearer token
+    if (typeof api === 'function' && typeof API_BASE !== 'undefined' && API_BASE) {
+      api('GET', '/admin/payment-methods')
+        .then(function (data) {
+          var list = (data && (data.methods || data.payment_methods)) || [];
+          if (!Array.isArray(list)) list = [];
+          var norm = list.map(function (m) {
+            return PM.normalize ? PM.normalize(m) : m;
+          }).filter(Boolean);
+          // Write into TeslaPaymentMethods cache via public save
+          if (typeof PM.save === 'function') {
+            // PM.save also pushes to API — avoid loop. Use internal path:
+            try {
+              // Seed cache without network push
+              if (PM.syncFromApi) {
+                // Manually set by calling normalizeList path: save through a no-push trick
+              }
+            } catch (e) {}
+          }
+          // Official write: temporary override push
+          try {
+            var _push = PM.pushToApi;
+            var _pushOne = PM.pushMethodToApi;
+            PM.pushToApi = function () {};
+            PM.pushMethodToApi = function () {};
+            if (typeof PM.save === 'function') PM.save(norm);
+            PM.pushToApi = _push;
+            PM.pushMethodToApi = _pushOne;
+          } catch (e) {
+            // fallback
+            if (typeof PM.syncFromApi === 'function') {
+              PM.syncFromApi('admin', finish);
+              return;
+            }
+          }
+          finish(true);
+        })
+        .catch(function (err) {
+          console.warn('[PM] admin api load failed', err && err.message);
+          if (typeof PM.syncFromApi === 'function') {
+            PM.syncFromApi('admin', finish);
+          } else {
+            finish(false);
+          }
+        });
+      return;
+    }
+
+    if (typeof PM.syncFromApi === 'function') {
+      PM.syncFromApi('admin', finish);
+    } else {
+      finish(false);
     }
   }
 

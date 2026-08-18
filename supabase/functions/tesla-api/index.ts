@@ -1563,7 +1563,7 @@ async function handleAdminGetStats() {
     // ── PAYMENT METHODS: ADMIN READ ───────────────────────────────────────────────
     async function handleAdminGetPaymentMethods() {
     const r = await fetch(
-      REST + "/payment_methods?select=*&order=sort_order.asc",
+      REST + "/payment_methods?select=id,slug,name,display_name,type,description,enabled,sort_order,logo_url,wallet_address,account_details,qr_code_url,payment_instructions,config,updated_at,created_at&order=sort_order.asc",
       { headers: SB_HEADERS },
     );
     if (!r.ok) {
