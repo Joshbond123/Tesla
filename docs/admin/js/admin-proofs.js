@@ -89,46 +89,60 @@ function loadProofs() {
       '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;flex-shrink:0"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>' +
       '<span style="font-size:14px;font-weight:500;">Loading payment proofs…</span></div>';
   }
-  api("GET", "/admin/payment-proofs").then(function(r) {
-    allProofs = (r.proofs || []).map(function(p) {
+  if (!API_BASE) {
+    if (container) container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">API not configured.</div>';
+    return;
+  }
+  api("GET", "/admin/payment-proofs").then(function (r) {
+    allProofs = ((r && r.proofs) || []).map(function (p) {
       return {
-        id:             p.id             || "",
-        order_id:       p.order_id       || "",
-        user_name:      p.user_name      || p.customer_name  || "",
-        user_email:     p.user_email     || p.customer_email || "",
-        user_phone:     p.user_phone     || p.customer_phone || "",
-        car_model:      p.car_model      || "",
-        delivery_method:p.delivery_method|| "",
+        id: p.id || "",
+        order_id: p.order_id || "",
+        user_name: p.user_name || p.customer_name || "",
+        user_email: p.user_email || p.customer_email || "",
+        user_phone: p.user_phone || p.customer_phone || "",
+        car_model: p.car_model || "",
+        delivery_method: p.delivery_method || "",
         payment_method: p.payment_method || "",
-        amount:         p.amount         || "",
-        status:         normaliseStatus(p.status),
-        admin_notes:    p.admin_notes    || "",
-        proof_url:      p.proof_url      || "",
+        amount: p.amount || "",
+        status: normaliseStatus(p.status),
+        admin_notes: p.admin_notes || "",
+        proof_url: p.proof_url || "",
         proof_back_url: p.proof_back_url || "",
-        proof_type:     p.proof_type     || "",
-        reviewed_at:    p.reviewed_at    || "",
-        reviewed_by:    p.reviewed_by    || "",
-        created_at:     p.created_at     || ""
+        proof_type: p.proof_type || "",
+        reviewed_at: p.reviewed_at || "",
+        reviewed_by: p.reviewed_by || "",
+        created_at: p.created_at || ""
       };
     });
-    var pending = allProofs.filter(function(p) { return p.status === "pending"; }).length;
+    var pending = allProofs.filter(function (p) { return p.status === "pending"; }).length;
     var badge = document.getElementById("proofsNavBadge");
-    if (badge) { badge.style.display = pending ? "inline-flex" : "none"; badge.textContent = String(pending); }
+    if (badge) {
+      badge.style.display = pending ? "inline-flex" : "none";
+      badge.textContent = String(pending);
+    }
     if (typeof setApiStatus === "function") setApiStatus(true);
-    renderProofs();
-  }).catch(function(err) {
+    try {
+      renderProofs();
+    } catch (err) {
+      console.error("[Admin] renderProofs:", err);
+      if (container) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Failed to render payment proofs.</div>';
+      }
+    }
+  }).catch(function (err) {
+    if (typeof setApiStatus === "function") setApiStatus(false);
     if (container) {
       container.innerHTML =
         '<div style="text-align:center;padding:60px 20px;">' +
-        '<div style="font-size:40px;margin-bottom:12px;">⚠️</div>' +
         '<div style="font-size:15px;font-weight:600;color:#dc2626;margin-bottom:6px;">Unable to load proofs</div>' +
-        '<div style="font-size:13px;color:#94a3b8;">Check the API connection and try again</div>' +
-        '<button onclick="loadProofs()" style="margin-top:16px;padding:8px 20px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Retry</button>' +
+        '<div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">' + esc((err && err.message) || "Request failed") + '</div>' +
+        '<button type="button" onclick="loadProofs()" style="margin-top:8px;padding:8px 20px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Retry</button>' +
         '</div>';
     }
-    if (typeof setApiStatus === "function") setApiStatus(false);
   });
 }
+
 
 // ── Render list ──────────────────────────────────────────────────
 // ── Lazy thumbnail loading (keeps the proofs list lean) ────────────────────────

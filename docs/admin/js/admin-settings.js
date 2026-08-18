@@ -68,6 +68,10 @@ function saveDeliveryFee() {
 
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Saving\u2026"; }
 
+  var saveWatchdog = setTimeout(function () {
+    restoreSaveButton(saveBtn);
+  }, 16000);
+
   if (typeof API_BASE !== "undefined" && API_BASE) {
     // Backend persists currency + fees to the database.
     api("POST", "/admin/settings", { standard_fee: std, express_fee: exp, currency: currency })
@@ -93,8 +97,12 @@ function saveDeliveryFee() {
         }
         showToast("Failed to save: " + (e && e.message ? e.message : "Server error"), "error");
       })
-      .finally(function() { restoreSaveButton(saveBtn); });
+      .then(function () {
+        clearTimeout(saveWatchdog);
+        restoreSaveButton(saveBtn);
+      });
   } else {
+    clearTimeout(saveWatchdog);
     // No backend configured — we cannot persist to the database.
     if (statusEl) {
       statusEl.textContent = "\u2717 API not configured \u2014 cannot save to database.";

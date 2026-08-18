@@ -79,10 +79,34 @@ function loadOrders() {
   if (!container) return;
   container.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--admin-text-muted);"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="animation:spin 1s linear infinite;display:block;margin:0 auto 12px"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Loading orders…</div>';
   if (empty) empty.style.display = "none";
-  if (!API_BASE) { allOrders = []; renderOrders(); return; }
+  if (!API_BASE) {
+    allOrders = [];
+    try { renderOrders(); } catch (e) {}
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">API not configured.</div>';
+    return;
+  }
   api("GET", "/admin/orders")
-    .then(function(r) { allOrders = r.orders || []; renderOrders(); })
-    .catch(function(e) { console.warn(e.message); allOrders = []; renderOrders(); });
+    .then(function (r) {
+      allOrders = (r && Array.isArray(r.orders)) ? r.orders : [];
+      if (typeof setApiStatus === "function") setApiStatus(true);
+      try {
+        renderOrders();
+      } catch (err) {
+        console.error("[Admin] renderOrders:", err);
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Failed to render orders.</div>';
+      }
+    })
+    .catch(function (e) {
+      console.warn("[Admin] loadOrders:", e && e.message);
+      allOrders = [];
+      if (typeof setApiStatus === "function") setApiStatus(false);
+      container.innerHTML =
+        '<div style="text-align:center;padding:48px 20px;">' +
+        '<div style="font-size:15px;font-weight:600;color:#dc2626;margin-bottom:8px;">Unable to load orders</div>' +
+        '<div style="font-size:13px;color:#94a3b8;margin-bottom:16px;">' + esc((e && e.message) || "Request failed") + '</div>' +
+        '<button type="button" class="btn btn-sm btn-primary" onclick="loadOrders()">Retry</button></div>';
+      if (empty) empty.style.display = "none";
+    });
 }
 
 function filterOrders() {
