@@ -648,6 +648,11 @@ function renderOrderPage(order) {
   var statusKeyNow = String(statusRaw || 'confirmed').toLowerCase().replace(/\s+/g, '_');
   var currentIdx = STATUS_TO_INDEX[statusKeyNow];
   if (typeof currentIdx !== 'number') currentIdx = 0;
+  // Align with furthest completed tracking stage (same rule as Admin)
+  (tl || []).forEach(function (t, i) {
+    var ord = typeof t.stage_order === 'number' ? t.stage_order : i;
+    if (t.completed && ord > currentIdx) currentIdx = ord;
+  });
   var done = tl.filter(function (t, i) { return t.completed || i < currentIdx || (i === currentIdx && currentIdx === tl.length - 1); }).length;
   var pct = Math.max(8, Math.min(((currentIdx + (currentIdx === tl.length - 1 ? 1 : 0.5)) / Math.max(tl.length, 1)) * 100, 100));
   var bar = document.getElementById('progressBar');

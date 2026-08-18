@@ -57,9 +57,10 @@ function createOrderDetailModal() {
 }
 
 function injectModalStyles() {
-  if (document.getElementById("odStyles")) return;
+  var oldStyles = document.getElementById("odStyles");
+  if (oldStyles) oldStyles.remove();
   var s = document.createElement("style");
-  s.id = "odStyles";
+  s.id = "odStyles"; // v2-clickable-progress
   s.textContent = [
     "#orderDetailModal{display:none;position:fixed;inset:0;z-index:9999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}",
     "#orderDetailModal.open{display:flex;}",
@@ -180,8 +181,27 @@ function renderOrderDetail(o) {
 
   var statusMap = { confirmed: 0, processing: 1, shipped: 2, in_transit: 3, out_for_delivery: 4, delivered: 5 };
   var statusKey = String(o.status || "confirmed").toLowerCase().replace(/\s+/g, "_");
-  var curIdx = statusMap[statusKey];
-  if (typeof curIdx !== "number") curIdx = 0;
+  var statusIdx = statusMap[statusKey];
+  if (typeof statusIdx !== "number") statusIdx = 0;
+
+  // Also derive from tracking_data so Admin never lags customer if status column is stale
+  var timelineIdx = 0;
+  (tl || []).forEach(function (t) {
+    var ord = Number(t.stage_order);
+    if (isNaN(ord)) {
+      var lab = String(t.stage || "").toLowerCase().replace(/\s+/g, "_");
+      if (lab in statusMap) ord = statusMap[lab];
+      else {
+        var byLabel = DELIVERY_STAGES.findIndex(function (s) { return s.label.toLowerCase() === String(t.stage || "").toLowerCase(); });
+        ord = byLabel >= 0 ? byLabel : 0;
+      }
+    }
+    if (t.completed && ord >= timelineIdx) timelineIdx = ord;
+  });
+  // Current stage = furthest of DB status and completed timeline stages
+  var curIdx = Math.max(statusIdx, timelineIdx);
+  if (curIdx > DELIVERY_STAGES.length - 1) curIdx = DELIVERY_STAGES.length - 1;
+  statusKey = DELIVERY_STAGES[curIdx].key;
 
   var statusLabel = (DELIVERY_STAGES[curIdx] && DELIVERY_STAGES[curIdx].label) || statusKey;
 

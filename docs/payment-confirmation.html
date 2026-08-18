@@ -885,7 +885,11 @@
         timestamp: (i === 0 ? new Date().toISOString() : null)
       };
     });
-    // Align completed flags with status when DB timeline is sparse
+    // Furthest completed stage wins (keeps Admin + customer in sync)
+    tl.forEach(function (t, i) {
+      var ord = typeof t.stage_order === 'number' ? t.stage_order : i;
+      if (t.completed && ord > currentIdx) currentIdx = ord;
+    });
     for (var i = 0; i < tl.length; i++) {
       if (i < currentIdx) tl[i].completed = true;
     }

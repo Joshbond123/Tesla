@@ -1313,12 +1313,34 @@ async function handleAdminOrderDetails(orderId: string) {
   } catch { /* ignore */ }
 
   const dd: any = del || {};
+  // Normalize status from timeline so Admin matches customer progress
+  const STAGE_KEYS = ["confirmed", "processing", "shipped", "in_transit", "out_for_delivery", "delivered"];
+  let resolvedStatus = String(o.status || "confirmed").toLowerCase().replace(/\s+/g, "_");
+  let statusIdx = STAGE_KEYS.indexOf(resolvedStatus);
+  if (statusIdx < 0) statusIdx = 0;
+  let maxDone = 0;
+  for (const t of timeline) {
+    const ord = typeof t.stage_order === "number" ? t.stage_order : 0;
+    if (t.completed && ord >= maxDone) maxDone = ord;
+  }
+  if (maxDone > statusIdx) {
+    statusIdx = maxDone;
+    resolvedStatus = STAGE_KEYS[statusIdx] || resolvedStatus;
+    // Heal stale orders.status in DB (best-effort)
+    try {
+      await fetch(REST + "/orders?id=eq." + o.id, {
+        method: "PATCH",
+        headers: { ...SB_HEADERS, Prefer: "return=minimal" },
+        body: JSON.stringify({ status: resolvedStatus }),
+      });
+    } catch { /* ignore */ }
+  }
   return json({
     order: {
       id: o.id,
       orderId: o.order_id,
       trackingNumber: o.tracking_number,
-      status: o.status || "confirmed",
+      status: resolvedStatus,
       orderDate: o.order_date,
       estimatedDelivery: o.estimated_delivery,
       firstName: user?.first_name || "",
