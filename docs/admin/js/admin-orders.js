@@ -85,11 +85,17 @@ function injectModalStyles() {
     ".od-item-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:5px;}",
     ".od-item-val{font-size:13px;font-weight:600;color:#111;word-break:break-word;}",
     ".od-progress-hint{font-size:12px;color:#888;margin:0 0 14px;line-height:1.45;}",
-    ".od-tl-step{cursor:pointer;border-radius:12px;padding:10px 10px;margin:0 -10px;transition:background .15s ease,box-shadow .15s ease;}",
+    ".od-tl-step{cursor:pointer;border-radius:12px;padding:10px 10px;margin:0 -10px;transition:background .15s ease,box-shadow .15s ease,transform .12s ease;}",
     ".od-tl-step:hover{background:rgba(227,25,55,.04);}",
     ".od-tl-step.is-saving{opacity:.6;pointer-events:none;}",
     ".od-tl-step.current{background:rgba(227,25,55,.06);}",
+    ".od-timeline.is-locked .od-tl-step{cursor:not-allowed;}",
+    ".od-timeline.is-locked .od-tl-step:hover{background:transparent;}",
+    ".od-lock-banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;font-weight:600;line-height:1.45;margin-bottom:14px;}",
+    ".od-lock-banner svg{flex-shrink:0;margin-top:1px;}",
     ".od-progress-msg{margin-top:12px;display:none;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;}",
+    ".od-panel{animation:odSlideIn .28s cubic-bezier(.22,1,.36,1);}",
+    "@keyframes odSlideIn{from{opacity:0;transform:translateY(12px) scale(.98);}to{opacity:1;transform:none;}}",
     ".od-timeline{display:flex;flex-direction:column;}",
     ".od-tl-step{display:flex;gap:14px;padding:10px 0;position:relative;}",
     ".od-tl-step:not(:last-child)::after{content:'';position:absolute;left:17px;top:42px;width:2px;bottom:0;background:rgba(0,0,0,.08);}",
@@ -230,7 +236,15 @@ function renderOrderDetail(o) {
     ].join("");
   }
 
-  // Delivery progress — current stage from order.status (DB source of truth)
+  // Delivery progress — editable only after payment proof exists in DB
+  var proofStatus = pp ? String(pp.status || "pending").toLowerCase() : "";
+  var canEditProgress = !!(pp && proofStatus !== "rejected");
+  var lockReason = !pp
+    ? "Delivery progress is locked until the customer uploads payment proof."
+    : (proofStatus === "rejected"
+      ? "Delivery progress is locked because the payment proof was rejected."
+      : "");
+
   var tlHtml = DELIVERY_STAGES.map(function (stage, i) {
     var row = tl.find(function (t) {
       return Number(t.stage_order) === i ||
@@ -246,8 +260,11 @@ function renderOrderDetail(o) {
     else if (isCurrent) tsHtml = "In progress…";
     else if (isDone) tsHtml = "Completed";
     else tsHtml = "Upcoming";
+    var title = canEditProgress
+      ? ("Set status to " + stage.label)
+      : "Editing locked until payment proof is uploaded";
     return [
-      '<div class="od-tl-step ' + cls + '" data-stage="' + stage.key + '" role="button" tabindex="0" title="Set status to ' + stage.label + '">',
+      '<div class="od-tl-step ' + cls + '" data-stage="' + stage.key + '" role="button" tabindex="' + (canEditProgress ? "0" : "-1") + '" title="' + title + '">',
         '<div class="od-tl-dot">' + (isDone ? "✓" : stage.icon) + '</div>',
         '<div class="od-tl-info">',
           '<div class="od-tl-label">' + stage.label + (isCurrent ? ' <span class="od-badge od-badge-current">Current</span>' : "") + '</div>',
@@ -301,15 +318,20 @@ function renderOrderDetail(o) {
     proofHtml,
     '<div class="od-section">',
       '<div class="od-section-title">Delivery Progress</div>',
-      '<p class="od-progress-hint">Click a delivery stage to update this order\'s progress. Changes save to the database and sync to customer pages.</p>',
-      '<div class="od-timeline" id="odTimeline">' + tlHtml + '</div>',
+      (canEditProgress
+        ? '<p class="od-progress-hint">Click a delivery stage to update this order\'s progress. Changes save to the database and sync to customer pages.</p>'
+        : '<div class="od-lock-banner"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>' + esc(lockReason) + '</span></div>'),
+      '<div class="od-timeline' + (canEditProgress ? '' : ' is-locked') + '" id="odTimeline">' + tlHtml + '</div>',
       '<div class="od-progress-msg" id="odStatusMsg"></div>',
     '</div>'
   ].join("");
 
-  // Bind click-to-update on each stage
+  // Store last order payload for in-place updates (no page reload)
+  window._odLastOrder = o;
+  window._odCanEditProgress = canEditProgress;
+
   var timelineEl = document.getElementById("odTimeline");
-  if (timelineEl) {
+  if (timelineEl && canEditProgress) {
     timelineEl.querySelectorAll(".od-tl-step").forEach(function (stepEl) {
       stepEl.addEventListener("click", function () {
         var stage = stepEl.getAttribute("data-stage");
@@ -342,6 +364,10 @@ function odItem(label, value) {
 function saveOrderStatus(status, stepEl) {
   if (!_currentOrderId || !API_BASE) return;
   if (!status) return;
+  if (!window._odCanEditProgress) {
+    showToast("Delivery progress is locked until payment proof is uploaded", "warning");
+    return;
+  }
   var msg = document.getElementById("odStatusMsg");
   if (msg) {
     msg.style.display = "none";
@@ -352,7 +378,7 @@ function saveOrderStatus(status, stepEl) {
   if (timelineEl) timelineEl.style.pointerEvents = "none";
 
   api("PUT", "/admin/orders/" + encodeURIComponent(_currentOrderId) + "/status", { status: status })
-    .then(function () {
+    .then(function (res) {
       var idx = allOrders.findIndex(function (o) { return o.orderId === _currentOrderId; });
       if (idx !== -1) allOrders[idx].status = status;
       var label = (DELIVERY_STAGES.find(function (s) { return s.key === status; }) || {}).label || status;
@@ -362,10 +388,39 @@ function saveOrderStatus(status, stepEl) {
         msg.style.background = "#f0fdf4";
         msg.style.border = "1px solid #bbf7d0";
         msg.style.color = "#166534";
-        msg.textContent = "Saved. Customer Order Placed and Payment Confirmation will show this status.";
+        msg.textContent = "Saved. Customer pages will show this status on next load.";
       }
-      loadOrderDetail(_currentOrderId);
-      setTimeout(function () { if (typeof renderOrders === "function") renderOrders(); }, 200);
+      // In-place UI update from cached order + new status (no page reload, modal stays open)
+      var cached = window._odLastOrder || {};
+      var stageIdx = DELIVERY_STAGES.findIndex(function (s) { return s.key === status; });
+      if (stageIdx < 0) stageIdx = 0;
+      var nowIso = (res && res.timestamp) || new Date().toISOString();
+      var newTl = DELIVERY_STAGES.map(function (s, i) {
+        var prev = (cached.timeline || []).find(function (t) {
+          return Number(t.stage_order) === i || String(t.stage || "").toLowerCase() === s.label.toLowerCase();
+        }) || {};
+        return {
+          stage_order: i,
+          stage: s.label,
+          completed: i <= stageIdx,
+          timestamp: i < stageIdx ? (prev.timestamp || nowIso) : (i === stageIdx ? nowIso : null)
+        };
+      });
+      cached.status = status;
+      cached.timeline = newTl;
+      window._odLastOrder = cached;
+      renderOrderDetail(cached);
+      // Soft-refresh list badges only
+      setTimeout(function () { if (typeof renderOrders === "function") renderOrders(); }, 150);
+      // Background revalidate from DB without clearing the modal first
+      api("GET", "/admin/orders/" + encodeURIComponent(_currentOrderId))
+        .then(function (r) {
+          if (r && r.order && _currentOrderId === (r.order.orderId || _currentOrderId)) {
+            window._odLastOrder = r.order;
+            renderOrderDetail(r.order);
+          }
+        })
+        .catch(function () { /* keep optimistic UI */ });
     })
     .catch(function (e) {
       showToast("Failed to update status: " + e.message, "error");

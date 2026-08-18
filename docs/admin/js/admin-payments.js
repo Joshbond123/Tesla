@@ -710,7 +710,7 @@
       var preview = $id('drwQrPreview');
       if (preview) {
         preview.className = 'pm3-qr-preview';
-        preview.innerHTML = '<img src="' + _qrUpload + '" alt="QR code"><button class="pm3-clear-btn" onclick="clearQrUpload()">Remove</button>';
+        preview.innerHTML = '<img src="' + _qrUpload + '" alt="QR code"><button type="button" class="pm3-clear-btn pm3-qr-remove" onclick="clearQrUpload()">Remove QR Code</button>';
       }
       var fname = $id('drwQrFileName');
       if (fname) fname.textContent = file.name;
@@ -746,7 +746,7 @@
 
   function _qrField(existingDataUrl) {
     var preview = existingDataUrl
-      ? '<div class="pm3-qr-preview" id="drwQrPreview"><img src="' + existingDataUrl + '" alt="QR code"><button class="pm3-clear-btn" onclick="clearQrUpload()">Remove</button></div>'
+      ? '<div class="pm3-qr-preview" id="drwQrPreview"><img src="' + existingDataUrl + '" alt="QR code"><button type="button" class="pm3-clear-btn pm3-qr-remove" onclick="clearQrUpload()">Remove QR Code</button></div>'
       : '<div class="pm3-qr-preview pm3-qr-preview--empty" id="drwQrPreview"></div>';
     return '<div class="pm3-field">' +
       '<label class="pm3-label">QR Code Image (optional)</label>' +

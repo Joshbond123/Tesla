@@ -1365,9 +1365,49 @@ async function handleAdminUpdateOrderStatus(req: Request, orderId: string) {
   const idx = ORDER_STAGE_KEYS.indexOf(status);
   if (idx < 0) return json({ error: "Invalid status. Use: " + ORDER_STAGE_KEYS.join(", ") }, 400);
 
-  const oRow = await dbGet1("orders", "id,order_id,status", { order_id: "eq." + orderId });
+  const oRow = await dbGet1("orders", "id,order_id,status,user_id", { order_id: "eq." + orderId });
   if (!oRow.data) return json({ error: "Order not found." }, 404);
   const dbId = (oRow.data as any).id;
+  const userId = (oRow.data as any).user_id || "";
+
+  // Require payment proof before delivery progress can be edited
+  let hasProof = false;
+  try {
+    let q = REST + "/payment_proofs?select=id,status&limit=1";
+    if (userId) {
+      q = REST + "/payment_proofs?select=id,status&or=(user_id.eq." + encodeURIComponent(userId) + ",order_id.eq." + encodeURIComponent(orderId) + ")&limit=5";
+    } else {
+      q = REST + "/payment_proofs?select=id,status&order_id=eq." + encodeURIComponent(orderId) + "&limit=5";
+    }
+    const ppR = await fetch(q, { headers: SB_HEADERS });
+    if (ppR.ok) {
+      const rows = await ppR.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        hasProof = rows.some((r: any) => String(r.status || "").toLowerCase() !== "rejected");
+      }
+    }
+    // Also match by customer email via user
+    if (!hasProof && userId) {
+      const uR = await fetch(REST + "/giveaway_users?select=email&id=eq." + encodeURIComponent(userId) + "&limit=1", { headers: SB_HEADERS });
+      if (uR.ok) {
+        const uRows = await uR.json();
+        const em = uRows[0]?.email;
+        if (em) {
+          const pp2 = await fetch(REST + "/payment_proofs?select=id,status&customer_email=eq." + encodeURIComponent(em) + "&limit=5", { headers: SB_HEADERS });
+          if (pp2.ok) {
+            const rows2 = await pp2.json();
+            if (Array.isArray(rows2) && rows2.length > 0) {
+              hasProof = rows2.some((r: any) => String(r.status || "").toLowerCase() !== "rejected");
+            }
+          }
+        }
+      }
+    }
+  } catch { /* ignore */ }
+  if (!hasProof) {
+    return json({ error: "Delivery progress can only be updated after the customer uploads payment proof." }, 403);
+  }
+
   const now = body.timestamp && !isNaN(Date.parse(body.timestamp))
     ? new Date(body.timestamp).toISOString()
     : new Date().toISOString();

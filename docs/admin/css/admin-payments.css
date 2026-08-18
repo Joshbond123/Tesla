@@ -1384,3 +1384,20 @@
     width: 100%;
   }
 }
+
+
+/* QR remove — danger style */
+.pm3-qr-preview .pm3-clear-btn,
+button.pm3-clear-btn.pm3-qr-remove {
+  background: #EF4444 !important;
+  border-color: #DC2626 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+}
+.pm3-qr-preview .pm3-clear-btn:hover,
+button.pm3-clear-btn.pm3-qr-remove:hover {
+  background: #DC2626 !important;
+  border-color: #B91C1C !important;
+  color: #fff !important;
+}
