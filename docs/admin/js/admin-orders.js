@@ -83,7 +83,12 @@ function injectModalStyles() {
     ".od-grid-item{background:#f8f9fb;border-radius:10px;padding:12px 14px;border:1px solid rgba(0,0,0,.05);}",
     ".od-item-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:5px;}",
     ".od-item-val{font-size:13px;font-weight:600;color:#111;word-break:break-word;}",
-    ".od-update-section{background:linear-gradient(180deg,rgba(227,25,55,.04),rgba(227,25,55,.02));border:1.5px solid rgba(227,25,55,.12);border-radius:14px;padding:18px;}",
+    ".od-progress-hint{font-size:12px;color:#888;margin:0 0 14px;line-height:1.45;}",
+    ".od-tl-step{cursor:pointer;border-radius:12px;padding:10px 10px;margin:0 -10px;transition:background .15s ease,box-shadow .15s ease;}",
+    ".od-tl-step:hover{background:rgba(227,25,55,.04);}",
+    ".od-tl-step.is-saving{opacity:.6;pointer-events:none;}",
+    ".od-tl-step.current{background:rgba(227,25,55,.06);}",
+    ".od-progress-msg{margin-top:12px;display:none;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;}",
     ".od-timeline{display:flex;flex-direction:column;}",
     ".od-tl-step{display:flex;gap:14px;padding:10px 0;position:relative;}",
     ".od-tl-step:not(:last-child)::after{content:'';position:absolute;left:17px;top:42px;width:2px;bottom:0;background:rgba(0,0,0,.08);}",
@@ -205,16 +210,16 @@ function renderOrderDetail(o) {
     ].join("");
   }
 
-  // Delivery progress timeline
+  // Delivery progress — current stage from order.status (DB source of truth)
   var tlHtml = DELIVERY_STAGES.map(function (stage, i) {
     var row = tl.find(function (t) {
       return Number(t.stage_order) === i ||
         String(t.stage || "").toLowerCase().replace(/\s+/g, "_") === stage.key ||
         String(t.stage || "").toLowerCase() === stage.label.toLowerCase();
     }) || {};
-    var isDone = !!row.completed || curIdx > i;
-    var isCurrent = curIdx === i;
-    var cls = isDone && !isCurrent ? "done" : (isCurrent ? "current" : "upcoming");
+    var isDone = i < curIdx;
+    var isCurrent = i === curIdx;
+    var cls = isDone ? "done" : (isCurrent ? "current" : "upcoming");
     var ts = row.timestamp ? formatDateTime(row.timestamp) : "";
     var tsHtml;
     if (ts && ts !== "—") tsHtml = ts;
@@ -222,8 +227,8 @@ function renderOrderDetail(o) {
     else if (isDone) tsHtml = "Completed";
     else tsHtml = "Upcoming";
     return [
-      '<div class="od-tl-step ' + cls + '">',
-        '<div class="od-tl-dot">' + (isDone && !isCurrent ? "✓" : stage.icon) + '</div>',
+      '<div class="od-tl-step ' + cls + '" data-stage="' + stage.key + '" role="button" tabindex="0" title="Set status to ' + stage.label + '">',
+        '<div class="od-tl-dot">' + (isDone ? "✓" : stage.icon) + '</div>',
         '<div class="od-tl-info">',
           '<div class="od-tl-label">' + stage.label + (isCurrent ? ' <span class="od-badge od-badge-current">Current</span>' : "") + '</div>',
           '<div class="od-tl-ts">' + tsHtml + '</div>',
@@ -276,29 +281,33 @@ function renderOrderDetail(o) {
     proofHtml,
     '<div class="od-section">',
       '<div class="od-section-title">Delivery Progress</div>',
-      '<div class="od-timeline">' + tlHtml + '</div>',
-    '</div>',
-    '<div class="od-section od-update-section">',
-      '<div class="od-section-title">Update Delivery Progress</div>',
-      '<p style="margin:0 0 14px;font-size:13px;color:#666;">Changes save to the database and appear on customer Order Placed and Payment Confirmation pages.</p>',
-      '<div class="od-status-row">',
-        '<div class="od-field">',
-          '<label for="odStatusSelect">Delivery stage</label>',
-          '<select id="odStatusSelect">' +
-            DELIVERY_STAGES.map(function (s) {
-              return '<option value="' + s.key + '"' + (s.key === statusKey ? " selected" : "") + ">" + s.label + "</option>";
-            }).join("") +
-          '</select>',
-        '</div>',
-        '<div class="od-field">',
-          '<label for="odStatusTime">Timestamp (optional)</label>',
-          '<input type="datetime-local" id="odStatusTime">',
-        '</div>',
-        '<button type="button" class="od-save-btn" id="odSaveStatusBtn" onclick="saveOrderStatus()">Save Progress</button>',
-      '</div>',
-      '<div id="odStatusMsg" style="margin-top:12px;display:none;"></div>',
+      '<p class="od-progress-hint">Click a delivery stage to update this order\'s progress. Changes save to the database and sync to customer pages.</p>',
+      '<div class="od-timeline" id="odTimeline">' + tlHtml + '</div>',
+      '<div class="od-progress-msg" id="odStatusMsg"></div>',
     '</div>'
   ].join("");
+
+  // Bind click-to-update on each stage
+  var timelineEl = document.getElementById("odTimeline");
+  if (timelineEl) {
+    timelineEl.querySelectorAll(".od-tl-step").forEach(function (stepEl) {
+      stepEl.addEventListener("click", function () {
+        var stage = stepEl.getAttribute("data-stage");
+        if (!stage || !_currentOrderId) return;
+        if (stage === statusKey) {
+          showToast("Already at this stage", "info");
+          return;
+        }
+        saveOrderStatus(stage, stepEl);
+      });
+      stepEl.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          stepEl.click();
+        }
+      });
+    });
+  }
 }
 
 function odItem(label, value) {
@@ -310,24 +319,19 @@ function odItem(label, value) {
     '</div></div>';
 }
 
-function saveOrderStatus() {
+function saveOrderStatus(status, stepEl) {
   if (!_currentOrderId || !API_BASE) return;
-  var sel = document.getElementById("odStatusSelect");
-  if (!sel) return;
-  var status = sel.value;
-  var timeEl = document.getElementById("odStatusTime");
-  var payload = { status: status };
-  if (timeEl && timeEl.value) {
-    try {
-      payload.timestamp = new Date(timeEl.value).toISOString();
-    } catch (e) {}
-  }
+  if (!status) return;
   var msg = document.getElementById("odStatusMsg");
-  var btn = document.getElementById("odSaveStatusBtn");
-  if (msg) msg.style.display = "none";
-  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  if (msg) {
+    msg.style.display = "none";
+    msg.textContent = "";
+  }
+  if (stepEl) stepEl.classList.add("is-saving");
+  var timelineEl = document.getElementById("odTimeline");
+  if (timelineEl) timelineEl.style.pointerEvents = "none";
 
-  api("PUT", "/admin/orders/" + encodeURIComponent(_currentOrderId) + "/status", payload)
+  api("PUT", "/admin/orders/" + encodeURIComponent(_currentOrderId) + "/status", { status: status })
     .then(function () {
       var idx = allOrders.findIndex(function (o) { return o.orderId === _currentOrderId; });
       if (idx !== -1) allOrders[idx].status = status;
@@ -335,8 +339,10 @@ function saveOrderStatus() {
       showToast("Delivery progress updated: " + label, "success");
       if (msg) {
         msg.style.display = "block";
-        msg.style.cssText = "display:block;padding:10px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:13px;font-weight:600;";
-        msg.textContent = "Saved to database. Customer pages will show this status on next load.";
+        msg.style.background = "#f0fdf4";
+        msg.style.border = "1px solid #bbf7d0";
+        msg.style.color = "#166534";
+        msg.textContent = "Saved. Customer Order Placed and Payment Confirmation will show this status.";
       }
       loadOrderDetail(_currentOrderId);
       setTimeout(function () { if (typeof renderOrders === "function") renderOrders(); }, 200);
@@ -345,12 +351,13 @@ function saveOrderStatus() {
       showToast("Failed to update status: " + e.message, "error");
       if (msg) {
         msg.style.display = "block";
-        msg.style.cssText = "display:block;padding:10px 14px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:13px;font-weight:600;";
+        msg.style.background = "#fef2f2";
+        msg.style.border = "1px solid #fecaca";
+        msg.style.color = "#991b1b";
         msg.textContent = "Failed: " + e.message;
       }
-    })
-    .then(function () {
-      if (btn) { btn.disabled = false; btn.textContent = "Save Progress"; }
+      if (stepEl) stepEl.classList.remove("is-saving");
+      if (timelineEl) timelineEl.style.pointerEvents = "";
     });
 }
 

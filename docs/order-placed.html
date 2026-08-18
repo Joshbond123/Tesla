@@ -643,11 +643,13 @@ function renderOrderPage(order) {
   }
 
   // ── Delivery Progress (always 6 stages from DB + status) ──
+  // Single source of truth: order.status determines the current stage (same as Admin)
   var tl = order.timeline;
-  var done = tl.filter(function (t) { return t.completed; }).length;
-  // Current stage index: first incomplete, or last if all done
-  var currentIdx = done < tl.length ? done : tl.length - 1;
-  var pct = Math.max(8, Math.min((done / Math.max(tl.length, 1)) * 100, 100));
+  var statusKeyNow = String(statusRaw || 'confirmed').toLowerCase().replace(/\s+/g, '_');
+  var currentIdx = STATUS_TO_INDEX[statusKeyNow];
+  if (typeof currentIdx !== 'number') currentIdx = 0;
+  var done = tl.filter(function (t, i) { return t.completed || i < currentIdx || (i === currentIdx && currentIdx === tl.length - 1); }).length;
+  var pct = Math.max(8, Math.min(((currentIdx + (currentIdx === tl.length - 1 ? 1 : 0.5)) / Math.max(tl.length, 1)) * 100, 100));
   var bar = document.getElementById('progressBar');
   if (bar) bar.style.width = pct + '%';
   var statusLabelEl = document.getElementById('statusLabel');
@@ -665,7 +667,10 @@ function renderOrderPage(order) {
   };
 
   document.getElementById('timeline').innerHTML = tl.map(function (s, i) {
-    var cls = s.completed ? 'done' : (i === currentIdx ? 'current' : 'upcoming');
+    var cls = (i < currentIdx || (i === currentIdx && currentIdx === tl.length - 1 && s.completed)) ? 'done' : (i === currentIdx ? 'current' : (s.completed && i < currentIdx ? 'done' : 'upcoming'));
+    if (i < currentIdx) cls = 'done';
+    else if (i === currentIdx) cls = 'current';
+    else cls = 'upcoming';
     var icon = stageIcons[s.stage] || '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
     var timeText;
     if (s.completed && s.timestamp) {

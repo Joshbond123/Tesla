@@ -873,33 +873,31 @@
     if (!steps) return;
 
     var statusKey = String(status || 'confirmed').toLowerCase().replace(/\s+/g, '_');
-    var statusOrder = { confirmed: 1, processing: 2, shipped: 3, in_transit: 4, out_for_delivery: 5, delivered: 6 };
-    var completedCount = statusOrder[statusKey] || 1;
+    // 0-based index — same source of truth as Admin Panel (orders.status)
+    var statusIndex = { confirmed: 0, processing: 1, shipped: 2, in_transit: 3, out_for_delivery: 4, delivered: 5 };
+    var currentIdx = statusIndex[statusKey];
+    if (typeof currentIdx !== 'number') currentIdx = 0;
 
     var tl = (timeline && timeline.length > 0) ? timeline.slice() : stageLabels.map(function(s, i){
       return {
         stage: s,
-        completed: i < completedCount,
+        completed: i < currentIdx,
         timestamp: (i === 0 ? new Date().toISOString() : null)
       };
     });
-    // If timeline exists but nothing marked completed, mark stages from status
-    var done = tl.filter(function(t){ return t.completed; }).length;
-    if (done === 0 && tl.length) {
-      for (var i = 0; i < Math.min(completedCount, tl.length); i++) {
-        tl[i].completed = true;
-        if (!tl[i].timestamp && i === 0) tl[i].timestamp = new Date().toISOString();
-      }
-      done = tl.filter(function(t){ return t.completed; }).length;
+    // Align completed flags with status when DB timeline is sparse
+    for (var i = 0; i < tl.length; i++) {
+      if (i < currentIdx) tl[i].completed = true;
     }
-    var pct  = tl.length > 0 ? Math.max(5, Math.min(100, Math.round((done / tl.length) * 100))) : 5;
+    var pct = Math.max(5, Math.min(100, Math.round(((currentIdx + 0.5) / Math.max(tl.length, 1)) * 100)));
+    if (currentIdx === tl.length - 1) pct = 100;
 
     if (fill) fill.style.width = pct + '%';
     if (pctEl) pctEl.textContent = pct + '%';
 
     steps.innerHTML = tl.map(function(step, i){
-      var isDone    = step.completed;
-      var isCurrent = !isDone && i === done;
+      var isDone    = i < currentIdx;
+      var isCurrent = i === currentIdx;
       var cls       = isDone ? 'done' : (isCurrent ? 'current' : 'upcoming');
       var icon      = isDone ? doneIcon : (stageIcons[i] || stageIcons[0]);
       var timeStr   = step.timestamp ? fmtDT(step.timestamp) : (isCurrent ? 'In progress…' : 'Upcoming');
