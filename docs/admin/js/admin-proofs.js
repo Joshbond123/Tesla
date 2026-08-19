@@ -12,6 +12,28 @@ function esc(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
+function proofIcon(name, size) {
+  var s = size || 16;
+  var paths = {
+    user: '<circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c.7-3.2 3.2-5 7.5-5s6.8 1.8 7.5 5"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10 5h4M11 18.5h2"/>',
+    car: '<path d="m5 16-1-5 2-5h12l2 5-1 5"/><path d="M4 16v3h3v-2h10v2h3v-3M7 11h10"/><circle cx="7.5" cy="15" r="1"/><circle cx="16.5" cy="15" r="1"/>',
+    order: '<path d="M6 3h12v18H6z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
+    card: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/>',
+    truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.7"/><circle cx="18" cy="18" r="1.7"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>',
+    eye: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+    close: '<path d="m6 6 12 12M18 6 6 18"/>',
+    trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+    expand: '<path d="M8 4H4v4M16 4h4v4M8 20H4v-4M20 16v4h-4"/>',
+    image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+    imageOff: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 3 18 18M8.5 8.5h.01M21 15l-5-5L5 21"/>',
+    refresh: '<path d="M20 11a8.1 8.1 0 0 0-14.8-4L3 10"/><path d="M3 4v6h6M4 13a8.1 8.1 0 0 0 14.8 4L21 14"/><path d="M21 20v-6h-6"/>',
+    document: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/>'
+  };
+  return '<svg class="proof-icon" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.document) + '</svg>';
+}
 // URL of a proof image served as a real binary response (img-friendly).
 // Token is passed via ?t= so <img> tags can authenticate.
 function proofImgUrl(id, n) {
@@ -57,18 +79,13 @@ function normaliseStatus(raw) {
 function statusBadge(rawStatus, large) {
   var status = normaliseStatus(rawStatus);
   var cfg = {
-    pending:  { label: "Pending",  bg: "#fff7ed", fg: "#9a3412", dot: "#f97316", border: "#fed7aa" },
-    approved: { label: "Approved", bg: "#f0fdf4", fg: "#166534", dot: "#22c55e", border: "#bbf7d0" },
-    rejected: { label: "Rejected", bg: "#fef2f2", fg: "#991b1b", dot: "#ef4444", border: "#fecaca" }
+    pending:  { label: "Pending" },
+    approved: { label: "Approved" },
+    rejected: { label: "Rejected" }
   };
   var c = cfg[status];
-  var pad = large ? "6px 14px" : "4px 10px";
-  var fs  = large ? "13px" : "11px";
-  return '<span style="display:inline-flex;align-items:center;gap:5px;padding:' + pad +
-    ';border-radius:999px;font-size:' + fs + ';font-weight:700;background:' + c.bg +
-    ';color:' + c.fg + ';border:1px solid ' + c.border + ';white-space:nowrap;">' +
-    '<span style="width:6px;height:6px;border-radius:50%;background:' + c.dot + ';flex-shrink:0;"></span>' +
-    c.label + '</span>';
+  return '<span class="proof-status proof-status--' + status + (large ? ' proof-status--large' : '') + '">' +
+    '<span class="proof-status-dot"></span><span>' + c.label + '</span></span>';
 }
 
 // ── Proof image URLs ─────────────────────────────────────────────
@@ -85,12 +102,12 @@ function loadProofs() {
   var container = document.getElementById("proofsContainer");
   if (container) {
     container.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:60px 20px;color:#94a3b8;">' +
-      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;flex-shrink:0"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.59"/></svg>' +
-      '<span style="font-size:14px;font-weight:500;">Loading payment proofs…</span></div>';
+      '<div class="proofs-loading">' +
+      '<span class="proofs-loading-spinner">' + proofIcon("refresh", 19) + '</span>' +
+      '<span>Loading payment proofs</span></div>';
   }
   if (!API_BASE) {
-    if (container) container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">API not configured.</div>';
+    if (container) container.innerHTML = '<div class="proofs-error"><strong>Payment proofs are unavailable</strong><span>API not configured.</span></div>';
     return;
   }
   api("GET", "/admin/payment-proofs").then(function (r) {
@@ -127,17 +144,18 @@ function loadProofs() {
     } catch (err) {
       console.error("[Admin] renderProofs:", err);
       if (container) {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Failed to render payment proofs.</div>';
+        container.innerHTML = '<div class="proofs-error"><strong>Payment proofs could not be displayed</strong><span>Please refresh and try again.</span></div>';
       }
     }
   }).catch(function (err) {
     if (typeof setApiStatus === "function") setApiStatus(false);
     if (container) {
       container.innerHTML =
-        '<div style="text-align:center;padding:60px 20px;">' +
-        '<div style="font-size:15px;font-weight:600;color:#dc2626;margin-bottom:6px;">Unable to load proofs</div>' +
-        '<div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">' + esc((err && err.message) || "Request failed") + '</div>' +
-        '<button type="button" onclick="loadProofs()" style="margin-top:8px;padding:8px 20px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Retry</button>' +
+        '<div class="proofs-error">' +
+        '<span class="proofs-error-icon">' + proofIcon("close", 18) + '</span>' +
+        '<strong>Unable to load payment proofs</strong>' +
+        '<span>' + esc((err && err.message) || "Request failed") + '</span>' +
+        '<button type="button" class="proof-button proof-button--primary" onclick="loadProofs()">' + proofIcon("refresh", 15) + 'Retry</button>' +
         '</div>';
     }
   });
@@ -198,7 +216,7 @@ function renderProofs() {
     return;
   }
   if (empty) empty.style.display = "none";
-  container.innerHTML = '<div style="padding:16px 20px 8px;">' + list.map(renderProofCard).join("") + '</div>';
+  container.innerHTML = '<div class="proofs-list">' + list.map(renderProofCard).join("") + '</div>';
 }
 
 // ── Card ─────────────────────────────────────────────────────────
@@ -229,74 +247,70 @@ function renderProofCard(p) {
 
   // Image count badge
   var imgBadge = imgs.length > 1
-    ? '<div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.65);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;">' + imgs.length + ' imgs</div>'
+    ? '<div class="proof-image-count">' + proofIcon("image", 12) + imgs.length + '</div>'
     : "";
 
   // Info chips
   function chip(icon, val, mono) {
     if (!hasVal(val)) return "";
-    return '<div style="display:flex;align-items:flex-start;gap:6px;min-width:0;">' +
-      '<span style="font-size:13px;flex-shrink:0;line-height:1.4;">' + icon + '</span>' +
-      '<span style="font-size:12px;color:#374151;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (mono ? 'font-family:ui-monospace,monospace;font-size:11px;' : '') + '">' + esc(val) + '</span>' +
+    return '<div class="proof-meta-item">' +
+      '<span class="proof-meta-icon">' + icon + '</span>' +
+      '<span class="proof-meta-value' + (mono ? ' proof-meta-value--mono' : '') + '">' + esc(val) + '</span>' +
       '</div>';
   }
 
-  return '<div style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid ' + borderLeft + ';border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:box-shadow .2s,transform .15s;" ' +
+  return '<article class="proof-card proof-card--' + status + '" style="border-left-color:' + borderLeft + ';" ' +
     'onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.1)\';this.style.transform=\'translateY(-1px)\'" ' +
     'onmouseleave="this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.05)\';this.style.transform=\'none\'">' +
 
-    '<div style="display:flex;align-items:stretch;">' +
+    '<div class="proof-card__layout">' +
 
     // ── Thumbnail column ────────────────────────────────────────
-    '<div style="width:90px;min-width:90px;background:#f8fafc;position:relative;overflow:hidden;border-right:1px solid #f1f5f9;">' +
+    '<div class="proof-card__thumb">' +
       thumbHtml +
       imgBadge +
     '</div>' +
 
     // ── Content column ──────────────────────────────────────────
-    '<div style="flex:1;padding:14px 16px;min-width:0;">' +
+    '<div class="proof-card__body">' +
 
       // Row 1: Name + status
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">' +
-        '<div style="min-width:0;">' +
-          '<div style="font-weight:700;font-size:14px;color:#111827;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + customerLabel + '</div>' +
-          (hasVal(p.user_email) ? '<div style="font-size:11.5px;color:#6b7280;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(p.user_email) + '</div>' : '') +
+      '<div class="proof-card__topline">' +
+        '<div class="proof-card__identity">' +
+          '<div class="proof-card__name">' + customerLabel + '</div>' +
+          (hasVal(p.user_email) ? '<div class="proof-card__email">' + esc(p.user_email) + '</div>' : '') +
         '</div>' +
         statusBadge(p.status) +
       '</div>' +
 
       // Row 2: info chips grid
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px 16px;margin-bottom:12px;">' +
-        chip("📱", p.user_phone) +
-        chip("🚗", hasVal(p.car_model)  ? p.car_model : "") +
-        chip("📋", p.order_id, true) +
-        chip("💳", p.payment_method) +
-        chip("🚚", p.delivery_method) +
-        chip("🕒", fmtDateTime(p.created_at)) +
+      '<div class="proof-card__meta">' +
+        chip(proofIcon("phone", 14), p.user_phone) +
+        chip(proofIcon("car", 14), hasVal(p.car_model)  ? p.car_model : "") +
+        chip(proofIcon("order", 14), p.order_id, true) +
+        chip(proofIcon("card", 14), p.payment_method) +
+        chip(proofIcon("truck", 14), p.delivery_method) +
+        chip(proofIcon("clock", 14), fmtDateTime(p.created_at)) +
       '</div>' +
 
       // Row 3: action buttons
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+      '<div class="proof-card__actions">' +
         '<button onclick="window.openProofDetail(\'' + esc(p.id) + '\')" ' +
-          'style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:#4f46e5;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;" ' +
-          'onmouseenter="this.style.background=\'#4338ca\'" onmouseleave="this.style.background=\'#4f46e5\'">' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Details' +
+          'class="proof-button proof-button--primary">' +
+          proofIcon("eye", 14) + 'View details' +
         '</button>' +
         (isPending
           ? '<button onclick="window.quickApproveProof(\'' + esc(p.id) + '\')" ' +
-              'style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" ' +
-              'onmouseenter="this.style.background=\'#dcfce7\'" onmouseleave="this.style.background=\'#f0fdf4\'">✓ Approve</button>'
+              'class="proof-button proof-button--success">' + proofIcon("check", 14) + 'Approve</button>'
           : '') +
         (isPending
           ? '<button onclick="window.quickRejectProof(\'' + esc(p.id) + '\')" ' +
-              'style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#fff;color:#991b1b;border:1px solid #fecaca;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" ' +
-              'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">✕ Reject</button>'
+              'class="proof-button proof-button--danger">' + proofIcon("close", 14) + 'Reject</button>'
           : '') +
         '<button onclick="window.deleteProof(\'' + esc(p.id) + '\')" ' +
-          'style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#fff;color:#b91c1c;border:1px solid #fecaca;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;" ' +
-          'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'" title="Delete proof">🗑 Delete</button>' +
+          'class="proof-button proof-button--quiet-danger" title="Delete proof">' + proofIcon("trash", 14) + 'Delete</button>' +
         (!isPending && hasVal(p.reviewed_at)
-          ? '<span style="font-size:11px;color:#9ca3af;">Reviewed ' + fmtDate(p.reviewed_at) + '</span>'
+          ? '<span class="proof-card__reviewed">Reviewed ' + fmtDate(p.reviewed_at) + '</span>'
           : '') +
       '</div>' +
 
@@ -346,28 +360,27 @@ function renderProofDetail(p) {
   var galleryHtml;
   if (imgCount === 0) {
     galleryHtml =
-      '<div style="padding:32px;text-align:center;background:#f8fafc;border-radius:12px;border:1.5px dashed #e2e8f0;color:#94a3b8;font-size:13px;">' +
-      '<div style="font-size:28px;margin-bottom:8px;">🖼️</div>No proof images uploaded</div>';
+      '<div class="proof-gallery-empty">' +
+      '<div class="proof-gallery-empty-icon">' + proofIcon("imageOff", 28) + '</div>No proof images uploaded</div>';
   } else {
-    var cols = imgCount === 1 ? "1fr" : "1fr 1fr";
-    galleryHtml = '<div style="display:grid;grid-template-columns:' + cols + ';gap:12px;">';
+    galleryHtml = '<div class="proof-gallery' + (imgCount === 1 ? ' proof-gallery--single' : '') + '">';
     imgs.forEach(function(img, i) {
       var encodedUrl = encodeURIComponent(img.url);
       var allEncoded = imgs.map(function(im) { return "'" + encodeURIComponent(im.url) + "'"; }).join(",");
       galleryHtml +=
-        '<div>' +
-          '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:6px;">' + esc(img.label) + '</div>' +
-          '<div style="position:relative;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">' +
+        '<div class="proof-gallery-item">' +
+          '<div class="proof-gallery-label">' + esc(img.label) + '</div>' +
+          '<div class="proof-gallery-frame">' +
             '<img src="' + esc(img.url) + '" alt="' + esc(img.label) + '" ' +
-              'style="width:100%;max-height:220px;object-fit:contain;display:block;cursor:zoom-in;" ' +
+              'class="proof-gallery-image" ' +
               'onclick="window.openImageZoom(\'' + encodedUrl + '\',' + i + ',[' + allEncoded + '])" ' +
               'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
-            '<div style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:120px;color:#94a3b8;font-size:12px;gap:6px;padding:20px;">' +
-              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
+            '<div class="proof-gallery-error">' +
+              proofIcon("imageOff", 28) +
               '<span>Image could not be loaded</span>' +
             '</div>' +
             '<button onclick="window.openImageZoom(\'' + encodedUrl + '\',' + i + ',[' + allEncoded + '])" ' +
-              'style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);border:none;border-radius:6px;color:#fff;font-size:10px;font-weight:600;padding:4px 8px;cursor:pointer;">⤢ Expand</button>' +
+              'class="proof-gallery-expand">' + proofIcon("expand", 13) + 'Expand</button>' +
           '</div>' +
         '</div>';
     });
@@ -375,17 +388,17 @@ function renderProofDetail(p) {
   }
 
   // ── Info section helper ────────────────────────────────────────
-  function infoSection(title, icon, rows) {
+  function infoSection(title, iconName, rows) {
     var content = rows.map(function(r) {
       if (!hasVal(r[1])) return "";
-      return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:7px 0;border-bottom:1px solid #f1f5f9;">' +
-        '<span style="font-size:12px;color:#6b7280;white-space:nowrap;flex-shrink:0;">' + esc(r[0]) + '</span>' +
-        '<span style="font-size:12px;font-weight:600;color:#111827;text-align:right;' + (r[2] ? 'font-family:ui-monospace,monospace;font-size:11px;' : '') + '">' + esc(r[1]) + '</span>' +
+      return '<div class="proof-info-row">' +
+        '<span class="proof-info-label">' + esc(r[0]) + '</span>' +
+        '<span class="proof-info-value' + (r[2] ? ' proof-info-value--mono' : '') + '">' + esc(r[1]) + '</span>' +
         '</div>';
     }).join("");
     if (!content) return "";
-    return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">' +
-      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:10px;">' + icon + '&nbsp; ' + esc(title) + '</div>' +
+    return '<section class="proof-info-section">' +
+      '<div class="proof-info-heading">' + proofIcon(iconName, 14) + '<span>' + esc(title) + '</span></div>' +
       content +
       '</div>';
   }
@@ -393,61 +406,58 @@ function renderProofDetail(p) {
   // ── Approve / Reject buttons ───────────────────────────────────
   var approveBtn = status !== "approved"
     ? '<button onclick="window.approveProof(\'' + esc(p.id) + '\')" ' +
-        'style="flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;" ' +
-        'onmouseenter="this.style.opacity=\'.85\'" onmouseleave="this.style.opacity=\'1\'">' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Approve Payment</button>'
+        'class="proof-detail-action proof-detail-action--approve">' +
+        proofIcon("check", 16) + 'Approve payment</button>'
     : "";
   var rejectBtn = status !== "rejected"
     ? '<button onclick="window.rejectProof(\'' + esc(p.id) + '\')" ' +
-        'style="flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;background:#fff;color:#dc2626;border:2px solid #fecaca;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;" ' +
-        'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject Payment</button>'
+        'class="proof-detail-action proof-detail-action--reject">' +
+        proofIcon("close", 16) + 'Reject payment</button>'
     : "";
   var deleteBtn = '<button onclick="window.deleteProof(\'' + esc(p.id) + '\')" ' +
-    'style="flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;background:#fff;color:#b91c1c;border:2px solid #fecaca;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;" ' +
-    'onmouseenter="this.style.background=\'#fef2f2\'" onmouseleave="this.style.background=\'#fff\'">' +
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Delete Proof</button>';
+    'class="proof-detail-action proof-detail-action--delete">' +
+    proofIcon("trash", 16) + 'Delete proof</button>';
 
   body.innerHTML =
     // ── Customer header ──────────────────────────────────────────
-    '<div style="display:flex;align-items:center;gap:14px;padding-bottom:20px;margin-bottom:20px;border-bottom:1.5px solid #f1f5f9;">' +
-      '<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.3);">' + initials(hasVal(p.user_name) ? p.user_name : p.user_email) + '</div>' +
-      '<div style="flex:1;min-width:0;">' +
-        '<div style="font-weight:800;font-size:18px;color:#111827;line-height:1.2;margin-bottom:3px;">' +
+    '<div class="proof-detail-customer">' +
+      '<div class="proof-detail-avatar">' + initials(hasVal(p.user_name) ? p.user_name : p.user_email) + '</div>' +
+      '<div class="proof-detail-customer-copy">' +
+        '<div class="proof-detail-customer-name">' +
           (hasVal(p.user_name) ? esc(p.user_name) : hasVal(p.user_email) ? esc(p.user_email) : '<span style="color:#9ca3af;font-style:italic;font-weight:400;">Customer ' + esc(p.order_id || p.id || '—') + '</span>') +
         '</div>' +
-        (hasVal(p.user_name) && hasVal(p.user_email) ? '<div style="font-size:12px;color:#6b7280;margin-bottom:5px;">' + esc(p.user_email) + (hasVal(p.user_phone) ? ' · ' + esc(p.user_phone) : '') + '</div>' : '') +
-        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+        (hasVal(p.user_name) && hasVal(p.user_email) ? '<div class="proof-detail-customer-meta">' + esc(p.user_email) + (hasVal(p.user_phone) ? ' · ' + esc(p.user_phone) : '') + '</div>' : '') +
+        '<div class="proof-detail-customer-tags">' +
           statusBadge(p.status, true) +
           (hasVal(p.car_model) ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;color:#e2e8f0;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.02em;">' + esc(p.car_model) + '</span>' : '') +
-          (p.created_at ? '<span style="font-size:11.5px;color:#9ca3af;">Submitted ' + fmtDateTime(p.created_at) + '</span>' : '') +
+           (p.created_at ? '<span class="proof-detail-submitted">Submitted ' + fmtDateTime(p.created_at) + '</span>' : '') +
         '</div>' +
       '</div>' +
     '</div>' +
 
     // ── Images ───────────────────────────────────────────────────
-    '<div style="margin-bottom:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;">Payment Proof' + (imgCount > 1 ? 's (' + imgCount + ')' : '') + '</div>' +
-    '<div style="margin-bottom:20px;">' + galleryHtml + '</div>' +
+    '<div class="proof-detail-section-label">Payment proof' + (imgCount > 1 ? 's (' + imgCount + ')' : '') + '</div>' +
+    '<div class="proof-detail-gallery-wrap">' + galleryHtml + '</div>' +
 
     // ── Info grid ────────────────────────────────────────────────
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px;">' +
-      infoSection("Customer", "👤", [
+    '<div class="proof-info-grid">' +
+      infoSection("Customer", "user", [
         ["Full Name",  p.user_name],
         ["Email",      p.user_email],
         ["Phone",      p.user_phone]
       ]) +
-      infoSection("Order", "📦", [
+      infoSection("Order", "order", [
         ["Order ID",       p.order_id,        true],
         ["Tesla Model", hasVal(p.car_model) ? p.car_model : "Not specified"],
         ["Delivery Method",p.delivery_method]
       ]) +
-      infoSection("Payment", "💳", [
+      infoSection("Payment", "card", [
         ["Method",    p.payment_method],
         ["Date",      fmtDate(p.created_at)],
         ["Time",      fmtTime(p.created_at)],
         ["Proof Type",p.proof_type],["Phone",p.user_phone]
       ]) +
-      infoSection("Status", "📊", [
+      infoSection("Status", "document", [
         ["Current Status", normaliseStatus(p.status).charAt(0).toUpperCase() + normaliseStatus(p.status).slice(1)],
         ["Reviewed By",    p.reviewed_by],
         ["Reviewed At",    fmtDateTime(p.reviewed_at)],
@@ -457,13 +467,13 @@ function renderProofDetail(p) {
 
     // ── Review banner ────────────────────────────────────────────
     (hasVal(p.reviewed_at) && hasVal(p.admin_notes)
-      ? '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">' +
-          '<strong>Admin note:</strong> ' + esc(p.admin_notes) +
+      ? '<div class="proof-review-note">' +
+          '<strong>Admin note</strong><span>' + esc(p.admin_notes) + '</span>' +
         '</div>'
       : '') +
 
     // ── Action buttons ───────────────────────────────────────────
-    '<div style="display:flex;gap:10px;flex-wrap:wrap;">' + (approveBtn || '') + (rejectBtn || '') + deleteBtn + '</div>';
+    '<div class="proof-detail-actions">' + (approveBtn || '') + (rejectBtn || '') + deleteBtn + '</div>';
 
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -517,7 +527,7 @@ function approveProof(id) {
   var orig = btn ? btn.innerHTML : "";
   if (btn) { btn.disabled = true; btn.textContent = "Approving…"; }
   api("POST", "/admin/payment-proofs/approve", { id: id }).then(function() {
-    if (typeof showToast === "function") showToast("Payment approved ✓", "success");
+    if (typeof showToast === "function") showToast("Payment approved", "success");
     closeProofDetail();
     loadProofs();
   }).catch(function(e) {
@@ -544,7 +554,7 @@ function quickApproveProof(id) {
   var who = hasVal(p.user_name) ? p.user_name : (hasVal(p.user_email) ? p.user_email : "this customer");
   if (!confirm("Approve payment from " + who + "?")) return;
   api("POST", "/admin/payment-proofs/approve", { id: id }).then(function() {
-    if (typeof showToast === "function") showToast("Payment approved ✓", "success");
+    if (typeof showToast === "function") showToast("Payment approved", "success");
     loadProofs();
   }).catch(function(e) {
     if (typeof showToast === "function") showToast("Approve failed: " + ((e && e.message) || "error"), "error");
