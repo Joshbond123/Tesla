@@ -532,37 +532,113 @@ if (document.readyState === 'loading') {
     .catch(function() { /* network errors — non-blocking */ });
 })();
 
-// ── WhatsApp Floating Button (DB-driven show/hide) ─────────────────────────
-function initWhatsAppFloat() {
+// ── Floating Contact (DB-driven FAB + popup) ────────────────────────────────
+function initWhatsAppFloat() { initFloatingContact(); }
+
+function initFloatingContact() {
   var base = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
     ? window.TESLA_API_BASE.replace(/\/+$/, '') : '';
-  if (!base) return;
-  fetch(base + '/whatsapp-settings')
-    .then(function(r) { return r.ok ? r.json() : null; })
-    .then(function(data) {
-      if (!data) return;
-      var floats = document.querySelectorAll('.whatsapp-float');
-      floats.forEach(function(el) {
-        if (!data.enabled) {
-          el.style.display = 'none';
-        } else {
-          el.style.display = '';
-          var link = el.querySelector('a');
-          if (link) {
-            var phone = String(data.phone || '').replace(/\D/g, '');
-            var msg = encodeURIComponent(data.message || '');
-            link.href = 'https://wa.me/' + phone + (msg ? '?text=' + msg : '');
-          }
+  if (!base || typeof fetch === 'undefined') return;
+
+  // Hide legacy static WhatsApp floats while we resolve DB settings
+  try {
+    document.querySelectorAll('.whatsapp-float').forEach(function (el) { el.style.display = 'none'; });
+  } catch (e) {}
+
+  fetch(base + '/floating-contact-settings')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () {
+      return fetch(base + '/whatsapp-settings').then(function (r) { return r.ok ? r.json() : null; });
+    })
+    .then(function (data) {
+      if (!data || data.enabled !== true) {
+        var existing = document.getElementById('teslaContactFab');
+        if (existing) existing.remove();
+        return;
+      }
+      var wa = data.whatsapp || {};
+      var tg = data.telegram || {};
+      var phone = String(wa.phone || data.phone || '').replace(/\D/g, '');
+      var waMsg = encodeURIComponent(String(wa.message || data.message || '').trim());
+      var tgUser = String(tg.username || data.telegramUsername || '').replace(/^@/, '').trim();
+      var tgMsg = encodeURIComponent(String(tg.message || data.telegramMessage || '').trim());
+      var hasWa = !!phone;
+      var hasTg = !!tgUser;
+      if (!hasWa && !hasTg) {
+        var dead = document.getElementById('teslaContactFab');
+        if (dead) dead.remove();
+        return;
+      }
+
+      if (!document.getElementById('teslaContactFabStyles')) {
+        var style = document.createElement('style');
+        style.id = 'teslaContactFabStyles';
+        style.textContent = [
+          '#teslaContactFab{position:fixed;right:22px;bottom:22px;z-index:99990;font-family:Inter,system-ui,sans-serif;}',
+          '#teslaContactFab .tcf-btn{width:56px;height:56px;border-radius:16px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;box-shadow:0 12px 28px rgba(15,23,42,.28);transition:transform .18s ease,box-shadow .18s ease;}',
+          '#teslaContactFab .tcf-btn:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(15,23,42,.32);}',
+          '#teslaContactFab .tcf-panel{position:absolute;right:0;bottom:68px;width:min(300px,calc(100vw - 32px));background:#fff;border-radius:16px;border:1px solid rgba(15,23,42,.08);box-shadow:0 18px 48px rgba(15,23,42,.18);padding:12px;opacity:0;pointer-events:none;transform:translateY(8px) scale(.98);transition:opacity .18s ease,transform .18s ease;}',
+          '#teslaContactFab.is-open .tcf-panel{opacity:1;pointer-events:auto;transform:none;}',
+          '#teslaContactFab .tcf-title{font-size:12px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;padding:4px 8px 10px;}',
+          '#teslaContactFab .tcf-link{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;text-decoration:none;color:#0f172a;font-weight:700;font-size:14px;transition:background .15s ease;}',
+          '#teslaContactFab .tcf-link:hover{background:#f8fafc;}',
+          '#teslaContactFab .tcf-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}',
+          '#teslaContactFab .tcf-ico.wa{background:#25D366;}',
+          '#teslaContactFab .tcf-ico.tg{background:#229ED9;}',
+          '#teslaContactFab .tcf-sub{display:block;font-size:12px;font-weight:500;color:#64748b;margin-top:2px;}',
+          '@media(max-width:560px){#teslaContactFab{right:16px;bottom:16px;}#teslaContactFab .tcf-btn{width:52px;height:52px;border-radius:14px;}}'
+        ].join('');
+        document.head.appendChild(style);
+      }
+
+      var root = document.getElementById('teslaContactFab');
+      if (!root) {
+        root = document.createElement('div');
+        root.id = 'teslaContactFab';
+        document.body.appendChild(root);
+      }
+
+      var links = '';
+      if (hasWa) {
+        links += '<a class="tcf-link" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + phone + (waMsg ? '?text=' + waMsg : '') + '">' +
+          '<span class="tcf-ico wa"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></span>' +
+          '<span>WhatsApp<span class="tcf-sub">Chat with support</span></span></a>';
+      }
+      if (hasTg) {
+        var tgHref = 'https://t.me/' + encodeURIComponent(tgUser) + (tgMsg ? '?text=' + tgMsg : '');
+        links += '<a class="tcf-link" target="_blank" rel="noopener noreferrer" href="' + tgHref + '">' +
+          '<span class="tcf-ico tg"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></span>' +
+          '<span>Telegram<span class="tcf-sub">Message on Telegram</span></span></a>';
+      }
+
+      root.innerHTML =
+        '<div class="tcf-panel" role="dialog" aria-label="Contact options"><div class="tcf-title">Contact us</div>' + links + '</div>' +
+        '<button type="button" class="tcf-btn" aria-label="Open contact options" aria-expanded="false">' +
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+        '</button>';
+
+      var btn = root.querySelector('.tcf-btn');
+      if (btn) {
+        btn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          root.classList.toggle('is-open');
+          btn.setAttribute('aria-expanded', root.classList.contains('is-open') ? 'true' : 'false');
+        });
+      }
+      document.addEventListener('click', function (ev) {
+        if (!root.contains(ev.target)) {
+          root.classList.remove('is-open');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
         }
       });
     })
-    .catch(function() { /* network error — keep default */ });
+    .catch(function () { /* network error */ });
 }
 
-// Auto-init on DOMContentLoaded
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initWhatsAppFloat);
+  document.addEventListener('DOMContentLoaded', initFloatingContact);
 } else {
-  initWhatsAppFloat();
+  initFloatingContact();
 }
+
 

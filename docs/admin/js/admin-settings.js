@@ -149,21 +149,39 @@ function loadDeliveryFees() {
 }
 
 function changePassword() {
-  var cur  = document.getElementById("currentPwd").value;
-  var neu  = document.getElementById("newPwd").value;
-  var conf = document.getElementById("confirmPwd").value;
-  if (!neu || neu.length < 8) { showToast("New password must be at least 8 characters", "error"); return; }
-  if (neu !== conf)           { showToast("Passwords do not match", "error"); return; }
-  if (typeof API_BASE === "undefined" || !API_BASE) { showToast("API not configured", "error"); return; }
+  var curEl = document.getElementById("currentPwd");
+  var neuEl = document.getElementById("newPwd");
+  var confEl = document.getElementById("confirmPwd");
+  var status = document.getElementById("pwdStatus");
+  var btn = document.getElementById("changePwdBtn");
+  var cur = curEl ? curEl.value : "";
+  var neu = neuEl ? neuEl.value : "";
+  var conf = confEl ? confEl.value : "";
+  function setPwdStatus(msg, ok) {
+    if (!status) return;
+    status.textContent = msg || "";
+    status.className = "ss-status" + (msg ? (ok ? " is-ok" : " is-err") : "");
+  }
+  if (!cur) { setPwdStatus("Enter your current password.", false); showToast("Enter current password", "error"); return; }
+  if (!neu || neu.length < 8) { setPwdStatus("New password must be at least 8 characters.", false); showToast("New password must be at least 8 characters", "error"); return; }
+  if (neu !== conf) { setPwdStatus("New passwords do not match.", false); showToast("Passwords do not match", "error"); return; }
+  if (!API_BASE) { setPwdStatus("API not configured.", false); showToast("API not configured", "error"); return; }
+  if (btn) { btn.disabled = true; }
+  setPwdStatus("Saving…", true);
   api("POST", "/admin/change-password", { current: cur, new: neu })
-    .then(function() {
-      try { localStorage.removeItem("tesla_admin_pwd"); } catch (e) {}
-      document.getElementById("currentPwd").value = "";
-      document.getElementById("newPwd").value     = "";
-      document.getElementById("confirmPwd").value = "";
+    .then(function () {
+      if (curEl) curEl.value = "";
+      if (neuEl) neuEl.value = "";
+      if (confEl) confEl.value = "";
+      setPwdStatus("Password updated successfully.", true);
       showToast("Password changed successfully");
     })
-    .catch(function(e) { showToast("Failed: " + (e && e.message ? e.message : "Server error"), "error"); });
+    .catch(function (e) {
+      var msg = (e && e.message) ? e.message : "Server error";
+      setPwdStatus(msg, false);
+      showToast("Failed: " + msg, "error");
+    })
+    .then(function () { if (btn) btn.disabled = false; });
 }
 
 function clearLocalData() {
@@ -183,41 +201,70 @@ function clearLocalData() {
 }
 
 
-// ── WhatsApp Floating Button Settings ────────────────────────────────────────
-function loadWhatsAppSetting() {
-  if (typeof API_BASE === 'undefined' || !API_BASE) return;
-  api('GET', '/admin/settings/whatsapp')
-    .then(function(r) {
-      var enabled = document.getElementById('waEnabled');
-      var phone = document.getElementById('waPhone');
-      var msg = document.getElementById('waMessage');
+
+// ── Floating Contact Settings (DB-backed) ───────────────────────────────────
+function loadFloatingContact() {
+  if (typeof API_BASE === "undefined" || !API_BASE) return;
+  api("GET", "/admin/settings/floating-contact")
+    .then(function (r) {
+      var enabled = document.getElementById("fcEnabled");
+      var waPhone = document.getElementById("fcWaPhone");
+      var waMsg = document.getElementById("fcWaMessage");
+      var tgUser = document.getElementById("fcTgUser");
+      var tgMsg = document.getElementById("fcTgMessage");
       if (enabled) enabled.checked = r.enabled === true;
-      if (phone) phone.value = r.phone || '';
-      if (msg) msg.value = r.message || '';
+      var wa = r.whatsapp || {};
+      var tg = r.telegram || {};
+      if (waPhone) waPhone.value = wa.phone || r.phone || "";
+      if (waMsg) waMsg.value = wa.message || r.message || "";
+      if (tgUser) tgUser.value = (tg.username || r.telegramUsername || "").replace(/^@/, "");
+      if (tgMsg) tgMsg.value = tg.message || r.telegramMessage || "";
     })
-    .catch(function() {});
+    .catch(function () {});
 }
 
-function saveWhatsAppSetting() {
-  if (typeof API_BASE === 'undefined' || !API_BASE) return;
-  var enabled = document.getElementById('waEnabled');
-  var phone = document.getElementById('waPhone');
-  var msg = document.getElementById('waMessage');
-  var status = document.getElementById('waStatus');
-  api('POST', '/admin/settings/whatsapp', {
-    enabled: enabled ? enabled.checked : false,
-    phone: phone ? phone.value.trim() : '',
-    message: msg ? msg.value.trim() : ''
-  }).then(function() {
-    if (status) { status.textContent = 'Saved ✓'; status.style.color = 'var(--success)'; setTimeout(function(){ status.textContent=''; }, 3000); }
-    if (typeof showToast === 'function') showToast('WhatsApp settings saved');
-  }).catch(function(e) {
-    if (status) { status.textContent = 'Failed: ' + (e.message || 'error'); status.style.color = 'var(--danger)'; }
-  });
+function saveFloatingContact() {
+  if (typeof API_BASE === "undefined" || !API_BASE) return;
+  var enabled = document.getElementById("fcEnabled");
+  var waPhone = document.getElementById("fcWaPhone");
+  var waMsg = document.getElementById("fcWaMessage");
+  var tgUser = document.getElementById("fcTgUser");
+  var tgMsg = document.getElementById("fcTgMessage");
+  var status = document.getElementById("fcStatus");
+  var btn = document.getElementById("fcSaveBtn");
+  var payload = {
+    enabled: !!(enabled && enabled.checked),
+    whatsapp: {
+      phone: waPhone ? waPhone.value.trim() : "",
+      message: waMsg ? waMsg.value.trim() : ""
+    },
+    telegram: {
+      username: tgUser ? tgUser.value.trim().replace(/^@/, "") : "",
+      message: tgMsg ? tgMsg.value.trim() : ""
+    }
+  };
+  if (btn) btn.disabled = true;
+  if (status) { status.textContent = "Saving…"; status.className = "ss-status"; }
+  api("POST", "/admin/settings/floating-contact", payload)
+    .then(function () {
+      if (status) { status.textContent = "Saved to database."; status.className = "ss-status is-ok"; }
+      if (typeof showToast === "function") showToast("Floating contact settings saved");
+      setTimeout(function () { if (status) status.textContent = ""; }, 3500);
+    })
+    .catch(function (e) {
+      var msg = (e && e.message) ? e.message : "error";
+      if (status) { status.textContent = "Failed: " + msg; status.className = "ss-status is-err"; }
+      if (typeof showToast === "function") showToast("Failed to save: " + msg, "error");
+    })
+    .then(function () { if (btn) btn.disabled = false; });
 }
 
+// Backward-compatible aliases
+function loadWhatsAppSetting() { loadFloatingContact(); }
+function saveWhatsAppSetting() { saveFloatingContact(); }
+
+window.loadFloatingContact = loadFloatingContact;
+window.saveFloatingContact = saveFloatingContact;
 window.loadWhatsAppSetting = loadWhatsAppSetting;
 window.saveWhatsAppSetting = saveWhatsAppSetting;
-
 window.loadDeliveryFees = loadDeliveryFees;
-window.loadWhatsAppSetting = loadWhatsAppSetting;

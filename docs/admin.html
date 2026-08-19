@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="admin/css/admin.css?v=20260819a">
-  <link rel="stylesheet" href="admin/css/admin-payments.css?v=20260819a">
+  <link rel="stylesheet" href="admin/css/admin.css?v=20260819b">
+  <link rel="stylesheet" href="admin/css/admin-payments.css?v=20260819b">
 </head>
 <body>
 
@@ -598,127 +598,127 @@
       </div>
 
       <!-- TAB: SETTINGS (Admin Password + WhatsApp) -->
+      <!-- TAB: SETTINGS -->
       <div class="tab-panel" id="panelSettings">
-        <style>
-          .sg-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--admin-border);}
-          .sg-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-          .sg-icon.gray{background:rgba(107,114,128,.1);}
-          .sg-icon.warn{background:rgba(239,68,68,.08);}
-          .sg-title{font-size:15px;font-weight:800;color:var(--dark);margin:0 0 3px;}
-          .sg-desc{font-size:12px;color:var(--admin-text-muted);margin:0;line-height:1.55;}
-        </style>
-        <div class="settings-grid">
-
-          <!-- Admin Password Management -->
-          <div class="setting-group">
-            <div class="sg-header">
-              <div class="sg-icon gray">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </div>
-              <div>
-                <p class="sg-title">Admin Password</p>
-                <p class="sg-desc">Change the admin panel access password. Must be at least 8 characters.</p>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:10px;max-width:340px;">
-              <div>
-                <label class="form-label" for="currentPwd">Current Password</label>
-                <input type="password" class="form-input" id="currentPwd" placeholder="Enter current password">
-              </div>
-              <div>
-                <label class="form-label" for="newPwd">New Password</label>
-                <input type="password" class="form-input" id="newPwd" placeholder="Enter new password (min 8 chars)">
-              </div>
-              <div>
-                <label class="form-label" for="confirmPwd">Confirm New Password</label>
-                <input type="password" class="form-input" id="confirmPwd" placeholder="Confirm new password">
-              </div>
-              <button class="btn btn-primary" onclick="changePassword()" style="margin-top:4px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Update Password
-              </button>
+        <div class="ss-page">
+          <div class="ss-page-header">
+            <div>
+              <h3 class="ss-page-title">System Settings</h3>
+              <p class="ss-page-sub">Manage admin access and the public floating contact experience.</p>
             </div>
           </div>
 
-          <!-- WhatsApp Floating Button -->
-          <div class="setting-group">
-            <div class="sg-header">
-              <div class="sg-icon" style="background:rgba(37,211,102,.1);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:#25D366;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          <div class="ss-grid">
+            <!-- Admin Password -->
+            <section class="ss-card" id="ssPasswordCard">
+              <div class="ss-card-head">
+                <div class="ss-card-icon ss-card-icon--lock">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div>
+                  <h4 class="ss-card-title">Admin Password</h4>
+                  <p class="ss-card-desc">Update the password used to access this admin panel. Stored securely in the database.</p>
+                </div>
               </div>
-              <div>
-                <p class="sg-title">WhatsApp Floating Button</p>
-                <p class="sg-desc">Manage the floating WhatsApp button on the public website. Enable/disable, set phone number and default message.</p>
+              <div class="ss-card-body">
+                <div class="ss-field">
+                  <label class="ss-label" for="currentPwd">Current password</label>
+                  <input type="password" class="ss-input" id="currentPwd" autocomplete="current-password" placeholder="Enter current password">
+                </div>
+                <div class="ss-field-row">
+                  <div class="ss-field">
+                    <label class="ss-label" for="newPwd">New password</label>
+                    <input type="password" class="ss-input" id="newPwd" autocomplete="new-password" placeholder="Min. 8 characters">
+                  </div>
+                  <div class="ss-field">
+                    <label class="ss-label" for="confirmPwd">Confirm password</label>
+                    <input type="password" class="ss-input" id="confirmPwd" autocomplete="new-password" placeholder="Re-enter new password">
+                  </div>
+                </div>
+                <p class="ss-hint">Use at least 8 characters. You will need the new password on the next login.</p>
+                <div class="ss-actions">
+                  <button type="button" class="ss-btn ss-btn-primary" id="changePwdBtn" onclick="changePassword()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Update password
+                  </button>
+                  <span class="ss-status" id="pwdStatus" aria-live="polite"></span>
+                </div>
               </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:14px;max-width:420px;">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-                <span style="font-size:13px;font-weight:600;color:var(--dark);">Enable floating button</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="waEnabled" onchange="saveWhatsAppSetting()">
-                  <span class="toggle-slider"></span>
+            </section>
+
+            <!-- Floating Contact -->
+            <section class="ss-card" id="ssContactCard">
+              <div class="ss-card-head">
+                <div class="ss-card-icon ss-card-icon--chat">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div class="ss-card-head-main">
+                  <h4 class="ss-card-title">Floating Contact Button</h4>
+                  <p class="ss-card-desc">Show a contact launcher on the public website. Visitors can open WhatsApp and/or Telegram from a clean popup.</p>
+                </div>
+                <label class="ss-switch" title="Enable floating contact">
+                  <input type="checkbox" id="fcEnabled" onchange="saveFloatingContact()">
+                  <span class="ss-switch-ui"></span>
                 </label>
               </div>
-              <div>
-                <label class="form-label">WhatsApp Phone Number</label>
-                <input type="text" class="form-input" id="waPhone" placeholder="+1 234 567 890" onblur="saveWhatsAppSetting()">
-              </div>
-              <div>
-                <label class="form-label">Default Pre-filled Message</label>
-                <textarea class="form-input" id="waMessage" placeholder="Hello, I have a question about the Tesla Award Program." rows="2" onblur="saveWhatsAppSetting()"></textarea>
-              </div>
-              <span id="waStatus" style="font-size:12px;font-weight:600;"></span>
-            </div>
-          </div>
+              <div class="ss-card-body">
+                <div class="ss-channel">
+                  <div class="ss-channel-head">
+                    <div class="ss-channel-brand ss-channel-brand--wa">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </div>
+                    <div>
+                      <div class="ss-channel-title">WhatsApp</div>
+                      <div class="ss-channel-sub">Opens a chat with your configured number</div>
+                    </div>
+                  </div>
+                  <div class="ss-field-row">
+                    <div class="ss-field">
+                      <label class="ss-label" for="fcWaPhone">Phone number</label>
+                      <input type="text" class="ss-input" id="fcWaPhone" placeholder="+1 555 0100" autocomplete="tel">
+                    </div>
+                    <div class="ss-field">
+                      <label class="ss-label" for="fcWaMessage">Default message</label>
+                      <input type="text" class="ss-input" id="fcWaMessage" placeholder="Hello, I need help with my Tesla order">
+                    </div>
+                  </div>
+                </div>
 
-          <!-- Danger Zone -->
-          <div class="setting-group">
-            <div class="sg-header">
-              <div class="sg-icon warn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </div>
-              <div>
-                <p class="sg-title">Danger Zone</p>
-                <p class="sg-desc">Clear browser-cached data. This action does <strong>not</strong> affect the database — only local storage is cleared.</p>
-              </div>
-            </div>
-            <button class="btn btn-outline" onclick="clearLocalData()"
-                    style="border-color:var(--danger);color:var(--danger);display:inline-flex;align-items:center;gap:8px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3,6 5,6 21,6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6"/><path d="M14 11v6"/>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-              </svg>
-              Clear Local Cache
-            </button>
-          </div>
+                <div class="ss-channel">
+                  <div class="ss-channel-head">
+                    <div class="ss-channel-brand ss-channel-brand--tg">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    </div>
+                    <div>
+                      <div class="ss-channel-title">Telegram</div>
+                      <div class="ss-channel-sub">Opens a chat with your Telegram username</div>
+                    </div>
+                  </div>
+                  <div class="ss-field-row">
+                    <div class="ss-field">
+                      <label class="ss-label" for="fcTgUser">Username</label>
+                      <input type="text" class="ss-input" id="fcTgUser" placeholder="TeslaSupport" autocomplete="off">
+                    </div>
+                    <div class="ss-field">
+                      <label class="ss-label" for="fcTgMessage">Default message (optional)</label>
+                      <input type="text" class="ss-input" id="fcTgMessage" placeholder="Hello, I need help with my Tesla order">
+                    </div>
+                  </div>
+                </div>
 
+                <div class="ss-actions">
+                  <button type="button" class="ss-btn ss-btn-primary" id="fcSaveBtn" onclick="saveFloatingContact()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+                    Save contact settings
+                  </button>
+                  <span class="ss-status" id="fcStatus" aria-live="polite"></span>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
 
-      <div class="tab-panel" id="panelNotifications">
-        <div class="admin-card">
-          <div class="card-header">
-            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Notification Settings</h3>
-          </div>
-          <div style="padding:8px 24px 24px;">
-            <p style="font-size:13px;color:var(--text-3);margin:0 0 20px;">Control which events trigger admin notifications.</p>
-            <div class="notif-list">
-              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">New User Registration</div><div class="notif-row-desc">Alert when a new user registers on the platform</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
-              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">New Order Placed</div><div class="notif-row-desc">Alert when a new order is submitted</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
-              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">Payment Proof Submitted</div><div class="notif-row-desc">Alert when a payment proof is uploaded and awaiting review</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
-              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">Order Status Changed</div><div class="notif-row-desc">Alert when an order status is updated</div></div><label class="notif-toggle"><input type="checkbox" onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
-              <div class="notif-row"><div class="notif-row-info"><div class="notif-row-title">System Health Alerts</div><div class="notif-row-desc">Alert when the API server goes offline or encounters errors</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
-              <div class="notif-row" style="border:none;"><div class="notif-row-info"><div class="notif-row-title">Daily Summary Report</div><div class="notif-row-desc">Daily digest of registrations, orders, and payment activity</div></div><label class="notif-toggle"><input type="checkbox" onchange="showToast('Notification preference updated')"><span class="notif-slider"></span></label></div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- TAB: WEBSITE SETTINGS -->
       <div class="tab-panel" id="panelWebsite">
@@ -748,23 +748,23 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="js/config.js?v=20260819a"></script>
-<script src="js/payment-methods.js?v=20260819a"></script>
-<script src="js/app.js?v=20260819a"></script><script src="admin/js/admin-core.js?v=20260819a"></script>
-<script src="admin/js/admin-helpers.js?v=20260819a"></script>
-<script src="admin/js/admin-auth.js?v=20260819a"></script>
-<script src="admin/js/admin-nav.js?v=20260819a"></script>
-<script src="admin/js/admin-data.js?v=20260819a"></script>
-<script src="admin/js/admin-dashboard.js?v=20260819a"></script>
-<script src="admin/js/admin-users.js?v=20260819a"></script>
-<script src="admin/js/admin-chart.js?v=20260819a"></script>
-<script src="admin/js/admin-vehicles.js?v=20260819a"></script>
-<script src="admin/js/admin-payments.js?v=20260819a"></script>
-<script src="admin/js/admin-cc-config.js?v=20260819a"></script>
-<script src="admin/js/admin-proofs.js?v=20260819a"></script>
-<script src="admin/js/admin-social.js?v=20260819a"></script>
-<script src="admin/js/admin-settings.js?v=20260819a"></script>
-<script src="admin/js/admin-orders.js?v=20260819a"></script>
-<script src="admin/js/admin-init.js?v=20260819a"></script>
+<script src="js/config.js?v=20260819b"></script>
+<script src="js/payment-methods.js?v=20260819b"></script>
+<script src="js/app.js?v=20260819b"></script><script src="admin/js/admin-core.js?v=20260819b"></script>
+<script src="admin/js/admin-helpers.js?v=20260819b"></script>
+<script src="admin/js/admin-auth.js?v=20260819b"></script>
+<script src="admin/js/admin-nav.js?v=20260819b"></script>
+<script src="admin/js/admin-data.js?v=20260819b"></script>
+<script src="admin/js/admin-dashboard.js?v=20260819b"></script>
+<script src="admin/js/admin-users.js?v=20260819b"></script>
+<script src="admin/js/admin-chart.js?v=20260819b"></script>
+<script src="admin/js/admin-vehicles.js?v=20260819b"></script>
+<script src="admin/js/admin-payments.js?v=20260819b"></script>
+<script src="admin/js/admin-cc-config.js?v=20260819b"></script>
+<script src="admin/js/admin-proofs.js?v=20260819b"></script>
+<script src="admin/js/admin-social.js?v=20260819b"></script>
+<script src="admin/js/admin-settings.js?v=20260819b"></script>
+<script src="admin/js/admin-orders.js?v=20260819b"></script>
+<script src="admin/js/admin-init.js?v=20260819b"></script>
 </body>
 </html>

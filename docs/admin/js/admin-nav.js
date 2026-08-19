@@ -77,7 +77,7 @@ function switchTab(tab) {
   if (resolvedTab === "settings") {
     try {
       if (typeof window.loadWhatsAppSetting === "function") {
-        window.loadWhatsAppSetting();
+        window.loadFloatingContact ? window.loadFloatingContact() : window.loadWhatsAppSetting();
       }
     } catch(e) {}
   }

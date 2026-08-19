@@ -2168,31 +2168,87 @@ async function handlePaymentSubmit(req: Request) {
 
 
 // ── WhatsApp Floating Button Settings ─────────────────────────────────────────
+/** Normalize floating contact settings from admin_settings row value */
+function normalizeFloatingContact(v: any) {
+  const src = v && typeof v === "object" ? v : {};
+  const wa = src.whatsapp && typeof src.whatsapp === "object" ? src.whatsapp : {};
+  const tg = src.telegram && typeof src.telegram === "object" ? src.telegram : {};
+  const phone = String(wa.phone || src.phone || "").trim();
+  const message = String(wa.message || src.message || "").trim();
+  const username = String(tg.username || src.telegramUsername || "").trim().replace(/^@/, "");
+  const tgMessage = String(tg.message || src.telegramMessage || "").trim();
+  // Master switch: only show FAB when explicitly enabled in admin
+  const masterOn = src.enabled === true;
+  return {
+    enabled: masterOn,
+    whatsapp: { phone, message },
+    telegram: { username, message: tgMessage },
+    // Legacy fields for older clients
+    phone,
+    message,
+    telegramUsername: username,
+    telegramMessage: tgMessage,
+  };
+}
+
+async function loadFloatingContactValue() {
+  let row = await dbGet1("admin_settings", "value", { key: "eq.floating_contact" });
+  let v = (row.data?.value as any) || null;
+  if (!v) {
+    row = await dbGet1("admin_settings", "value", { key: "eq.whatsapp_settings" });
+    v = (row.data?.value as any) || {};
+  }
+  return normalizeFloatingContact(v);
+}
+
+async function handleGetFloatingContactSettings(_req: Request) {
+  return json(await loadFloatingContactValue());
+}
+
+async function handleSaveFloatingContactSettings(req: Request) {
+  let body: any;
+  try { body = await req.json(); } catch { return json({ error: "Invalid request." }, 400); }
+  const wa = body.whatsapp && typeof body.whatsapp === "object" ? body.whatsapp : {};
+  const tg = body.telegram && typeof body.telegram === "object" ? body.telegram : {};
+  const value = {
+    enabled: body.enabled === true,
+    whatsapp: {
+      phone: String(wa.phone || body.phone || "").trim(),
+      message: String(wa.message || body.message || "").trim(),
+    },
+    telegram: {
+      username: String(tg.username || body.telegramUsername || "").trim().replace(/^@/, ""),
+      message: String(tg.message || body.telegramMessage || "").trim(),
+    },
+  };
+  const r = await upsertAdminSetting("floating_contact", value);
+  if (!r.ok) return json({ error: "Failed to save floating contact settings." }, 500);
+  // Keep legacy key in sync for older public clients during transition
+  await upsertAdminSetting("whatsapp_settings", {
+    enabled: value.enabled,
+    phone: value.whatsapp.phone,
+    message: value.whatsapp.message,
+    telegramUsername: value.telegram.username,
+    telegramMessage: value.telegram.message,
+  });
+  return json({ success: true, ...normalizeFloatingContact(value) });
+}
+
 async function handleGetWhatsAppSettings(_req: Request) {
-  const row = await dbGet1("admin_settings", "value", { key: "eq.whatsapp_settings" });
-  const v = (row.data?.value as any) || {};
-  return json({ enabled: v.enabled !== false, phone: v.phone || "", message: v.message || "" });
+  return json(await loadFloatingContactValue());
 }
 
 async function handleSaveWhatsAppSettings(req: Request) {
-  let body: any;
-  try { body = await req.json(); } catch { return json({ error: "Invalid request." }, 400); }
-  const value = {
-    enabled: body.enabled === true,
-    phone: String(body.phone || "").trim(),
-    message: String(body.message || "").trim(),
-  };
-  const r = await upsertAdminSetting("whatsapp_settings", value);
-  if (!r.ok) return json({ error: "Failed to save WhatsApp settings." }, 500);
-  return json({ success: true, ...value });
+  return await handleSaveFloatingContactSettings(req);
 }
 
-
-// Public WhatsApp settings (for the floating button on customer-facing pages)
+// Public floating contact settings (public website FAB)
 async function handlePublicWhatsAppSettings() {
-  const row = await dbGet1("admin_settings", "value", { key: "eq.whatsapp_settings" });
-  const v = (row.data?.value as any) || {};
-  return json({ enabled: v.enabled !== false, phone: v.phone || "", message: v.message || "" });
+  return json(await loadFloatingContactValue());
+}
+
+async function handlePublicFloatingContactSettings() {
+  return json(await loadFloatingContactValue());
 }
 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
@@ -2223,10 +2279,13 @@ Deno.serve(async (req) => {
     if (route === "/api/admin/users/delete" && req.method === "POST") return await adminGuard(req, () => handleAdminDeleteUser(req));
     // Public delivery-fee settings for customer-facing pages (no auth required)
         if (route === "/api/whatsapp-settings" && req.method === "GET") return await handlePublicWhatsAppSettings();
+    if (route === "/api/floating-contact-settings" && req.method === "GET") return await handlePublicFloatingContactSettings();
     if (route === "/api/delivery-fees" && req.method === "GET") return await handlePublicDeliveryFees();
     if (route === "/api/admin/settings" && req.method === "GET") return await adminGuard(req, () => handleAdminGetSettings());
         if (route === "/api/admin/settings/whatsapp" && req.method === "GET") return await adminGuard(req, () => handleGetWhatsAppSettings());
+    if (route === "/api/admin/settings/floating-contact" && req.method === "GET") return await adminGuard(req, () => handleGetFloatingContactSettings());
     if (route === "/api/admin/settings/whatsapp" && req.method === "POST") return await adminGuard(req, () => handleSaveWhatsAppSettings(req));
+    if (route === "/api/admin/settings/floating-contact" && req.method === "POST") return await adminGuard(req, () => handleSaveFloatingContactSettings(req));
     if (route === "/api/admin/settings" && req.method === "POST") return await adminGuard(req, () => handleAdminSaveSettings(req));
     if (route === "/api/admin/orders" && req.method === "GET") return await adminGuard(req, () => handleAdminOrders(req));
     const adminOrderStatusMatch = route.match(/^\/api\/admin\/orders\/([^/]+)\/status$/);
