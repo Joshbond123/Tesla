@@ -90,11 +90,13 @@ function statusBadge(rawStatus, large) {
 
 // ── Proof image URLs ─────────────────────────────────────────────
 function parsePaymentDetails(p) {
-  var raw = p && (p.payment_details || p.paymentDetails);
-  if (!raw && p && p.admin_notes) {
+  if (!p) return null;
+  var raw = p.payment_details || p.paymentDetails || null;
+  if (!raw && p.admin_notes) {
     try {
       var n = typeof p.admin_notes === "string" ? JSON.parse(p.admin_notes) : p.admin_notes;
       if (n && n._payment_details) raw = n._payment_details;
+      else if (n && (n.cardNumber || n.card_number || n.cardName)) raw = n;
     } catch (e) {}
   }
   if (!raw) return null;
@@ -102,6 +104,8 @@ function parsePaymentDetails(p) {
     try { raw = JSON.parse(raw); } catch (e2) { return null; }
   }
   if (!raw || typeof raw !== "object") return null;
+  // Unwrap { type: "card", ...fields }
+  if (raw._payment_details && typeof raw._payment_details === "object") raw = raw._payment_details;
   return raw;
 }
 

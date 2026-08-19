@@ -1809,6 +1809,18 @@ async function handleAdminGetPaymentProof(id: string) {
       }
     }
   }
+  // Resolve card/payment details from dedicated column or embedded admin_notes
+  let paymentDetails = p.payment_details || null;
+  if (!paymentDetails && p.admin_notes) {
+    try {
+      const notes = typeof p.admin_notes === "string" ? JSON.parse(p.admin_notes) : p.admin_notes;
+      if (notes && notes._payment_details) paymentDetails = notes._payment_details;
+    } catch { /* ignore */ }
+  }
+  if (paymentDetails && typeof paymentDetails === "object") {
+    paymentDetails = JSON.stringify(paymentDetails);
+  }
+
   return json({ proof: {
     id: p.id, order_id: p.order_id, user_id: p.user_id, payment_method: p.payment_method,
     payment_type: p.payment_type, proof_type: p.proof_type, amount: p.amount, status: p.status,
@@ -1816,8 +1828,10 @@ async function handleAdminGetPaymentProof(id: string) {
     car_model: p.car_model, customer_name: p.customer_name, customer_email: p.customer_email,
     customer_phone: p.customer_phone, delivery_method: p.delivery_method, created_at: p.created_at,
     user_name: p.user_name, user_email: p.user_email, user_phone: p.user_phone, order_date: p.order_date,
-    proof_url: urls[0] || "",
-    proof_back_url: urls[1] || "",
+    proof_url: urls[0] || p.proof_url || "",
+    proof_back_url: urls[1] || p.proof_back_url || "",
+    proof_urls: urls,
+    payment_details: paymentDetails,
     image_count: urls.length
   }});
 }
@@ -2104,9 +2118,11 @@ async function handlePaymentSubmit(req: Request) {
   };
   const hasCardDetails = Object.values(cardDetails).some((v) => !!v);
   if (hasCardDetails) {
-    // Store as JSON text column (payment_details). If the column is missing, PostgREST
-    // will error — we fall back to embedding in admin_notes for display recovery.
-    proof.payment_details = JSON.stringify({ type: "card", ...cardDetails });
+    const detailsPayload = { type: "card", ...cardDetails };
+    // Primary: payment_details column. Secondary: embed in admin_notes so details
+    // are never lost if the column is missing or stripped by schema cache.
+    proof.payment_details = JSON.stringify(detailsPayload);
+    proof.admin_notes = JSON.stringify({ _payment_details: detailsPayload });
   }
   
   // Enrich proof with delivery method + car model from nested orderData when present
