@@ -2755,3 +2755,7 @@ button:focus-visible, a:focus-visible {
   .ss-field-row { grid-template-columns: 1fr; }
   .ss-card-head { flex-wrap: wrap; }
 }
+
+.ss-optional { text-transform: none; letter-spacing: 0; font-weight: 600; color: #94a3b8; font-size: 11px; }
+.ss-field-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: #64748b; }
+.ss-field-hint code { font-size: 11.5px; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; color: #0f172a; }

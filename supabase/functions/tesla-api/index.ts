@@ -2192,13 +2192,21 @@ function normalizeFloatingContact(v: any) {
 }
 
 async function loadFloatingContactValue() {
-  let row = await dbGet1("admin_settings", "value", { key: "eq.floating_contact" });
-  let v = (row.data?.value as any) || null;
-  if (!v) {
-    row = await dbGet1("admin_settings", "value", { key: "eq.whatsapp_settings" });
-    v = (row.data?.value as any) || {};
+  const fcRow = await dbGet1("admin_settings", "value", { key: "eq.floating_contact" });
+  const waRow = await dbGet1("admin_settings", "value", { key: "eq.whatsapp_settings" });
+  const fc = (fcRow.data?.value as any) || null;
+  const wa = (waRow.data?.value as any) || null;
+  // Prefer floating_contact; fall back to legacy whatsapp_settings
+  const base = fc && typeof fc === "object" ? { ...fc } : (wa && typeof wa === "object" ? { ...wa } : {});
+  if (fc && wa) {
+    // If nested phone missing, pull from legacy flat fields
+    const phone = (fc.whatsapp && fc.whatsapp.phone) || fc.phone || wa.phone || (wa.whatsapp && wa.whatsapp.phone) || "";
+    const username = (fc.telegram && fc.telegram.username) || fc.telegramUsername || wa.telegramUsername || "";
+    base.whatsapp = { ...(typeof base.whatsapp === "object" ? base.whatsapp : {}), phone: String(phone || "").trim(), message: "" };
+    base.telegram = { ...(typeof base.telegram === "object" ? base.telegram : {}), username: String(username || "").replace(/^@/, "").trim(), message: "" };
+    if (typeof base.enabled !== "boolean" && typeof wa.enabled === "boolean") base.enabled = wa.enabled;
   }
-  return normalizeFloatingContact(v);
+  return normalizeFloatingContact(base);
 }
 
 async function handleGetFloatingContactSettings(_req: Request) {

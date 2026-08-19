@@ -974,35 +974,58 @@
 (function() {
   'use strict';
 
-  // ── LOAD ORDER DATA (local cache; recover from DB if incomplete) ──
-  var selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null');
-  var deliveryDetails = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null');
-  var deliveryMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null');
-  var sessionToken = localStorage.getItem('tesla_session_token') || (typeof getSession === 'function' ? getSession() : '');
+  // ── LOAD ORDER DATA (local cache; recover from DB session if incomplete) ──
+  var selectedCar = null;
+  var deliveryDetails = null;
+  var deliveryMethod = null;
+  try { selectedCar = JSON.parse(localStorage.getItem('tesla_selected_car') || 'null'); } catch (e) { selectedCar = null; }
+  try { deliveryDetails = JSON.parse(localStorage.getItem('tesla_delivery_details') || 'null'); } catch (e) { deliveryDetails = null; }
+  try { deliveryMethod = JSON.parse(localStorage.getItem('tesla_delivery_method') || 'null'); } catch (e) { deliveryMethod = null; }
+  var sessionToken = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session') || (typeof getSession === 'function' ? getSession() : '') || '';
   try {
-    if (!selectedCar || !deliveryDetails) {
-      var lastOrd = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
-      if (lastOrd) {
-        if (!selectedCar && lastOrd.selectedCar) selectedCar = lastOrd.selectedCar;
-        if (!deliveryDetails && lastOrd.deliveryDetails) deliveryDetails = lastOrd.deliveryDetails;
-        if (!deliveryMethod && lastOrd.deliveryMethod) deliveryMethod = lastOrd.deliveryMethod;
-      }
+    var lastOrd = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+    if (lastOrd) {
+      if (!selectedCar && lastOrd.selectedCar) selectedCar = lastOrd.selectedCar;
+      if (!deliveryDetails && lastOrd.deliveryDetails) deliveryDetails = lastOrd.deliveryDetails;
+      if (!deliveryMethod && lastOrd.deliveryMethod) deliveryMethod = lastOrd.deliveryMethod;
     }
   } catch (e) {}
-  // Resolve customer email from delivery details or a stored value so the
-  // backend can link the proof to the user record by email.
-  var userEmail = (deliveryDetails && deliveryDetails.email) ||
-    localStorage.getItem('tesla_user_email') || '';
 
-  // Never send checkout users back through dashboard → order-placed loop.
-  // If method is missing, return to delivery-method (not dashboard).
-  if (!selectedCar || !deliveryDetails) {
-    window.location.replace('delivery-method.html');
-    return;
+  var userEmail = (deliveryDetails && deliveryDetails.email) || localStorage.getItem('tesla_user_email') || '';
+  var isRepay = false;
+  try { isRepay = /(?:\?|&)repay=1(?:&|$)/.test(window.location.search || ''); } catch (eR) {}
+
+  function applyOrderFromSession(order) {
+    if (!order) return;
+    if (!selectedCar && order.selectedCar) selectedCar = order.selectedCar;
+    if (!deliveryDetails && order.deliveryDetails) deliveryDetails = order.deliveryDetails;
+    if (!deliveryMethod && order.deliveryMethod) deliveryMethod = order.deliveryMethod;
+    try {
+      if (selectedCar) localStorage.setItem('tesla_selected_car', JSON.stringify(selectedCar));
+      if (deliveryDetails) localStorage.setItem('tesla_delivery_details', JSON.stringify(deliveryDetails));
+      if (deliveryMethod) localStorage.setItem('tesla_delivery_method', JSON.stringify(deliveryMethod));
+      var lo = {};
+      try { lo = JSON.parse(localStorage.getItem('tesla_last_order') || '{}') || {}; } catch (e3) { lo = {}; }
+      lo.selectedCar = selectedCar || lo.selectedCar;
+      lo.deliveryDetails = deliveryDetails || lo.deliveryDetails;
+      lo.deliveryMethod = deliveryMethod || lo.deliveryMethod;
+      lo.orderId = order.orderId || order.order_id || lo.orderId;
+      localStorage.setItem('tesla_last_order', JSON.stringify(lo));
+    } catch (e2) {}
+    if (deliveryDetails && deliveryDetails.email) userEmail = deliveryDetails.email;
   }
-  if (!deliveryMethod) {
-    window.location.replace('delivery-method.html');
-    return;
+
+  function requireCheckoutContextOrExit() {
+    if (!selectedCar || !deliveryDetails) {
+      window.location.replace('delivery-method.html');
+      return false;
+    }
+    if (!deliveryMethod) {
+      // Default to standard so repay users are not blocked if method missing
+      deliveryMethod = { id: 'standard', name: 'Standard Delivery' };
+      try { localStorage.setItem('tesla_delivery_method', JSON.stringify(deliveryMethod)); } catch (e4) {}
+    }
+    return true;
   }
 
   function startPaymentUI() {
@@ -1754,8 +1777,12 @@
     var needs = !selectedCar || !deliveryDetails || !deliveryMethod;
     var base = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
       ? String(window.TESLA_API_BASE).replace(/\/+$/, '') : '';
-    // Always try session when repay=1 or context incomplete
-    if ((!needs && !isRepay) || !sessionToken || !base) {
+    if (!sessionToken || !base) {
+      startPaymentUI();
+      return;
+    }
+    // Prefer DB session order on repay or when local checkout context is incomplete
+    if (!needs && !isRepay) {
       startPaymentUI();
       return;
     }
@@ -1763,8 +1790,6 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (data && data.valid && data.order) applyOrderFromSession(data.order);
-        // Rejected repayment: stay on payment page even if some fields still missing —
-        // requireCheckoutContextOrExit will only leave if truly unusable.
         startPaymentUI();
       })
       .catch(function () { startPaymentUI(); });

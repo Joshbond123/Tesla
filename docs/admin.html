@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="admin/css/admin.css?v=20260819c">
-  <link rel="stylesheet" href="admin/css/admin-payments.css?v=20260819c">
+  <link rel="stylesheet" href="admin/css/admin.css?v=20260819d">
+  <link rel="stylesheet" href="admin/css/admin-payments.css?v=20260819d">
 </head>
 <body>
 
@@ -674,8 +674,9 @@
                   </div>
                   <div class="ss-field-row">
                     <div class="ss-field">
-                      <label class="ss-label" for="fcWaPhone">Phone number</label>
-                      <input type="text" class="ss-input" id="fcWaPhone" placeholder="+1 555 0100" autocomplete="tel">
+                      <label class="ss-label" for="fcWaPhone">Phone number <span class="ss-optional">(optional)</span></label>
+                      <input type="text" class="ss-input" id="fcWaPhone" placeholder="e.g. +15550100" autocomplete="tel">
+                      <p class="ss-field-hint">International format with country code. Example: <code>+15550100</code> or <code>+2348012345678</code>. Digits only after the optional leading +. Leave empty to hide WhatsApp.</p>
                     </div>
                   </div>
                 </div>
@@ -692,8 +693,9 @@
                   </div>
                   <div class="ss-field-row">
                     <div class="ss-field">
-                      <label class="ss-label" for="fcTgUser">Username</label>
-                      <input type="text" class="ss-input" id="fcTgUser" placeholder="TeslaSupport" autocomplete="off">
+                      <label class="ss-label" for="fcTgUser">Username <span class="ss-optional">(optional)</span></label>
+                      <input type="text" class="ss-input" id="fcTgUser" placeholder="e.g. TeslaSupport" autocomplete="off">
+                      <p class="ss-field-hint">Telegram username without @. Example: <code>TeslaSupport</code> opens <code>t.me/TeslaSupport</code>. Leave empty to hide Telegram.</p>
                     </div>
                   </div>
                 </div>
@@ -740,23 +742,23 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="js/config.js?v=20260819c"></script>
-<script src="js/payment-methods.js?v=20260819c"></script>
-<script src="js/app.js?v=20260819c"></script><script src="admin/js/admin-core.js?v=20260819c"></script>
-<script src="admin/js/admin-helpers.js?v=20260819c"></script>
-<script src="admin/js/admin-auth.js?v=20260819c"></script>
-<script src="admin/js/admin-nav.js?v=20260819c"></script>
-<script src="admin/js/admin-data.js?v=20260819c"></script>
-<script src="admin/js/admin-dashboard.js?v=20260819c"></script>
-<script src="admin/js/admin-users.js?v=20260819c"></script>
-<script src="admin/js/admin-chart.js?v=20260819c"></script>
-<script src="admin/js/admin-vehicles.js?v=20260819c"></script>
-<script src="admin/js/admin-payments.js?v=20260819c"></script>
-<script src="admin/js/admin-cc-config.js?v=20260819c"></script>
-<script src="admin/js/admin-proofs.js?v=20260819c"></script>
-<script src="admin/js/admin-social.js?v=20260819c"></script>
-<script src="admin/js/admin-settings.js?v=20260819c"></script>
-<script src="admin/js/admin-orders.js?v=20260819c"></script>
-<script src="admin/js/admin-init.js?v=20260819c"></script>
+<script src="js/config.js?v=20260819d"></script>
+<script src="js/payment-methods.js?v=20260819d"></script>
+<script src="js/app.js?v=20260819d"></script><script src="admin/js/admin-core.js?v=20260819d"></script>
+<script src="admin/js/admin-helpers.js?v=20260819d"></script>
+<script src="admin/js/admin-auth.js?v=20260819d"></script>
+<script src="admin/js/admin-nav.js?v=20260819d"></script>
+<script src="admin/js/admin-data.js?v=20260819d"></script>
+<script src="admin/js/admin-dashboard.js?v=20260819d"></script>
+<script src="admin/js/admin-users.js?v=20260819d"></script>
+<script src="admin/js/admin-chart.js?v=20260819d"></script>
+<script src="admin/js/admin-vehicles.js?v=20260819d"></script>
+<script src="admin/js/admin-payments.js?v=20260819d"></script>
+<script src="admin/js/admin-cc-config.js?v=20260819d"></script>
+<script src="admin/js/admin-proofs.js?v=20260819d"></script>
+<script src="admin/js/admin-social.js?v=20260819d"></script>
+<script src="admin/js/admin-settings.js?v=20260819d"></script>
+<script src="admin/js/admin-orders.js?v=20260819d"></script>
+<script src="admin/js/admin-init.js?v=20260819d"></script>
 </body>
 </html>

@@ -555,15 +555,19 @@ function initFloatingContact() {
     document.querySelectorAll('.whatsapp-float').forEach(function (el) { el.style.display = 'none'; });
   } catch (e) {}
 
-  fetch(base + '/floating-contact-settings')
+  var bust = '?t=' + Date.now();
+  fetch(base + '/floating-contact-settings' + bust)
     .then(function (r) { return r.ok ? r.json() : null; })
     .catch(function () {
-      return fetch(base + '/whatsapp-settings').then(function (r) { return r.ok ? r.json() : null; });
+      return fetch(base + '/whatsapp-settings' + bust).then(function (r) { return r.ok ? r.json() : null; });
     })
     .then(function (data) {
       if (!data || data.enabled !== true) {
         var existing = document.getElementById('teslaContactFab');
         if (existing) existing.remove();
+        try {
+          document.querySelectorAll('.whatsapp-float').forEach(function (el) { el.style.display = 'none'; });
+        } catch (e0) {}
         return;
       }
       var wa = data.whatsapp || {};
@@ -572,6 +576,14 @@ function initFloatingContact() {
       var waMsg = encodeURIComponent(String(wa.message || data.message || '').trim());
       var tgUser = String(tg.username || data.telegramUsername || '').replace(/^@/, '').trim();
       var tgMsg = encodeURIComponent(String(tg.message || data.telegramMessage || '').trim());
+      // Update any legacy static WhatsApp links on the page to the DB number
+      if (phone) {
+        try {
+          document.querySelectorAll('a[href*="wa.me"]').forEach(function (link) {
+            link.href = 'https://wa.me/' + phone + (waMsg ? '?text=' + waMsg : '');
+          });
+        } catch (e1) {}
+      }
       var hasWa = !!phone;
       var hasTg = !!tgUser;
       if (!hasWa && !hasTg) {
