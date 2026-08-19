@@ -825,11 +825,11 @@ function buildOrderConfirmationEmail(order: any) {
   const carId = (car.id || 'models').toLowerCase();
 
   const imgMap: Record<string, string> = {
-    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
-    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
-    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
-    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
-    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+    cybertruck: 'https://joshbond123.github.io/Tesla/assets/vehicles/cybertruck-main.png',
+    modely: 'https://joshbond123.github.io/Tesla/assets/vehicles/modely-main.png',
+    models: 'https://joshbond123.github.io/Tesla/assets/vehicles/models-main.png',
+    model3: 'https://joshbond123.github.io/Tesla/assets/vehicles/model3-main.png',
+    modelx: 'https://joshbond123.github.io/Tesla/assets/vehicles/modelx-main.png'
   };
   const carImg = imgMap[carId] || imgMap['models'];
   const carModel = car.name || 'Model S';

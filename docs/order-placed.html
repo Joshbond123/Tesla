@@ -627,11 +627,11 @@ function renderOrderPage(order) {
   var vd = (typeof VEHICLE_DATA !== 'undefined' ? VEHICLE_DATA : null);
   var vi = vd ? vd[carId] || null : null;
   var imgMap2 = {
-    cybertruck: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/cybertruck-main.png',
-    modely: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modely-main.png',
-    models: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/models-main.png',
-    model3: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/model3-main.png',
-    modelx: 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/modelx-main.png'
+    cybertruck: 'assets/vehicles/cybertruck-main.png',
+    modely: 'assets/vehicles/modely-main.png',
+    models: 'assets/vehicles/models-main.png',
+    model3: 'assets/vehicles/model3-main.png',
+    modelx: 'assets/vehicles/modelx-main.png'
   };
   if (im2) {
     if (vi && vi.img) im2.src = vi.img;

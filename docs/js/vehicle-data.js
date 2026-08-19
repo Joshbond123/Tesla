@@ -1,6 +1,13 @@
 // Shared vehicle data — single source of truth for all pages
-// Images served from Supabase Storage (no third-party hosting)
-var SUPABASE_IMG = 'https://puebwzumwqizgbmksrpq.supabase.co/storage/v1/object/public/vehicle-images/';
+// Images served from repository assets (file-based, not Supabase Storage)
+var SUPABASE_IMG = (function () {
+  try {
+    var path = String(window.location.pathname || '').toLowerCase();
+    if (path.indexOf('/vehicles/') !== -1) return '../assets/vehicles/';
+  } catch (e) {}
+  return 'assets/vehicles/';
+})();
+var VEHICLE_IMG = SUPABASE_IMG;
 
 var VEHICLE_DATA = {
   cybertruck: {
