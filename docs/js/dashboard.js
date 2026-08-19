@@ -36,18 +36,28 @@ document.addEventListener('DOMContentLoaded', async function() {
       return; 
     }
 
-    // Show verified banner (only when coming from email link)
-    if (urlSession) {
+    // Welcome banner on first login / email-link entry (not an "email verified" message)
+    var showWelcome = !!urlSession;
+    try {
+      if (!sessionStorage.getItem('tesla_welcome_shown')) showWelcome = true;
+    } catch (eW) {}
+    if (showWelcome) {
       var banner = document.getElementById('verifiedBanner');
       if (banner) {
         banner.style.display = 'flex';
         var nameDisplay = document.getElementById('userNameDisplay');
-        if (nameDisplay) {
-          nameDisplay.textContent = data.user.firstName || data.user.email.split('@')[0];
+        if (nameDisplay && data.user) {
+          nameDisplay.textContent = data.user.firstName || (data.user.email ? data.user.email.split('@')[0] : 'winner');
+        }
+        try { sessionStorage.setItem('tesla_welcome_shown', '1'); } catch (eS) {}
+        var closeBtn = document.getElementById('welcomeBannerClose');
+        if (closeBtn) {
+          closeBtn.onclick = function () {
+            banner.style.display = 'none';
+          };
         }
       }
-      // Launch confetti!
-      launchConfetti(50);
+      if (typeof launchConfetti === 'function') launchConfetti(40);
     }
 
     // DB-driven redirects (session API / database only — never localStorage for this decision)

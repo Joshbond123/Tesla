@@ -45,10 +45,54 @@
     .s-line.done{background:var(--success);}
 
     /* Verified banner */
-    .verified-banner{background:linear-gradient(135deg,rgba(0,165,80,.08),rgba(0,165,80,.04));border:1.5px solid rgba(0,165,80,.2);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:14px;margin-bottom:28px;}
-    .verified-icon{width:42px;height:42px;background:var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;}
-    .verified-text strong{font-size:15px;color:var(--dark);}
-    .verified-text p{font-size:13px;color:var(--gray-2);margin-top:2px;}
+    .welcome-banner{
+      position:relative;overflow:hidden;
+      display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+      margin-bottom:28px;padding:20px 22px;
+      border-radius:18px;
+      background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#3f0d18 100%);
+      color:#fff;
+      box-shadow:0 16px 40px rgba(15,23,42,.22),0 0 0 1px rgba(227,25,55,.25);
+      animation:welcomeIn .55s cubic-bezier(.16,1,.3,1) both;
+    }
+    .welcome-banner__glow{
+      position:absolute;inset:auto -20% -60% auto;width:220px;height:220px;
+      background:radial-gradient(circle,rgba(227,25,55,.45),transparent 68%);
+      pointer-events:none;
+    }
+    .welcome-banner__icon{
+      position:relative;z-index:1;
+      width:48px;height:48px;border-radius:14px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(255,255,255,.1);color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .welcome-banner__body{position:relative;z-index:1;flex:1;min-width:180px;}
+    .welcome-banner__kicker{
+      margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.08em;
+      text-transform:uppercase;color:rgba(255,255,255,.55);
+    }
+    .welcome-banner__title{
+      margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.2;
+    }
+    .welcome-banner__sub{
+      margin:0;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.72);max-width:42ch;
+    }
+    .welcome-banner__close{
+      position:relative;z-index:1;margin-left:auto;
+      width:34px;height:34px;border-radius:10px;border:none;cursor:pointer;
+      display:inline-flex;align-items:center;justify-content:center;
+      background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);
+      transition:background .15s ease,color .15s ease;
+    }
+    .welcome-banner__close:hover{background:rgba(255,255,255,.16);color:#fff;}
+    @keyframes welcomeIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+    @media(max-width:560px){
+      .welcome-banner{padding:16px;gap:12px;border-radius:16px;}
+      .welcome-banner__title{font-size:17px;}
+      .welcome-banner__sub{font-size:13px;}
+      .welcome-banner__icon{width:42px;height:42px;border-radius:12px;}
+    }
 
     /* Section header */
     .section-hdr{margin-bottom:28px;}
@@ -202,13 +246,20 @@
 <div class="dash-wrap">
 
 
-  <!-- Verified banner (shown after email verify) -->
-  <div class="verified-banner anim-fade-up" id="verifiedBanner" style="display:none;">
-    <div class="verified-icon">✓</div>
-    <div class="verified-text">
-      <strong>Email Verified Successfully!</strong>
-      <p>Welcome, <span id="userNameDisplay">winner</span>! Your entry is verified and confirmed. Choose your Tesla below.</p>
+  <!-- Welcome banner (first login / session start) -->
+  <div class="welcome-banner anim-fade-up" id="verifiedBanner" style="display:none;" role="status" aria-live="polite">
+    <div class="welcome-banner__glow" aria-hidden="true"></div>
+    <div class="welcome-banner__icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </div>
+    <div class="welcome-banner__body">
+      <p class="welcome-banner__kicker">Tesla Award Program</p>
+      <h2 class="welcome-banner__title">Welcome, <span id="userNameDisplay">winner</span></h2>
+      <p class="welcome-banner__sub">You&rsquo;re all set. Browse the collection below and choose the Tesla that&rsquo;s yours.</p>
+    </div>
+    <button type="button" class="welcome-banner__close" id="welcomeBannerClose" aria-label="Dismiss welcome message">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
   </div>
 
   <!-- STEP 2: Car Selection -->
