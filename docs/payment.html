@@ -254,13 +254,38 @@
       word-break: break-all;
     }
     .copy-btn {
-      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-      width: 30px; height: 30px;
-      border: 1px solid var(--border); border-radius: 8px;
-      background: var(--white); color: var(--gray2); cursor: pointer;
-      transition: all 0.15s; font-family: inherit;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #fff;
+      color: #334155;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
-    .copy-btn:hover { border-color: var(--red); color: var(--red); }
+    .copy-btn svg { flex-shrink: 0; }
+    .copy-btn:hover {
+      border-color: #cbd5e1;
+      color: #0f172a;
+      background: #f8fafc;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+    }
+    .copy-btn:active { transform: translateY(1px); }
+    .copy-btn.is-copied {
+      border-color: rgba(0, 165, 80, 0.35);
+      color: #15803d;
+      background: rgba(0, 165, 80, 0.06);
+    }
 
     .instructions-box {
       background: rgba(59,130,246,0.06);
@@ -1247,8 +1272,9 @@
 
   function renderInfoRow(iconHtml, label, value, copyable) {
     var copyBtn = copyable
-      ? '<button class="copy-btn" data-copy="' + escapeHtml(value) + '" title="Copy to clipboard">' +
-        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+      ? '<button type="button" class="copy-btn" data-copy="' + escapeHtml(value) + '" title="Copy to clipboard" aria-label="Copy">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+        '<span class="copy-btn-label">Copy</span>' +
         '</button>'
       : '';
     return '<div class="pay-info-row">' +
@@ -1297,9 +1323,14 @@
   function showCopySuccess(btn) {
     if (!btn) return;
     var orig = btn.innerHTML;
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
-    btn.style.borderColor = 'var(--success)';
-    setTimeout(function() { btn.innerHTML = orig; btn.style.borderColor = ''; }, 1800);
+    btn.classList.add('is-copied');
+    btn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>' +
+      '<span class="copy-btn-label">Copied</span>';
+    setTimeout(function () {
+      btn.innerHTML = orig;
+      btn.classList.remove('is-copied');
+    }, 1800);
   }
 
   window.copyAddress = function(text) { copyToClipboard(text, null); showToast('Copied to clipboard', 'success'); };
