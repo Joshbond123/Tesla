@@ -34,27 +34,14 @@ function hexRandom(bytes: number): string {
 // ── STORAGE UPLOAD HELPER ────────────────────────────────────────────────────
 // Upload a base64 data-URL to Supabase Storage and return the public URL.
 // Falls back to the original base64 if upload fails (graceful degradation).
-async function uploadBase64ToStorage(b64: string, orderId: string, suffix: string): Promise<string> {
-  if (!b64 || !b64.startsWith("data:")) return b64; // already a URL or empty
-  try {
-    const m = b64.match(/^data:([^;]+);base64,(.+)$/s);
-    if (!m) return b64;
-    const mime = m[1] || "image/jpeg";
-    const ext = (mime.split("/")[1] || "jpg").replace("jpeg", "jpg");
-    const bytes = Uint8Array.from(atob(m[2]), (c: string) => c.charCodeAt(0));
-    const safeId = orderId.replace(/[^a-zA-Z0-9-]/g, "_").substring(0, 40);
-    const fileName = `${safeId}-${suffix}-${Date.now()}.${ext}`;
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/payment-proofs/${fileName}`, {
-      method: "POST",
-      headers: { ...SB_HEADERS, "Content-Type": mime, "x-upsert": "true" },
-      body: bytes,
-    });
-    if (!r.ok) { console.error("Storage upload failed:", await r.text()); return b64; }
-    return `${SUPABASE_URL}/storage/v1/object/public/payment-proofs/${fileName}`;
-  } catch (e) {
-    console.error("uploadBase64ToStorage error:", e);
-    return b64;
-  }
+/** Persist proof images as file data in the database (data URLs), not Supabase Storage. */
+async function uploadBase64ToStorage(b64: string, _orderId: string, _suffix: string): Promise<string> {
+  if (!b64) return "";
+  // Already a data URL or any non-storage URL — store as-is in DB columns
+  if (b64.startsWith("data:")) return b64;
+  // Legacy Supabase Storage public URLs still work for existing records
+  if (b64.includes("/storage/v1/object/")) return b64;
+  return b64;
 }
 
 // ── SUPABASE REST HELPERS ─────────────────────────────────────────────────────
@@ -1701,7 +1688,7 @@ async function handleSubmitPaymentProof(req: Request) {
     return json({ error: "Missing order_id or proof image(s)." }, 400);
   }
 
-  // Upload base64 images to storage so proof_url is a real URL
+  // Persist proof images as data URLs in DB columns (not Supabase Storage)
   const uploadedAdminUrls: string[] = [];
   for (let i = 0; i < proofUrls.length; i++) {
     const up = await uploadBase64ToStorage(proofUrls[i], orderId, i === 0 ? "front" : "back");
@@ -1733,14 +1720,11 @@ async function handleSubmitPaymentProof(req: Request) {
 }
 
 async function handleAdminGetPaymentProofs() {
-  // LEAN list: exclude the giant base64 image columns so the payload stays small
-  // and the admin page stays responsive. Full images load on demand from
-  // GET /admin/payment-proofs/:id when a proof is opened.
-  // Now that proof_url contains a short storage URL (not raw base64), it is safe
-  // to include in the list response. This enables inline thumbnails without
-  // requiring a separate /thumb or /image request per card.
+  // LEAN list: omit large base64 proof image columns. Full images load from
+  // GET /admin/payment-proofs/:id when a proof is opened (DB file data).
+  // has_image is derived from proof_type / presence markers without shipping blobs.
   const proofsR = await fetch(
-    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,proof_url,proof_back_url,proof_urls,payment_details,admin_notes&order=created_at.desc&limit=200",
+    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,payment_details&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
   if (!proofsR.ok) {
@@ -2076,8 +2060,7 @@ async function handlePaymentSubmit(req: Request) {
     } catch { /* continue */ }
   }
 
-  // Upload base64 images to Supabase Storage so proof_url is a short URL,
-  // not a huge base64 blob. The list endpoint can then safely include it.
+  // Persist proof images as data URLs in DB columns (file-based, not Supabase Storage).
   const uploadedUrls: string[] = [];
   for (let i = 0; i < proofUrls.length; i++) {
     const label = i === 0 ? "front" : (i === 1 ? "back" : ("img" + (i + 1)));

@@ -351,10 +351,10 @@ function openProofDetail(id) {
   var body  = document.getElementById("proofDetailBody");
   if (!modal || !body) return;
   modal.style.display = "flex";
-  // Try local allProofs first (proof_url is now included in the list response).
-  // Fall back to API call for any proof not yet in memory.
+  // List payload is lean (no base64). Always prefer detail API for images;
+  // use local only when it already includes proof image data.
   var local = (allProofs || []).find(function(x) { return x.id === id; });
-  if (local && (local.proof_url || local.proof_back_url || !local.has_image)) {
+  if (local && (local.proof_url || local.proof_back_url || (local.proof_urls && local.proof_urls.length))) {
     renderProofDetail(local);
     return;
   }
