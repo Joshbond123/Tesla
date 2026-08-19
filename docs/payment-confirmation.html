@@ -145,12 +145,42 @@
       border-radius: 50%;
       margin: 0 auto 20px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 34px;
       transition: all .4s ease;
+      color: #b45309;
     }
-    .pending  .status-icon-wrap { background: rgba(245,158,11,.1); border: 2px solid rgba(245,158,11,.25); animation: pulseRing 2s infinite; }
-    .approved .status-icon-wrap { background: rgba(0,165,80,.1); border: 2px solid rgba(0,165,80,.25); animation: pulseRingGreen 2s infinite; }
-    .rejected .status-icon-wrap { background: rgba(239,68,68,.1); border: 2px solid rgba(239,68,68,.2); animation: pulseRingRed 2s infinite; }
+    .status-icon-wrap .status-svg { display: block; }
+    .pending  .status-icon-wrap { background: rgba(245,158,11,.1); border: 2px solid rgba(245,158,11,.25); animation: pulseRing 2s infinite; color: #b45309; }
+    .approved .status-icon-wrap { background: rgba(0,165,80,.1); border: 2px solid rgba(0,165,80,.25); animation: pulseRingGreen 2s infinite; color: #15803d; }
+    .rejected .status-icon-wrap { background: rgba(239,68,68,.1); border: 2px solid rgba(239,68,68,.2); animation: pulseRingRed 2s infinite; color: #b91c1c; }
+    .rejected-cta-wrap {
+      display: none;
+      text-align: center;
+      padding: 8px 24px 40px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .rejected-cta-wrap.is-visible { display: block; }
+    .rejected-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #E31937, #c41030);
+      color: #fff !important;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(227,25,55,.3);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .rejected-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(227,25,55,.35);
+    }
 
     .status-title {
       font-size: 28px; font-weight: 900; letter-spacing: -.4px; margin-bottom: 10px;
@@ -467,7 +497,9 @@
   <div class="status-hero anim-0" id="confHero">
     <div class="status-hero-bar pending" id="heroBar"></div>
     <div class="status-hero-inner pending" id="heroTop">
-      <div class="status-icon-wrap" id="statusIconWrap">⏳</div>
+      <div class="status-icon-wrap" id="statusIconWrap" aria-hidden="true">
+        <svg class="status-svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      </div>
       <div class="status-title" id="heroTitle">Payment Under Review</div>
       <div class="status-sub" id="heroSub">Your payment proof has been received and is being reviewed. We will update the status here once verified.</div>
       <div>
@@ -593,10 +625,10 @@
 
 
   <!-- Rejected CTA (shown only when payment is rejected) -->
-  <div id="rejectedCTA" style="display:none;text-align:center;padding:0 24px 40px;max-width:980px;margin:0 auto;">
-    <a href="payment.html" style="display:inline-flex;align-items:center;gap:8px;padding:14px 40px;background:linear-gradient(135deg,#E31937,#c41030);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(227,25,55,.3);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(227,25,55,.35)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(227,25,55,.3)'">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Upload New Payment Proof
+  <div id="rejectedCTA" class="rejected-cta-wrap" hidden>
+    <a class="rejected-cta-btn" href="payment.html" id="returnToPaymentBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      Return to Payment
     </a>
   </div>
 
@@ -671,41 +703,62 @@
     var badge= el('statusBadge');
     var st   = el('statusText');
     var proofEl = el('proofStatus');
+    var rc = document.getElementById('rejectedCTA');
 
-    ['pending','approved','rejected'].forEach(function(c){
-      if (bar) bar.classList.remove(c);
-      if (top) top.classList.remove(c);
-    });
+    var status = String(proofStatus || 'pending').toLowerCase().trim();
+    if (status === 'approve' || status === 'verified' || status === 'accepted') status = 'approved';
+    if (status === 'reject' || status === 'declined' || status === 'denied') status = 'rejected';
+    if (status !== 'approved' && status !== 'rejected') status = 'pending';
 
-    if (proofStatus === 'approved') {
-      if (bar) bar.classList.add('approved');
-      if (top) top.classList.add('approved');
-      if (icon) icon.textContent = '';
+    var icons = {
+      pending:
+        '<svg class="status-svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+      approved:
+        '<svg class="status-svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+      rejected:
+        '<svg class="status-svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>'
+    };
+
+    if (bar) bar.className = 'status-hero-bar ' + status;
+    if (top) top.className = 'status-hero-inner ' + status;
+    if (icon) icon.innerHTML = icons[status];
+
+    function showRejectedCta(show) {
+      if (!rc) return;
+      if (show) {
+        rc.hidden = false;
+        rc.style.display = 'block';
+        rc.classList.add('is-visible');
+      } else {
+        rc.hidden = true;
+        rc.style.display = 'none';
+        rc.classList.remove('is-visible');
+      }
+    }
+
+    if (status === 'approved') {
       if (title) title.textContent = 'Payment Verified';
       if (sub) sub.textContent = 'Your payment has been verified and approved. Your Tesla is being prepared for delivery — track your order progress below.';
-      var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'none';
+      showRejectedCta(false);
       var ab = document.querySelector('.action-bar'); if (ab) ab.style.display = 'flex';
       if (badge) badge.className = 'status-badge approved';
       if (st) st.textContent = 'Payment Approved';
       if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge approved">Approved</span>';
-    } else if (proofStatus === 'rejected') {
-      if (bar) bar.classList.add('rejected');
-      if (top) top.classList.add('rejected');
-      if (icon) icon.textContent = '';
+    } else if (status === 'rejected') {
       if (title) title.textContent = 'Payment Rejected';
       if (sub) sub.textContent = 'Your payment could not be verified. Please return to the payment page to upload a new proof.';
-      var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'block';
+      showRejectedCta(true);
       var ab = document.querySelector('.action-bar'); if (ab) ab.style.display = 'none';
       if (badge) badge.className = 'status-badge rejected';
       if (st) st.textContent = 'Payment Rejected';
       if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge rejected">Rejected</span>';
+      // Ensure CTA always points at the Payment page
+      var btn = document.getElementById('returnToPaymentBtn');
+      if (btn) btn.setAttribute('href', 'payment.html');
     } else {
-      if (bar) bar.classList.add('pending');
-      if (top) top.classList.add('pending');
-      if (icon) icon.textContent = '';
       if (title) title.textContent = 'Payment Under Review';
       if (sub) sub.textContent = 'Your payment proof has been received and is being reviewed. We will update the status here once verified.';
-      var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'none';
+      showRejectedCta(false);
       var ab = document.querySelector('.action-bar'); if (ab) ab.style.display = 'flex';
       if (badge) badge.className = 'status-badge pending';
       if (st) st.textContent = 'Pending Review';
@@ -713,7 +766,7 @@
     }
   }
 
-  function labelOf(obj, fallback) {
+  function labelOf  function labelOf(obj, fallback) {
     if (!obj) return fallback || '—';
     if (typeof obj === 'string') {
       var s = obj.trim();
