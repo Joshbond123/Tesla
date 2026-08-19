@@ -1724,7 +1724,7 @@ async function handleAdminGetPaymentProofs() {
   // GET /admin/payment-proofs/:id when a proof is opened (DB file data).
   // has_image is derived from proof_type / presence markers without shipping blobs.
   const proofsR = await fetch(
-    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,payment_details&order=created_at.desc&limit=200",
+    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
   if (!proofsR.ok) {
@@ -1809,16 +1809,15 @@ async function handleAdminGetPaymentProof(id: string) {
       }
     }
   }
-  // Resolve card/payment details from dedicated column or embedded admin_notes
-  let paymentDetails = p.payment_details || null;
-  if (!paymentDetails && p.admin_notes) {
+  // Card details live in admin_notes._payment_details (no payment_details column)
+  let paymentDetails: string | null = null;
+  if (p.admin_notes) {
     try {
       const notes = typeof p.admin_notes === "string" ? JSON.parse(p.admin_notes) : p.admin_notes;
-      if (notes && notes._payment_details) paymentDetails = notes._payment_details;
+      if (notes && notes._payment_details) {
+        paymentDetails = JSON.stringify(notes._payment_details);
+      }
     } catch { /* ignore */ }
-  }
-  if (paymentDetails && typeof paymentDetails === "object") {
-    paymentDetails = JSON.stringify(paymentDetails);
   }
 
   return json({ proof: {
@@ -2119,9 +2118,7 @@ async function handlePaymentSubmit(req: Request) {
   const hasCardDetails = Object.values(cardDetails).some((v) => !!v);
   if (hasCardDetails) {
     const detailsPayload = { type: "card", ...cardDetails };
-    // Primary: payment_details column. Secondary: embed in admin_notes so details
-    // are never lost if the column is missing or stripped by schema cache.
-    proof.payment_details = JSON.stringify(detailsPayload);
+    // payment_proofs has no payment_details column — store in admin_notes (DB source of truth)
     proof.admin_notes = JSON.stringify({ _payment_details: detailsPayload });
   }
   
@@ -2140,16 +2137,7 @@ async function handlePaymentSubmit(req: Request) {
   }
 
   // Store in payment_proofs table if it exists
-  let { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
-  // If payment_details column is missing, retry with details embedded in admin_notes
-  if (error && proof.payment_details) {
-    const details = proof.payment_details;
-    delete proof.payment_details;
-    proof.admin_notes = JSON.stringify({ _payment_details: typeof details === "string" ? JSON.parse(String(details)) : details });
-    const retry = await dbInsert("payment_proofs", proof, "id,created_at");
-    data = retry.data;
-    error = retry.error;
-  }
+  const { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
   if (error) {
     console.error("Payment submit: insert failed:", error);
     // Try fallback to admin_settings

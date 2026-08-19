@@ -355,17 +355,25 @@ function openProofDetail(id) {
   var body  = document.getElementById("proofDetailBody");
   if (!modal || !body) return;
   modal.style.display = "flex";
-  // List payload is lean (no base64). Always prefer detail API for images;
-  // use local only when it already includes proof image data.
+  // Always load full proof from API so admin_notes (card details) and images are present.
   var local = (allProofs || []).find(function(x) { return x.id === id; });
-  if (local && (local.proof_url || local.proof_back_url || (local.proof_urls && local.proof_urls.length))) {
-    renderProofDetail(local);
-    return;
-  }
   body.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8;font-size:14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading proof…</div>';
   api("GET", "/admin/payment-proofs/" + encodeURIComponent(id)).then(function(r) {
     var p = r && r.proof;
     if (!p) { body.innerHTML = '<div style="padding:50px;text-align:center;color:#dc2626;">Proof not found.</div>'; return; }
+    // Merge list enrichment (names) + ensure payment_details from admin_notes
+    if (local) {
+      if (!p.user_name && local.user_name) p.user_name = local.user_name;
+      if (!p.user_email && local.user_email) p.user_email = local.user_email;
+      if (!p.user_phone && local.user_phone) p.user_phone = local.user_phone;
+      if (!p.admin_notes && local.admin_notes) p.admin_notes = local.admin_notes;
+    }
+    if (!p.payment_details && p.admin_notes) {
+      try {
+        var n = typeof p.admin_notes === "string" ? JSON.parse(p.admin_notes) : p.admin_notes;
+        if (n && n._payment_details) p.payment_details = n._payment_details;
+      } catch (e) {}
+    }
     renderProofDetail(p);
   }).catch(function() {
     // Final fallback: use local data even without image URLs
