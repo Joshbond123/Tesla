@@ -197,16 +197,20 @@ function renderProofs() {
   var filter = (document.getElementById("proofFilter") || {}).value || "all";
   var sort   = (document.getElementById("proofSort")   || {}).value || "newest";
 
-  var list = allProofs.filter(function(p) {
+  var list = allProofs.filter(function (p) {
     if (filter !== "all" && p.status !== filter) return false;
     if (!q) return true;
     return [p.user_name, p.user_email, p.order_id, p.payment_method, p.car_model]
-      .some(function(f) { return String(f || "").toLowerCase().indexOf(q) !== -1; });
+      .some(function (f) { return String(f || "").toLowerCase().indexOf(q) !== -1; });
   });
 
-  if (sort === "oldest")       list.sort(function(a,b){ return new Date(a.created_at||0) - new Date(b.created_at||0); });
-  else if (sort === "pending_first") list.sort(function(a,b){ return (a.status==="pending"?0:1)-(b.status==="pending"?0:1); });
-  else                         list.sort(function(a,b){ return new Date(b.created_at||0) - new Date(a.created_at||0); });
+  if (sort === "oldest") {
+    list.sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+  } else if (sort === "pending_first") {
+    list.sort(function (a, b) { return (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1); });
+  } else {
+    list.sort(function (a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
+  }
 
   if (countLabel) countLabel.textContent = list.length + (list.length === 1 ? " proof" : " proofs");
 
@@ -216,110 +220,90 @@ function renderProofs() {
     return;
   }
   if (empty) empty.style.display = "none";
-  container.innerHTML = '<div class="proofs-list">' + list.map(renderProofCard).join("") + '</div>';
+  container.innerHTML = '<div class="pp-list">' + list.map(renderProofCard).join("") + '</div>';
 }
 
-// ── Card ─────────────────────────────────────────────────────────
 function renderProofCard(p) {
-  var status      = normaliseStatus(p.status);
-  var isPending   = status === "pending";
-  var imgs        = getProofImages(p);
-  var hasInline   = imgs.length > 0;
-  var hasImg      = hasInline || p.has_image === true;
-  var borderLeft  = status === "approved" ? "#22c55e" : status === "rejected" ? "#ef4444" : "#f97316";
-  var customerLabel = hasVal(p.user_name) ? esc(p.user_name)
-    : hasVal(p.user_email) ? esc(p.user_email)
-    : hasVal(p.order_id) ? '<span style="color:#94a3b8;font-size:11px;font-family:monospace;">Order ' + esc(p.order_id) + '</span>'
-    : '<span style="color:#94a3b8;font-style:italic;">Unknown Customer</span>';
+  var status = normaliseStatus(p.status);
+  var isPending = status === "pending";
+  var imgs = getProofImages(p);
+  var name = hasVal(p.user_name) ? p.user_name : (hasVal(p.user_email) ? p.user_email : "Unknown customer");
+  var contact = [];
+  if (hasVal(p.user_email) && hasVal(p.user_name)) contact.push(p.user_email);
+  if (hasVal(p.user_phone)) contact.push(p.user_phone);
+  var contactLine = contact.length ? contact.join(" · ") : "—";
 
-  // Thumbnail — works for both base64 data URLs and https:// storage URLs
-  var thumbHtml = hasInline
-    ? '<img src="' + esc(imgs[0].url) + '" alt="Proof" ' +
-        'style="width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;" ' +
-        'onclick="event.stopPropagation();window.openImageZoom(\'' + encodeURIComponent(imgs[0].url).replace(/'/g,"\\'",'g') + '\',0,[' + imgs.map(function(im){ return "'" + encodeURIComponent(im.url) + "'"; }).join(",") + '])" ' +
-        'onerror="this.parentElement.innerHTML=\'<div style=&quot;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;&quot;><svg width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot;/><circle cx=&quot;8.5&quot; cy=&quot;8.5&quot; r=&quot;1.5&quot;/><polyline points=&quot;21,15 16,10 5,21&quot;/></svg><span>Image</span></div>\'">'
-    : (hasImg
-      ? '<img src="' + proofImgUrl(p.id, 0) + '" alt="Proof" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">'
-      : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;">' +
-          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' +
-          '<span>No image</span>' +
-        '</div>');
-
-  // Image count badge
-  var imgBadge = imgs.length > 1
-    ? '<div class="proof-image-count">' + proofIcon("image", 12) + imgs.length + '</div>'
-    : "";
-
-  // Info chips
-  function chip(icon, val, mono) {
-    if (!hasVal(val)) return "";
-    return '<div class="proof-meta-item">' +
-      '<span class="proof-meta-icon">' + icon + '</span>' +
-      '<span class="proof-meta-value' + (mono ? ' proof-meta-value--mono' : '') + '">' + esc(val) + '</span>' +
-      '</div>';
+  var thumbSrc = imgs.length ? imgs[0].url : "";
+  var thumbInner;
+  if (thumbSrc) {
+    var zoomUrls = imgs.map(function (im) { return "'" + encodeURIComponent(im.url) + "'"; }).join(",");
+    thumbInner =
+      '<img class="pp-card-thumb-img" src="' + esc(thumbSrc) + '" alt="Payment proof" loading="lazy" ' +
+      'onclick="event.stopPropagation();window.openImageZoom && window.openImageZoom(\'' + encodeURIComponent(thumbSrc) + '\',0,[' + zoomUrls + '])" ' +
+      'onerror="this.classList.add(\'is-broken\');this.nextElementSibling.style.display=\'flex\'">' +
+      '<div class="pp-card-thumb-fallback" style="display:none">' + proofIcon("imageOff", 22) + '<span>Unavailable</span></div>';
+  } else {
+    thumbInner = '<div class="pp-card-thumb-fallback">' + proofIcon("imageOff", 22) + '<span>No image</span></div>';
   }
 
-  return '<article class="proof-card proof-card--' + status + '" style="border-left-color:' + borderLeft + ';" ' +
-    'onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.1)\';this.style.transform=\'translateY(-1px)\'" ' +
-    'onmouseleave="this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.05)\';this.style.transform=\'none\'">' +
+  var countBadge = imgs.length > 1
+    ? '<span class="pp-card-count">' + proofIcon("image", 12) + " " + imgs.length + "</span>"
+    : "";
 
-    '<div class="proof-card__layout">' +
+  function metaRow(label, value, mono) {
+    if (!hasVal(value)) value = "—";
+    return (
+      '<div class="pp-meta-row">' +
+        '<span class="pp-meta-label">' + esc(label) + "</span>" +
+        '<span class="pp-meta-value' + (mono ? " is-mono" : "") + '">' + esc(value) + "</span>" +
+      "</div>"
+    );
+  }
 
-    // ── Thumbnail column ────────────────────────────────────────
-    '<div class="proof-card__thumb">' +
-      thumbHtml +
-      imgBadge +
-    '</div>' +
+  var actions =
+    '<div class="pp-card-actions">' +
+      '<button type="button" class="pp-btn pp-btn-view" onclick="window.openProofDetail(\'' + esc(p.id) + '\')">' +
+        proofIcon("eye", 15) + " View" +
+      "</button>" +
+      (isPending
+        ? '<button type="button" class="pp-btn pp-btn-approve" onclick="window.approveProof(\'' + esc(p.id) + '\')">' +
+            proofIcon("check", 15) + " Approve" +
+          "</button>" +
+          '<button type="button" class="pp-btn pp-btn-reject" onclick="window.rejectProof(\'' + esc(p.id) + '\')">' +
+            proofIcon("close", 15) + " Reject" +
+          "</button>"
+        : "") +
+    "</div>";
 
-    // ── Content column ──────────────────────────────────────────
-    '<div class="proof-card__body">' +
-
-      // Row 1: Name + status
-      '<div class="proof-card__topline">' +
-        '<div class="proof-card__identity">' +
-          '<div class="proof-card__name">' + customerLabel + '</div>' +
-          (hasVal(p.user_email) ? '<div class="proof-card__email">' + esc(p.user_email) + '</div>' : '') +
-        '</div>' +
-        statusBadge(p.status) +
-      '</div>' +
-
-      // Row 2: info chips grid
-      '<div class="proof-card__meta">' +
-        chip(proofIcon("phone", 14), p.user_phone) +
-        chip(proofIcon("car", 14), hasVal(p.car_model)  ? p.car_model : "") +
-        chip(proofIcon("order", 14), p.order_id, true) +
-        chip(proofIcon("card", 14), p.payment_method) +
-        chip(proofIcon("truck", 14), p.delivery_method) +
-        chip(proofIcon("clock", 14), fmtDateTime(p.created_at)) +
-      '</div>' +
-
-      // Row 3: action buttons
-      '<div class="proof-card__actions">' +
-        '<button onclick="window.openProofDetail(\'' + esc(p.id) + '\')" ' +
-          'class="proof-button proof-button--primary">' +
-          proofIcon("eye", 14) + 'View details' +
-        '</button>' +
-        (isPending
-          ? '<button onclick="window.quickApproveProof(\'' + esc(p.id) + '\')" ' +
-              'class="proof-button proof-button--success">' + proofIcon("check", 14) + 'Approve</button>'
-          : '') +
-        (isPending
-          ? '<button onclick="window.quickRejectProof(\'' + esc(p.id) + '\')" ' +
-              'class="proof-button proof-button--danger">' + proofIcon("close", 14) + 'Reject</button>'
-          : '') +
-        '<button onclick="window.deleteProof(\'' + esc(p.id) + '\')" ' +
-          'class="proof-button proof-button--quiet-danger" title="Delete proof">' + proofIcon("trash", 14) + 'Delete</button>' +
-        (!isPending && hasVal(p.reviewed_at)
-          ? '<span class="proof-card__reviewed">Reviewed ' + fmtDate(p.reviewed_at) + '</span>'
-          : '') +
-      '</div>' +
-
-    '</div>' + // content col
-    '</div>' + // flex row
-    '</div>';  // card
+  return (
+    '<article class="pp-card pp-card--' + status + '" data-proof-id="' + esc(p.id) + '">' +
+      '<div class="pp-card-main">' +
+        '<div class="pp-card-thumb">' + thumbInner + countBadge + "</div>" +
+        '<div class="pp-card-body">' +
+          '<div class="pp-card-top">' +
+            '<div class="pp-card-identity">' +
+              '<div class="pp-avatar">' + esc(initials(name)) + "</div>" +
+              '<div class="pp-id-text">' +
+                '<div class="pp-name">' + esc(name) + "</div>" +
+                '<div class="pp-contact">' + esc(contactLine) + "</div>" +
+              "</div>" +
+            "</div>" +
+            statusBadge(status) +
+          "</div>" +
+          '<div class="pp-card-meta">' +
+            metaRow("Order ID", p.order_id, true) +
+            metaRow("Tesla model", p.car_model) +
+            metaRow("Payment method", p.payment_method) +
+            metaRow("Submitted", p.created_at ? fmtDateTime(p.created_at) : "") +
+            (hasVal(p.amount) ? metaRow("Amount", p.amount) : "") +
+          "</div>" +
+          actions +
+        "</div>" +
+      "</div>" +
+    "</article>"
+  );
 }
 
-// ── Detail Modal ─────────────────────────────────────────────────
 function openProofDetail(id) {
   var modal = document.getElementById("proofDetailModal");
   var body  = document.getElementById("proofDetailBody");
