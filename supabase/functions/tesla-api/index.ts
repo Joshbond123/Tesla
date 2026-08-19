@@ -497,6 +497,14 @@ async function getSessionUser(sessionToken: string) {
 
 
 /** Normalize PostgREST embedded relation → plain object with .data unwrapped */
+
+function normalizeProofStatus(raw: unknown): "pending" | "approved" | "rejected" {
+  const s = String(raw || "pending").toLowerCase().trim();
+  if (s === "approved" || s === "approve" || s === "verified" || s === "accepted") return "approved";
+  if (s === "rejected" || s === "reject" || s === "declined" || s === "denied") return "rejected";
+  return "pending";
+}
+
 function extractRelationData(rel: any): Record<string, unknown> {
   if (!rel) return {};
   const row = Array.isArray(rel) ? rel[0] : rel;
@@ -569,7 +577,7 @@ async function handleSession(req: Request) {
           const p = ppRows[0];
           paymentProof = {
             id: p.id,
-            status: p.status || "pending",
+            status: normalizeProofStatus(p.status),
             proof_url: p.proof_url || "",
             created_at: p.created_at,
             payment_method: p.payment_method || "",
@@ -705,16 +713,18 @@ async function handleOrder(req: Request) {
     order_id: orderId, tracking_number: trackingNumber, user_id: user.id,
     selected_car_id: carRow?.id, delivery_details_id: deliveryRow?.id,
     delivery_method: method ?? {}, payment_method: paymentMethod ?? { id: "unknown", name: "Not specified" },
-    status: "confirmed", estimated_delivery: estimatedDelivery,
+    status: "processing", estimated_delivery: estimatedDelivery,
   }, "id,order_date");
   if (orderError || !orderRow) {
     console.error("Order: orders insert failed:", orderError);
     return json({ error: "Server error. Please try again." }, 500);
   }
 
+  const orderDate = orderRow?.order_date || new Date().toISOString();
+  // After order placement: current delivery stage is Processing (DB source of truth)
   const timeline = [
-    { stage: "Order Confirmed", timestamp: orderRow?.order_date, completed: true },
-    { stage: "Processing", timestamp: null, completed: false },
+    { stage: "Order Confirmed", timestamp: orderDate, completed: true },
+    { stage: "Processing", timestamp: orderDate, completed: false },
     { stage: "Shipped", timestamp: null, completed: false },
     { stage: "In Transit", timestamp: null, completed: false },
     { stage: "Out for Delivery", timestamp: null, completed: false },
@@ -727,8 +737,7 @@ async function handleOrder(req: Request) {
     }
   }
 
-  const orderDate = orderRow?.order_date || new Date().toISOString();
-  const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? {}, status: "confirmed", orderDate, estimatedDelivery, timeline };
+  const order = { orderId, trackingNumber, email: user.email, entryId: user.entryId, selectedCar: selectedCar ?? {}, deliveryDetails: deliveryDetails ?? {}, deliveryMethod: method, paymentMethod: paymentMethod ?? {}, status: "processing", orderDate, estimatedDelivery, timeline };
   sendEmailBackground(user.email, `Your Tesla Order Confirmation — Order ${orderId}`, buildOrderConfirmationEmail(order));
   return json({ success: true, order });
 }

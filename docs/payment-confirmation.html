@@ -680,8 +680,8 @@
     if (proofStatus === 'approved') {
       if (bar) bar.classList.add('approved');
       if (top) top.classList.add('approved');
-      if (icon) icon.textContent = '✅';
-      if (title) title.textContent = 'Payment Approved!';
+      if (icon) icon.textContent = '';
+      if (title) title.textContent = 'Payment Verified';
       if (sub) sub.textContent = 'Your payment has been verified and approved. Your Tesla is being prepared for delivery — track your order progress below.';
       var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'none';
       var ab = document.querySelector('.action-bar'); if (ab) ab.style.display = 'flex';
@@ -691,7 +691,7 @@
     } else if (proofStatus === 'rejected') {
       if (bar) bar.classList.add('rejected');
       if (top) top.classList.add('rejected');
-      if (icon) icon.textContent = '❌';
+      if (icon) icon.textContent = '';
       if (title) title.textContent = 'Payment Rejected';
       if (sub) sub.textContent = 'Your payment could not be verified. Please return to the payment page to upload a new proof.';
       var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'block';
@@ -702,7 +702,7 @@
     } else {
       if (bar) bar.classList.add('pending');
       if (top) top.classList.add('pending');
-      if (icon) icon.textContent = '⏳';
+      if (icon) icon.textContent = '';
       if (title) title.textContent = 'Payment Under Review';
       if (sub) sub.textContent = 'Your payment proof has been received and is being reviewed. We will update the status here once verified.';
       var rc = document.getElementById('rejectedCTA'); if (rc) rc.style.display = 'none';
@@ -820,9 +820,19 @@
 
   function applyPaymentProof(proof) {
     if (!proof) return;
-    var status = String(proof.status || 'pending').toLowerCase();
+    var status = String(proof.status || 'pending').toLowerCase().trim();
+    if (status === 'approve' || status === 'verified' || status === 'accepted') status = 'approved';
+    if (status === 'reject' || status === 'declined' || status === 'denied') status = 'rejected';
     if (status !== 'approved' && status !== 'rejected') status = 'pending';
     setStatus(status);
+    // Clear any stale local payment status so refresh cannot re-apply "pending"
+    try {
+      var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
+      if (stored && typeof stored === 'object') {
+        stored.paymentStatus = status;
+        localStorage.setItem('tesla_last_order', JSON.stringify(stored));
+      }
+    } catch (e) {}
     var submittedAt = proof.created_at || proof.createdAt || proof.submitted_at || proof.timestamp || '';
     if (submittedAt) setText('proofDate', fmtDT(submittedAt));
     var methodLabel = labelOf(proof.payment_method || proof.paymentMethod, '');
@@ -1100,11 +1110,11 @@
       populateOrder(data.order);
       applyOrderPaymentFallback(data.order);
     }
+    // Database is the only source of truth for payment proof status
     if (data.paymentProof) {
       applyPaymentProof(data.paymentProof);
     } else if (data.hasPaymentProof) {
-      // Proof exists but details missing — show pending until status endpoint fills in
-      setStatus('pending');
+      // Details may arrive from /payment/status next — do not force pending if already set from prior poll
     }
     return true;
   }
@@ -1139,8 +1149,7 @@
           var dt = stored.paymentSubmittedAt || stored.orderDate;
           var pd = (el('proofDate') && el('proofDate').textContent || '').trim();
           if (!pd || pd === '—') setText('proofDate', fmtDT(dt));
-          var ps = (el('proofStatus') && el('proofStatus').textContent || '').trim();
-          if (!ps || ps === '—') setStatus(stored.paymentStatus || stored.status || 'pending');
+          // Payment status comes from DB only (loadFromDB / loadPaymentDetails)
         }
       }
     } catch (e) {}
@@ -1152,7 +1161,7 @@
     var session = getSessionToken();
     var oi = urlOrderId;
 
-    // Prefer local order snapshot immediately so UI is not empty while API loads
+    // Hydrate order fields only from local snapshot — never trust local payment status
     try {
       var stored = JSON.parse(localStorage.getItem('tesla_last_order') || 'null');
       if (stored) {
@@ -1166,26 +1175,30 @@
         }
         if (stored.paymentSubmittedAt || stored.orderDate) {
           setText('proofDate', fmtDT(stored.paymentSubmittedAt || stored.orderDate));
-          setStatus(stored.paymentStatus || 'pending');
         }
       }
     } catch (e) {}
+
+    function startDbSync(orderId) {
+      loadPaymentDetails(orderId);
+      // Poll DB often so admin approve/reject appears without relying on cache
+      setInterval(function () { loadPaymentDetails(orderId); }, 12000);
+    }
 
     if (session) {
       apiCall('/session?token=' + encodeURIComponent(session))
         .then(function(data) {
           if (applySessionPayload(data)) {
-            if (data.order) oi = data.order.orderId || oi;
-            loadPaymentDetails(oi);
-            // Poll for updates
-            setInterval(function() { loadPaymentDetails(oi); }, 30000);
+            if (data.order) oi = data.order.orderId || data.order.order_id || oi;
+            startDbSync(oi);
           } else {
-            loadFromLocalStorage(oi);
+            // Session invalid — still try payment/status by order id
+            startDbSync(oi);
           }
         })
-        .catch(function() { loadFromLocalStorage(oi); });
+        .catch(function() { startDbSync(oi); });
     } else {
-      loadFromLocalStorage(oi);
+      startDbSync(oi);
     }
   });
 
