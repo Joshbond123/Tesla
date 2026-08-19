@@ -743,10 +743,17 @@ function loadOrderFromDatabase() {
       }
       // Payment proof → confirmation page
       if (d.hasPaymentProof === true) {
-        var dest = 'payment-confirmation.html';
-        if (d.order && d.order.orderId) dest += '?order=' + encodeURIComponent(d.order.orderId);
-        window.location.replace(dest);
-        return;
+        var _ps = String((d.paymentProof && d.paymentProof.status) || '').toLowerCase().trim();
+        if (_ps === 'reject') _ps = 'rejected';
+        if (_ps !== 'rejected') {
+          try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
+          var dest = 'payment-confirmation.html';
+          if (d.order && (d.order.orderId || d.order.order_id)) {
+            dest += '?order=' + encodeURIComponent(d.order.orderId || d.order.order_id);
+          }
+          window.location.replace(dest);
+          return;
+        }
       }
       if (!d.hasOrder || !d.order) {
         window.location.href = 'dashboard.html';

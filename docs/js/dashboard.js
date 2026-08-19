@@ -54,11 +54,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Payment proof exists → Payment Confirmation
     // Order exists, no proof → Order Placed
     if (data.hasPaymentProof === true) {
-      try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
-      var dest = 'payment-confirmation.html';
-      if (data.order && data.order.orderId) dest += '?order=' + encodeURIComponent(data.order.orderId);
-      window.location.href = dest;
-      return;
+      var _ps = String((data.paymentProof && data.paymentProof.status) || '').toLowerCase().trim();
+      if (_ps === 'reject') _ps = 'rejected';
+      if (_ps !== 'rejected') {
+        try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
+        var dest = 'payment-confirmation.html';
+        if (data.order && data.order.orderId) dest += '?order=' + encodeURIComponent(data.order.orderId);
+        window.location.href = dest;
+        return;
+      }
     }
     // Order without proof: send to Order Placed only once per session.
     // After that, user may open delivery-method / payment without being bounced back.

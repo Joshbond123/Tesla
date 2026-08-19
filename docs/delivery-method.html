@@ -566,10 +566,15 @@ function recoverFromDatabaseThenContinue() {
       }
       // If payment proof already uploaded, go to confirmation — not delivery method
       if (d.hasPaymentProof === true) {
-        var dest = 'payment-confirmation.html';
-        if (d.order && d.order.orderId) dest += '?order=' + encodeURIComponent(d.order.orderId);
-        window.location.replace(dest);
-        return;
+        var st = String((d.paymentProof && d.paymentProof.status) || '').toLowerCase().trim();
+        if (st === 'reject') st = 'rejected';
+        // Rejected proofs must be able to return to payment / delivery flow
+        if (st !== 'rejected') {
+          var dest = 'payment-confirmation.html';
+          if (d.order && d.order.orderId) dest += '?order=' + encodeURIComponent(d.order.orderId);
+          window.location.replace(dest);
+          return;
+        }
       }
       if (d.order) {
         if (!savedCar && d.order.selectedCar) savedCar = d.order.selectedCar;

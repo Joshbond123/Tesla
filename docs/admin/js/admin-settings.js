@@ -209,16 +209,12 @@ function loadFloatingContact() {
     .then(function (r) {
       var enabled = document.getElementById("fcEnabled");
       var waPhone = document.getElementById("fcWaPhone");
-      var waMsg = document.getElementById("fcWaMessage");
       var tgUser = document.getElementById("fcTgUser");
-      var tgMsg = document.getElementById("fcTgMessage");
       if (enabled) enabled.checked = r.enabled === true;
       var wa = r.whatsapp || {};
       var tg = r.telegram || {};
       if (waPhone) waPhone.value = wa.phone || r.phone || "";
-      if (waMsg) waMsg.value = wa.message || r.message || "";
       if (tgUser) tgUser.value = (tg.username || r.telegramUsername || "").replace(/^@/, "");
-      if (tgMsg) tgMsg.value = tg.message || r.telegramMessage || "";
     })
     .catch(function () {});
 }
@@ -227,20 +223,18 @@ function saveFloatingContact() {
   if (typeof API_BASE === "undefined" || !API_BASE) return;
   var enabled = document.getElementById("fcEnabled");
   var waPhone = document.getElementById("fcWaPhone");
-  var waMsg = document.getElementById("fcWaMessage");
   var tgUser = document.getElementById("fcTgUser");
-  var tgMsg = document.getElementById("fcTgMessage");
   var status = document.getElementById("fcStatus");
   var btn = document.getElementById("fcSaveBtn");
   var payload = {
     enabled: !!(enabled && enabled.checked),
     whatsapp: {
       phone: waPhone ? waPhone.value.trim() : "",
-      message: waMsg ? waMsg.value.trim() : ""
+      message: ""
     },
     telegram: {
       username: tgUser ? tgUser.value.trim().replace(/^@/, "") : "",
-      message: tgMsg ? tgMsg.value.trim() : ""
+      message: ""
     }
   };
   if (btn) btn.disabled = true;
