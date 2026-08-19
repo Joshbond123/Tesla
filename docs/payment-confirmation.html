@@ -155,9 +155,9 @@
     .rejected-cta-wrap {
       display: none;
       text-align: center;
-      padding: 8px 24px 40px;
-      max-width: 980px;
-      margin: 0 auto;
+      margin: 22px auto 0;
+      padding: 0;
+      max-width: 100%;
     }
     .rejected-cta-wrap.is-visible { display: block; }
     .rejected-cta-btn {
@@ -508,6 +508,12 @@
           <span id="statusText">Pending Review</span>
         </span>
       </div>
+      <div id="rejectedCTA" class="rejected-cta-wrap" hidden>
+        <a class="rejected-cta-btn" href="payment.html" id="returnToPaymentBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          Return to Payment
+        </a>
+      </div>
     </div>
   </div>
 
@@ -622,16 +628,6 @@
   </div>
 
 </div>
-
-
-  <!-- Rejected CTA (shown only when payment is rejected) -->
-  <div id="rejectedCTA" class="rejected-cta-wrap" hidden>
-    <a class="rejected-cta-btn" href="payment.html" id="returnToPaymentBtn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-      Return to Payment
-    </a>
-  </div>
-
 <!-- WhatsApp -->
 <div class="whatsapp-float">
   <span class="whatsapp-label">Need help?<br>Chat with us</span>
@@ -752,9 +748,15 @@
       if (badge) badge.className = 'status-badge rejected';
       if (st) st.textContent = 'Payment Rejected';
       if (proofEl) proofEl.innerHTML = '<span class="proof-status-badge rejected">Rejected</span>';
-      // Ensure CTA always points at the Payment page
+      // Point to Payment page; repay=1 signals intentional repayment after rejection
       var btn = document.getElementById('returnToPaymentBtn');
-      if (btn) btn.setAttribute('href', 'payment.html');
+      if (btn) {
+        btn.setAttribute('href', 'payment.html?repay=1');
+        btn.onclick = function (e) {
+          // Do not let any global handler rewrite navigation
+          e.stopPropagation();
+        };
+      }
     } else {
       if (title) title.textContent = 'Payment Under Review';
       if (sub) sub.textContent = 'Your payment proof has been received and is being reviewed. We will update the status here once verified.';

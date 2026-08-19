@@ -1005,6 +1005,9 @@
     return;
   }
 
+  function startPaymentUI() {
+  if (!requireCheckoutContextOrExit()) return;
+
   // ── PAYMENT METHODS ──
   var PM = window.TeslaPaymentMethods;
   var paymentMethods = [];
@@ -1742,6 +1745,27 @@
 
   // ── INIT ──
   loadPaymentMethods();
+
+
+  } // end startPaymentUI
+
+  // Recover order context from DB session (needed after rejected proof → Return to Payment)
+  (function recoverThenBoot() {
+    var needs = !selectedCar || !deliveryDetails || !deliveryMethod;
+    var base = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
+      ? String(window.TESLA_API_BASE).replace(/\/+$/, '') : '';
+    if (!needs || !sessionToken || !base) {
+      startPaymentUI();
+      return;
+    }
+    fetch(base + '/session?token=' + encodeURIComponent(sessionToken))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && data.valid && data.order) applyOrderFromSession(data.order);
+        startPaymentUI();
+      })
+      .catch(function () { startPaymentUI(); });
+  })();
 
 })();
 </script>

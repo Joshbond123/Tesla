@@ -512,8 +512,18 @@ if (document.readyState === 'loading') {
       if (!data || !data.valid) return;
       var oid = (data.order && (data.order.orderId || data.order.order_id)) || '';
 
-      // Proof uploaded → always confirmation (every visit)
+      // Proof uploaded → confirmation, unless the latest proof was REJECTED
+      // (user must be allowed to open payment.html and submit again).
       if (data.hasPaymentProof === true) {
+        var proofStatus = '';
+        try {
+          proofStatus = String((data.paymentProof && data.paymentProof.status) || '').toLowerCase().trim();
+        } catch (e0) {}
+        if (proofStatus === 'reject') proofStatus = 'rejected';
+        if (proofStatus === 'rejected') {
+          // Rejected: do not force Payment Confirmation; allow Payment / checkout pages.
+          return;
+        }
         try { sessionStorage.removeItem('tesla_order_placed_redirect_done'); } catch (e) {}
         go('payment-confirmation.html', oid);
         return;
