@@ -168,13 +168,24 @@ function changePassword() {
   if (!API_BASE) { setPwdStatus("API not configured.", false); showToast("API not configured", "error"); return; }
   if (btn) { btn.disabled = true; }
   setPwdStatus("Saving…", true);
-  api("POST", "/admin/change-password", { current: cur, new: neu })
-    .then(function () {
+  api("POST", "/admin/change-password", { current: cur, new: neu, newPassword: neu })
+    .then(function (r) {
+      // Persist rotated session so DB access continues without re-login
+      if (r && r.token) {
+        try {
+          localStorage.setItem("tesla_admin_token", r.token);
+          sessionStorage.setItem("tesla_admin_authenticated", "true");
+        } catch (e0) {}
+      }
+      // Keep local password hint in sync (optional UI helper only — not used for API auth)
+      try { localStorage.setItem("tesla_admin_pwd", neu); } catch (e1) {}
+      if (typeof adminPassword !== "undefined") adminPassword = neu;
       if (curEl) curEl.value = "";
       if (neuEl) neuEl.value = "";
       if (confEl) confEl.value = "";
       setPwdStatus("Password updated successfully.", true);
       showToast("Password changed successfully");
+      try { if (typeof refreshAll === "function") refreshAll(); } catch (e2) {}
     })
     .catch(function (e) {
       var msg = (e && e.message) ? e.message : "Server error";

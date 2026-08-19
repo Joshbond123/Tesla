@@ -65,8 +65,10 @@ function api(method, path, body) {
   try {
     var token = localStorage.getItem("tesla_admin_token");
     if (token) {
-      headers["Authorization"] = "Bearer " + token;
+      // Session must be X-Admin-Token so Supabase gateway does not treat it as a JWT.
       headers["X-Admin-Token"] = token;
+      // Keep Bearer for backwards compatibility with older function builds
+      headers["Authorization"] = "Bearer " + token;
     }
   } catch (e) {}
 
@@ -95,7 +97,7 @@ function api(method, path, body) {
           d = { error: text || "Invalid JSON response" };
         }
         if (!r.ok) {
-          if (r.status === 401 && path.indexOf("/admin/auth") === -1) {
+          if (r.status === 401 && path.indexOf("/admin/auth") === -1 && path.indexOf("/admin/change-password") === -1) {
             try {
               sessionStorage.removeItem("tesla_admin_authenticated");
               localStorage.removeItem("tesla_admin_token");

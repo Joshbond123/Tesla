@@ -953,8 +953,14 @@ async function sha256(text: string): Promise<string> {
 // Returns an error Response if invalid, or null when authorized.
 async function requireAdmin(req: Request): Promise<Response | null> {
   const auth = req.headers.get("authorization") || "";
-  const xtok = req.headers.get("x-admin-token") || "";
-  const token = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : xtok.trim();
+  const xtok = (req.headers.get("x-admin-token") || "").trim();
+  // Prefer X-Admin-Token. Authorization Bearer may be a Supabase JWT (gateway) or our session hex.
+  let token = xtok;
+  if (!token && auth.toLowerCase().startsWith("bearer ")) {
+    const bearer = auth.slice(7).trim();
+    // Our admin sessions are hex strings (no dots). JWTs contain dots — ignore those here.
+    if (bearer && bearer.indexOf(".") === -1) token = bearer;
+  }
   if (!token) return json({ error: "Authentication required." }, 401);
   const row = await dbGet1("admin_settings", "key", { key: "eq.session_" + token });
   if (!row.data) return json({ error: "Invalid or expired session." }, 401);
@@ -984,16 +990,31 @@ async function handleAdminAuth(req: Request) {
 
 // Change the admin password (requires an active session). Minimum 8 characters.
 async function handleAdminChangePassword(req: Request) {
-  let body: { current?: string; new?: string };
+  let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
-  const current = String(body.current || "");
-  const neu = String(body.new || "");
+  const current = String(body.current || body.currentPassword || body.current_password || "");
+  const neu = String(body.new || body.newPassword || body.new_password || body.password || "");
   if (!neu || neu.length < 8) return json({ error: "New password must be at least 8 characters." }, 400);
-  if (await sha256(current) !== await getAdminPasswordHash()) return json({ error: "Current password is incorrect." }, 401);
+  if (await sha256(current) !== await getAdminPasswordHash()) {
+    return json({ error: "Current password is incorrect." }, 401);
+  }
   const newHash = await sha256(neu);
   const upR = await upsertAdminSetting("admin_password_hash", { hash: newHash });
   if (!upR.ok) return json({ error: "Failed to update password." }, 500);
-  return json({ success: true });
+
+  // Issue a fresh admin session so the panel keeps working after password change
+  // without relying on any client-side password cache.
+  const token = hexRandom(32);
+  const { error: sessionError } = await dbInsert("admin_settings", {
+    key: "session_" + token,
+    value: { created: new Date().toISOString(), afterPasswordChange: true },
+  });
+  if (sessionError) {
+    // Password was updated; client can still use existing session
+    console.error("Admin change-password: session insert failed:", sessionError);
+    return json({ success: true, token: null });
+  }
+  return json({ success: true, token });
 }
 
 async function handleAdminUsers(_req: Request) {
