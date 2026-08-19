@@ -181,12 +181,10 @@
       label: 'Credit / Debit Card',
       type: 'card',
       fields: [
-        { id: 'drw_cardHolder',   key: 'cardHolder',  label: 'Card Holder Name',              inputType: 'text',     placeholder: 'Name on card',                 required: false },
-        { id: 'drw_cardNumber',   key: 'cardNumber',  label: 'Card Number',                   inputType: 'text',     placeholder: '4111 1111 1111 1111',          required: false },
-        { id: 'drw_expiryDate',   key: 'expiryDate',  label: 'Expiry Date',                   inputType: 'text',     placeholder: 'MM/YY',                        required: false },
-        { id: 'drw_cvv',          key: 'cvv',         label: 'CVV',                           inputType: 'text',     placeholder: '123',                          required: false },
-        { id: 'drw_billingAddress',key:'billingAddress',label:'Billing Address',              inputType: 'textarea', placeholder: '123 Main St, City, State, ZIP',required: false },
-        { id: 'drw_instructions', key: 'instructions',label: 'Payment Instructions',          inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
+        // Customer card data is collected on the public payment form only — not configured here
+        { id: 'drw_acceptedNetworks', key: 'acceptedNetworks', label: 'Accepted Networks', inputType: 'text', placeholder: 'Visa, Mastercard, Amex', required: false },
+        { id: 'drw_supportPhone', key: 'supportPhone', label: 'Support Phone (optional)', inputType: 'tel', placeholder: '+1 (888) 000-0000', required: false },
+        { id: 'drw_instructions', key: 'instructions', label: 'Payment Instructions', inputType: 'textarea', placeholder: 'Instructions shown to customers...', required: false },
       ]
     },
 
