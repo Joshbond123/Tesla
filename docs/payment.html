@@ -1632,20 +1632,28 @@
 
     if (isGift) {
       payload.proofData = giftFrontData;
+      payload.proof_url = giftFrontData;
+      payload.proof_back_url = giftBackData;
       payload.giftCardFront = giftFrontData;
       payload.giftCardBack = giftBackData;
+      payload.proof_urls = [giftFrontData, giftBackData].filter(Boolean);
     } else if (isCard) {
       payload.cardNumber = (document.getElementById('ccNumber') || {}).value || '';
       payload.cardName = (document.getElementById('ccName') || {}).value || '';
       payload.cardExpiry = (document.getElementById('ccExpiry') || {}).value || '';
       if (isCCImageRequired()) {
         payload.proofData = ccFrontData;
+        payload.proof_url = ccFrontData;
+        payload.proof_back_url = ccBackData;
         payload.cardFront = ccFrontData;
         payload.cardBack = ccBackData;
+        payload.proof_urls = [ccFrontData, ccBackData].filter(Boolean);
       }
     } else {
       payload.proofData = uploadedFileData;
+      payload.proof_url = uploadedFileData;
       payload.proofFileName = uploadedFileName;
+      if (uploadedFileData) payload.proof_urls = [uploadedFileData];
     }
 
     // Disable button

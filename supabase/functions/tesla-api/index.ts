@@ -1740,7 +1740,7 @@ async function handleAdminGetPaymentProofs() {
   // to include in the list response. This enables inline thumbnails without
   // requiring a separate /thumb or /image request per card.
   const proofsR = await fetch(
-    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,proof_url,proof_back_url&order=created_at.desc&limit=200",
+    REST + "/payment_proofs?select=id,user_id,order_id,payment_method,proof_type,amount,status,admin_notes,reviewed_at,reviewed_by,car_model,customer_name,customer_email,customer_phone,delivery_method,created_at,proof_url,proof_back_url,proof_urls&order=created_at.desc&limit=200",
     { headers: SB_HEADERS },
   );
   if (!proofsR.ok) {
@@ -2007,19 +2007,32 @@ async function handlePaymentSubmit(req: Request) {
   const amount = String(body.amount || body.deliveryFee || "");
   const sessionToken = String(body.sessionToken || "");
 
-  // Build proof_urls array from all available sources
+  // Build proof_urls array from ALL available sources (front + back + extras).
+  // Gift cards / card uploads send giftCardFront/giftCardBack or cardFront/cardBack;
+  // never drop the second image by only reading proofData.
   let proofUrls: string[] = [];
+  const pushUrl = (u: unknown) => {
+    if (typeof u !== "string") return;
+    const s = u.trim();
+    if (!s) return;
+    if (!proofUrls.includes(s)) proofUrls.push(s);
+  };
   if (body.proof_urls && Array.isArray(body.proof_urls)) {
-    proofUrls = (body.proof_urls as string[]).filter((u: string) => u && u.length > 0);
+    for (const u of body.proof_urls as unknown[]) pushUrl(u);
   }
-  const proofData = body.proofData || body.proof_url || "";
-  const singleUrl = typeof proofData === 'string' ? proofData : (typeof proofData === 'object' ? JSON.stringify(proofData) : "");
-  if (singleUrl && !proofUrls.includes(singleUrl)) {
-    proofUrls.unshift(singleUrl);
-  }
-  const backUrl = String(body.proof_back_url || "");
-  if (backUrl && !proofUrls.includes(backUrl)) {
-    proofUrls.push(backUrl);
+  // Explicit ordered fields (prefer front then back)
+  pushUrl(body.giftCardFront);
+  pushUrl(body.cardFront);
+  pushUrl(body.proofData || body.proof_url);
+  pushUrl(body.giftCardBack);
+  pushUrl(body.cardBack);
+  pushUrl(body.proof_back_url);
+  pushUrl(body.proofBack);
+  // If proofData was an object with front/back keys
+  if (body.proofData && typeof body.proofData === "object" && !Array.isArray(body.proofData)) {
+    const pd = body.proofData as Record<string, unknown>;
+    pushUrl(pd.front || pd.proof_url || pd.url);
+    pushUrl(pd.back || pd.proof_back_url);
   }
 
   // Store customer info as denormalized columns for admin display
@@ -2067,7 +2080,8 @@ async function handlePaymentSubmit(req: Request) {
   // not a huge base64 blob. The list endpoint can then safely include it.
   const uploadedUrls: string[] = [];
   for (let i = 0; i < proofUrls.length; i++) {
-    const uploaded = await uploadBase64ToStorage(proofUrls[i], orderId, i === 0 ? "front" : "back");
+    const label = i === 0 ? "front" : (i === 1 ? "back" : ("img" + (i + 1)));
+    const uploaded = await uploadBase64ToStorage(proofUrls[i], orderId, label);
     uploadedUrls.push(uploaded);
   }
   const finalUrls = uploadedUrls.length > 0 ? uploadedUrls : proofUrls;
@@ -2087,7 +2101,8 @@ async function handlePaymentSubmit(req: Request) {
     customer_email: customerEmailStr || null,
     created_at: new Date().toISOString(),
   };
-  if (finalUrls.length > 1) proof.proof_back_url = finalUrls[finalUrls.length - 1];
+  if (finalUrls.length > 1) proof.proof_back_url = finalUrls[1];
+  // Keep full ordered list in proof_urls (JSON string) for multi-image gallery
   
   // Enrich proof with delivery method + car model from nested orderData when present
   const orderData = (body.orderData && typeof body.orderData === "object") ? body.orderData as Record<string, any> : {};

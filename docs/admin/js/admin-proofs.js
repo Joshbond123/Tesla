@@ -91,9 +91,35 @@ function statusBadge(rawStatus, large) {
 // ── Proof image URLs ─────────────────────────────────────────────
 function getProofImages(p) {
   var imgs = [];
-  if (hasVal(p.proof_url))      imgs.push({ url: p.proof_url,      label: "Front" });
-  if (hasVal(p.proof_back_url)) imgs.push({ url: p.proof_back_url, label: "Back"  });
+  var seen = {};
+  function add(url, label) {
+    if (!hasVal(url)) return;
+    var u = String(url).trim();
+    if (!u || seen[u]) return;
+    seen[u] = true;
+    imgs.push({ url: u, label: label || ("Image " + (imgs.length + 1)) });
+  }
+  // Ordered multi-image list from DB (JSON array or array)
+  var urls = p.proof_urls;
+  if (typeof urls === "string") {
+    try { urls = JSON.parse(urls); } catch (e) { urls = null; }
+  }
+  if (Array.isArray(urls)) {
+    urls.forEach(function (u, i) {
+      var label = i === 0 ? "Front" : (i === 1 ? "Back" : ("Image " + (i + 1)));
+      add(u, label);
+    });
+  }
+  // Explicit columns (do not overwrite existing)
+  add(p.proof_url, imgs.length ? "Front" : "Front");
+  add(p.proof_back_url, "Back");
+  // If only one image total, use neutral label
   if (imgs.length === 1) imgs[0].label = "Proof Image";
+  // Gift-specific: ensure Front/Back labels when exactly 2
+  if (imgs.length === 2) {
+    imgs[0].label = "Front";
+    imgs[1].label = "Back";
+  }
   return imgs;
 }
 
