@@ -1,46 +1,62 @@
-# Deploying Tesla Award on InfinityFree (PHP + MySQL)
+# InfinityFree upload guide (fix the "No index file" error)
 
-## 1. Create MySQL database
-1. InfinityFree control panel → **MySQL Databases** → create a database.
-2. Note: host, database name, username, password.
+## Correct htdocs layout
 
-## 2. Import schema
-1. Open **phpMyAdmin**.
-2. Select your database.
-3. **Import** the file `database.sql` from this repository.
+Your **htdocs** folder must look like this (index at the **top level**):
 
-## 3. Upload website files
-Upload the contents of the `docs/` folder to `htdocs/` (or your domain root), including:
-- All HTML/CSS/JS/assets
-- `api/` (PHP backend)
-- `uploads/` (empty folders for proofs/logos)
-- `.htaccess`
-
-## 4. Configure database
-Edit `api/config.php` (or copy from `api/config.sample.php`):
-
-```php
-return [
-  'db_host' => 'sqlXXX.infinityfree.com',
-  'db_name' => 'if0_XXXX_tesla',
-  'db_user' => 'if0_XXXX',
-  'db_pass' => 'YOUR_PASSWORD',
-  'db_charset' => 'utf8mb4',
-  'public_base_url' => 'https://your-subdomain.infinityfreeapp.com',
-  'resend_api_key' => '', // optional external email API
-  'mail_from' => 'noreply@your-domain.com',
-];
+```text
+htdocs/
+  index.html          ← required
+  index.php           ← required (this repo includes it)
+  admin.html
+  payment.html
+  api/
+  assets/
+  css/
+  js/
+  uploads/
+  ...
 ```
 
-## 5. Permissions
-Ensure `uploads/proofs` and `uploads/logos` are writable (755 or 775).
+## Wrong layout (causes the error)
 
-## 6. Test
-- Visit `https://your-site/api/health` → `{"ok":true,"db":"mysql"}`
-- Admin panel → login with password `admin123` (change immediately)
-- Place a test order and upload a payment proof (images save under `uploads/proofs/`)
+```text
+htdocs/
+  Tesla-main/           ← DO NOT leave this extra folder
+    docs/
+      index.html        ← too deep — server never finds it
+```
+
+or:
+
+```text
+htdocs/
+  docs/
+    index.html          ← still wrong — one folder too deep
+```
+
+## How to upload correctly
+
+1. Download: https://github.com/Joshbond123/Tesla/archive/refs/heads/main.zip
+2. Unzip on your computer.
+3. Open the folder **`Tesla-main/docs`** (not `Tesla-main` itself).
+4. Select **all files and folders inside `docs`** (index.html, index.php, api, assets, …).
+5. Upload them **directly into** InfinityFree **htdocs** (use FileZilla FTP if the online manager fails).
+6. Confirm in File Manager that you see `htdocs/index.html` and `htdocs/index.php`.
+
+## Database
+
+1. Create a MySQL database in the InfinityFree panel.
+2. phpMyAdmin → Import → `database.sql` (from `docs/database.sql` or repo root).
+3. Edit `htdocs/api/config.php` with your MySQL host, name, user, password.
+
+## Test
+
+- Home: `https://your-site.infinityfreeapp.com/`
+- API: `https://your-site.infinityfreeapp.com/api/health`
 
 ## Notes
-- InfinityFree does **not** run Node/Deno — this PHP API replaces Supabase Edge Functions.
-- Outbound email is often blocked; use Resend/SendGrid API keys in config if needed.
-- Default admin password hash is SHA-256 of `admin123`.
+
+- Filenames are **case-sensitive** (`index.html` not `Index.HTML`).
+- HTML/PHP files over **1 MB** are rejected — our `index.html` is under that limit.
+- Prefer **FileZilla** over the browser file manager for large uploads.
