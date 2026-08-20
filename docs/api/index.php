@@ -40,24 +40,24 @@ function route(string $method, string $path) {
   }
 
   // Public settings
-  if ($path === '/delivery-fees' && $method === 'GET') handle_delivery_fees(); return;
-  if ($path === '/floating-contact-settings' && $method === 'GET') handle_floating_contact_public(); return;
-  if ($path === '/whatsapp-settings' && $method === 'GET') handle_whatsapp_public(); return;
-  if ($path === '/payment-methods' && $method === 'GET') handle_payment_methods_public(); return;
+  if ($path === '/delivery-fees' && $method === 'GET') { handle_delivery_fees(); return; }
+  if ($path === '/floating-contact-settings' && $method === 'GET') { handle_floating_contact_public(); return; }
+  if ($path === '/whatsapp-settings' && $method === 'GET') { handle_whatsapp_public(); return; }
+  if ($path === '/payment-methods' && $method === 'GET') { handle_payment_methods_public(); return; }
 
   // Auth / entry
-  if ($path === '/entry' && $method === 'POST') handle_entry(); return;
-  if ($path === '/login' && $method === 'POST') handle_login(); return;
-  if ($path === '/verify' && $method === 'GET') handle_verify(); return;
-  if ($path === '/session' && $method === 'GET') handle_session(); return;
-  if ($path === '/order' && $method === 'POST') handle_order(); return;
-  if ($path === '/payment/submit' && $method === 'POST') handle_payment_submit(); return;
-  if ($path === '/payment-proof' && $method === 'POST') handle_payment_submit(); return;
-  if ($path === '/payment/status' && $method === 'GET') handle_payment_status(); return;
-  if ($path === '/resend' && $method === 'POST') handle_resend(); return;
+  if ($path === '/entry' && $method === 'POST') { handle_entry(); return; }
+  if ($path === '/login' && $method === 'POST') { handle_login(); return; }
+  if ($path === '/verify' && $method === 'GET') { handle_verify(); return; }
+  if ($path === '/session' && $method === 'GET') { handle_session(); return; }
+  if ($path === '/order' && $method === 'POST') { handle_order(); return; }
+  if ($path === '/payment/submit' && $method === 'POST') { handle_payment_submit(); return; }
+  if ($path === '/payment-proof' && $method === 'POST') { handle_payment_submit(); return; }
+  if ($path === '/payment/status' && $method === 'GET') { handle_payment_status(); return; }
+  if ($path === '/resend' && $method === 'POST') { handle_resend(); return; }
 
   // Admin auth
-  if ($path === '/admin/auth' && $method === 'POST') handle_admin_auth(); return;
+  if ($path === '/admin/auth' && $method === 'POST') { handle_admin_auth(); return; }
   if ($path === '/admin/change-password' && $method === 'POST') { require_admin(); handle_admin_change_password(); return; }
 
   // Admin data
@@ -65,15 +65,15 @@ function route(string $method, string $path) {
   if ($path === '/admin/users' && $method === 'GET') { require_admin(); handle_admin_users(); return; }
   if ($path === '/admin/users/delete' && $method === 'POST') { require_admin(); handle_admin_delete_user(); return; }
   if ($path === '/admin/orders' && $method === 'GET') { require_admin(); handle_admin_orders(); return; }
-  if (preg_match('#^/admin/orders/([^/]+)$#', $path, $m) && $method === 'GET') { require_admin(); return handle_admin_order_detail(urldecode($m[1])); }
-  if (preg_match('#^/admin/orders/([^/]+)/status$#', $path, $m) && $method === 'PUT') { require_admin(); return handle_admin_order_status(urldecode($m[1])); }
+  if (preg_match('#^/admin/orders/([^/]+)$#', $path, $m) && $method === 'GET') { require_admin(); handle_admin_order_detail(urldecode($m[1])); return; }
+  if (preg_match('#^/admin/orders/([^/]+)/status$#', $path, $m) && $method === 'PUT') { require_admin(); handle_admin_order_status(urldecode($m[1])); }
   if ($path === '/admin/payment-methods' && $method === 'GET') { require_admin(); handle_admin_payment_methods(); return; }
   if ($path === '/admin/payment-methods' && $method === 'POST') { require_admin(); handle_admin_save_payment_methods(); return; }
   if ($path === '/admin/payment-methods/upsert' && $method === 'POST') { require_admin(); handle_admin_upsert_payment_method(); return; }
-  if (preg_match('#^/admin/payment-methods/([^/]+)$#', $path, $m) && $method === 'DELETE') { require_admin(); return handle_admin_delete_payment_method(urldecode($m[1])); }
+  if (preg_match('#^/admin/payment-methods/([^/]+)$#', $path, $m) && $method === 'DELETE') { require_admin(); handle_admin_delete_payment_method(urldecode($m[1])); }
   if ($path === '/admin/payment-proofs' && $method === 'GET') { require_admin(); handle_admin_proofs_list(); return; }
-  if (preg_match('#^/admin/payment-proofs/([^/]+)$#', $path, $m) && $method === 'GET') { require_admin(); return handle_admin_proof_detail(urldecode($m[1])); }
-  if (preg_match('#^/admin/payment-proofs/([^/]+)/thumb$#', $path, $m) && $method === 'GET') { require_admin(); return handle_admin_proof_thumb(urldecode($m[1])); }
+  if (preg_match('#^/admin/payment-proofs/([^/]+)$#', $path, $m) && $method === 'GET') { require_admin(); handle_admin_proof_detail(urldecode($m[1])); }
+  if (preg_match('#^/admin/payment-proofs/([^/]+)/thumb$#', $path, $m) && $method === 'GET') { require_admin(); handle_admin_proof_thumb(urldecode($m[1])); }
   if ($path === '/admin/payment-proofs/approve' && $method === 'POST') { require_admin(); handle_admin_proof_review('approved'); return; }
   if ($path === '/admin/payment-proofs/reject' && $method === 'POST') { require_admin(); handle_admin_proof_review('rejected'); return; }
   if ($path === '/admin/settings' && $method === 'GET') { require_admin(); handle_admin_get_settings(); return; }

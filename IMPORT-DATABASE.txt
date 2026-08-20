@@ -1,0 +1,25 @@
+HOW TO IMPORT THE DATABASE (phpMyAdmin)
+=======================================
+
+USE THIS FILE ONLY:
+  database.sql
+  OR
+  tesla_award_database.sql
+
+DO NOT import:
+  index.html
+  index.php
+  any .html file
+
+Steps:
+1. InfinityFree panel → MySQL Databases → create DB → note host/user/pass
+2. Open phpMyAdmin → select your database (left sidebar)
+3. Click Import
+4. Choose file: database.sql
+5. Format: SQL
+6. Click Go
+
+If you see errors about "<!DOCTYPE html>", you selected the wrong file
+(an HTML page). Choose database.sql again.
+
+Default admin password after import: admin123
