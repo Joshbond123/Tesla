@@ -1,7 +1,4 @@
 <?php
-/**
- * InfinityFree MySQL configuration
- */
 return [
   'db_host' => 'sql311.infinityfree.com',
   'db_name' => 'if0_42529480_tesla',

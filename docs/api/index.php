@@ -239,13 +239,31 @@ function handle_verify(): void {
 }
 
 function session_user(): ?array {
-  $token = $_GET['token'] ?? '';
+  $token = trim((string)($_GET['token'] ?? ''));
   if ($token === '') {
-    $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    if (stripos($auth, 'Bearer ') === 0) $token = trim(substr($auth, 7));
+    $auth = $_SERVER['HTTP_AUTHORIZATION']
+      ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+      ?? '';
+    if (stripos($auth, 'Bearer ') === 0) {
+      $token = trim(substr($auth, 7));
+    }
+  }
+  if ($token === '') {
+    $token = trim((string)($_SERVER['HTTP_X_SESSION_TOKEN'] ?? ''));
+  }
+  // Body token fallback (some hosts strip Authorization on POST)
+  if ($token === '' && in_array(req_method(), ['POST', 'PUT', 'PATCH'], true)) {
+    $b = body_json();
+    $token = trim((string)($b['token'] ?? $b['sessionToken'] ?? $b['session'] ?? ''));
   }
   if ($token === '') return null;
-  $st = db()->prepare('SELECT u.* FROM user_sessions s JOIN giveaway_users u ON u.id = s.user_id WHERE s.token = ? LIMIT 1');
+  $st = db()->prepare(
+    'SELECT u.* FROM user_sessions s
+     JOIN giveaway_users u ON u.id = s.user_id
+     WHERE s.token = ?
+       AND (s.expires_at IS NULL OR s.expires_at > NOW())
+     LIMIT 1'
+  );
   $st->execute([$token]);
   $u = $st->fetch();
   return $u ?: null;
@@ -334,13 +352,21 @@ function handle_session(): void {
 function handle_order(): void {
   $b = body_json();
   $user = session_user();
-  $email = strtolower(trim((string)($b['email'] ?? ($user['email'] ?? ''))));
-  if (!$user && $email) {
+  $delPreview = $b['deliveryDetails'] ?? $b['delivery'] ?? [];
+  if (!is_array($delPreview)) $delPreview = [];
+  $email = strtolower(trim((string)(
+    $b['email']
+    ?? $delPreview['email']
+    ?? ($user['email'] ?? '')
+  )));
+  if (!$user && $email !== '') {
     $st = db()->prepare('SELECT * FROM giveaway_users WHERE email = ? LIMIT 1');
     $st->execute([$email]);
     $user = $st->fetch() ?: null;
   }
-  if (!$user) json_out(['error' => 'User required'], 401);
+  if (!$user) {
+    json_out(['error' => 'User required. Please log in again and retry placing your order.'], 401);
+  }
 
   $carData = $b['selectedCar'] ?? $b['car'] ?? [];
   $delData = $b['deliveryDetails'] ?? $b['delivery'] ?? [];

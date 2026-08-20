@@ -13,10 +13,16 @@ function json_out($data, int $code = 200): void {
   exit;
 }
 function body_json(): array {
+  static $cached = null;
+  if ($cached !== null) return $cached;
   $raw = file_get_contents('php://input');
-  if ($raw === false || $raw === '') return [];
+  if ($raw === false || $raw === '') {
+    $cached = [];
+    return $cached;
+  }
   $d = json_decode($raw, true);
-  return is_array($d) ? $d : [];
+  $cached = is_array($d) ? $d : [];
+  return $cached;
 }
 function req_method(): string {
   return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');

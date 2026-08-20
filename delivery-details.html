@@ -336,9 +336,22 @@ document.getElementById('deliveryDetailsForm').addEventListener('submit', async 
     }
 
     var result = await apiCall('/order', 'POST', orderData);
+    if (!result || !result.orderId) {
+      throw new Error((result && result.error) || 'Order was not created. Please try again.');
+    }
 
-    // Save order to localStorage for order-placed page to read
-    localStorage.setItem('tesla_last_order', JSON.stringify(result.order));
+    // Persist a complete order snapshot for Order Placed (DB remains source of truth via /session)
+    var orderSnapshot = {
+      orderId: result.orderId,
+      order_id: result.orderId,
+      trackingNumber: result.trackingNumber,
+      status: result.status || 'processing',
+      selectedCar: selectedCar,
+      deliveryDetails: deliveryDetails,
+      deliveryMethod: null,
+      paymentMethod: null
+    };
+    try { localStorage.setItem('tesla_last_order', JSON.stringify(orderSnapshot)); } catch (eO) {}
 
     // Redirect to Order Placed page
     hideLoading();

@@ -83,11 +83,32 @@ async function apiCall(endpoint, method, body) {
   if (configError) throw new Error(configError);
 
   const options = { method, headers: { 'Content-Type': 'application/json' }, signal: controller.signal };
+  // Attach user session so POST /order and other protected routes can identify the user
+  var sessTok = '';
+  try {
+    if (typeof getSession === 'function') sessTok = getSession() || '';
+  } catch (eS) {}
+  if (!sessTok) {
+    try {
+      sessTok = localStorage.getItem('tesla_session_token') || localStorage.getItem('tesla_session') || '';
+    } catch (eL) {}
+  }
+  if (sessTok) {
+    options.headers['Authorization'] = 'Bearer ' + sessTok;
+  }
   if (body) options.body = JSON.stringify(body);
+
+  // Also pass token on query string for servers that strip Authorization
+  var url = API_BASE + endpoint;
+  if (sessTok && method !== 'GET') {
+    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(sessTok);
+  } else if (sessTok && method === 'GET' && url.indexOf('token=') < 0) {
+    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(sessTok);
+  }
 
   let res;
   try {
-    res = await fetch(API_BASE + endpoint, options);
+    res = await fetch(url, options);
   } catch (err) {
     if (err && err.name === 'AbortError') {
       throw new Error('The backend API timed out before completing the request. Please try again.');
