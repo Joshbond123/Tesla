@@ -796,7 +796,7 @@ function buildVerificationEmail(firstName: string, verifyLink: string, entryId: 
   </td></tr>
   <tr><td style="background:#F7F8FA;padding:24px 40px;border-top:1px solid #EAECF0;">
     <p style="margin:0 0 6px;font-size:12px;color:#B0B3B8;text-align:center;line-height:1.6;">© 2026 Tesla Award Program. All rights reserved.</p>
-    <p style="margin:0;font-size:11px;color:#C9CDD4;text-align:center;line-height:1.6;">Tesla® is a registered trademark of Tesla, Inc. This is an independent award program not affiliated with Tesla, Inc.</p>
+    
   </td></tr>
 </table>
 </td></tr>
@@ -920,7 +920,7 @@ function buildOrderConfirmationEmail(order: any) {
           <tr>
             <td style="background-color:#f8f9fa;border-top:1px solid #eef0f2;padding:24px 35px;text-align:center;">
               <p style="margin:0 0 6px;font-size:12px;color:#8d9096;line-height:1.6;">Tesla Award Program &mdash; This is an automated message. Please do not reply directly to this email.<br>&copy; 2026 Tesla Award Program. All rights reserved.</p>
-              <p style="margin:0;font-size:11px;color:#b0b3b8;">Tesla&reg; is a registered trademark of Tesla, Inc. This is an independent award program not affiliated with Tesla, Inc.</p>
+              
             </td>
           </tr>
         </table>
@@ -1862,10 +1862,18 @@ async function handleAdminProofThumb(id: string) {
   const row = await dbGet1("payment_proofs", "*", { id: "eq." + id });
   const p = (row.data as any) || {};
   let url = p.proof_url || "";
+  if (!url && p.proof_back_url) url = p.proof_back_url;
   if (!url && p.proof_urls) {
-    try { const a = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls); if (Array.isArray(a) && a[0]) url = a[0]; } catch { /* ignore */ }
+    try {
+      const a = Array.isArray(p.proof_urls) ? p.proof_urls : JSON.parse(p.proof_urls);
+      if (Array.isArray(a)) {
+        for (const u of a) {
+          if (typeof u === "string" && u.trim()) { url = u; break; }
+        }
+      }
+    } catch { /* ignore */ }
   }
-  return json({ url });
+  return json({ url: url || "", hasImage: !!url });
 }
 
 // Serve a single proof image as a real binary response (img-friendly URL) so the

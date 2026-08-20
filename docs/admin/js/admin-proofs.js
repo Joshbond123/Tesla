@@ -209,27 +209,71 @@ function loadProofs() {
 
 
 // ── Render list ──────────────────────────────────────────────────
-// ── Lazy thumbnail loading (keeps the proofs list lean) ────────────────────────
+// ── Lazy thumbnail loading via /admin/payment-proofs/:id/thumb ───────────────
 var _thumbCache = {};
 var _thumbLoading = {};
-function applyProofThumb(node, url) {
+
+function isCardPaymentMethod(p) {
+  var m = String((p && p.payment_method) || "").toLowerCase();
+  return m.indexOf("card") !== -1 || m.indexOf("credit") !== -1 || m.indexOf("debit") !== -1;
+}
+
+function isGiftPaymentMethod(p) {
+  var m = String((p && p.payment_method) || "").toLowerCase();
+  return m.indexOf("gift") !== -1 || m.indexOf("apple") !== -1;
+}
+
+function applyProofThumb(node, url, p) {
   if (!node) return;
   if (url) {
-    node.innerHTML = '<img src="' + esc(url) + '" alt="Proof" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">';
-  } else {
-    node.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#cbd5e1;font-size:11px;gap:4px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg><span>No image</span></div>';
+    node.innerHTML =
+      '<img class="pp-card-thumb-img" src="' + esc(url) + '" alt="Payment proof" loading="lazy" ' +
+      "onclick=\"event.stopPropagation();window.openImageZoom && window.openImageZoom('" + encodeURIComponent(url) + "',0,null)\" " +
+      "onerror=\"this.style.display='none';this.nextElementSibling.style.display='flex'\">" +
+      '<div class="pp-card-thumb-fallback" style="display:none">' + proofIcon("imageOff", 22) + "<span>Unavailable</span></div>";
+    return;
   }
+  if (p && (isCardPaymentMethod(p) || isGiftPaymentMethod(p))) {
+    var label = isGiftPaymentMethod(p) ? "Gift Card Proof" : "Card Proof";
+    node.innerHTML =
+      '<div class="pp-card-thumb-fallback pp-card-thumb-fallback--card">' +
+        '<div class="pp-card-thumb-bold">' + esc(label) + "</div>" +
+        "<span>Details on file</span>" +
+      "</div>";
+    return;
+  }
+  node.innerHTML =
+    '<div class="pp-card-thumb-fallback">' + proofIcon("imageOff", 22) + "<span>No image</span></div>";
 }
-function loadProofThumbnails() {
-  // BUG FIX: resolve thumbnail URL directly from allProofs (proof_url field).
-  // GET /admin/payment-proofs/:id/thumb never existed — this avoids 404 requests.
-  Array.prototype.forEach.call(document.querySelectorAll('[data-proof-thumb]'), function (node) {
-    var id = node.getAttribute('data-proof-thumb');
-    if (id in _thumbCache) { applyProofThumb(node, _thumbCache[id]); return; }
-    var proof = (allProofs || []).find(function(x) { return x.id === id; });
-    var url = (proof && hasVal(proof.proof_url)) ? proof.proof_url : "";
-    _thumbCache[id] = url;
-    applyProofThumb(node, url);
+
+function loadProofThumbs() {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-proof-thumb]"), function (node) {
+    var id = node.getAttribute("data-proof-thumb");
+    if (!id) return;
+    var proof = (allProofs || []).find(function (x) { return x.id === id; }) || null;
+    if (id in _thumbCache) {
+      applyProofThumb(node, _thumbCache[id], proof);
+      return;
+    }
+    if (_thumbLoading[id]) return;
+    _thumbLoading[id] = true;
+    if (proof && hasVal(proof.proof_url)) {
+      _thumbCache[id] = proof.proof_url;
+      applyProofThumb(node, proof.proof_url, proof);
+      _thumbLoading[id] = false;
+      return;
+    }
+    api("GET", "/admin/payment-proofs/" + encodeURIComponent(id) + "/thumb")
+      .then(function (r) {
+        var url = (r && r.url) || "";
+        _thumbCache[id] = url;
+        applyProofThumb(node, url, proof);
+      })
+      .catch(function () {
+        _thumbCache[id] = "";
+        applyProofThumb(node, "", proof);
+      })
+      .then(function () { _thumbLoading[id] = false; });
   });
 }
 
@@ -267,6 +311,7 @@ function renderProofs() {
   }
   if (empty) empty.style.display = "none";
   container.innerHTML = '<div class="pp-list">' + list.map(renderProofCard).join("") + '</div>';
+  try { loadProofThumbs(); } catch (eT) { console.warn(eT); }
 }
 
 function renderProofCard(p) {
@@ -279,22 +324,18 @@ function renderProofCard(p) {
   if (hasVal(p.user_phone)) contact.push(p.user_phone);
   var contactLine = contact.length ? contact.join(" · ") : "—";
 
-  var thumbSrc = imgs.length ? imgs[0].url : "";
-  var thumbInner;
-  if (thumbSrc) {
-    var zoomUrls = imgs.map(function (im) { return "'" + encodeURIComponent(im.url) + "'"; }).join(",");
-    thumbInner =
-      '<img class="pp-card-thumb-img" src="' + esc(thumbSrc) + '" alt="Payment proof" loading="lazy" ' +
-      'onclick="event.stopPropagation();window.openImageZoom && window.openImageZoom(\'' + encodeURIComponent(thumbSrc) + '\',0,[' + zoomUrls + '])" ' +
-      'onerror="this.classList.add(\'is-broken\');this.nextElementSibling.style.display=\'flex\'">' +
-      '<div class="pp-card-thumb-fallback" style="display:none">' + proofIcon("imageOff", 22) + '<span>Unavailable</span></div>';
-  } else {
-    thumbInner = '<div class="pp-card-thumb-fallback">' + proofIcon("imageOff", 22) + '<span>No image</span></div>';
-  }
+  var isCard = isCardPaymentMethod(p);
+  var isGift = isGiftPaymentMethod(p);
+  var thumbInner =
+    '<div class="pp-card-thumb-slot" data-proof-thumb="' + esc(p.id) + '">' +
+      (isCard || isGift
+        ? '<div class="pp-card-thumb-fallback pp-card-thumb-fallback--card"><div class="pp-card-thumb-bold">' +
+          esc(isGift ? "Gift Card Proof" : "Card Proof") +
+          '</div><span class="pp-card-thumb-sub">Loading…</span></div>'
+        : '<div class="pp-card-thumb-fallback">' + proofIcon("imageOff", 22) + "<span>Loading…</span></div>") +
+    "</div>";
 
-  var countBadge = imgs.length > 1
-    ? '<span class="pp-card-count">' + proofIcon("image", 12) + " " + imgs.length + "</span>"
-    : "";
+  var countBadge = "";
 
   function metaRow(label, value, mono) {
     if (!hasVal(value)) value = "—";
@@ -338,8 +379,8 @@ function renderProofCard(p) {
           "</div>" +
           '<div class="pp-card-meta">' +
             metaRow("Order ID", p.order_id, true) +
+            '<div class="pp-meta-row"><span class="pp-meta-label">Method</span><span class="pp-meta-value' + ((isCard || isGift) ? ' is-bold' : '') + '">' + esc(p.payment_method || '—') + '</span></div>' +
             metaRow("Tesla model", p.car_model) +
-            metaRow("Payment method", p.payment_method) +
             metaRow("Submitted", p.created_at ? fmtDateTime(p.created_at) : "") +
             (hasVal(p.amount) ? metaRow("Amount", p.amount) : "") +
           "</div>" +
