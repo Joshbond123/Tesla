@@ -157,18 +157,44 @@ function handle_entry(): void {
   if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     json_out(['error' => 'Valid email required'], 400);
   }
+
   $st = db()->prepare('SELECT * FROM giveaway_users WHERE email = ? LIMIT 1');
   $st->execute([$email]);
   $existing = $st->fetch();
+
   if ($existing) {
-    json_out(['success' => true, 'message' => 'Already registered', 'userId' => $existing['id']]);
+    // Already registered — issue a session so the user can continue (login-equivalent)
+    $sess = hex_token(32);
+    db()->prepare('INSERT INTO user_sessions (token, user_id, created_at, expires_at) VALUES (?,?,NOW(),DATE_ADD(NOW(), INTERVAL 30 DAY))')
+      ->execute([$sess, $existing['id']]);
+    json_out([
+      'success' => true,
+      'message' => 'Already registered',
+      'alreadyRegistered' => true,
+      'userId' => $existing['id'],
+      'sessionToken' => $sess,
+      'token' => $sess,
+    ]);
   }
+
   $id = uuid();
-  $token = hex_token(24);
-  $ins = db()->prepare('INSERT INTO giveaway_users (id, email, phone, first_name, last_name, verification_token, verification_status, entry_count, created_at) VALUES (?,?,?,?,?,?,?,?,NOW())');
-  $ins->execute([$id, $email, $phone ?: null, $first ?: null, $last ?: null, $token, 'pending', 1]);
-  // Email optional on InfinityFree
-  json_out(['success' => true, 'userId' => $id, 'verifyToken' => $token]);
+  // Auto-verify on InfinityFree (email delivery is often blocked)
+  $ins = db()->prepare(
+    'INSERT INTO giveaway_users (id, email, phone, first_name, last_name, verification_token, verification_status, entry_count, created_at, verified_at)
+     VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())'
+  );
+  $ins->execute([$id, $email, $phone ?: null, $first ?: null, $last ?: null, null, 'verified', 1]);
+
+  $sess = hex_token(32);
+  db()->prepare('INSERT INTO user_sessions (token, user_id, created_at, expires_at) VALUES (?,?,NOW(),DATE_ADD(NOW(), INTERVAL 30 DAY))')
+    ->execute([$sess, $id]);
+
+  json_out([
+    'success' => true,
+    'userId' => $id,
+    'sessionToken' => $sess,
+    'token' => $sess,
+  ]);
 }
 
 function handle_login(): void {

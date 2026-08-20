@@ -236,16 +236,23 @@
         lastName: lastName 
       });
 
-      // Success — redirect directly to dashboard (no email confirmation step)
+      // Success — save session and go to dashboard
+      var tok = data.sessionToken || data.token || '';
+      if (tok) {
+        try { saveSession(tok); } catch (e) {}
+        try { localStorage.setItem('tesla_session_token', tok); } catch (e2) {}
+      }
+      if (data.alreadyRegistered) {
+        showToast('Welcome back — you are already registered.', 'info');
+      }
       setTimeout(function() {
         hideLoading();
-        if (data.sessionToken) {
-          saveSession(data.sessionToken);
-          window.location.href = 'dashboard.html?session=' + encodeURIComponent(data.sessionToken);
+        if (tok) {
+          window.location.href = 'dashboard.html?session=' + encodeURIComponent(tok);
         } else {
           window.location.href = 'dashboard.html';
         }
-      }, 2500);
+      }, 600);
 
     } catch (err) {
       hideLoading();

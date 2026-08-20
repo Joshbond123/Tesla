@@ -4,32 +4,33 @@
 
   function normalize(v) { return String(v || '').trim().replace(/\/+$/, ''); }
 
-  // 1) Explicit override
-  // 2) Same-origin PHP API (InfinityFree / local Apache)
-  // 3) Legacy Supabase edge (optional fallback during transition)
   var deployedApiBase = '__TESLA_API_BASE__';
   var injected = deployedApiBase.indexOf('__') !== 0;
   var supabaseFallback = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+  var host = '';
+  try { host = global.location.hostname || ''; } catch (e) {}
 
+  var isGitHubPages = /\.github\.io$/i.test(host);
   var sameOriginApi = '';
   try {
-    // Prefer /api when served from PHP-capable host
-    if (global.location && /^https?:$/i.test(global.location.protocol)) {
-      var path = global.location.pathname || '/';
-      // If site lives in a subfolder, keep origin only; API is at /api
+    if (global.location && /^https?:$/i.test(global.location.protocol) && !isGitHubPages) {
       sameOriginApi = global.location.origin + '/api';
-      // GitHub Pages project sites: /Tesla/api won't exist — use fallback
-      if (/github\.io$/i.test(global.location.hostname)) {
-        sameOriginApi = '';
-      }
     }
-  } catch (e) {}
+  } catch (e2) {}
+
+  // Clear stale Supabase base when on InfinityFree
+  try {
+    var stored = localStorage.getItem('tesla_api_base') || '';
+    if (stored && /supabase\.co/i.test(stored) && !isGitHubPages) {
+      localStorage.removeItem('tesla_api_base');
+    }
+  } catch (e3) {}
 
   global.TESLA_API_BASE = normalize(
     global.TESLA_API_BASE ||
     (injected ? deployedApiBase : '') ||
     sameOriginApi ||
-    supabaseFallback
+    (isGitHubPages ? supabaseFallback : '/api')
   );
 
   global.TESLA_CURRENCIES = [

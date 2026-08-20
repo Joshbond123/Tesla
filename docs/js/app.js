@@ -25,21 +25,35 @@ function isValidApiBase(value) {
   }
 }
 
+const isGitHubPages = window.location.hostname.endsWith('github.io');
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const isInfinityFree = /infinityfree|epizy|rf\.gd|42web|kesug|great-site|freewebhostmost/i.test(window.location.hostname);
+
+// Prefer explicit URL param / window override, then same-origin PHP API on real hosts.
+// Ignore stale localStorage pointing at dead Supabase URLs when hosted on InfinityFree.
+var storedApi = '';
+try { storedApi = localStorage.getItem('tesla_api_base') || ''; } catch (e) {}
+if (storedApi && isInfinityFree && /supabase\.co/i.test(storedApi)) {
+  try { localStorage.removeItem('tesla_api_base'); } catch (e2) {}
+  storedApi = '';
+}
+
 const configuredApiBase = normalizeApiBase(
   window.TESLA_API_BASE ||
-  localStorage.getItem('tesla_api_base') ||
+  storedApi ||
   ''
 );
 
-const isGitHubPages = window.location.hostname.endsWith('github.io');
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 if (configuredApiBase && !isValidApiBase(configuredApiBase)) {
   console.error('[Tesla] Invalid API base URL. It must end in /api:', configuredApiBase);
 }
 
+// Production PHP hosts (InfinityFree etc.) must use same-origin /api — never hang on remote edge timeouts.
 const API_BASE = isValidApiBase(configuredApiBase)
   ? configuredApiBase
-  : (isLocalhost ? '/api' : (isGitHubPages ? 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api' : '/api'));
+  : (isGitHubPages
+      ? 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api'
+      : '/api');
 
 window.TESLA_API_BASE = API_BASE;
 
@@ -63,7 +77,7 @@ async function apiCall(endpoint, method, body) {
   method = method || 'GET';
   body = body || null;
   var controller = new AbortController();
-  var timeout = setTimeout(function() { controller.abort(); }, 30000);
+  var timeout = setTimeout(function() { controller.abort(); }, 20000);
   
   const configError = getApiConfigurationError();
   if (configError) throw new Error(configError);

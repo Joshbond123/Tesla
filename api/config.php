@@ -1,9 +1,10 @@
 <?php
 /**
- * InfinityFree / local MySQL config — edit these values.
+ * Copy to config.php on InfinityFree and fill in MySQL panel values.
+ * Host is usually like sqlXXX.infinityfree.com — NEVER "localhost".
  */
 return [
-  'db_host' => 'sqlXXX.infinityfree.com',  // NOT localhost on InfinityFree
+  'db_host' => 'sqlXXX.infinityfree.com',
   'db_name' => 'if0_XXXX_tesla',
   'db_user' => 'if0_XXXX',
   'db_pass' => 'YOUR_PASSWORD',
