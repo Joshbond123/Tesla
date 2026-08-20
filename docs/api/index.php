@@ -208,14 +208,19 @@ function handle_login(): void {
   $tok = hex_token(32);
   $ins = db()->prepare('INSERT INTO user_sessions (token, user_id, created_at, expires_at) VALUES (?,?,NOW(),DATE_ADD(NOW(), INTERVAL 30 DAY))');
   $ins->execute([$tok, $user['id']]);
-  json_out(['success' => true, 'token' => $tok, 'user' => [
-    'id' => $user['id'],
-    'email' => $user['email'],
-    'firstName' => $user['first_name'],
-    'lastName' => $user['last_name'],
-    'phone' => $user['phone'],
-    'status' => $user['verification_status'],
-  ]]);
+  json_out([
+    'success' => true,
+    'token' => $tok,
+    'sessionToken' => $tok,
+    'user' => [
+      'id' => $user['id'],
+      'email' => $user['email'],
+      'firstName' => $user['first_name'],
+      'lastName' => $user['last_name'],
+      'phone' => $user['phone'],
+      'status' => $user['verification_status'],
+    ],
+  ]);
 }
 
 function handle_verify(): void {
@@ -248,7 +253,7 @@ function session_user(): ?array {
 
 function handle_session(): void {
   $user = session_user();
-  if (!$user) json_out(['authenticated' => false]);
+  if (!$user) json_out(['authenticated' => false, 'valid' => false]);
 
   // Latest order
   $st = db()->prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 1');
@@ -293,6 +298,7 @@ function handle_session(): void {
 
   json_out([
     'authenticated' => true,
+    'valid' => true,
     'user' => [
       'id' => $user['id'],
       'email' => $user['email'],

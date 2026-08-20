@@ -253,7 +253,7 @@ function testPushNotification() {
 }
 window.testPushNotification = testPushNotification;
 
-/** Validate existing subscription; prompt if invalid or missing when permission granted */
+/** Validate existing subscription; only prompt Re-subscribe when invalid */
 function validatePushSubscription() {
   if (!pushSupported() || !API_BASE) return Promise.resolve();
   if (typeof Notification === 'undefined') return Promise.resolve();
@@ -261,12 +261,16 @@ function validatePushSubscription() {
 
   return loadPushStatus().then(function (status) {
     return ensureServiceWorker().then(function (reg) {
+      if (!reg || !reg.pushManager) {
+        updatePushUI();
+        return;
+      }
       return reg.pushManager.getSubscription().then(function (sub) {
         var localSub = !!sub;
         var serverSub = !!(status && status.subscribed);
 
         if (_pushStatus.permission === 'granted' && localSub && !serverSub) {
-          // Re-sync to server
+          // Browser has sub, server missing — re-sync to database
           var json = sub.toJSON();
           return api('POST', '/admin/push/subscribe', {
             endpoint: json.endpoint,
@@ -279,39 +283,27 @@ function validatePushSubscription() {
         }
 
         if (_pushStatus.permission === 'granted' && !localSub && serverSub) {
-          // Server thinks subscribed but browser subscription is gone
+          // Server has stale subscription — clear DB and show Re-subscribe (not auto enable)
           showPushReenableModal();
-          return api('POST', '/admin/push/unsubscribe', { endpoint: '', clearInvalid: true });
+          return api('POST', '/admin/push/unsubscribe', { endpoint: '', clearInvalid: true }).then(function () {
+            _pushStatus.subscribed = false;
+            updatePushUI();
+          });
         }
 
-        if (_pushStatus.permission === 'default' && !(status && status.promptDismissed)) {
-          // First-time prompt
-          showPushEnableModal();
+        if (_pushStatus.permission === 'granted' && localSub && serverSub) {
+          _pushStatus.subscribed = true;
         }
 
-        if (_pushStatus.permission === 'granted' && !localSub && !serverSub) {
-          // Soft prompt if never subscribed
-          if (!(status && status.promptDismissed)) showPushEnableModal();
-        }
-
+        // Never auto-open the first-time "Enable Notifications" popup
         updatePushUI();
       });
-    }).catch(function () { updatePushUI(); });
+    }).catch(function () {
+      updatePushUI();
+    });
+  }).catch(function () {
+    updatePushUI();
   });
 }
 
-function dismissPushPrompt() {
-  hidePushModals();
-  if (API_BASE) {
-    api('POST', '/admin/push/prefs', { promptDismissed: true }).catch(function () {});
-  }
-}
-
-window.subscribePush = subscribePush;
-window.unsubscribePush = unsubscribePush;
-window.savePushPrefs = savePushPrefs;
-window.loadPushStatus = loadPushStatus;
-window.validatePushSubscription = validatePushSubscription;
-window.dismissPushPrompt = dismissPushPrompt;
-window.hidePushModals = hidePushModals;
 window.showPushEnableModal = showPushEnableModal;

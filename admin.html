@@ -604,88 +604,83 @@
 
       <!-- TAB: NOTIFICATIONS -->
       <div class="tab-panel" id="panelNotifications">
-        <div class="ss-page">
+        <div class="ss-page notif-page">
           <div class="ss-page-header">
             <div>
               <h3 class="ss-page-title">Notifications</h3>
-              <p class="ss-page-sub">Web push alerts for new orders and payment proofs — delivered even when the admin panel is closed.</p>
+              <p class="ss-page-sub">Web push alerts for new orders and payment proofs. Subscriptions are stored in the database.</p>
             </div>
           </div>
 
-          <div id="pushStatusBanner" class="push-banner push-banner--info" style="display:none"></div>
+          <div id="pushStatusBanner" class="push-banner push-banner--info" style="display:none" role="status"></div>
 
-          <div class="ss-grid">
-            <section class="ss-card">
+          <div class="notif-grid">
+            <section class="ss-card notif-card">
               <div class="ss-card-head">
-                <div class="ss-card-icon ss-card-icon--lock">
+                <div class="ss-card-icon ss-card-icon--bell">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 </div>
                 <div>
                   <h4 class="ss-card-title">Push subscription</h4>
-                  <p class="ss-card-desc">Subscribe this browser to receive system notifications.</p>
+                  <p class="ss-card-desc">Subscribe this browser once. Status is restored from the database on each visit.</p>
                 </div>
               </div>
               <div class="ss-card-body">
-                <div class="push-status-row">
-                  <div class="push-status-item">
-                    <span class="push-status-label">Permission</span>
+                <div class="notif-status-grid">
+                  <div class="notif-status-item">
+                    <span class="notif-status-label">Browser permission</span>
                     <span id="pushPermStatus" class="push-pill push-pill--muted">—</span>
                   </div>
-                  <div class="push-status-item">
-                    <span class="push-status-label">Subscription</span>
+                  <div class="notif-status-item">
+                    <span class="notif-status-label">Database subscription</span>
                     <span id="pushSubStatus" class="push-pill push-pill--muted">—</span>
                   </div>
                 </div>
-                <div class="ss-actions" style="margin-top:16px;">
-                  <button type="button" class="ss-btn ss-btn-primary" id="pushEnableBtn" onclick="subscribePush()">Enable Notifications</button>
-                  <button type="button" class="ss-btn ss-btn-ghost" id="pushDisableBtn" style="display:none" onclick="unsubscribePush()">Unsubscribe</button>
-                  <button type="button" class="ss-btn ss-btn-ghost" id="pushTestBtn" onclick="testPushNotification()">Send test</button>
+                <div class="notif-actions">
+                  <button type="button" class="ss-btn ss-btn-primary" id="pushEnableBtn" onclick="subscribePush()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    Enable notifications
+                  </button>
+                  <button type="button" class="ss-btn ss-btn-ghost" id="pushDisableBtn" onclick="unsubscribePush()">Unsubscribe</button>
+                  <button type="button" class="ss-btn ss-btn-ghost" id="pushResubBtn" onclick="subscribePush()" title="Use when the previous subscription expired">Re-subscribe</button>
+                  <button type="button" class="ss-btn ss-btn-ghost" onclick="testPushNotification()">Send test</button>
                 </div>
-                <p class="ss-field-hint" style="margin-top:12px;">Delivery depends on browser, OS, and device settings. Keep notifications allowed for this site for best reliability.</p>
+                <p class="ss-field-hint">Delivery depends on browser, OS, and network. Invalid or revoked subscriptions are detected automatically.</p>
               </div>
             </section>
 
-            <section class="ss-card">
+            <section class="ss-card notif-card">
               <div class="ss-card-head">
-                <div class="ss-card-icon">
+                <div class="ss-card-icon ss-card-icon--prefs">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                 </div>
                 <div>
-                  <h4 class="ss-card-title">Notification settings</h4>
-                  <p class="ss-card-desc">Stored in the database. Applies to all subscribed admin devices.</p>
+                  <h4 class="ss-card-title">Event types</h4>
+                  <p class="ss-card-desc">Choose which events send a push notification.</p>
                 </div>
               </div>
-              <div class="ss-card-body">
-                <div class="ss-toggle-row">
+              <div class="ss-card-body notif-toggles">
+                <label class="ss-toggle-row">
                   <div>
-                    <div class="ss-toggle-title">Notifications master switch</div>
-                    <div class="ss-toggle-desc">Turn all push alerts on or off</div>
+                    <div class="ss-toggle-title">Master switch</div>
+                    <div class="ss-toggle-desc">Turn all push notifications on or off</div>
                   </div>
-                  <label class="ss-switch">
-                    <input type="checkbox" id="pushMasterEnabled" onchange="savePushPrefs()" checked>
-                    <span class="ss-switch-ui"></span>
-                  </label>
-                </div>
-                <div class="ss-toggle-row">
+                  <input type="checkbox" id="pushMasterEnabled" class="ss-toggle" onchange="savePushPrefs()" />
+                </label>
+                <label class="ss-toggle-row">
                   <div>
-                    <div class="ss-toggle-title">New order</div>
+                    <div class="ss-toggle-title">New orders</div>
                     <div class="ss-toggle-desc">Alert when a customer places an order</div>
                   </div>
-                  <label class="ss-switch">
-                    <input type="checkbox" id="pushNewOrder" onchange="savePushPrefs()" checked>
-                    <span class="ss-switch-ui"></span>
-                  </label>
-                </div>
-                <div class="ss-toggle-row">
+                  <input type="checkbox" id="pushNewOrder" class="ss-toggle" onchange="savePushPrefs()" />
+                </label>
+                <label class="ss-toggle-row">
                   <div>
-                    <div class="ss-toggle-title">Payment proof uploaded</div>
-                    <div class="ss-toggle-desc">Alert when a customer submits payment proof</div>
+                    <div class="ss-toggle-title">Payment proof uploads</div>
+                    <div class="ss-toggle-desc">Alert when a customer uploads payment proof</div>
                   </div>
-                  <label class="ss-switch">
-                    <input type="checkbox" id="pushPaymentProof" onchange="savePushPrefs()" checked>
-                    <span class="ss-switch-ui"></span>
-                  </label>
-                </div>
+                  <input type="checkbox" id="pushPaymentProof" class="ss-toggle" onchange="savePushPrefs()" />
+                </label>
               </div>
             </section>
           </div>
@@ -853,7 +848,7 @@
 <script src="admin/js/admin-proofs.js?v=20260819k"></script>
 <script src="admin/js/admin-social.js?v=20260819k"></script>
 <script src="admin/js/admin-settings.js?v=20260820a"></script>
-<script src="admin/js/admin-notifications.js?v=20260820b"></script>
+<script src="admin/js/admin-notifications.js?v=20260820c"></script>
 <script src="admin/js/admin-orders.js?v=20260819k"></script>
 <script src="admin/js/admin-init.js?v=20260819k"></script>
 

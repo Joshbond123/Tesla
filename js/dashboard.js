@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   try {
     var data = await apiCall('/session?token=' + encodeURIComponent(session));
-    if (!data.valid) { 
+    // PHP API returns authenticated; legacy/edge may return valid
+    var ok = (data && (data.authenticated === true || data.valid === true));
+    if (!ok) { 
       clearSession(); 
       window.location.href = 'entry.html'; 
       return; 

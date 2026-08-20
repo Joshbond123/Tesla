@@ -2840,3 +2840,60 @@ button:focus-visible, a:focus-visible {
 body.has-push-topbar .topbar { margin-top: 64px; }
 body.has-push-topbar .main-content { padding-top: 8px; }
 
+
+
+/* ── Notifications page ───────────────────────────────────── */
+.notif-page .ss-page-sub { color: #64748b; font-size: 14px; margin: 6px 0 0; }
+.notif-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 8px;
+}
+.notif-card .ss-card-body { padding-top: 4px; }
+.notif-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.notif-status-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.notif-status-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+.notif-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.notif-actions .ss-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ss-card-icon--bell { background: #eff6ff; color: #2563eb; }
+.ss-card-icon--prefs { background: #f5f3ff; color: #7c3aed; }
+.notif-toggles .ss-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.notif-toggles .ss-toggle-row:last-child { border-bottom: 0; }
+@media (max-width: 640px) {
+  .notif-status-grid { grid-template-columns: 1fr; }
+}

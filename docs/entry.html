@@ -163,7 +163,10 @@
     showLoading('Opening your winner dashboard...');
     try {
       var data = await apiCall('/login', 'POST', { email: email, phone: phone });
-      saveSession(data.sessionToken);
+      var loginTok = data.sessionToken || data.token || '';
+      if (!loginTok) throw new Error('Login succeeded but no session token was returned.');
+      saveSession(loginTok);
+      data.sessionToken = loginTok;
       // DB-driven redirects after login (database via login/session response)
       if (data.hasPaymentProof === true) {
         var _ps = String((data.paymentProof && data.paymentProof.status) || '').toLowerCase().trim();

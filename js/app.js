@@ -523,7 +523,7 @@ if (document.readyState === 'loading') {
   fetch(apiBase + '/session?token=' + encodeURIComponent(sessionToken), { method: 'GET' })
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(data) {
-      if (!data || !data.valid) return;
+      if (!data || !(data.valid === true || data.authenticated === true)) return;
       var oid = (data.order && (data.order.orderId || data.order.order_id)) || '';
 
       // Proof uploaded → confirmation, unless the latest proof was REJECTED
