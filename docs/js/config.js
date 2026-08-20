@@ -2,11 +2,35 @@
 (function (global) {
   'use strict';
 
-  var deployedApiBase = '__TESLA_API_BASE__';
-  var fallbackApiBase = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
-  var injected = deployedApiBase.indexOf('__') !== 0;
   function normalize(v) { return String(v || '').trim().replace(/\/+$/, ''); }
-  global.TESLA_API_BASE = normalize(global.TESLA_API_BASE || (injected ? deployedApiBase : fallbackApiBase));
+
+  // 1) Explicit override
+  // 2) Same-origin PHP API (InfinityFree / local Apache)
+  // 3) Legacy Supabase edge (optional fallback during transition)
+  var deployedApiBase = '__TESLA_API_BASE__';
+  var injected = deployedApiBase.indexOf('__') !== 0;
+  var supabaseFallback = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
+
+  var sameOriginApi = '';
+  try {
+    // Prefer /api when served from PHP-capable host
+    if (global.location && /^https?:$/i.test(global.location.protocol)) {
+      var path = global.location.pathname || '/';
+      // If site lives in a subfolder, keep origin only; API is at /api
+      sameOriginApi = global.location.origin + '/api';
+      // GitHub Pages project sites: /Tesla/api won't exist — use fallback
+      if (/github\.io$/i.test(global.location.hostname)) {
+        sameOriginApi = '';
+      }
+    }
+  } catch (e) {}
+
+  global.TESLA_API_BASE = normalize(
+    global.TESLA_API_BASE ||
+    (injected ? deployedApiBase : '') ||
+    sameOriginApi ||
+    supabaseFallback
+  );
 
   global.TESLA_CURRENCIES = [
     {code:'USD',symbol:'$',label:'US Dollar'},{code:'EUR',symbol:'€',label:'Euro'},
@@ -24,4 +48,3 @@
     return code || '$';
   };
 })(window);
-
