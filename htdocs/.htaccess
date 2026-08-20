@@ -1,0 +1,11 @@
+# InfinityFree — site root (.htaccess in htdocs)
+DirectoryIndex index.php index.html index.htm
+
+RewriteEngine On
+
+# Route API requests to PHP backend
+RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+
+# Optional: force HTTPS if your host supports it
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

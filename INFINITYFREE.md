@@ -1,62 +1,45 @@
-# InfinityFree upload guide (fix the "No index file" error)
+# InfinityFree deployment
 
-## Correct htdocs layout
+## File tree (correct)
 
-Your **htdocs** folder must look like this (index at the **top level**):
-
-```text
-htdocs/
-  index.html          ← required
-  index.php           ← required (this repo includes it)
-  admin.html
-  payment.html
-  api/
-  assets/
-  css/
-  js/
-  uploads/
-  ...
-```
-
-## Wrong layout (causes the error)
+After download, use the **`htdocs`** folder only:
 
 ```text
 htdocs/
-  Tesla-main/           ← DO NOT leave this extra folder
-    docs/
-      index.html        ← too deep — server never finds it
+├── index.html          ← homepage (must be here)
+├── index.php           ← InfinityFree index fallback
+├── .htaccess
+├── admin.html
+├── payment.html
+├── order-placed.html
+├── payment-confirmation.html
+├── api/
+│   ├── index.php
+│   ├── config.php      ← edit MySQL credentials
+│   └── lib/
+├── assets/
+├── css/
+├── js/
+├── admin/
+├── uploads/
+├── vehicles/
+└── database.sql
 ```
 
-or:
-
-```text
-htdocs/
-  docs/
-    index.html          ← still wrong — one folder too deep
-```
-
-## How to upload correctly
+## Upload steps
 
 1. Download: https://github.com/Joshbond123/Tesla/archive/refs/heads/main.zip
-2. Unzip on your computer.
-3. Open the folder **`Tesla-main/docs`** (not `Tesla-main` itself).
-4. Select **all files and folders inside `docs`** (index.html, index.php, api, assets, …).
-5. Upload them **directly into** InfinityFree **htdocs** (use FileZilla FTP if the online manager fails).
-6. Confirm in File Manager that you see `htdocs/index.html` and `htdocs/index.php`.
+2. Unzip → open **`htdocs`**
+3. Upload **all files inside `htdocs`** into InfinityFree **`htdocs`**
+4. Confirm InfinityFree File Manager shows: `htdocs/index.html`
+
+## Wrong
+
+```text
+htdocs/Tesla-main/htdocs/index.html   ✗
+htdocs/docs/index.html                ✗
+```
 
 ## Database
 
-1. Create a MySQL database in the InfinityFree panel.
-2. phpMyAdmin → Import → `database.sql` (from `docs/database.sql` or repo root).
-3. Edit `htdocs/api/config.php` with your MySQL host, name, user, password.
-
-## Test
-
-- Home: `https://your-site.infinityfreeapp.com/`
-- API: `https://your-site.infinityfreeapp.com/api/health`
-
-## Notes
-
-- Filenames are **case-sensitive** (`index.html` not `Index.HTML`).
-- HTML/PHP files over **1 MB** are rejected — our `index.html` is under that limit.
-- Prefer **FileZilla** over the browser file manager for large uploads.
+Import `htdocs/database.sql` in phpMyAdmin, then edit `htdocs/api/config.php`.

