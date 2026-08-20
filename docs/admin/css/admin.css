@@ -2774,3 +2774,56 @@ button:focus-visible, a:focus-visible {
   text-transform: uppercase;
 }
 .pp-card-thumb-sub { font-size: 11px; opacity: 0.75; }
+
+/* Web Push Notifications */
+.push-banner {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px; border-radius: 14px; margin-bottom: 20px;
+  border: 1px solid #e2e8f0; background: #f8fafc;
+}
+.push-banner strong { font-size: 13px; font-weight: 800; color: #0f172a; }
+.push-banner span { font-size: 13px; color: #64748b; line-height: 1.45; }
+.push-banner--ok { background: #f0fdf4; border-color: #bbf7d0; }
+.push-banner--warn { background: #fff7ed; border-color: #fed7aa; }
+.push-banner--info { background: #f8fafc; border-color: #e2e8f0; }
+.push-status-row { display: flex; flex-wrap: wrap; gap: 16px; }
+.push-status-item { display: flex; flex-direction: column; gap: 6px; min-width: 140px; }
+.push-status-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; }
+.push-pill {
+  display: inline-flex; align-items: center; width: fit-content;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  background: #f1f5f9; color: #475569;
+}
+.push-pill--ok { background: #dcfce7; color: #166534; }
+.push-pill--bad { background: #fee2e2; color: #991b1b; }
+.push-pill--muted { background: #f1f5f9; color: #64748b; }
+.ss-toggle-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 0; border-bottom: 1px solid #f1f5f9;
+}
+.ss-toggle-row:last-child { border-bottom: none; }
+.ss-toggle-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+.ss-toggle-desc { font-size: 12.5px; color: #64748b; margin-top: 2px; }
+.push-modal {
+  position: fixed; inset: 0; z-index: 100000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+}
+.push-modal-card {
+  width: 100%; max-width: 420px; background: #fff; border-radius: 20px;
+  padding: 28px 24px; box-shadow: 0 24px 60px rgba(15,23,42,.25);
+  text-align: center;
+}
+.push-modal-icon {
+  width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: #0f172a; color: #fff;
+}
+.push-modal-icon--warn { background: #9a3412; }
+.push-modal-title { margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -.02em; }
+.push-modal-body { margin: 0 0 22px; font-size: 14px; line-height: 1.55; color: #64748b; }
+.push-modal-actions { display: flex; flex-direction: column; gap: 10px; }
+@media (min-width: 480px) {
+  .push-modal-actions { flex-direction: row; justify-content: center; }
+}

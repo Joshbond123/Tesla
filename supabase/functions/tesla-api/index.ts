@@ -702,6 +702,15 @@ async function handleOrder(req: Request) {
     delivery_method: method ?? {}, payment_method: paymentMethod ?? { id: "unknown", name: "Not specified" },
     status: "processing", estimated_delivery: estimatedDelivery,
   }, "id,order_date");
+  if (!orderError && orderRow) {
+    try {
+      await notifyAdmins(
+        "new_order",
+        "New order placed",
+        "A customer placed a new order (" + orderId + "). Open the Admin Panel to review."
+      );
+    } catch { /* non-blocking */ }
+  }
   if (orderError || !orderRow) {
     console.error("Order: orders insert failed:", orderError);
     return json({ error: "Server error. Please try again." }, 500);
@@ -951,6 +960,205 @@ async function sha256(text: string): Promise<string> {
 
 // Validate an admin session token (stored in admin_settings as "session_<token>").
 // Returns an error Response if invalid, or null when authorized.
+
+// ── WEB PUSH (VAPID) ─────────────────────────────────────────────────────────
+const VAPID_PUBLIC_KEY = "BMzBYBqYqsmZ3oc4NS1rcV8l4F1t4LD9YR3gpHaRDdCXq8sPDq5zxy6AS6up5lynVS3rIePJ-333WkLBawwi4DQ";
+const VAPID_PRIVATE_KEY = "5nixKu2laNx0qmYPmvF5-aJgIzo50BOUGTGvnWYEBGk";
+const VAPID_SUBJECT = "mailto:admin@tesla-award.local";
+
+type PushPrefs = {
+  enabled: boolean;
+  newOrder: boolean;
+  paymentProof: boolean;
+  promptDismissed?: boolean;
+};
+
+type PushSub = {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  expirationTime?: number | null;
+  createdAt?: string;
+};
+
+async function loadPushPrefs(): Promise<PushPrefs> {
+  const row = await dbGet1("admin_settings", "value", { key: "eq.push_prefs" });
+  const v = (row.data?.value as any) || {};
+  return {
+    enabled: v.enabled !== false,
+    newOrder: v.newOrder !== false,
+    paymentProof: v.paymentProof !== false,
+    promptDismissed: v.promptDismissed === true,
+  };
+}
+
+async function savePushPrefs(prefs: PushPrefs) {
+  return upsertAdminSetting("push_prefs", prefs as unknown as Record<string, unknown>);
+}
+
+async function loadPushSubscriptions(): Promise<PushSub[]> {
+  const row = await dbGet1("admin_settings", "value", { key: "eq.push_subscriptions" });
+  const v = (row.data?.value as any) || {};
+  return Array.isArray(v.items) ? v.items.filter((s: any) => s && s.endpoint && s.keys) : [];
+}
+
+async function savePushSubscriptions(items: PushSub[]) {
+  return upsertAdminSetting("push_subscriptions", { items } as unknown as Record<string, unknown>);
+}
+
+function b64urlToUint8(s: string): Uint8Array {
+  const pad = "=".repeat((4 - (s.length % 4)) % 4);
+  const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
+function uint8ToB64url(buf: ArrayBuffer | Uint8Array): string {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/** Send web push using npm:web-push when available; otherwise best-effort fetch */
+async function sendWebPush(sub: PushSub, payload: Record<string, unknown>): Promise<{ ok: boolean; status?: number; gone?: boolean }> {
+  try {
+    const webpush = await import("npm:web-push@3.6.7");
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+    await webpush.sendNotification(
+      {
+        endpoint: sub.endpoint,
+        keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+      },
+      JSON.stringify(payload),
+      { TTL: 60 * 60 * 12, urgency: "high" }
+    );
+    return { ok: true };
+  } catch (e: any) {
+    const status = e?.statusCode || e?.status || 0;
+    const gone = status === 404 || status === 410;
+    console.error("sendWebPush error:", status, e?.message || e);
+    return { ok: false, status, gone };
+  }
+}
+
+async function notifyAdmins(type: "new_order" | "payment_proof", title: string, body: string) {
+  try {
+    const prefs = await loadPushPrefs();
+    if (!prefs.enabled) return;
+    if (type === "new_order" && !prefs.newOrder) return;
+    if (type === "payment_proof" && !prefs.paymentProof) return;
+
+    let subs = await loadPushSubscriptions();
+    if (!subs.length) return;
+
+    const payload = {
+      title,
+      body,
+      type,
+      tag: "tesla-" + type,
+      url: "./admin.html",
+    };
+
+    const kept: PushSub[] = [];
+    for (const sub of subs) {
+      const res = await sendWebPush(sub, payload);
+      if (res.gone) continue; // drop invalid
+      kept.push(sub);
+    }
+    if (kept.length !== subs.length) {
+      await savePushSubscriptions(kept);
+    }
+  } catch (e) {
+    console.error("notifyAdmins failed:", e);
+  }
+}
+
+async function handlePushVapidPublic() {
+  return json({ publicKey: VAPID_PUBLIC_KEY });
+}
+
+async function handlePushStatus(req: Request) {
+  const prefs = await loadPushPrefs();
+  const subs = await loadPushSubscriptions();
+  // Optional: client can send endpoint to check membership
+  let endpoint = "";
+  try {
+    const u = new URL(req.url);
+    endpoint = u.searchParams.get("endpoint") || "";
+  } catch { /* ignore */ }
+  const subscribed = endpoint
+    ? subs.some((s) => s.endpoint === endpoint)
+    : subs.length > 0;
+  return json({
+    prefs,
+    subscribed,
+    subscriptionCount: subs.length,
+    vapidPublicKey: VAPID_PUBLIC_KEY,
+  });
+}
+
+async function handlePushSubscribe(req: Request) {
+  let body: any;
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  const endpoint = String(body.endpoint || "");
+  const keys = body.keys || {};
+  if (!endpoint || !keys.p256dh || !keys.auth) {
+    return json({ error: "Invalid subscription" }, 400);
+  }
+  const subs = await loadPushSubscriptions();
+  const next: PushSub = {
+    endpoint,
+    keys: { p256dh: String(keys.p256dh), auth: String(keys.auth) },
+    expirationTime: body.expirationTime ?? null,
+    createdAt: new Date().toISOString(),
+  };
+  const filtered = subs.filter((s) => s.endpoint !== endpoint);
+  filtered.push(next);
+  // Cap stored subscriptions
+  const capped = filtered.slice(-20);
+  await savePushSubscriptions(capped);
+  const prefs = await loadPushPrefs();
+  if (!prefs.enabled) {
+    prefs.enabled = true;
+    await savePushPrefs(prefs);
+  }
+  return json({ success: true, subscriptionCount: capped.length });
+}
+
+async function handlePushUnsubscribe(req: Request) {
+  let body: any = {};
+  try { body = await req.json(); } catch { /* empty */ }
+  const endpoint = String(body.endpoint || "");
+  let subs = await loadPushSubscriptions();
+  if (body.clearInvalid) {
+    // Keep all until send fails; nothing to do server-side without endpoint
+  }
+  if (endpoint) {
+    subs = subs.filter((s) => s.endpoint !== endpoint);
+  } else if (body.clearAll) {
+    subs = [];
+  }
+  await savePushSubscriptions(subs);
+  return json({ success: true, subscriptionCount: subs.length });
+}
+
+async function handlePushPrefs(req: Request) {
+  let body: any;
+  try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
+  const current = await loadPushPrefs();
+  const prefs: PushPrefs = {
+    enabled: body.enabled !== undefined ? body.enabled === true : current.enabled,
+    newOrder: body.newOrder !== undefined ? body.newOrder === true : current.newOrder,
+    paymentProof: body.paymentProof !== undefined ? body.paymentProof === true : current.paymentProof,
+    promptDismissed: body.promptDismissed !== undefined ? body.promptDismissed === true : current.promptDismissed,
+  };
+  await savePushPrefs(prefs);
+  return json({ success: true, prefs });
+}
+
+
 async function requireAdmin(req: Request): Promise<Response | null> {
   const auth = req.headers.get("authorization") || "";
   const xtok = (req.headers.get("x-admin-token") || "").trim();
@@ -2167,6 +2375,16 @@ async function handlePaymentSubmit(req: Request) {
 
   // Store in payment_proofs table if it exists
   const { data, error } = await dbInsert("payment_proofs", proof, "id,created_at");
+  if (!error) {
+    try {
+      const methodLabel = String(proof.payment_method || "Payment");
+      await notifyAdmins(
+        "payment_proof",
+        "Payment proof uploaded",
+        methodLabel + " proof received for order " + String(proof.order_id || "") + ". Review it in the Admin Panel."
+      );
+    } catch { /* non-blocking */ }
+  }
   if (error) {
     console.error("Payment submit: insert failed:", error);
     // Try fallback to admin_settings
@@ -2344,6 +2562,11 @@ Deno.serve(async (req) => {
     if (orderM && req.method === "GET") return await handleOrderLookup(orderM[1]);
     // Admin routes — all require a valid admin session EXCEPT login
     if (route === "/api/admin/auth" && req.method === "POST") return await handleAdminAuth(req);
+        if (route === "/api/admin/push/vapid-public-key" && req.method === "GET") return await adminGuard(req, () => handlePushVapidPublic());
+    if (route === "/api/admin/push/status" && req.method === "GET") return await adminGuard(req, () => handlePushStatus(req));
+    if (route === "/api/admin/push/subscribe" && req.method === "POST") return await adminGuard(req, () => handlePushSubscribe(req));
+    if (route === "/api/admin/push/unsubscribe" && req.method === "POST") return await adminGuard(req, () => handlePushUnsubscribe(req));
+    if (route === "/api/admin/push/prefs" && req.method === "POST") return await adminGuard(req, () => handlePushPrefs(req));
     if (route === "/api/admin/change-password" && req.method === "POST") return await adminGuard(req, () => handleAdminChangePassword(req));
     if (route === "/api/admin/users" && req.method === "GET") return await adminGuard(req, () => handleAdminUsers(req));
     if (route === "/api/admin/users/delete" && req.method === "POST") return await adminGuard(req, () => handleAdminDeleteUser(req));

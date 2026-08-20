@@ -54,6 +54,11 @@ function init() {
 
   // ── Health check ─────────────────────────────────────────────────────
   try { healthCheck(); } catch(e) {}
+  try {
+    if (typeof validatePushSubscription === "function") {
+      setTimeout(function () { validatePushSubscription(); }, 800);
+    }
+  } catch (ePush) {}
 }
 
 // ---- EXPOSE ----
