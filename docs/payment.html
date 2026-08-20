@@ -1130,53 +1130,69 @@
 
   // ── LOAD PAYMENT METHODS ──
     function loadPaymentMethods() {
-    // Load from the API server which returns properly-normalised data
-    // with config objects (walletAddress, cashtag, email, instructions, qrCode…)
-    // so that showPaymentDetails renders correctly after any admin edit.
+    // Always resolve a real API base (config.js fallback + hard fallback)
     var API_BASE_PM = (typeof window.TESLA_API_BASE !== 'undefined' && window.TESLA_API_BASE)
-      ? window.TESLA_API_BASE.replace(/\/+$/, '')
-      : '';
-
-    renderPaymentMethods();
-    renderOrderSummary();
-
+      ? String(window.TESLA_API_BASE).replace(/\/+$/, '')
+      : 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
     if (!API_BASE_PM) {
-      // No API configured — use TeslaPaymentMethods store defaults
-      var pmDefaults = (window.TeslaPaymentMethods && window.TeslaPaymentMethods.getEnabled)
-        ? window.TeslaPaymentMethods.getEnabled() : [];
-      if (pmDefaults.length > 0) {
-        paymentMethods = pmDefaults;
-        renderPaymentMethods();
-      }
-      return;
+      API_BASE_PM = 'https://puebwzumwqizgbmksrpq.supabase.co/functions/v1/tesla-api/api';
     }
 
-    // Fetch from API server — normalised format with config objects
-    var _pmCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var _pmTimer = setTimeout(function() { if (_pmCtrl) _pmCtrl.abort(); }, 12000);
-    fetch(API_BASE_PM + '/payment-methods', _pmCtrl ? { signal: _pmCtrl.signal } : undefined)
-      .then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(data) {
-        var list = data && (data.methods || data);
-        if (!Array.isArray(list) || list.length === 0) return;
-        paymentMethods = list
-          .filter(function(m) { return m.enabled !== false; })
-          .sort(function(a, b) { return (a.displayOrder || a.sort_order || 99) - (b.displayOrder || b.sort_order || 99); });
-        try { localStorage.removeItem('tesla_pm_v2'); localStorage.removeItem('tesla_payment_methods'); } catch(e) {}
-        renderPaymentMethods();
-        renderOrderSummary();
-      })
-      .then(function() { clearTimeout(_pmTimer); })
-      .catch(function(e) {
-        clearTimeout(_pmTimer);
-        console.warn('Payment methods API fetch failed:', e);
-        var pmDefaults = (window.TeslaPaymentMethods && window.TeslaPaymentMethods.getEnabled)
-          ? window.TeslaPaymentMethods.getEnabled() : [];
-        if (pmDefaults.length > 0 && paymentMethods.length === 0) {
-          paymentMethods = pmDefaults;
-          renderPaymentMethods();
-        }
-      });
+    var listEl = document.getElementById('paymentMethodsList');
+    if (listEl && !paymentMethods.length) {
+      listEl.innerHTML = '<div class="pm-empty" style="opacity:.85">Loading payment methods…</div>';
+    }
+    try { renderOrderSummary(); } catch (e0) {}
+
+    function applyMethods(list) {
+      if (!Array.isArray(list) || !list.length) return false;
+      paymentMethods = list
+        .filter(function(m) { return m && m.enabled !== false && m.enabled !== 0 && m.enabled !== 'false'; })
+        .sort(function(a, b) {
+          return (Number(a.displayOrder != null ? a.displayOrder : a.sort_order) || 99) -
+                 (Number(b.displayOrder != null ? b.displayOrder : b.sort_order) || 99);
+        });
+      if (!paymentMethods.length) return false;
+      try { localStorage.removeItem('tesla_pm_v2'); localStorage.removeItem('tesla_payment_methods'); } catch (e) {}
+      renderPaymentMethods();
+      try { renderOrderSummary(); } catch (e1) {}
+      return true;
+    }
+
+    function fallbackLocal() {
+      var pmDefaults = (window.TeslaPaymentMethods && window.TeslaPaymentMethods.getEnabled)
+        ? window.TeslaPaymentMethods.getEnabled() : [];
+      if (pmDefaults.length) applyMethods(pmDefaults);
+      else if (!paymentMethods.length) renderPaymentMethods();
+    }
+
+    function fetchMethods(attempt) {
+      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timer = setTimeout(function() { if (ctrl) try { ctrl.abort(); } catch (e) {} }, 15000);
+      var opts = { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' };
+      if (ctrl) opts.signal = ctrl.signal;
+      return fetch(API_BASE_PM + '/payment-methods', opts)
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function(data) {
+          clearTimeout(timer);
+          var list = data && (data.methods || data);
+          if (!applyMethods(list)) {
+            if (attempt < 1) return fetchMethods(attempt + 1);
+            fallbackLocal();
+          }
+        })
+        .catch(function(e) {
+          clearTimeout(timer);
+          console.warn('Payment methods API fetch failed:', e);
+          if (attempt < 1) return fetchMethods(attempt + 1);
+          fallbackLocal();
+        });
+    }
+
+    return fetchMethods(0);
   }
 
   function findMethod(id) {

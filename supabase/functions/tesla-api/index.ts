@@ -1021,25 +1021,55 @@ function uint8ToB64url(buf: ArrayBuffer | Uint8Array): string {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-/** Send web push using npm:web-push when available; otherwise best-effort fetch */
+/** Send web push (Web Crypto compatible — works on Deno Deploy / Supabase Edge) */
 async function sendWebPush(sub: PushSub, payload: Record<string, unknown>): Promise<{ ok: boolean; status?: number; gone?: boolean }> {
   try {
-    const webpush = await import("npm:web-push@3.6.7");
-    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-    await webpush.sendNotification(
+    // Prefer pure Web Crypto implementation (Edge-safe)
+    const { buildPushPayload } = await import("npm:@block65/webcrypto-web-push@1.0.2");
+    const pushPayload = await buildPushPayload(
+      {
+        data: JSON.stringify(payload),
+        ttl: 60 * 60 * 12,
+        urgency: "high",
+      },
       {
         endpoint: sub.endpoint,
         keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
-      },
-      JSON.stringify(payload),
-      { TTL: 60 * 60 * 12, urgency: "high" }
+        expirationTime: sub.expirationTime ?? null,
+      } as any,
+      {
+        subject: VAPID_SUBJECT,
+        publicKey: VAPID_PUBLIC_KEY,
+        privateKey: VAPID_PRIVATE_KEY,
+      }
     );
-    return { ok: true };
-  } catch (e: any) {
-    const status = e?.statusCode || e?.status || 0;
-    const gone = status === 404 || status === 410;
-    console.error("sendWebPush error:", status, e?.message || e);
-    return { ok: false, status, gone };
+    const res = await fetch(sub.endpoint, pushPayload as RequestInit);
+    if (res.status === 404 || res.status === 410) {
+      return { ok: false, status: res.status, gone: true };
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error("sendWebPush HTTP", res.status, text.slice(0, 200));
+      return { ok: false, status: res.status };
+    }
+    return { ok: true, status: res.status };
+  } catch (e1: any) {
+    console.error("sendWebPush webcrypto failed, trying web-push:", e1?.message || e1);
+    try {
+      const webpush = await import("npm:web-push@3.6.7");
+      webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } },
+        JSON.stringify(payload),
+        { TTL: 60 * 60 * 12, urgency: "high" }
+      );
+      return { ok: true };
+    } catch (e: any) {
+      const status = e?.statusCode || e?.status || 0;
+      const gone = status === 404 || status === 410;
+      console.error("sendWebPush error:", status, e?.body || e?.message || e);
+      return { ok: false, status, gone };
+    }
   }
 }
 
@@ -1073,6 +1103,24 @@ async function notifyAdmins(type: "new_order" | "payment_proof", title: string, 
   } catch (e) {
     console.error("notifyAdmins failed:", e);
   }
+}
+
+
+async function handlePushTest(_req: Request) {
+  const subs = await loadPushSubscriptions();
+  if (!subs.length) return json({ ok: false, error: "No subscriptions stored" }, 400);
+  const results = [];
+  for (const sub of subs) {
+    const res = await sendWebPush(sub, {
+      title: "Test notification",
+      body: "Push is working. You will receive alerts for new orders and payment proofs.",
+      type: "test",
+      tag: "tesla-test",
+      url: "./admin.html",
+    });
+    results.push({ endpoint: sub.endpoint.slice(0, 48) + "…", ...res });
+  }
+  return json({ ok: results.some((r) => r.ok), results, count: subs.length });
 }
 
 async function handlePushVapidPublic() {
@@ -2562,7 +2610,8 @@ Deno.serve(async (req) => {
     if (orderM && req.method === "GET") return await handleOrderLookup(orderM[1]);
     // Admin routes — all require a valid admin session EXCEPT login
     if (route === "/api/admin/auth" && req.method === "POST") return await handleAdminAuth(req);
-        if (route === "/api/admin/push/vapid-public-key" && req.method === "GET") return await adminGuard(req, () => handlePushVapidPublic());
+        if (route === "/api/admin/push/test" && req.method === "POST") return await adminGuard(req, () => handlePushTest(req));
+    if (route === "/api/admin/push/vapid-public-key" && req.method === "GET") return await adminGuard(req, () => handlePushVapidPublic());
     if (route === "/api/admin/push/status" && req.method === "GET") return await adminGuard(req, () => handlePushStatus(req));
     if (route === "/api/admin/push/subscribe" && req.method === "POST") return await adminGuard(req, () => handlePushSubscribe(req));
     if (route === "/api/admin/push/unsubscribe" && req.method === "POST") return await adminGuard(req, () => handlePushUnsubscribe(req));

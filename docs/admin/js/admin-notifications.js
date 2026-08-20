@@ -88,9 +88,11 @@ function loadPushStatus() {
 
 function ensureServiceWorker() {
   if (!('serviceWorker' in navigator)) return Promise.reject(new Error('Service workers not supported'));
-  // Scope: register from site root relative to admin.html
-  var swUrl = 'sw.js';
-  return navigator.serviceWorker.register(swUrl).then(function (reg) {
+  // Resolve SW next to admin.html (GitHub Pages project path: /Tesla/sw.js)
+  var path = (location.pathname || '/').replace(/\/[^/]*$/, '/');
+  if (path.indexOf('/admin') !== -1) path = path.replace(/\/admin\/?$/, '/');
+  var swUrl = path + 'sw.js';
+  return navigator.serviceWorker.register(swUrl, { scope: path }).then(function (reg) {
     return navigator.serviceWorker.ready.then(function () { return reg; });
   });
 }
@@ -204,22 +206,52 @@ function savePushPrefs() {
     });
 }
 
+function syncPushTopbarBodyClass() {
+  var a = document.getElementById('pushEnableModal');
+  var b = document.getElementById('pushReenableModal');
+  var visible = (a && a.style.display !== 'none' && a.style.display !== '') ||
+    (b && b.style.display !== 'none' && b.style.display !== '');
+  try {
+    document.body.classList.toggle('has-push-topbar', !!visible);
+  } catch (e) {}
+}
+
 function hidePushModals() {
   var a = document.getElementById('pushEnableModal');
   var b = document.getElementById('pushReenableModal');
   if (a) a.style.display = 'none';
   if (b) b.style.display = 'none';
+  syncPushTopbarBodyClass();
 }
 
 function showPushEnableModal() {
+  var b = document.getElementById('pushReenableModal');
+  if (b) b.style.display = 'none';
   var m = document.getElementById('pushEnableModal');
-  if (m) m.style.display = 'flex';
+  if (m) m.style.display = 'block';
+  syncPushTopbarBodyClass();
 }
 
 function showPushReenableModal() {
+  var a = document.getElementById('pushEnableModal');
+  if (a) a.style.display = 'none';
   var m = document.getElementById('pushReenableModal');
-  if (m) m.style.display = 'flex';
+  if (m) m.style.display = 'block';
+  syncPushTopbarBodyClass();
 }
+
+function testPushNotification() {
+  if (!API_BASE) { showToast('API not configured', 'error'); return; }
+  api('POST', '/admin/push/test', {})
+    .then(function (r) {
+      if (r && r.ok) showToast('Test notification sent');
+      else showToast((r && r.error) || 'Test failed — check subscription', 'error');
+    })
+    .catch(function (e) {
+      showToast((e && e.message) || 'Test failed', 'error');
+    });
+}
+window.testPushNotification = testPushNotification;
 
 /** Validate existing subscription; prompt if invalid or missing when permission granted */
 function validatePushSubscription() {

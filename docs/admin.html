@@ -639,6 +639,7 @@
                 <div class="ss-actions" style="margin-top:16px;">
                   <button type="button" class="ss-btn ss-btn-primary" id="pushEnableBtn" onclick="subscribePush()">Enable Notifications</button>
                   <button type="button" class="ss-btn ss-btn-ghost" id="pushDisableBtn" style="display:none" onclick="unsubscribePush()">Unsubscribe</button>
+                  <button type="button" class="ss-btn ss-btn-ghost" id="pushTestBtn" onclick="testPushNotification()">Send test</button>
                 </div>
                 <p class="ss-field-hint" style="margin-top:12px;">Delivery depends on browser, OS, and device settings. Keep notifications allowed for this site for best reliability.</p>
               </div>
@@ -852,35 +853,38 @@
 <script src="admin/js/admin-proofs.js?v=20260819k"></script>
 <script src="admin/js/admin-social.js?v=20260819k"></script>
 <script src="admin/js/admin-settings.js?v=20260820a"></script>
-<script src="admin/js/admin-notifications.js?v=20260819k"></script>
+<script src="admin/js/admin-notifications.js?v=20260820b"></script>
 <script src="admin/js/admin-orders.js?v=20260819k"></script>
 <script src="admin/js/admin-init.js?v=20260819k"></script>
 
-<!-- Push: enable prompt -->
-<div id="pushEnableModal" class="push-modal" style="display:none" role="dialog" aria-modal="true">
-  <div class="push-modal-card">
-    <div class="push-modal-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+<!-- Push prompts: non-blocking top banners -->
+<div id="pushEnableModal" class="push-topbar" style="display:none" role="status">
+  <div class="push-topbar-inner">
+    <div class="push-topbar-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
     </div>
-    <h3 class="push-modal-title">Enable Notifications</h3>
-    <p class="push-modal-body">Turn on notifications to receive alerts when a user places an order or uploads payment proof.</p>
-    <div class="push-modal-actions">
-      <button type="button" class="ss-btn ss-btn-primary" onclick="subscribePush()">Enable Notifications</button>
-      <button type="button" class="ss-btn ss-btn-ghost" onclick="dismissPushPrompt()">Not Now</button>
+    <div class="push-topbar-text">
+      <strong>Enable Notifications</strong>
+      <span>Get alerts when a user places an order or uploads payment proof — even if the admin panel is closed.</span>
+    </div>
+    <div class="push-topbar-actions">
+      <button type="button" class="push-topbar-btn push-topbar-btn--primary" onclick="subscribePush()">Enable</button>
+      <button type="button" class="push-topbar-btn" onclick="dismissPushPrompt()">Not now</button>
     </div>
   </div>
 </div>
-<!-- Push: re-enable -->
-<div id="pushReenableModal" class="push-modal" style="display:none" role="dialog" aria-modal="true">
-  <div class="push-modal-card">
-    <div class="push-modal-icon push-modal-icon--warn">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+<div id="pushReenableModal" class="push-topbar push-topbar--warn" style="display:none" role="status">
+  <div class="push-topbar-inner">
+    <div class="push-topbar-icon push-topbar-icon--warn" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     </div>
-    <h3 class="push-modal-title">Notifications Need Attention</h3>
-    <p class="push-modal-body">Your notification subscription is no longer active. Re-enable notifications to continue receiving order and payment-proof alerts.</p>
-    <div class="push-modal-actions">
-      <button type="button" class="ss-btn ss-btn-primary" onclick="subscribePush()">Re-enable Notifications</button>
-      <button type="button" class="ss-btn ss-btn-ghost" onclick="hidePushModals()">Dismiss</button>
+    <div class="push-topbar-text">
+      <strong>Notifications need attention</strong>
+      <span>Your subscription is no longer active. Re-enable to keep receiving order and payment-proof alerts.</span>
+    </div>
+    <div class="push-topbar-actions">
+      <button type="button" class="push-topbar-btn push-topbar-btn--primary" onclick="subscribePush()">Re-enable</button>
+      <button type="button" class="push-topbar-btn" onclick="hidePushModals()">Dismiss</button>
     </div>
   </div>
 </div>
