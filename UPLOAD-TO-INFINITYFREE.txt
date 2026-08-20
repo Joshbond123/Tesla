@@ -1,19 +1,23 @@
 INFINITYFREE UPLOAD
 ==================
 
-1. Open the folder named:  htdocs
-2. Upload EVERYTHING inside "htdocs" into your InfinityFree "htdocs" directory.
-3. After upload you must have:
+Upload these files from the ZIP root (NOT from a subfolder):
 
-   YOUR_INFINITYFREE_htdocs/
-     index.html
-     index.php
-     admin.html
-     api/
-     assets/
-     css/
-     js/
-     ...
+  index.html
+  index.php
+  admin.html
+  api/
+  assets/
+  css/
+  js/
+  admin/
+  uploads/
+  vehicles/
+  ...
 
-Do NOT upload the outer "Tesla-main" folder.
-Do NOT upload only the "docs" folder name — use the "htdocs" folder contents.
+Into InfinityFree htdocs so you have:
+
+  htdocs/index.html
+  htdocs/index.php
+
+Do not create an extra "htdocs" folder inside the ZIP — site files are already at the root.
